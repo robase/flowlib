@@ -3,7 +3,7 @@
  *
  * `'wasm-unsafe-eval'` keeps QuickJS template-preview viable. `connect-src`
  * is opened to the in-process Express server's loopback URL so the embedded
- * `<Invect>` UI can `fetch` the local backend; otherwise a strict CSP.
+ * `<Flowlib>` UI can `fetch` the local backend; otherwise a strict CSP.
  */
 
 import * as vscode from 'vscode';
@@ -13,18 +13,18 @@ export interface BuildHtmlOptions {
   extensionUri: vscode.Uri;
   /** The panel's `webview` — needed for `cspSource` and `asWebviewUri`. */
   webview: vscode.Webview;
-  /** Page title shown in the panel tab. Defaults to "Invect Flow". */
+  /** Page title shown in the panel tab. Defaults to "Flowlib Flow". */
   title?: string;
   /**
    * Origin (scheme://host:port) of the in-process backend the webview
-   * will fetch. Whitelisted in `connect-src` so Invect's `ApiClient`
+   * will fetch. Whitelisted in `connect-src` so Flowlib's `ApiClient`
    * can reach it. SSE uses the same origin.
    */
   apiOrigin?: string;
 }
 
 export function buildWebviewHtml(opts: BuildHtmlOptions): string {
-  const { extensionUri, webview, title = 'Invect Flow', apiOrigin } = opts;
+  const { extensionUri, webview, title = 'Flowlib Flow', apiOrigin } = opts;
   const nonce = generateNonce();
   const webviewDir = vscode.Uri.joinPath(extensionUri, 'dist', 'webview');
   const scriptUri = webview.asWebviewUri(vscode.Uri.joinPath(webviewDir, 'main.js'));

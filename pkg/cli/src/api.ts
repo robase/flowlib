@@ -1,7 +1,7 @@
 /**
  * Programmatic API for @flowlib/cli
  *
- * Programmatic API for the Invect CLI generators.
+ * Programmatic API for the Flowlib CLI generators.
  * Import this to use schema generators in tests or build scripts.
  *
  * @example

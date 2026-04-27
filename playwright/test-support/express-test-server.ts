@@ -1,5 +1,5 @@
 /**
- * Playwright test server — Express + Invect with mock external APIs.
+ * Playwright test server — Express + Flowlib with mock external APIs.
  *
  * Isolated test server spawned per Playwright worker with a disposable
  * SQLite database. Used by e2e, critical-paths, and visual-audit tests.
@@ -17,7 +17,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import express from 'express';
 import cors from 'cors';
-import { createInvectRouter } from '../../pkg/express/dist/index.js';
+import { createFlowlibRouter } from '../../pkg/express/dist/index.js';
 import { webhooks } from '../../pkg/plugins/webhooks/src/backend/index.ts';
 import { startExternalApiMocks, stopExternalApiMocks } from './mock-external-apis.ts';
 
@@ -38,7 +38,7 @@ const db = drizzle(sqlite);
 const migrationsFolder = path.resolve(__dirname, '../../pkg/core/drizzle/sqlite');
 await migrate(db, { migrationsFolder });
 sqlite.exec(`
-  CREATE TABLE IF NOT EXISTS invect_webhook_triggers (
+  CREATE TABLE IF NOT EXISTS flowlib_webhook_triggers (
     id TEXT PRIMARY KEY NOT NULL,
     name TEXT NOT NULL,
     description TEXT,
@@ -57,12 +57,12 @@ sqlite.exec(`
     trigger_count INTEGER NOT NULL DEFAULT 0,
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (flow_id) REFERENCES invect_flows(id) ON DELETE NO ACTION
+    FOREIGN KEY (flow_id) REFERENCES flowlib_flows(id) ON DELETE NO ACTION
   );
 `);
 sqlite.close();
 
-// ── 2. Boot Express + Invect ──────────────────────────────────────────────
+// ── 2. Boot Express + Flowlib ──────────────────────────────────────────────
 const app = express();
 app.use(cors());
 app.use(express.json());
@@ -81,7 +81,7 @@ app.get('/flowlib/plugins/auth/api/auth/get-session', (_req, res) => {
 
 app.use(
   '/flowlib',
-  await createInvectRouter({
+  await createFlowlibRouter({
     encryptionKey: 'dGVzdC1lbmNyeXB0aW9uLWtleS0xMjM0NTY3ODkw',
     database: {
       type: 'sqlite',

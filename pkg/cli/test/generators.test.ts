@@ -54,7 +54,7 @@ describe('generateDrizzleSchema (single dialect)', () => {
     });
 
     expect(result.code).toBeDefined();
-    expect(result.code).toContain("sqliteTable('invect_flows'");
+    expect(result.code).toContain("sqliteTable('flowlib_flows'");
     expect(result.fileName).toContain('schema-sqlite.ts');
     expect(result.overwrite).toBeFalsy();
   });
@@ -67,7 +67,7 @@ describe('generateDrizzleSchema (single dialect)', () => {
     });
 
     expect(result.code).toBeDefined();
-    expect(result.code).toContain("pgTable('invect_flows'");
+    expect(result.code).toContain("pgTable('flowlib_flows'");
     expect(result.code).toContain('pgEnum(');
   });
 
@@ -79,7 +79,7 @@ describe('generateDrizzleSchema (single dialect)', () => {
     });
 
     expect(result.code).toBeDefined();
-    expect(result.code).toContain("mysqlTable('invect_flows'");
+    expect(result.code).toContain("mysqlTable('flowlib_flows'");
     expect(result.code).toContain('mysqlEnum(');
   });
 
@@ -191,7 +191,7 @@ describe('generateAllDrizzleSchemas (single dialect)', () => {
     });
 
     expect(results).toHaveLength(1);
-    expect(results[0].code).toContain("pgTable('invect_flows'");
+    expect(results[0].code).toContain("pgTable('flowlib_flows'");
   });
 
   it('should generate mysql dialect when specified', async () => {
@@ -202,7 +202,7 @@ describe('generateAllDrizzleSchemas (single dialect)', () => {
     });
 
     expect(results).toHaveLength(1);
-    expect(results[0].code).toContain("mysqlTable('invect_flows'");
+    expect(results[0].code).toContain("mysqlTable('flowlib_flows'");
   });
 
   it('should return correct stats for core-only', async () => {
@@ -320,7 +320,7 @@ describe('generateSchema (router)', () => {
     });
 
     expect(result.code).toBeDefined();
-    expect(result.code).toContain("sqliteTable('invect_flows'");
+    expect(result.code).toContain("sqliteTable('flowlib_flows'");
   });
 
   it('should route to prisma adapter', async () => {

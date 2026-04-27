@@ -1,8 +1,8 @@
 /**
  * `npx flowlib-cli migrate` — Apply pending database migrations
  *
- * Applies the Invect schema directly to your database. This wraps
- * Drizzle Kit's migration commands with Invect-aware configuration.
+ * Applies the Flowlib schema directly to your database. This wraps
+ * Drizzle Kit's migration commands with Flowlib-aware configuration.
  *
  * For development, use `--push` to apply schema changes directly
  * without generating migration files (uses `drizzle-kit push`).
@@ -30,20 +30,20 @@ const onCancel = () => {
 
 export const migrateCommand = new Command('migrate')
   .description('Apply pending database migrations via Drizzle Kit')
-  .option('--config <path>', 'Path to your Invect config file')
+  .option('--config <path>', 'Path to your Flowlib config file')
   .option('-y, --yes', 'Skip confirmation prompt')
   .option('--push', 'Push schema directly without migration files (dev mode)')
   .action(migrateAction);
 
 /** @internal — exported for testing */
 async function migrateAction(options: { config?: string; yes?: boolean; push?: boolean }) {
-  console.log(pc.bold('\n🗄️  Invect Migration\n'));
+  console.log(pc.bold('\n🗄️  Flowlib Migration\n'));
 
   // ─── Step 1: Find and load config ───────────────────────────────
   const configPath = findConfigPath(options.config);
   if (!configPath) {
     console.error(
-      pc.red('✗ Could not find Invect config file.') +
+      pc.red('✗ Could not find Flowlib config file.') +
         '\n' +
         pc.dim('  Use --config <path> to specify the config file explicitly.') +
         '\n\n' +

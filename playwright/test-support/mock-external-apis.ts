@@ -308,7 +308,7 @@ function createServer() {
       return HttpResponse.json({
         login: 'flowlib-msw',
         id: 1001,
-        name: 'Invect Mock User',
+        name: 'Flowlib Mock User',
       });
     }),
     http.get('https://api.openai.com/v1/models', () => {

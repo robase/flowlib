@@ -4,7 +4,7 @@
  * Generates Drizzle ORM schema files from the merged abstract schema
  * (core + plugins). Produces dialect-specific TypeScript source code.
  *
- * This is the primary generator — Invect uses Drizzle exclusively.
+ * This is the primary generator — Flowlib uses Drizzle exclusively.
  * The pattern generates dialect-specific Drizzle schema files from an abstract
  *   1. getAuthTables() → mergeSchemas() — merge core + plugin schemas
  *   2. Map abstract fields → dialect-specific Drizzle column code
@@ -135,9 +135,9 @@ export async function generateAllDrizzleSchemas(options: {
 }
 
 /**
- * Generate Invect table definitions for appending to an existing schema file.
+ * Generate Flowlib table definitions for appending to an existing schema file.
  *
- * This approach appends Invect tables into the user's existing schema file, instead of creating separate files,
+ * This approach appends Flowlib tables into the user's existing schema file, instead of creating separate files,
  * generate only the table + relation code and append it to the user's
  * existing Drizzle schema file.
  *

@@ -2,7 +2,7 @@ import 'dotenv/config';
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
-import { InvectModule } from '@flowlib/nestjs';
+import { FlowlibModule } from '@flowlib/nestjs';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 
@@ -15,8 +15,8 @@ const DATABASE_URL =
       isGlobal: true,
       envFilePath: '.env',
     }),
-    InvectModule.forRoot({
-      encryptionKey: process.env.INVECT_ENCRYPTION_KEY ?? 'change-me',
+    FlowlibModule.forRoot({
+      encryptionKey: process.env.FLOWLIB_ENCRYPTION_KEY ?? 'change-me',
       database: {
         type: 'postgresql',
         connectionString: DATABASE_URL,

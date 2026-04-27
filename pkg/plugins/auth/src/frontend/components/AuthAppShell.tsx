@@ -1,12 +1,12 @@
 /**
- * AuthAppShell — Plugin appShell that wraps Invect with auth gating.
+ * AuthAppShell — Plugin appShell that wraps Flowlib with auth gating.
  *
- * When provided as `appShell` on the auth frontend plugin, the `<Invect>`
+ * When provided as `appShell` on the auth frontend plugin, the `<Flowlib>`
  * component automatically wraps its content with this shell. No need for
- * the separate `<AuthenticatedInvect>` wrapper.
+ * the separate `<AuthenticatedFlowlib>` wrapper.
  *
  * Render tree:
- *   AuthProvider → AuthGate → children (Invect layout)
+ *   AuthProvider → AuthGate → children (Flowlib layout)
  *                    └─ fallback: SignInPage / TwoFactorVerifyForm
  */
 
@@ -56,7 +56,7 @@ function SignInWithTwoFactor() {
     );
   }
 
-  return <SignInPage onSuccess={noop} subtitle="Sign in to access Invect" />;
+  return <SignInPage onSuccess={noop} subtitle="Sign in to access Flowlib" />;
 }
 
 // ── Internal: Loading spinner ────────────────────────────────

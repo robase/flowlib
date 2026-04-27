@@ -1,5 +1,5 @@
 /**
- * `@flowlib/sdk` — the unified authoring SDK for Invect flows.
+ * `@flowlib/sdk` — the unified authoring SDK for Flowlib flows.
  *
  * Single entry point for authoring `.flow.ts` files, consuming DB-emitted
  * source, and anywhere else flows are expressed as TypeScript. Replaces the

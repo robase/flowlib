@@ -42,7 +42,7 @@ export default defineConfig({
     // one for `@flowlib/ui`) and the `$$typeof` symbol mismatch produces
     // React error #31. Same problem for `react-router`: two copies → two
     // separate React contexts → our outer `<MemoryRouter>` is invisible to
-    // `@flowlib/ui`'s `useInRouterContext()`, so Invect falls back to
+    // `@flowlib/ui`'s `useInRouterContext()`, so Flowlib falls back to
     // BrowserRouter and reads `window.location` (which inside a webview is
     // garbage like `/index.html?id=...`).
     dedupe: [

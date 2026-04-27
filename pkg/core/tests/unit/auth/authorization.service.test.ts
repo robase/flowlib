@@ -7,7 +7,7 @@ import {
   AuthorizationService,
   createAuthorizationService,
 } from '../../../src/services/auth/authorization.service';
-import { InvectIdentity, InvectPermission } from '../../../src/types/auth.types';
+import { FlowlibIdentity, FlowlibPermission } from '../../../src/types/auth.types';
 
 describe('AuthorizationService', () => {
   let authService: AuthorizationService;
@@ -51,7 +51,7 @@ describe('AuthorizationService', () => {
     });
 
     it('should allow action for admin role', async () => {
-      const identity: InvectIdentity = {
+      const identity: FlowlibIdentity = {
         id: 'user_1',
         role: 'admin',
       };
@@ -65,13 +65,13 @@ describe('AuthorizationService', () => {
     });
 
     it('should allow admin:* to access any action', async () => {
-      const identity: InvectIdentity = {
+      const identity: FlowlibIdentity = {
         id: 'user_1',
         role: 'admin',
       };
 
       // Test various permissions
-      const permissions: InvectPermission[] = [
+      const permissions: FlowlibPermission[] = [
         'flow:create',
         'flow:delete',
         'credential:delete',
@@ -87,7 +87,7 @@ describe('AuthorizationService', () => {
 
   describe('Role-Based Permissions', () => {
     it('should allow editor to create flows', async () => {
-      const identity: InvectIdentity = {
+      const identity: FlowlibIdentity = {
         id: 'user_1',
         role: 'editor',
       };
@@ -101,7 +101,7 @@ describe('AuthorizationService', () => {
     });
 
     it('should deny viewer from creating flows', async () => {
-      const identity: InvectIdentity = {
+      const identity: FlowlibIdentity = {
         id: 'user_1',
         role: 'viewer',
       };
@@ -116,7 +116,7 @@ describe('AuthorizationService', () => {
     });
 
     it('should allow viewer to read flows', async () => {
-      const identity: InvectIdentity = {
+      const identity: FlowlibIdentity = {
         id: 'user_1',
         role: 'viewer',
       };
@@ -130,7 +130,7 @@ describe('AuthorizationService', () => {
     });
 
     it('should allow operator to start flow runs', async () => {
-      const identity: InvectIdentity = {
+      const identity: FlowlibIdentity = {
         id: 'user_1',
         role: 'operator',
       };
@@ -144,7 +144,7 @@ describe('AuthorizationService', () => {
     });
 
     it('should deny operator from deleting flows', async () => {
-      const identity: InvectIdentity = {
+      const identity: FlowlibIdentity = {
         id: 'user_1',
         role: 'operator',
       };
@@ -159,7 +159,7 @@ describe('AuthorizationService', () => {
   });
 
   describe('Role Mapping', () => {
-    it('should map host app roles to Invect roles', async () => {
+    it('should map host app roles to Flowlib roles', async () => {
       const service = createAuthorizationService({
         config: {
           roleMapper: {
@@ -169,7 +169,7 @@ describe('AuthorizationService', () => {
         },
       });
 
-      const identity: InvectIdentity = {
+      const identity: FlowlibIdentity = {
         id: 'user_1',
         role: 'super_admin', // Host app role
       };
@@ -190,7 +190,7 @@ describe('AuthorizationService', () => {
         },
       });
 
-      const identity: InvectIdentity = {
+      const identity: FlowlibIdentity = {
         id: 'user_1',
         // No role specified
       };
@@ -222,7 +222,7 @@ describe('AuthorizationService', () => {
         },
       });
 
-      const identity: InvectIdentity = {
+      const identity: FlowlibIdentity = {
         id: 'user_1',
         role: 'qa_tester',
       };
@@ -240,7 +240,7 @@ describe('AuthorizationService', () => {
 
   describe('Direct Permission Overrides', () => {
     it('should allow action via direct permission override', async () => {
-      const identity: InvectIdentity = {
+      const identity: FlowlibIdentity = {
         id: 'user_1',
         role: 'viewer',
         permissions: ['flow:create'], // Override: viewer with create permission
@@ -255,7 +255,7 @@ describe('AuthorizationService', () => {
     });
 
     it('should allow action if direct permissions include admin:*', async () => {
-      const identity: InvectIdentity = {
+      const identity: FlowlibIdentity = {
         id: 'user_1',
         role: 'viewer',
         permissions: ['admin:*'],
@@ -272,7 +272,7 @@ describe('AuthorizationService', () => {
 
   describe('Resource-Level Access Control', () => {
     it('should allow access to specific flow IDs', async () => {
-      const identity: InvectIdentity = {
+      const identity: FlowlibIdentity = {
         id: 'user_1',
         role: 'editor',
         resourceAccess: {
@@ -299,7 +299,7 @@ describe('AuthorizationService', () => {
     });
 
     it('should allow all resources with wildcard', async () => {
-      const identity: InvectIdentity = {
+      const identity: FlowlibIdentity = {
         id: 'user_1',
         role: 'editor',
         resourceAccess: {
@@ -317,7 +317,7 @@ describe('AuthorizationService', () => {
     });
 
     it('should not restrict when resourceAccess is not set', async () => {
-      const identity: InvectIdentity = {
+      const identity: FlowlibIdentity = {
         id: 'user_1',
         role: 'editor',
         // No resourceAccess
@@ -333,7 +333,7 @@ describe('AuthorizationService', () => {
     });
 
     it('should map flow-run resource to flows access', async () => {
-      const identity: InvectIdentity = {
+      const identity: FlowlibIdentity = {
         id: 'user_1',
         role: 'editor',
         resourceAccess: {
@@ -359,7 +359,7 @@ describe('AuthorizationService', () => {
         config: { enabled: true, customAuthorize },
       });
 
-      const identity: InvectIdentity = {
+      const identity: FlowlibIdentity = {
         id: 'user_1',
         role: 'viewer',
       };
@@ -380,7 +380,7 @@ describe('AuthorizationService', () => {
         config: { enabled: true, customAuthorize },
       });
 
-      const identity: InvectIdentity = {
+      const identity: FlowlibIdentity = {
         id: 'user_1',
         role: 'admin',
       };
@@ -403,7 +403,7 @@ describe('AuthorizationService', () => {
         config: { enabled: true, customAuthorize },
       });
 
-      const identity: InvectIdentity = {
+      const identity: FlowlibIdentity = {
         id: 'user_1',
         role: 'viewer',
       };
@@ -438,7 +438,7 @@ describe('AuthorizationService', () => {
       const listener = vi.fn();
       authService.on('auth:authorized', listener);
 
-      const identity: InvectIdentity = {
+      const identity: FlowlibIdentity = {
         id: 'user_1',
         role: 'admin',
       };
@@ -462,7 +462,7 @@ describe('AuthorizationService', () => {
       const listener = vi.fn();
       authService.on('auth:forbidden', listener);
 
-      const identity: InvectIdentity = {
+      const identity: FlowlibIdentity = {
         id: 'user_1',
         role: 'viewer',
       };
@@ -502,7 +502,7 @@ describe('AuthorizationService', () => {
 
   describe('Utility Methods', () => {
     it('should return all permissions for an identity', () => {
-      const identity: InvectIdentity = {
+      const identity: FlowlibIdentity = {
         id: 'user_1',
         role: 'editor',
         permissions: ['admin:*'], // Override
@@ -520,7 +520,7 @@ describe('AuthorizationService', () => {
     });
 
     it('should check permission correctly', () => {
-      const identity: InvectIdentity = {
+      const identity: FlowlibIdentity = {
         id: 'user_1',
         role: 'editor',
       };

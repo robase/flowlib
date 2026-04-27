@@ -1,4 +1,4 @@
-// Common Zod validation schemas for Invect API
+// Common Zod validation schemas for Flowlib API
 // Shared across all framework adapters (Express, NestJS, etc.)
 
 import { z } from 'zod/v4';

@@ -2,7 +2,7 @@
   "name": "nest-prisma",
   "version": "0.0.1",
   "private": true,
-  "description": "Acme SaaS — NestJS + Prisma + PostgreSQL example with Invect integration",
+  "description": "Acme SaaS — NestJS + Prisma + PostgreSQL example with Flowlib integration",
   "license": "UNLICENSED",
   "author": "robase <team@flowlib.dev>",
   "scripts": {

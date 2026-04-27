@@ -2,7 +2,7 @@
  * Shared plugin database API factory.
  *
  * Creates a dialect-agnostic `PluginDatabaseApi` from a `DatabaseConnection`.
- * All framework adapters (Express, NestJS, Next.js) and the core `Invect`
+ * All framework adapters (Express, NestJS, Next.js) and the core `Flowlib`
  * class share this single implementation.
  */
 

@@ -1,6 +1,6 @@
 ---
 title: Quickstart
-description: Install Invect and run your first workflow in under 5 minutes.
+description: Install Flowlib and run your first workflow in under 5 minutes.
 ---
 
 import { Callout } from 'fumadocs-ui/components/callout';
@@ -30,12 +30,12 @@ The CLI installs everything, but you still need to mount the router. Here's the 
 
 ```ts title="index.ts"
 import express from 'express';
-import { createInvectRouter } from '@flowlib/express';
-import { invectConfig } from './flowlib.config';
+import { createFlowlibRouter } from '@flowlib/express';
+import { flowlibConfig } from './flowlib.config';
 
 const app = express();
 app.use(express.json());
-app.use('/flowlib', await createInvectRouter(invectConfig));
+app.use('/flowlib', await createFlowlibRouter(flowlibConfig));
 
 app.listen(3000, () => console.log('http://localhost:3000/flowlib'));
 ```
@@ -44,19 +44,19 @@ For NestJS or Next.js mounting patterns, see [Installation](/docs/installation).
 
 ## Open the dashboard
 
-Start your server and visit `http://localhost:3000/flowlib`. You should see the Invect dashboard where you can create and run flows.
+Start your server and visit `http://localhost:3000/flowlib`. You should see the Flowlib dashboard where you can create and run flows.
 
 ## Add the visual editor (optional)
 
 If your frontend is a separate React app, install `@flowlib/ui` and mount the editor:
 
 ```tsx title="App.tsx"
-import { Invect } from '@flowlib/ui';
+import { Flowlib } from '@flowlib/ui';
 import '@flowlib/ui/styles';
-import { invectConfig } from '../flowlib.config';
+import { flowlibConfig } from '../flowlib.config';
 
 function App() {
-  return <Invect config={invectConfig} />;
+  return <Flowlib config={flowlibConfig} />;
 }
 ```
 

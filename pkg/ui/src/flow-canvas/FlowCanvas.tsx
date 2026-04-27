@@ -3,7 +3,7 @@
  *
  * Contract C in `VSCODE_EXTENSION_TASKS.md` §3.2. Takes all data and
  * configuration via props; renders the same visual editor as the full
- * `<Invect>` component but without `ApiProvider` (a prop-backed
+ * `<Flowlib>` component but without `ApiProvider` (a prop-backed
  * `InMemoryApiClient` replaces it) or `PluginRegistryProvider`.
  *
  * Two routes live inside the canvas's MemoryRouter:

@@ -1,4 +1,4 @@
-// Framework-agnostic Batch Jobs Service for Invect core
+// Framework-agnostic Batch Jobs Service for Flowlib core
 import type { DatabaseService } from '../database/database.service';
 import { BatchJobsModel, UpdateBatchJobInput, BatchJob } from './batch-jobs.model';
 import { BatchProvider, BatchStatus, BatchResult } from '../ai/base-client';

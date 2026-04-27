@@ -1,7 +1,7 @@
 {
   "name": "@flowlib/rbac",
   "version": "0.0.12",
-  "description": "RBAC plugin for Invect — adds role-based access control UI, flow sharing, and permission management. Requires @flowlib/user-auth.",
+  "description": "RBAC plugin for Flowlib — adds role-based access control UI, flow sharing, and permission management. Requires @flowlib/user-auth.",
   "homepage": "https://flowlib.dev",
   "bugs": {
     "url": "https://github.com/robase/flowlib/issues"

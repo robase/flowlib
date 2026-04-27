@@ -1,4 +1,4 @@
-import type { InvectPluginDefinition } from '@flowlib/core';
+import type { FlowlibPluginDefinition } from '@flowlib/core';
 import { buildBackendPlugin, type VercelWorkflowsBackendOptions } from './backend/endpoints';
 
 export interface VercelWorkflowsPluginOptions extends VercelWorkflowsBackendOptions {
@@ -11,7 +11,7 @@ export interface VercelWorkflowsPluginOptions extends VercelWorkflowsBackendOpti
 // SDK-source file it imports, ready for copy-paste into the user's Next.js app.
 export function vercelWorkflowsPlugin(
   options: VercelWorkflowsPluginOptions = {},
-): InvectPluginDefinition {
+): FlowlibPluginDefinition {
   const backend = buildBackendPlugin(options);
   return {
     id: 'vercel-workflows',

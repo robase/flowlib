@@ -2,14 +2,14 @@
  * Fixture flow + action catalogue for the FlowCanvas playground.
  *
  * Mirrors the shape of `pkg/core/tests/e2e/complex-branching-flow.ts`
- * but written directly as a plain `InvectDefinition` to keep the
+ * but written directly as a plain `FlowlibDefinition` to keep the
  * playground off the `@flowlib/sdk` dependency graph.
  */
 
-import type { InvectDefinition } from '@flowlib/core/types';
+import type { FlowlibDefinition } from '@flowlib/core/types';
 import type { ActionMetadata } from '@flowlib/ui/flow-canvas';
 
-export const fixtureFlow: InvectDefinition = {
+export const fixtureFlow: FlowlibDefinition = {
   nodes: [
     {
       id: 'input_1',
@@ -57,7 +57,7 @@ export const fixtureFlow: InvectDefinition = {
       },
       label: 'Minor Message',
     },
-  ] as InvectDefinition['nodes'],
+  ] as FlowlibDefinition['nodes'],
   edges: [
     { id: 'e1', source: 'input_1', target: 'transform_1' },
     { id: 'e2', source: 'transform_1', target: 'ifelse_1' },

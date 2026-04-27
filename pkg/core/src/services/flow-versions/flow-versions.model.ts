@@ -1,15 +1,15 @@
-// Flow Versions Model for Invect core — adapter-based implementation
-import type { InvectAdapter, WhereClause } from '../../database/adapter';
+// Flow Versions Model for Flowlib core — adapter-based implementation
+import type { FlowlibAdapter, WhereClause } from '../../database/adapter';
 import { DatabaseError } from 'src/types/common/errors.types';
 import { Logger, PaginatedResponse, QueryOptions } from 'src/schemas';
-import { CreateFlowVersionRequest, InvectDefinitionRuntime } from './schemas-fresh';
+import { CreateFlowVersionRequest, FlowlibDefinitionRuntime } from './schemas-fresh';
 import { FlowVersion } from '../../database';
 
 /**
  * Input for updating a flow version (limited fields)
  */
 interface UpdateFlowVersionInput {
-  invectDefinition?: InvectDefinitionRuntime;
+  flowlibDefinition?: FlowlibDefinitionRuntime;
 }
 
 /**
@@ -30,14 +30,14 @@ interface _FlowVersionQuery {
   offset?: number;
 }
 
-const TABLE = 'invect_flow_versions';
+const TABLE = 'flowlib_flow_versions';
 
 /**
- * Flow Versions CRUD operations class — uses InvectAdapter.
+ * Flow Versions CRUD operations class — uses FlowlibAdapter.
  */
 export class FlowVersionsModel {
   constructor(
-    private readonly adapter: InvectAdapter,
+    private readonly adapter: FlowlibAdapter,
     private readonly logger: Logger,
   ) {}
 
@@ -58,7 +58,7 @@ export class FlowVersionsModel {
           data: {
             flow_id: flowId,
             version: nextVersionNumber,
-            invect_definition: input.invectDefinition,
+            flowlib_definition: input.flowlibDefinition,
             created_at: new Date(),
           },
         });
@@ -174,8 +174,8 @@ export class FlowVersionsModel {
   ): Promise<FlowVersion> {
     try {
       const updateData: Record<string, unknown> = {};
-      if (input.invectDefinition !== undefined) {
-        updateData.invect_definition = input.invectDefinition;
+      if (input.flowlibDefinition !== undefined) {
+        updateData.flowlib_definition = input.flowlibDefinition;
       }
 
       const result = await this.adapter.update<Record<string, unknown>>({
@@ -258,7 +258,7 @@ export class FlowVersionsModel {
     return {
       version: Number(raw.version),
       flowId: String(raw.flow_id ?? raw.flowId),
-      invectDefinition: (raw.invect_definition ?? raw.invectDefinition) as InvectDefinitionRuntime,
+      flowlibDefinition: (raw.flowlib_definition ?? raw.flowlibDefinition) as FlowlibDefinitionRuntime,
       createdAt: new Date(String(raw.created_at ?? raw.createdAt)).toISOString(),
       createdBy: raw.created_by ? String(raw.created_by) : null,
     };

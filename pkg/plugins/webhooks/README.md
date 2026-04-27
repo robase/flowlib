@@ -1,21 +1,21 @@
 <p align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="../../../.github/assets/logo-light.svg">
-    <img alt="Invect" src="../../../.github/assets/logo-dark.svg" width="50">
+    <img alt="Flowlib" src="../../../.github/assets/logo-dark.svg" width="50">
   </picture>
 </p>
 
 <h1 align="center">@flowlib/webhooks</h1>
 
 <p align="center">
-  Webhook trigger plugin for Invect.
+  Webhook trigger plugin for Flowlib.
   <br />
   <a href="https://flowlib.dev/docs/plugins"><strong>Docs</strong></a>
 </p>
 
 ---
 
-Adds webhook management, ingestion, signature verification, and rate limiting to Invect. Create webhook endpoints that trigger flow runs when external services send events.
+Adds webhook management, ingestion, signature verification, and rate limiting to Flowlib. Create webhook endpoints that trigger flow runs when external services send events.
 
 ## Install
 
@@ -28,13 +28,13 @@ pnpm add @flowlib/webhooks
 ```ts
 import { webhooks } from '@flowlib/webhooks';
 
-const invectRouter = await createInvectRouter({
+const flowlibRouter = await createFlowlibRouter({
   database: { type: 'sqlite', connectionString: 'file:./dev.db' },
-  encryptionKey: process.env.INVECT_ENCRYPTION_KEY,
+  encryptionKey: process.env.FLOWLIB_ENCRYPTION_KEY,
   plugins: [webhooks()],
 });
 
-app.use('/flowlib', invectRouter);
+app.use('/flowlib', flowlibRouter);
 ```
 
 ### Options
@@ -51,10 +51,10 @@ webhooks({
 ## Frontend
 
 ```tsx
-import { Invect } from '@flowlib/ui';
+import { Flowlib } from '@flowlib/ui';
 import { webhooksFrontend } from '@flowlib/webhooks/ui';
 
-<Invect apiBaseUrl="/api/flowlib" plugins={[webhooksFrontend]} />;
+<Flowlib apiBaseUrl="/api/flowlib" plugins={[webhooksFrontend]} />;
 ```
 
 The plugin adds a Webhooks page to the sidebar for managing webhook triggers.

@@ -1,19 +1,19 @@
 // Main component exports
-export { Invect } from './Invect';
-export { InvectShell } from './InvectShell';
-export { InvectLoader } from './components/shared/InvectLoader';
-export { InvectLogo } from './components/shared/InvectLogo';
+export { Flowlib } from './Flowlib';
+export { FlowlibShell } from './FlowlibShell';
+export { FlowlibLoader } from './components/shared/FlowlibLoader';
+export { FlowlibLogo } from './components/shared/FlowlibLogo';
 
 // Export types for better TypeScript support
-export type { InvectProps, InvectConfig } from './Invect';
-export type { InvectShellProps } from './InvectShell';
-export type { InvectLoaderProps } from './components/shared/InvectLoader';
-export type { InvectLogoProps } from './components/shared/InvectLogo';
+export type { FlowlibProps, FlowlibConfig } from './Flowlib';
+export type { FlowlibShellProps } from './FlowlibShell';
+export type { FlowlibLoaderProps } from './components/shared/FlowlibLoader';
+export type { FlowlibLogoProps } from './components/shared/FlowlibLogo';
 
 // Plugin system types
 export type {
-  InvectFrontendPlugin,
-  InvectPluginDefinition,
+  FlowlibFrontendPlugin,
+  FlowlibPluginDefinition,
   PluginSidebarContribution,
   PluginRouteContribution,
   PluginPanelTabContribution,

@@ -4,7 +4,7 @@
  * CRUD operations for persisted chat messages, scoped to flows.
  */
 
-import type { InvectAdapter } from '../../database/adapter';
+import type { FlowlibAdapter } from '../../database/adapter';
 import type { Logger } from 'src/schemas';
 import { randomUUID } from 'crypto';
 
@@ -32,11 +32,11 @@ export interface CreateChatMessageInput {
 // Model
 // =====================================
 
-const TABLE = 'invect_chat_messages';
+const TABLE = 'flowlib_chat_messages';
 
 export class ChatMessagesModel {
   constructor(
-    private readonly adapter: InvectAdapter,
+    private readonly adapter: FlowlibAdapter,
     private readonly logger: Logger,
   ) {}
 

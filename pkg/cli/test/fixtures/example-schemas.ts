@@ -8,14 +8,14 @@
  * (e.g., twoFactor, username, organization) to exercise the generator.
  */
 
-import type { InvectPluginSchema } from '@flowlib/core';
+import type { FlowlibPluginSchema } from '@flowlib/core';
 
 // =============================================================================
 // 0. User Auth — auth tables (user, session, account, verification)
 //    Mirrors the schema exported by @flowlib/user-auth's USER_AUTH_SCHEMA
 // =============================================================================
 
-export const authenticationSchema: InvectPluginSchema = {
+export const authenticationSchema: FlowlibPluginSchema = {
   user: {
     tableName: 'user',
     order: 1,
@@ -96,7 +96,7 @@ export const authenticationPlugin = {
 // 1. SaaS Multi-Tenant — adds tenancy, billing, and user profiles
 // =============================================================================
 
-export const multiTenantSchema: InvectPluginSchema = {
+export const multiTenantSchema: FlowlibPluginSchema = {
   // New table: tenants
   tenants: {
     tableName: 'tenants',
@@ -163,7 +163,7 @@ export const multiTenantPlugin = {
 // 2. Audit Log — tracking system for compliance
 // =============================================================================
 
-export const auditLogSchema: InvectPluginSchema = {
+export const auditLogSchema: FlowlibPluginSchema = {
   auditLogs: {
     tableName: 'audit_logs',
     order: 70,
@@ -196,7 +196,7 @@ export const auditLogPlugin = {
 // 3. E-Commerce — orders, products, customers
 // =============================================================================
 
-export const ecommerceSchema: InvectPluginSchema = {
+export const ecommerceSchema: FlowlibPluginSchema = {
   products: {
     tableName: 'products',
     order: 70,
@@ -286,7 +286,7 @@ export const ecommercePlugin = {
 // 4. Minimal — single new table, no foreign keys, no enums
 // =============================================================================
 
-export const minimalSchema: InvectPluginSchema = {
+export const minimalSchema: FlowlibPluginSchema = {
   tags: {
     tableName: 'tags',
     order: 90,
@@ -309,7 +309,7 @@ export const minimalPlugin = {
 // 5. Core-Only Extension — only extends core tables, no new tables
 // =============================================================================
 
-export const coreExtensionSchema: InvectPluginSchema = {
+export const coreExtensionSchema: FlowlibPluginSchema = {
   flows: {
     fields: {
       ownerId: { type: 'string', required: false },
@@ -335,7 +335,7 @@ export const coreExtensionPlugin = {
 // 6. BigInt / UUID edge-case — tests bigint columns, uuid defaults
 // =============================================================================
 
-export const analyticsSchema: InvectPluginSchema = {
+export const analyticsSchema: FlowlibPluginSchema = {
   flowAnalytics: {
     tableName: 'flow_analytics',
     order: 80,
@@ -366,7 +366,7 @@ export const analyticsPlugin = {
 // 7. Conflicting Plugin — tries to redefine a core field (should fail)
 // =============================================================================
 
-export const conflictingSchema: InvectPluginSchema = {
+export const conflictingSchema: FlowlibPluginSchema = {
   flows: {
     fields: {
       name: { type: 'number', required: true }, // name already exists as string in core!
@@ -384,7 +384,7 @@ export const conflictingPlugin = {
 // 8. Disabled Migration — table that should be skipped
 // =============================================================================
 
-export const disabledMigrationSchema: InvectPluginSchema = {
+export const disabledMigrationSchema: FlowlibPluginSchema = {
   tempData: {
     tableName: 'temp_data',
     disableMigration: true,
@@ -422,7 +422,7 @@ export const pluginA = {
         pluginAField: { type: 'string' as const, required: false },
       },
     },
-  } satisfies InvectPluginSchema,
+  } satisfies FlowlibPluginSchema,
 };
 
 export const pluginB = {
@@ -434,7 +434,7 @@ export const pluginB = {
         pluginBField: { type: 'number' as const, required: false },
       },
     },
-  } satisfies InvectPluginSchema,
+  } satisfies FlowlibPluginSchema,
 };
 
 // =============================================================================
@@ -450,7 +450,7 @@ export const conflictPluginA = {
         sharedField: { type: 'string' as const, required: false },
       },
     },
-  } satisfies InvectPluginSchema,
+  } satisfies FlowlibPluginSchema,
 };
 
 export const conflictPluginB = {
@@ -462,5 +462,5 @@ export const conflictPluginB = {
         sharedField: { type: 'number' as const, required: false },
       },
     },
-  } satisfies InvectPluginSchema,
+  } satisfies FlowlibPluginSchema,
 };

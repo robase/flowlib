@@ -1,7 +1,7 @@
 {
   "name": "@flowlib/version-control",
   "version": "0.0.12",
-  "description": "Version control plugin for Invect — sync flows to GitHub/GitLab/Bitbucket as .flow.ts files",
+  "description": "Version control plugin for Flowlib — sync flows to GitHub/GitLab/Bitbucket as .flow.ts files",
   "license": "MIT",
   "files": [
     "dist",

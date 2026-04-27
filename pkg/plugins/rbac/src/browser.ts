@@ -6,14 +6,14 @@
  */
 import { rbacFrontend } from './frontend/index';
 
-interface InvectPluginDefinition {
+interface FlowlibPluginDefinition {
   id: string;
   name?: string;
   backend?: unknown;
   frontend?: unknown;
 }
 
-export function rbac(_options?: Record<string, unknown>): InvectPluginDefinition {
+export function rbac(_options?: Record<string, unknown>): FlowlibPluginDefinition {
   return {
     id: 'rbac',
     name: 'Role-Based Access Control',

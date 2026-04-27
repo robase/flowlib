@@ -1,4 +1,4 @@
-// API client types for communicating with the Invect backend
+// API client types for communicating with the Flowlib backend
 
 import type { FlowValidationResult } from '@flowlib/core/types';
 import type { NodeDefinition } from '../types/node-definition.types';
@@ -17,7 +17,7 @@ export type {
   PaginatedResponse,
   SubmitPromptRequest,
   QueryOptions,
-  InvectDefinition,
+  FlowlibDefinition,
   Model,
   ReactFlowData,
   AgentToolDefinition,

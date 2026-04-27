@@ -1,7 +1,7 @@
 /**
- * Example: Static demo data for showcasing Invect flows in documentation.
+ * Example: Static demo data for showcasing Flowlib flows in documentation.
  *
- * This file demonstrates the shape of data needed to power the DemoInvect
+ * This file demonstrates the shape of data needed to power the DemoFlowlib
  * and FlowViewer components without a backend server.
  */
 
@@ -1934,7 +1934,7 @@ export const sampleChatMessages = [
 ];
 
 // ---------------------------------------------------------------------------
-// 7. Complete DemoData bundle — ready for <DemoInvect>
+// 7. Complete DemoData bundle — ready for <DemoFlowlib>
 // ---------------------------------------------------------------------------
 
 // The DemoData types (ReactFlowData, Flow) come from core DB types which

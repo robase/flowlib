@@ -19,14 +19,14 @@
 import { strict as assert } from 'node:assert';
 import { FlowRunStatus } from '../../src';
 import { defineFlow, input, output, agent } from '@flowlib/sdk';
-import type { InvectInstance } from '../../src/api/types';
+import type { FlowlibInstance } from '../../src/api/types';
 import { getOutputVariable, type AgentOutputLike, type FlowExample } from './example-types';
 
 /**
  * Ensure we have an AI credential for Agent node.
  */
 async function ensureAICredential(
-  flowlib: InvectInstance,
+  flowlib: FlowlibInstance,
 ): Promise<{ id: string; name: string; isOpenAI: boolean }> {
   const openaiKey = process.env.OPENAI_API_KEY;
   const anthropicKey = process.env.ANTHROPIC_API_KEY;
@@ -111,7 +111,7 @@ export const simpleAgentFlowExample: FlowExample = {
   name: 'Simple Agent Flow - Math Calculator',
   description: 'Tests AI Agent node with math_eval tool to perform calculations',
 
-  async execute(flowlib: InvectInstance) {
+  async execute(flowlib: FlowlibInstance) {
     const { id: credentialId, isOpenAI } = await ensureAICredential(flowlib);
 
     const definition = buildSimpleAgentFlowDefinition(credentialId, isOpenAI);
@@ -120,7 +120,7 @@ export const simpleAgentFlowExample: FlowExample = {
       name: 'E2E Simple Agent Flow',
     });
 
-    await flowlib.versions.create(flow.id, { invectDefinition: definition });
+    await flowlib.versions.create(flow.id, { flowlibDefinition: definition });
 
     const result = await flowlib.runs.start(
       flow.id,

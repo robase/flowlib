@@ -44,7 +44,7 @@ async function connect(deps: ConnectDeps): Promise<void> {
   const current = await readBackendCredentials(deps.context, folder);
 
   const url = await vscode.window.showInputBox({
-    prompt: 'Invect backend URL',
+    prompt: 'Flowlib backend URL',
     placeHolder: 'http://localhost:3000/flowlib',
     value: current.url,
     validateInput: (value) => {
@@ -82,7 +82,7 @@ async function connect(deps: ConnectDeps): Promise<void> {
     const msg = (err as Error).message;
     logger.error('backend connection failed', { url, error: msg });
     deps.statusBar.set({ kind: 'error', url, message: msg });
-    void vscode.window.showErrorMessage(`Couldn't reach Invect backend: ${msg}`);
+    void vscode.window.showErrorMessage(`Couldn't reach Flowlib backend: ${msg}`);
     return;
   }
 
@@ -102,7 +102,7 @@ async function disconnect(deps: ConnectDeps): Promise<void> {
   const logger = getExtensionLogger();
   const folder = vscode.workspace.workspaceFolders?.[0]?.uri;
   const choice = await vscode.window.showWarningMessage(
-    'Disconnect from the remote Invect backend? Falls back to the embedded local backend.',
+    'Disconnect from the remote Flowlib backend? Falls back to the embedded local backend.',
     { modal: true },
     'Disconnect',
   );

@@ -90,7 +90,7 @@ export const complexBranchingFlowExample: FlowExample = {
 
     const flowDefinition = buildFlowDefinition(true);
     await flowlib.versions.create(flow.id, {
-      invectDefinition: flowDefinition,
+      flowlibDefinition: flowDefinition,
     });
     console.log(`  💾 Saved flow version with ${flowDefinition.nodes.length} nodes`);
 
@@ -173,7 +173,7 @@ export const complexBranchingFlowMinorExample: FlowExample = {
 
     const flowDefinition = buildFlowDefinition(false);
     await flowlib.versions.create(flow.id, {
-      invectDefinition: flowDefinition,
+      flowlibDefinition: flowDefinition,
     });
     console.log(`  💾 Saved flow version with ${flowDefinition.nodes.length} nodes`);
 

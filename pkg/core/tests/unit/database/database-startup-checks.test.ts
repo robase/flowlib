@@ -10,7 +10,7 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { CORE_SCHEMA } from '../../../src/database/core-schema';
-import type { InvectPlugin } from '../../../src/types/plugin.types';
+import type { FlowlibPlugin } from '../../../src/types/plugin.types';
 
 // We test the DatabaseService indirectly by importing it and mocking its deps
 // Since the startup checks are private methods called from initialize(),
@@ -235,7 +235,7 @@ describe('DatabaseService startup checks', () => {
 
       const { DatabaseService } = await import('../../../src/services/database/database.service');
       const logger = createMockLogger();
-      const plugins: InvectPlugin[] = [
+      const plugins: FlowlibPlugin[] = [
         {
           id: 'user-auth',
           name: 'User Auth',
@@ -264,7 +264,7 @@ describe('DatabaseService startup checks', () => {
 
       const { DatabaseService } = await import('../../../src/services/database/database.service');
       const logger = createMockLogger();
-      const plugins: InvectPlugin[] = [
+      const plugins: FlowlibPlugin[] = [
         {
           id: 'my-plugin',
           name: 'My Plugin',
@@ -291,7 +291,7 @@ describe('DatabaseService startup checks', () => {
 
       const { DatabaseService } = await import('../../../src/services/database/database.service');
       const logger = createMockLogger();
-      const plugins: InvectPlugin[] = [
+      const plugins: FlowlibPlugin[] = [
         {
           id: 'user-auth',
           name: 'User Auth',
@@ -318,7 +318,7 @@ describe('DatabaseService startup checks', () => {
 
       const { DatabaseService } = await import('../../../src/services/database/database.service');
       const logger = createMockLogger();
-      const plugins: InvectPlugin[] = [
+      const plugins: FlowlibPlugin[] = [
         {
           id: 'auth',
           name: 'Auth Plugin',
@@ -350,7 +350,7 @@ describe('DatabaseService startup checks', () => {
 
       const { DatabaseService } = await import('../../../src/services/database/database.service');
       const logger = createMockLogger();
-      const plugins: InvectPlugin[] = [
+      const plugins: FlowlibPlugin[] = [
         {
           id: 'custom-plugin',
           name: 'Custom Plugin',
@@ -385,7 +385,7 @@ describe('DatabaseService startup checks', () => {
 
       const { DatabaseService } = await import('../../../src/services/database/database.service');
       const logger = createMockLogger();
-      const plugins: InvectPlugin[] = [
+      const plugins: FlowlibPlugin[] = [
         {
           id: 'simple-plugin',
           // No requiredTables and no schema
@@ -413,7 +413,7 @@ describe('DatabaseService startup checks', () => {
 
       const { DatabaseService } = await import('../../../src/services/database/database.service');
       const logger = createMockLogger();
-      const plugins: InvectPlugin[] = [
+      const plugins: FlowlibPlugin[] = [
         {
           id: 'user-auth',
           name: 'User Auth',
@@ -442,7 +442,7 @@ describe('DatabaseService startup checks', () => {
       mockConnectionFactory({ tables: [] });
       const { DatabaseService } = await import('../../../src/services/database/database.service');
 
-      const plugins: InvectPlugin[] = [
+      const plugins: FlowlibPlugin[] = [
         {
           id: 'test-plugin',
           name: 'Test',
@@ -462,7 +462,7 @@ describe('DatabaseService startup checks', () => {
       mockConnectionFactory({ tables: [] });
       const { DatabaseService } = await import('../../../src/services/database/database.service');
 
-      const plugins: InvectPlugin[] = [
+      const plugins: FlowlibPlugin[] = [
         {
           id: 'schema-plugin',
           schema: {
@@ -488,7 +488,7 @@ describe('DatabaseService startup checks', () => {
       mockConnectionFactory({ tables: [] });
       const { DatabaseService } = await import('../../../src/services/database/database.service');
 
-      const plugins: InvectPlugin[] = [
+      const plugins: FlowlibPlugin[] = [
         {
           id: 'both',
           requiredTables: ['explicit_table'],
@@ -510,7 +510,7 @@ describe('DatabaseService startup checks', () => {
       mockConnectionFactory({ tables: [] });
       const { DatabaseService } = await import('../../../src/services/database/database.service');
 
-      const plugins: InvectPlugin[] = [
+      const plugins: FlowlibPlugin[] = [
         { id: 'no-tables' },
         { id: 'with-tables', requiredTables: ['t1'] },
       ];

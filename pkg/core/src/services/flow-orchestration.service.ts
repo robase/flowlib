@@ -11,7 +11,7 @@ import { DatabaseError, ValidationError } from 'src/types/common/errors.types';
 import { FlowRunStatus } from 'src/types/base';
 import { FlowRun } from './flow-runs/flow-runs.model';
 import { Flow } from './flows/flows.model';
-import { InvectDefinition } from './flow-versions/schemas-fresh';
+import { FlowlibDefinition } from './flow-versions/schemas-fresh';
 import { NodeDataService } from './node-data.service';
 import { GraphService } from './graph.service';
 import { FlowVersion } from 'src/database';
@@ -301,7 +301,7 @@ export class FlowOrchestrationService {
       }
 
       // Validate flow definition exists
-      if (!flow.flowVersion.invectDefinition) {
+      if (!flow.flowVersion.flowlibDefinition) {
         throw new ValidationError('Flow version does not contain a valid flow definition');
       }
 
@@ -323,7 +323,7 @@ export class FlowOrchestrationService {
       });
 
       // Start execution in background (fire and forget)
-      const typedDefinition = flow.flowVersion.invectDefinition as InvectDefinition;
+      const typedDefinition = flow.flowVersion.flowlibDefinition as FlowlibDefinition;
 
       // Inject trigger context into flowInputs if present (see D1 in FLOW-TRIGGERS-PLAN.md)
       // Trigger actions read from context.flowInputs.__triggerData at runtime.
@@ -424,7 +424,7 @@ export class FlowOrchestrationService {
     });
 
     // Validate flow and version
-    if (!flow.flowVersion.invectDefinition) {
+    if (!flow.flowVersion.flowlibDefinition) {
       const error = 'Flow version does not contain a valid flow definition';
       this.logger.error(error, {
         flowId: flow.id,
@@ -451,7 +451,7 @@ export class FlowOrchestrationService {
       });
 
       // Execute the flow definition - cast runtime type to inferred type
-      const typedDefinition = flow.flowVersion.invectDefinition as InvectDefinition;
+      const typedDefinition = flow.flowVersion.flowlibDefinition as FlowlibDefinition;
       finalExecutionResult = await this.flowRunCoordinator.executeFlowDefinition(
         execution,
         typedDefinition,
@@ -532,11 +532,11 @@ export class FlowOrchestrationService {
       }
 
       // Validate flow and version
-      if (!flow.flowVersion.invectDefinition) {
+      if (!flow.flowVersion.flowlibDefinition) {
         throw new ValidationError('Flow version does not contain a valid flow definition');
       }
 
-      const definition = flow.flowVersion.invectDefinition as InvectDefinition;
+      const definition = flow.flowVersion.flowlibDefinition as FlowlibDefinition;
 
       // Verify target node exists in the definition
       const targetNode = definition.nodes.find((n) => n.id === targetNodeId);
@@ -609,7 +609,7 @@ export class FlowOrchestrationService {
    */
   async continueFlowRunFromBatch(
     flowRunId: string,
-    definition: InvectDefinition,
+    definition: FlowlibDefinition,
     flowInputs: Record<string, unknown> = {},
   ): Promise<FlowRunResult> {
     return this.flowRunCoordinator.continueFlowRunFromBatch(flowRunId, definition, flowInputs);
@@ -984,7 +984,7 @@ export class FlowOrchestrationService {
       const flow = await this.flowsService.getFlowById(payload.flowId, {
         flowVersion: { version: run.flowVersion },
       });
-      if (!flow?.flowVersion?.invectDefinition) {
+      if (!flow?.flowVersion?.flowlibDefinition) {
         await this.flowRunsService.updateRunStatus(payload.flowRunId, FlowRunStatus.FAILED, {
           error: 'Flow definition missing at execution time',
         });
@@ -1003,7 +1003,7 @@ export class FlowOrchestrationService {
       try {
         await this.flowRunCoordinator.executeFlowDefinition(
           run,
-          flow.flowVersion.invectDefinition as InvectDefinition,
+          flow.flowVersion.flowlibDefinition as FlowlibDefinition,
           augmentedInputs,
           payload.useBatchProcessing,
         );

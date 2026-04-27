@@ -75,7 +75,7 @@ async function cleanupFlowByName(apiBase: string, request: APIRequestContext, na
  * Falls back to any `div` containing the label if `.bg-card` is not present.
  */
 async function getStatCardText(page: Page, label: string): Promise<string> {
-  // Primary: .bg-card elements used throughout the Invect shell
+  // Primary: .bg-card elements used throughout the Flowlib shell
   const bgCard = page.locator('.bg-card').filter({ hasText: label });
   if ((await bgCard.count()) > 0) {
     const card = bgCard.first();
@@ -131,7 +131,7 @@ test.describe('Dashboard Stats & Overview', () => {
     jqFlowId = jqFlow.id;
     await request.post(`${apiBase}/flows/${jqFlowId}/versions`, {
       data: {
-        invectDefinition: {
+        flowlibDefinition: {
           nodes: [
             {
               id: 'input-1',
@@ -166,7 +166,7 @@ test.describe('Dashboard Stats & Overview', () => {
     templateFlowId = templateFlow.id;
     await request.post(`${apiBase}/flows/${templateFlowId}/versions`, {
       data: {
-        invectDefinition: {
+        flowlibDefinition: {
           nodes: [
             {
               id: 'input-1',

@@ -47,18 +47,18 @@ suite('Sidebar views + commands', () => {
     }
   });
 
-  test('flowlib.openCredentials opens an Invect webview tab', async () => {
+  test('flowlib.openCredentials opens an Flowlib webview tab', async () => {
     await closeAllEditors();
     await vscode.commands.executeCommand('flowlib.openCredentials');
-    await waitFor(() => findInvectPanel('Invect: Credentials') !== undefined, 5000);
-    assert.ok(findInvectPanel('Invect: Credentials'), 'credentials panel did not open');
+    await waitFor(() => findFlowlibPanel('Flowlib: Credentials') !== undefined, 5000);
+    assert.ok(findFlowlibPanel('Flowlib: Credentials'), 'credentials panel did not open');
   });
 
-  test('flowlib.openWebhooks opens an Invect webview tab', async () => {
+  test('flowlib.openWebhooks opens an Flowlib webview tab', async () => {
     await closeAllEditors();
     await vscode.commands.executeCommand('flowlib.openWebhooks');
-    await waitFor(() => findInvectPanel('Invect: Webhooks') !== undefined, 5000);
-    assert.ok(findInvectPanel('Invect: Webhooks'), 'webhooks panel did not open');
+    await waitFor(() => findFlowlibPanel('Flowlib: Webhooks') !== undefined, 5000);
+    assert.ok(findFlowlibPanel('Flowlib: Webhooks'), 'webhooks panel did not open');
   });
 
   test('flowlib.openFlow opens the .flow.ts custom editor', async () => {
@@ -85,7 +85,7 @@ suite('Sidebar views + commands', () => {
   });
 });
 
-function findInvectPanel(title: string): vscode.Tab | undefined {
+function findFlowlibPanel(title: string): vscode.Tab | undefined {
   for (const group of vscode.window.tabGroups.all) {
     for (const tab of group.tabs) {
       if (tab.label === title) {

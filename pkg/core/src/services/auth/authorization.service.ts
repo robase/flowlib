@@ -1,18 +1,18 @@
 /**
  * Authorization Service
  *
- * Handles RBAC (Role-Based Access Control) for Invect resources.
+ * Handles RBAC (Role-Based Access Control) for Flowlib resources.
  * This service is stateless - all identity information comes from the host app
  * via the resolveUser callback at request time.
  */
 
 import { EventEmitter } from 'events';
 import {
-  InvectIdentity,
-  InvectPermission,
-  InvectRole,
-  InvectResourceType,
-  InvectAuthConfig,
+  FlowlibIdentity,
+  FlowlibPermission,
+  FlowlibRole,
+  FlowlibResourceType,
+  FlowlibAuthConfig,
   AuthorizationContext,
   AuthorizationResult,
   AuthAuthorizedEvent,
@@ -27,12 +27,12 @@ import type { Logger } from '../../schemas/flowlib-config';
  * Options for creating the AuthorizationService
  */
 export interface AuthorizationServiceOptions {
-  config?: InvectAuthConfig;
+  config?: FlowlibAuthConfig;
   logger?: Logger;
 }
 
 /**
- * AuthorizationService - Stateless RBAC authorization for Invect
+ * AuthorizationService - Stateless RBAC authorization for Flowlib
  *
  * Key design decisions:
  * - No database tables for users/roles (BYO Auth pattern)
@@ -48,8 +48,8 @@ export interface AuthorizationServiceOptions {
  * implement. See PR 8 in `flowlib-hosted/UPSTREAM.md`.
  */
 export class AuthorizationService extends EventEmitter {
-  private readonly config: InvectAuthConfig;
-  private readonly rolePermissions: Map<string, InvectPermission[]>;
+  private readonly config: FlowlibAuthConfig;
+  private readonly rolePermissions: Map<string, FlowlibPermission[]>;
   private readonly logger?: Logger;
 
   constructor(options: AuthorizationServiceOptions = {}) {
@@ -184,7 +184,7 @@ export class AuthorizationService extends EventEmitter {
   /**
    * Get all permissions for an identity.
    */
-  getPermissions(identity: InvectIdentity | null): InvectPermission[] {
+  getPermissions(identity: FlowlibIdentity | null): FlowlibPermission[] {
     if (!identity) {
       return [];
     }
@@ -207,7 +207,7 @@ export class AuthorizationService extends EventEmitter {
   /**
    * Check if identity has a specific permission.
    */
-  hasPermission(identity: InvectIdentity | null, permission: InvectPermission): boolean {
+  hasPermission(identity: FlowlibIdentity | null, permission: FlowlibPermission): boolean {
     if (!identity) {
       return false;
     }
@@ -219,7 +219,7 @@ export class AuthorizationService extends EventEmitter {
   /**
    * Get the resolved role for an identity.
    */
-  getResolvedRole(identity: InvectIdentity): InvectRole {
+  getResolvedRole(identity: FlowlibIdentity): FlowlibRole {
     return this.resolveRole(identity);
   }
 
@@ -255,8 +255,8 @@ export class AuthorizationService extends EventEmitter {
    * Get available roles and their permissions.
    * Useful for admin UIs to show role options.
    */
-  getAvailableRoles(): Array<{ role: string; permissions: InvectPermission[] }> {
-    const roles: Array<{ role: string; permissions: InvectPermission[] }> = [];
+  getAvailableRoles(): Array<{ role: string; permissions: FlowlibPermission[] }> {
+    const roles: Array<{ role: string; permissions: FlowlibPermission[] }> = [];
 
     for (const [role, permissions] of this.rolePermissions) {
       roles.push({ role, permissions });
@@ -270,9 +270,9 @@ export class AuthorizationService extends EventEmitter {
   // ===========================================================================
 
   /**
-   * Resolve the effective Invect role for an identity.
+   * Resolve the effective Flowlib role for an identity.
    */
-  private resolveRole(identity: InvectIdentity): string {
+  private resolveRole(identity: FlowlibIdentity): string {
     const identityRole = identity.role;
 
     // No role provided - use default
@@ -291,14 +291,14 @@ export class AuthorizationService extends EventEmitter {
   /**
    * Get permissions for a role.
    */
-  private getPermissionsForRole(role: string): InvectPermission[] {
+  private getPermissionsForRole(role: string): FlowlibPermission[] {
     return this.rolePermissions.get(role) || [];
   }
 
   /**
    * Check if identity has the permission via direct override.
    */
-  private hasDirectPermission(identity: InvectIdentity, action: InvectPermission): boolean {
+  private hasDirectPermission(identity: FlowlibIdentity, action: FlowlibPermission): boolean {
     if (!identity.permissions) {
       return false;
     }
@@ -309,7 +309,7 @@ export class AuthorizationService extends EventEmitter {
    * Check if a permission list includes the required permission.
    * Handles admin:* wildcard.
    */
-  private permissionMatches(permissions: InvectPermission[], required: InvectPermission): boolean {
+  private permissionMatches(permissions: FlowlibPermission[], required: FlowlibPermission): boolean {
     // Admin wildcard grants everything
     if (permissions.includes('admin:*')) {
       return true;
@@ -321,8 +321,8 @@ export class AuthorizationService extends EventEmitter {
    * Check resource-level access control.
    */
   private checkResourceAccess(
-    identity: InvectIdentity,
-    resource: { type: InvectResourceType; id?: string },
+    identity: FlowlibIdentity,
+    resource: { type: FlowlibResourceType; id?: string },
   ): boolean {
     if (!identity.resourceAccess || !resource.id) {
       return true; // No restriction
@@ -354,8 +354,8 @@ export class AuthorizationService extends EventEmitter {
    * Map resource type to resourceAccess property key.
    */
   private getResourceAccessKey(
-    type: InvectResourceType,
-  ): keyof NonNullable<InvectIdentity['resourceAccess']> | null {
+    type: FlowlibResourceType,
+  ): keyof NonNullable<FlowlibIdentity['resourceAccess']> | null {
     switch (type) {
       case 'flow':
       case 'flow-version':

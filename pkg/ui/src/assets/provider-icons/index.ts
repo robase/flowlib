@@ -1,6 +1,6 @@
 import anthropic from './anthropic.svg?raw';
 import anthropicLight from './anthropic_light.svg?raw';
-import { INVECT_ICON_DARK_SVG, INVECT_ICON_LIGHT_SVG } from '../flowlib-branding';
+import { FLOWLIB_ICON_DARK_SVG, FLOWLIB_ICON_LIGHT_SVG } from '../flowlib-branding';
 import cloudwatch from './cloudwatch.svg?raw';
 import dropbox from './dropbox.svg?raw';
 import facebook from './facebook.svg?raw';
@@ -32,8 +32,8 @@ import twitter from './twitter.svg?raw';
 export const PROVIDER_SVG_ICONS: Record<string, string> = {
   anthropic,
   anthropic_light: anthropicLight,
-  core: INVECT_ICON_LIGHT_SVG,
-  core_light: INVECT_ICON_DARK_SVG,
+  core: FLOWLIB_ICON_LIGHT_SVG,
+  core_light: FLOWLIB_ICON_DARK_SVG,
   cloudwatch,
   dropbox,
   facebook,

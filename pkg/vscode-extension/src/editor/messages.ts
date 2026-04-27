@@ -10,10 +10,10 @@
 export type HostToWebview =
   | {
       type: 'init';
-      /** Base URL of the in-process Invect server, e.g. `http://127.0.0.1:5xxxx/flowlib`. */
+      /** Base URL of the in-process Flowlib server, e.g. `http://127.0.0.1:5xxxx/flowlib`. */
       apiUrl: string;
       /**
-       * Initial route to push into Invect's MemoryRouter, e.g.
+       * Initial route to push into Flowlib's MemoryRouter, e.g.
        * `/flowlib/flow/<id>`. When `undefined`, the webview shows an
        * error/empty state instead of falling back to the dashboard —
        * inside the extension a `.flow.ts` editor should never land on
@@ -27,7 +27,7 @@ export type HostToWebview =
        * shows a banner with this message; if `initialPath` is also set
        * (we have a previous-good DB version), the canvas still renders
        * underneath. If `initialPath` is missing, the webview shows the
-       * error full-screen instead of any Invect routes.
+       * error full-screen instead of any Flowlib routes.
        */
       parseError?: string;
     }

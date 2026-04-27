@@ -1,7 +1,7 @@
 {
   "name": "@flowlib/cli",
   "version": "0.0.12",
-  "description": "CLI for managing Invect database schemas, migrations, and project setup",
+  "description": "CLI for managing Flowlib database schemas, migrations, and project setup",
   "keywords": [
     "cli",
     "drizzle",

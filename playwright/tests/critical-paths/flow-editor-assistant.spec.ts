@@ -52,7 +52,7 @@ async function createFlowWithDefinition(
 ): Promise<string> {
   const flowId = await createFlow(apiBase, request, name);
   const versionResponse = await request.post(`${apiBase}/flows/${flowId}/versions`, {
-    data: { invectDefinition: definition },
+    data: { flowlibDefinition: definition },
   });
   expect(versionResponse.ok()).toBeTruthy();
   return flowId;

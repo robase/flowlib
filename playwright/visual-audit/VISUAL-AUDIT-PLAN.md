@@ -179,7 +179,7 @@ All per-screen findings are sent together (text only, no images) asking the mode
 ### Per-Screen Prompt
 
 ```
-You are a senior UX/UI designer auditing "Invect" — a workflow orchestration
+You are a senior UX/UI designer auditing "Flowlib" — a workflow orchestration
 tool with a visual flow editor for building AI pipelines.
 
 Analyze this screenshot of: {description}
@@ -209,7 +209,7 @@ say so briefly and move on.
 ### Synthesis Prompt
 
 ```
-You've reviewed {N} screens of the Invect workflow editor. Below are your
+You've reviewed {N} screens of the Flowlib workflow editor. Below are your
 per-screen findings.
 
 {all findings joined}
@@ -232,7 +232,7 @@ Now synthesize:
 ### Report Structure
 
 ```markdown
-# Invect UI Visual Audit Report
+# Flowlib UI Visual Audit Report
 
 > Generated: 2025-03-14T19:00:00Z | Model: claude-sonnet-4-20250514 | Screenshots: 18
 

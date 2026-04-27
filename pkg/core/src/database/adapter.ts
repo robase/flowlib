@@ -1,5 +1,5 @@
 /**
- * Invect Database Adapter Interface
+ * Flowlib Database Adapter Interface
  *
  * Inspired by better-auth's adapter pattern. Provides a model-string-based
  * interface for CRUD operations so that model classes no longer need 3-way
@@ -37,7 +37,7 @@ export interface WhereClause {
 // Adapter interface — what model classes call
 // ---------------------------------------------------------------------------
 
-export interface InvectAdapter {
+export interface FlowlibAdapter {
   readonly dialect: 'sqlite' | 'postgresql' | 'mysql';
 
   create<T extends Record<string, unknown>>(params: { model: string; data: T }): Promise<T>;
@@ -86,7 +86,7 @@ export interface InvectAdapter {
   /**
    * Run multiple operations in a database transaction.
    */
-  transaction<R>(callback: (trx: InvectAdapter) => Promise<R>): Promise<R>;
+  transaction<R>(callback: (trx: FlowlibAdapter) => Promise<R>): Promise<R>;
 }
 
 // ---------------------------------------------------------------------------
@@ -96,7 +96,7 @@ export interface InvectAdapter {
 // The adapter factory wraps this with type coercion.
 // ---------------------------------------------------------------------------
 
-export interface RawInvectAdapter {
+export interface RawFlowlibAdapter {
   create<T extends Record<string, unknown>>(params: { model: string; data: T }): Promise<T>;
 
   findOne<T extends Record<string, unknown>>(params: {
@@ -135,7 +135,7 @@ export interface RawInvectAdapter {
 
   executeRaw?<T extends Record<string, unknown>>(sql: string, params?: unknown[]): Promise<T[]>;
 
-  transaction<R>(callback: (trx: RawInvectAdapter) => Promise<R>): Promise<R>;
+  transaction<R>(callback: (trx: RawFlowlibAdapter) => Promise<R>): Promise<R>;
 }
 
 // ---------------------------------------------------------------------------

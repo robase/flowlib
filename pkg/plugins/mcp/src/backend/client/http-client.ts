@@ -1,16 +1,16 @@
 /**
- * HttpClient — wraps Invect HTTP API for CLI/stdio mode.
+ * HttpClient — wraps Flowlib HTTP API for CLI/stdio mode.
  */
 
 import { emitSdkSource, SdkEmitError } from '@flowlib/sdk';
 import type {
-  InvectClient,
+  FlowlibClient,
   CredentialSummary,
   FlowSdkSourceResult,
   GetFlowSdkSourceOptions,
 } from './types';
 
-export class HttpClient implements InvectClient {
+export class HttpClient implements FlowlibClient {
   private baseUrl: string;
   private apiKey: string;
 
@@ -78,13 +78,13 @@ export class HttpClient implements InvectClient {
     const version = (await this.request(
       'GET',
       `/flows/${encodeURIComponent(flowId)}/versions/${encodeURIComponent(String(requested))}`,
-    )) as { invectDefinition?: unknown; version: string | number };
-    if (!version?.invectDefinition) {
-      throw new Error(`Version "${requested}" of flow ${flowId} has no invectDefinition`);
+    )) as { flowlibDefinition?: unknown; version: string | number };
+    if (!version?.flowlibDefinition) {
+      throw new Error(`Version "${requested}" of flow ${flowId} has no flowlibDefinition`);
     }
     try {
       const result = emitSdkSource(
-        version.invectDefinition as Parameters<typeof emitSdkSource>[0],
+        version.flowlibDefinition as Parameters<typeof emitSdkSource>[0],
         {
           flowName: options.flowName,
           sdkImport: options.sdkImport,

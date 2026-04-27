@@ -17,8 +17,8 @@ import { Button } from '~/components/ui/button';
 import { useFlowEditorStore } from '~/stores/flow-editor.store';
 import { useUIStore } from '~/stores/uiStore';
 import { useFlow, useFlowVersions } from '~/api/flows.api';
-import type { InvectDefinition } from '@flowlib/core/types';
-import { transformToInvectDefinition } from '~/utils/flowTransformations';
+import type { FlowlibDefinition } from '@flowlib/core/types';
+import { transformToFlowlibDefinition } from '~/utils/flowTransformations';
 import { emitSdkSource, SdkEmitError } from '@flowlib/sdk';
 import {
   CODEMIRROR_IOSEVKA_FONT_STACK,
@@ -64,14 +64,14 @@ export function FlowCodePanel({ flowId, source = 'editor', className }: FlowCode
 
   const { data: flow } = useFlow(flowId);
   const { data: versionsResponse } = useFlowVersions(flowId, { pagination: { page: 1, limit: 1 } });
-  const latestDefinition = versionsResponse?.data?.[0]?.invectDefinition as
-    | InvectDefinition
+  const latestDefinition = versionsResponse?.data?.[0]?.flowlibDefinition as
+    | FlowlibDefinition
     | undefined;
 
   const { code, error } = useMemo(() => {
     try {
-      const def: InvectDefinition | undefined = useEditor
-        ? transformToInvectDefinition(nodes, edges)
+      const def: FlowlibDefinition | undefined = useEditor
+        ? transformToFlowlibDefinition(nodes, edges)
         : latestDefinition;
       if (!def) {
         return { code: '', error: null as string | null };

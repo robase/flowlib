@@ -15,9 +15,9 @@ import type { NodeErrorDetails } from '@flowlib/action-kit';
 /**
  * Persistence strategy for node executions during a flow run.
  *
- * - `'per-node'`: every create/update writes through to `invect_action_traces`.
+ * - `'per-node'`: every create/update writes through to `flowlib_action_traces`.
  * - `'per-run'`:  buffered in memory for the run's lifetime, flushed by the
- *                 FlowRunCoordinator into `invect_flow_executions.node_outputs`
+ *                 FlowRunCoordinator into `flowlib_flow_executions.node_outputs`
  *                 when the run reaches a terminal state.
  */
 export type PersistenceMode = 'per-node' | 'per-run';
@@ -346,9 +346,9 @@ export class NodeExecutionService {
    *
    * Resolution order:
    * 1. In-memory buffer (in-flight `'per-run'` runs on this process).
-   * 2. Flushed JSON blob in `invect_flow_executions.node_outputs` (completed
+   * 2. Flushed JSON blob in `flowlib_flow_executions.node_outputs` (completed
    *    `'per-run'` runs).
-   * 3. `invect_action_traces` table (`'per-node'` runs and tool traces).
+   * 3. `flowlib_action_traces` table (`'per-node'` runs and tool traces).
    *
    * For a `'per-run'` run that completed on a different process, only step
    * 2 is consulted — step 1 will be empty.

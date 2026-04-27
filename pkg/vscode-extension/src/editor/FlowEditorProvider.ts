@@ -1,10 +1,10 @@
 /**
- * Custom editor for `.flow.ts`. Each tab hosts the full `<Invect>` UI
+ * Custom editor for `.flow.ts`. Each tab hosts the full `<Flowlib>` UI
  * pointed at the in-process Express server, deep-linked to the flow row
  * that backs the open file.
  *
  * The webview itself has no special knowledge of the file — it just
- * loads the Invect SPA against the local backend. The host is
+ * loads the Flowlib SPA against the local backend. The host is
  * responsible for:
  *
  *   1. Booting the embedded server (lazy, via `InProcessBackend`).

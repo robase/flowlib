@@ -1,21 +1,21 @@
 <p align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="../../../.github/assets/logo-light.svg">
-    <img alt="Invect" src="../../../.github/assets/logo-dark.svg" width="50">
+    <img alt="Flowlib" src="../../../.github/assets/logo-dark.svg" width="50">
   </picture>
 </p>
 
 <h1 align="center">@flowlib/version-control</h1>
 
 <p align="center">
-  Version control plugin for Invect.
+  Version control plugin for Flowlib.
   <br />
   <a href="https://flowlib.dev/docs/plugins"><strong>Docs</strong></a>
 </p>
 
 ---
 
-Sync Invect flows to GitHub (and other Git providers) as readable `.flow.ts` TypeScript files. Supports push, pull, PR-based publishing, and bidirectional sync.
+Sync Flowlib flows to GitHub (and other Git providers) as readable `.flow.ts` TypeScript files. Supports push, pull, PR-based publishing, and bidirectional sync.
 
 ## Install
 
@@ -29,9 +29,9 @@ pnpm add @flowlib/version-control
 import { versionControl } from '@flowlib/version-control';
 import { githubProvider } from '@flowlib/version-control/providers/github';
 
-const invectRouter = await createInvectRouter({
+const flowlibRouter = await createFlowlibRouter({
   database: { type: 'sqlite', connectionString: 'file:./dev.db' },
-  encryptionKey: process.env.INVECT_ENCRYPTION_KEY,
+  encryptionKey: process.env.FLOWLIB_ENCRYPTION_KEY,
   plugins: [
     versionControl({
       provider: githubProvider({ auth: process.env.GITHUB_TOKEN! }),
@@ -40,7 +40,7 @@ const invectRouter = await createInvectRouter({
   ],
 });
 
-app.use('/flowlib', invectRouter);
+app.use('/flowlib', flowlibRouter);
 ```
 
 ### Options
@@ -61,7 +61,7 @@ versionControl({
 
 - **Push/pull** — Sync flows to and from a Git repository.
 - **PR-based publishing** — Create pull requests for flow changes, merge to deploy.
-- **Bidirectional sync** — Keep flows in sync between Invect and Git.
+- **Bidirectional sync** — Keep flows in sync between Flowlib and Git.
 - **Readable exports** — Flows are serialized as `.flow.ts` TypeScript files.
 - **Sync history** — Full audit trail of sync operations with commit SHAs.
 

@@ -6,7 +6,7 @@ import Database from 'better-sqlite3';
 import { drizzle } from 'drizzle-orm/better-sqlite3';
 import { sql } from 'drizzle-orm';
 import * as schema from '../../src/database/schema-sqlite';
-import { createInvect } from '../../src/api/create-flowlib';
+import { createFlowlib } from '../../src/api/create-flowlib';
 import type { FlowExample } from './example-types';
 import { inputTemplateModelExample } from './input-template-model';
 import {
@@ -39,7 +39,7 @@ const examples: FlowExample[] = [
 ];
 
 async function runExamples(): Promise<void> {
-  console.log('🚀 Starting Invect E2E Examples\n');
+  console.log('🚀 Starting Flowlib E2E Examples\n');
   console.log('='.repeat(80));
 
   const hasApiKey = !!(process.env.OPENAI_API_KEY || process.env.ANTHROPIC_API_KEY);
@@ -48,8 +48,8 @@ async function runExamples(): Promise<void> {
     process.exit(1);
   }
 
-  // Initialize Invect
-  const flowlib = await createInvect({
+  // Initialize Flowlib
+  const flowlib = await createFlowlib({
     database: {
       type: 'sqlite',
       connectionString: `file:${sqlitePath}`,
@@ -60,7 +60,7 @@ async function runExamples(): Promise<void> {
   });
 
   try {
-    console.log('✅ Invect initialized\n');
+    console.log('✅ Flowlib initialized\n');
 
     let passed = 0;
     let failed = 0;
@@ -106,7 +106,7 @@ async function runExamples(): Promise<void> {
 
     console.log('\n🎉 All E2E examples completed successfully!\n');
   } finally {
-    console.log('🧹 Shutting down Invect...');
+    console.log('🧹 Shutting down Flowlib...');
     try {
       await flowlib.shutdown();
       console.log('✅ Shutdown complete\n');

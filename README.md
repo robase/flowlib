@@ -1,7 +1,7 @@
 <p align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset=".github/assets/logo-light.svg">
-    <img alt="Invect" src=".github/assets/logo-dark.svg" width="50">
+    <img alt="Flowlib" src=".github/assets/logo-dark.svg" width="50">
   </picture>
 </p>
 
@@ -19,7 +19,7 @@
 
 <p align="center">
   <a href="https://flowlib.dev/demo">
-    <img src=".github/assets/flow-screenshot.png" alt="Invect Flow Editor" width="800" />
+    <img src=".github/assets/flow-screenshot.png" alt="Flowlib Flow Editor" width="800" />
   </a>
 </p>
 
@@ -29,7 +29,7 @@
 
 ---
 
-Invect is an open-source workflow orchestration library you mount directly into your existing Express, NestJS, or Next.js app. Visual flow editor, AI agent nodes, 50+ built-in integrations, and batch processing — all as a library, not a platform.
+Flowlib is an open-source workflow orchestration library you mount directly into your existing Express, NestJS, or Next.js app. Visual flow editor, AI agent nodes, 50+ built-in integrations, and batch processing — all as a library, not a platform.
 
 ## Quick Start
 
@@ -47,29 +47,29 @@ npm install @flowlib/core @flowlib/express @flowlib/ui
 
 ```ts
 import express from 'express';
-import { createInvectRouter } from '@flowlib/express';
+import { createFlowlibRouter } from '@flowlib/express';
 
 const app = express();
 
-const invectRouter = await createInvectRouter({
+const flowlibRouter = await createFlowlibRouter({
   database: {
     type: 'sqlite',
     connectionString: 'file:./dev.db',
   },
-  encryptionKey: process.env.INVECT_ENCRYPTION_KEY, // npx flowlib-cli secret
+  encryptionKey: process.env.FLOWLIB_ENCRYPTION_KEY, // npx flowlib-cli secret
 });
 
-app.use('/flowlib', invectRouter);
+app.use('/flowlib', flowlibRouter);
 app.listen(3000);
 ```
 
 ### Frontend
 
 ```tsx
-import { Invect } from '@flowlib/ui';
+import { Flowlib } from '@flowlib/ui';
 import '@flowlib/ui/styles';
 
-export default () => <Invect apiBaseUrl="http://localhost:3000/flowlib" />;
+export default () => <Flowlib apiBaseUrl="http://localhost:3000/flowlib" />;
 ```
 
 ## Features

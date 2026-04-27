@@ -1,4 +1,4 @@
-// API client for communicating with the Invect backend
+// API client for communicating with the Flowlib backend
 
 import type {
   Flow,
@@ -11,7 +11,7 @@ import type {
   PaginatedResponse,
   SubmitPromptRequest,
   QueryOptions,
-  InvectDefinition,
+  FlowlibDefinition,
   Model,
   ReactFlowData,
   AgentToolDefinition,
@@ -262,7 +262,7 @@ class ApiClient {
 
   async validateFlow(
     flowId: string,
-    flowDefinition: InvectDefinition,
+    flowDefinition: FlowlibDefinition,
   ): Promise<FlowValidationResult> {
     return this.request<FlowValidationResult>(`/validate-flow`, {
       method: 'POST',

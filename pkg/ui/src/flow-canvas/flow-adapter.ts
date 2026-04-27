@@ -1,7 +1,7 @@
 /**
- * Client-side InvectDefinition ⇄ ReactFlow converter.
+ * Client-side FlowlibDefinition ⇄ ReactFlow converter.
  *
- * The hosted `<Invect>` app receives `ReactFlowData` from the backend's
+ * The hosted `<Flowlib>` app receives `ReactFlowData` from the backend's
  * `ReactFlowRendererService`. The headless `<FlowCanvas>` doesn't talk to a
  * backend, so we replicate the relevant parts of that transform in the
  * browser using the action metadata the caller provides.
@@ -12,7 +12,7 @@
  */
 
 import type { Edge, Node } from '@xyflow/react';
-import type { InvectDefinition, ReactFlowData } from '@flowlib/core/types';
+import type { FlowlibDefinition, ReactFlowData } from '@flowlib/core/types';
 import { NodeExecutionStatus } from '@flowlib/core/types';
 import type { ReactFlowNodeData } from '@flowlib/core/types';
 import type { ActionMetadata, NodeRunStatus } from './types';
@@ -56,18 +56,18 @@ function mapRunStatus(status: NodeRunStatus | undefined): {
 }
 
 export interface FlowAdapterInput {
-  flow: InvectDefinition;
+  flow: FlowlibDefinition;
   actions: ActionMetadata[];
   nodeRunStatus?: Record<string, NodeRunStatus>;
 }
 
 /**
- * Convert a raw `InvectDefinition` into the `ReactFlowData` shape the
+ * Convert a raw `FlowlibDefinition` into the `ReactFlowData` shape the
  * editor store expects. The returned `version` field is a stable
  * synthetic value so React Query cache keys remain stable across re-renders
  * that don't actually change the flow.
  */
-export function invectDefinitionToReactFlowData({
+export function flowlibDefinitionToReactFlowData({
   flow,
   actions,
   nodeRunStatus,
@@ -122,7 +122,7 @@ export function invectDefinitionToReactFlowData({
   const syntheticVersion = {
     flowId: '__flow-canvas__',
     version: 1,
-    invectDefinition: flow,
+    flowlibDefinition: flow,
     createdAt: new Date().toISOString(),
     createdBy: null,
   } as ReactFlowData['version'];
@@ -139,13 +139,13 @@ export function invectDefinitionToReactFlowData({
 
 /**
  * Convert the Zustand store's internal working-copy nodes/edges back into
- * an `InvectDefinition`. Strips ReactFlow-internal state and flattens data
- * fields the same way `transformToInvectDefinition` does in `flowTransformations.ts`.
+ * an `FlowlibDefinition`. Strips ReactFlow-internal state and flattens data
+ * fields the same way `transformToFlowlibDefinition` does in `flowTransformations.ts`.
  *
  * This is re-implemented here (rather than re-used) so the flow-canvas
  * entry does not drag in the whole `~/utils/flowTransformations` module.
  */
-export function reactFlowToInvectDefinition(nodes: Node[], edges: Edge[]): InvectDefinition {
+export function reactFlowToFlowlibDefinition(nodes: Node[], edges: Edge[]): FlowlibDefinition {
   const transformedNodes = nodes.map((node) => {
     const data = (node.data || {}) as Record<string, unknown>;
     const params =
@@ -189,5 +189,5 @@ export function reactFlowToInvectDefinition(nodes: Node[], edges: Edge[]): Invec
   return {
     nodes: transformedNodes,
     edges: transformedEdges,
-  } as InvectDefinition;
+  } as FlowlibDefinition;
 }

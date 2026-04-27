@@ -1,7 +1,7 @@
-// Invect Core Package - Main entry point
-// Framework-agnostic core package for Invect execution engine
+// Flowlib Core Package - Main entry point
+// Framework-agnostic core package for Flowlib execution engine
 
-// Legacy class (deprecated — use createInvect instead)
+// Legacy class (deprecated — use createFlowlib instead)
 export * from './flowlib-core';
 export * from './database';
 export * from './types.internal';
@@ -60,12 +60,12 @@ export { createPluginDatabaseApi } from './services/plugin-database-api';
 export { AuthorizationService, createAuthorizationService } from './services/auth';
 export type { AuthorizationServiceOptions } from './services/auth';
 export type {
-  InvectIdentity,
-  InvectResourceAccess,
-  InvectBuiltInRole,
-  InvectRole,
-  InvectPermission,
-  InvectResourceType,
+  FlowlibIdentity,
+  FlowlibResourceAccess,
+  FlowlibBuiltInRole,
+  FlowlibRole,
+  FlowlibPermission,
+  FlowlibResourceType,
   AuthorizationContext,
   AuthorizationResult,
   AuthEventBase,
@@ -74,7 +74,7 @@ export type {
   AuthUnauthenticatedEvent,
   AuthEvent,
   CustomAuthorizeFn,
-  InvectAuthConfig,
+  FlowlibAuthConfig,
 } from './types/auth.types';
 export { DEFAULT_ROLE_PERMISSIONS, ACTION_PERMISSION_MAP } from './types/auth.types';
 
@@ -82,14 +82,14 @@ export { DEFAULT_ROLE_PERMISSIONS, ACTION_PERMISSION_MAP } from './types/auth.ty
 export {
   flowNodeDefinitionsSchema,
   flowEdgeSchema,
-  invectDefinitionSchema,
+  flowlibDefinitionSchema,
   createFlowVersionRequestSchema,
   mapperConfigSchema,
   // Export types with schema prefix to avoid conflicts
   type FlowNodeDefinitions,
   type FlowNodeForType,
   type FlowEdge,
-  type InvectDefinition,
+  type FlowlibDefinition,
   type CreateFlowVersionRequest,
   type MapperConfig,
 } from './services/flow-versions/schemas-fresh';
@@ -191,18 +191,18 @@ export type { PaginatedResponse, QueryOptions } from './schemas/pagination-sort-
 // Re-export commonly needed base types
 export { FlowRunStatus, NodeExecutionStatus } from './types/base';
 
-export type { InvectConfig } from './schemas/flowlib-config';
+export type { FlowlibConfig } from './schemas/flowlib-config';
 export { defineConfig, definePlugin } from './schemas/flowlib-config';
 
 // Plugin system
 export type {
-  InvectPlugin,
-  InvectPluginDefinition,
-  InvectPluginSchema,
-  InvectPluginHooks,
-  InvectPluginEndpoint,
-  InvectPluginContext,
-  InvectPluginInitResult,
+  FlowlibPlugin,
+  FlowlibPluginDefinition,
+  FlowlibPluginSchema,
+  FlowlibPluginHooks,
+  FlowlibPluginEndpoint,
+  FlowlibPluginContext,
+  FlowlibPluginInitResult,
   PluginEndpointContext,
   PluginDatabaseApi,
   PluginEndpointCoreApi,
@@ -250,7 +250,7 @@ export type {
 export { generateNodeSlug } from './utils/node-slug';
 
 // Re-export configuration types
-export type { ExecutionConfig, LoggingConfig, Logger, InvectDatabaseConfig } from './schemas';
+export type { ExecutionConfig, LoggingConfig, Logger, FlowlibDatabaseConfig } from './schemas';
 
 // Re-export scoped logging utilities
 export {
@@ -311,7 +311,7 @@ export type {
   // PR 13/14 — background job runner abstraction
   JobRunnerAdapter,
   JobOptions,
-  InvectServiceOverrides,
+  FlowlibServiceOverrides,
 } from './types/services';
 // EncryptedData envelope type (referenced by EncryptionAdapter signatures).
 export type { EncryptedData } from './services/credentials/encryption.service';
@@ -429,11 +429,11 @@ export type { LayoutNode, LayoutEdge, DagreLayoutOptions } from '@flowlib/layout
 // =====================================
 // New API (namespaced sub-APIs)
 // =====================================
-export { createInvect } from './api';
+export { createFlowlib } from './api';
 export type {
-  InvectInstance,
-  InvectMaintenanceOptions,
-  InvectMaintenanceResult,
+  FlowlibInstance,
+  FlowlibMaintenanceOptions,
+  FlowlibMaintenanceResult,
   FlowsAPI,
   FlowVersionsAPI,
   FlowRunsAPI,

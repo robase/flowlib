@@ -2,7 +2,7 @@ import type { TestingAPI } from './types';
 import type { ServiceFactory } from '../services/service-factory';
 import type { ActionRegistry } from '../actions';
 import type { JsExpressionService, TemplateService } from '../services/templating';
-import type { Logger, InvectConfig } from '../schemas';
+import type { Logger, FlowlibConfig } from '../schemas';
 import type { NodeExecutionContext } from '../types.internal';
 import type { SubmitPromptRequest } from '../services/node-data.service';
 import { NodeExecutionStatus } from '../types/base';
@@ -52,7 +52,7 @@ export function createTestingAPI(
   actionRegistry: ActionRegistry,
   jsExpressionService: JsExpressionService | null,
   templateService: TemplateService | null,
-  config: InvectConfig,
+  config: FlowlibConfig,
 ): TestingAPI {
   const logger = config.logger;
   const nodeDataService = sf.getNodeDataService();

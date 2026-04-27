@@ -50,7 +50,7 @@ The plugin requires a Git provider and a target repository:
 import { versionControl } from '@flowlib/version-control';
 import { githubProvider } from '@flowlib/version-control/providers/github';
 
-export const invectConfig = defineConfig({
+export const flowlibConfig = defineConfig({
   // ...
   plugins: [
     versionControl({
@@ -84,8 +84,8 @@ npx flowlib-cli migrate --push
 
 Once configured, you can sync individual flows or all flows at once:
 
-- **Push** — export a flow from Invect to the Git repository
-- **Pull** — import a flow from the Git repository into Invect
+- **Push** — export a flow from Flowlib to the Git repository
+- **Pull** — import a flow from the Git repository into Flowlib
 - **Publish** — in `pr-per-publish` mode, creates a pull request for review
 - **Force push/pull** — resolve conflicts by choosing one side as the source of truth
 - **Webhook** — automatically sync when the repository is updated

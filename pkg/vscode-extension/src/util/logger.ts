@@ -5,8 +5,8 @@ export type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 /**
  * Scoped output-channel logger.
  *
- * Two channels back the system: `Invect` for host-side messages and
- * `Invect (Webview)` for forwarded webview console output. Each call site
+ * Two channels back the system: `Flowlib` for host-side messages and
+ * `Flowlib (Webview)` for forwarded webview console output. Each call site
  * grabs a `ScopedLogger` via `Channel#scoped(scope)`; lines prefix `scope`
  * so tail-reading the panel makes provenance obvious without splitting into
  * dozens of channels.
@@ -128,18 +128,18 @@ export function redactSecrets(s: string): string {
 let extensionChannel: ChannelImpl | undefined;
 let webviewChannel: ChannelImpl | undefined;
 
-/** Lazily create / return the host-side `Invect` channel. */
+/** Lazily create / return the host-side `Flowlib` channel. */
 export function getExtensionLogger(): Logger & { scoped(scope: string): ScopedLogger } {
   if (!extensionChannel) {
-    extensionChannel = new ChannelImpl('Invect');
+    extensionChannel = new ChannelImpl('Flowlib');
   }
   return extensionChannel;
 }
 
-/** Lazily create / return the webview-forwarded `Invect (Webview)` channel. */
+/** Lazily create / return the webview-forwarded `Flowlib (Webview)` channel. */
 export function getWebviewLogger(): Logger & { scoped(scope: string): ScopedLogger } {
   if (!webviewChannel) {
-    webviewChannel = new ChannelImpl('Invect (Webview)');
+    webviewChannel = new ChannelImpl('Flowlib (Webview)');
   }
   return webviewChannel;
 }
@@ -151,8 +151,8 @@ export function _resetLoggersForTests(
 ): void {
   extensionChannel?.dispose();
   webviewChannel?.dispose();
-  extensionChannel = injectedHost ? new ChannelImpl('Invect', injectedHost) : undefined;
+  extensionChannel = injectedHost ? new ChannelImpl('Flowlib', injectedHost) : undefined;
   webviewChannel = injectedWebview
-    ? new ChannelImpl('Invect (Webview)', injectedWebview)
+    ? new ChannelImpl('Flowlib (Webview)', injectedWebview)
     : undefined;
 }

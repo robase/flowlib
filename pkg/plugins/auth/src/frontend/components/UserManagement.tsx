@@ -57,7 +57,7 @@ interface ManagedUser {
 }
 
 export interface UserManagementProps {
-  /** Base URL for the Invect API (same as AuthProvider's baseUrl) */
+  /** Base URL for the Flowlib API (same as AuthProvider's baseUrl) */
   apiBaseUrl: string;
   /** Additional CSS class names */
   className?: string;

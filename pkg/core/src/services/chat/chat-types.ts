@@ -7,8 +7,8 @@
  */
 
 import { z } from 'zod/v4';
-import type { InvectIdentity } from 'src/types/auth.types';
-import type { InvectInstance } from 'src/api/types';
+import type { FlowlibIdentity } from 'src/types/auth.types';
+import type { FlowlibInstance } from 'src/api/types';
 import type { Logger } from 'src/schemas';
 
 // =====================================
@@ -105,10 +105,10 @@ export interface ChatReadState {
  * Context provided to chat tool execute functions
  */
 export interface ChatToolContext {
-  /** The Invect core instance for accessing all services */
-  flowlib: InvectInstance;
+  /** The Flowlib core instance for accessing all services */
+  flowlib: FlowlibInstance;
   /** The requesting user's identity (for RBAC) */
-  identity?: InvectIdentity;
+  identity?: FlowlibIdentity;
   /** Chat context from the frontend */
   chatContext: ChatContext;
   /**
@@ -179,7 +179,7 @@ export interface ChatUsage {
 // =====================================
 
 /**
- * Zod schema for chat configuration in InvectConfig.
+ * Zod schema for chat configuration in FlowlibConfig.
  */
 export const ChatConfigSchema = z.object({
   /** Credential ID for the default chat model (from credentials table) */

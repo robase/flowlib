@@ -105,7 +105,7 @@ export interface TypedReactFlowData<T extends string = string> {
 
 /**
  * Service for rendering flow data in React Flow compatible format
- * Transforms Invect flow definitions into React Flow compatible nodes and edges
+ * Transforms Flowlib flow definitions into React Flow compatible nodes and edges
  */
 export class ReactFlowRendererService {
   private initialized = false;
@@ -223,7 +223,7 @@ export class ReactFlowRendererService {
     // created flow). Otherwise respect the positions the user has saved —
     // layout should only run on an explicit user action from the editor.
     const hasSavedPositions =
-      flowVersion.invectDefinition?.nodes?.some(
+      flowVersion.flowlibDefinition?.nodes?.some(
         (n: FlowNodeDefinitions) => n.position !== undefined,
       ) ?? false;
     if (!hasSavedPositions) {
@@ -283,7 +283,7 @@ export class ReactFlowRendererService {
     flowVersion: FlowVersion,
     statusMap: Map<string, NodeExecutionStatusInfo>,
   ): void {
-    const nodes = flowVersion.invectDefinition?.nodes;
+    const nodes = flowVersion.flowlibDefinition?.nodes;
     if (!nodes) {
       return;
     }
@@ -312,7 +312,7 @@ export class ReactFlowRendererService {
   ): ReactFlowNode[] {
     const nodes: ReactFlowNode[] = [];
 
-    const definition = flowVersion.invectDefinition;
+    const definition = flowVersion.flowlibDefinition;
     if (!definition?.nodes) {
       return nodes;
     }
@@ -457,7 +457,7 @@ export class ReactFlowRendererService {
   ): ReactFlowEdge[] {
     const edges: ReactFlowEdge[] = [];
 
-    const definition = flowVersion.invectDefinition;
+    const definition = flowVersion.flowlibDefinition;
     if (!definition?.edges || !definition?.nodes) {
       return edges;
     }

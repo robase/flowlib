@@ -65,7 +65,7 @@ export interface SlackSendMessageParams {
   channel: z.input<typeof _slackSendMessageAction.params.schema>['channel'];
   /**
    * Message text. Supports Slack mrkdwn formatting (*bold*, _italic_, `code`).
-   * @example Hello from Invect! :wave:
+   * @example Hello from Flowlib! :wave:
    */
   text: z.input<typeof _slackSendMessageAction.params.schema>['text'];
   /** Reply to a specific thread by providing the parent message's ts value */

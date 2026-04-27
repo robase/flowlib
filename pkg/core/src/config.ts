@@ -15,23 +15,23 @@
  *   theme: 'dark',
  *   plugins: [auth(), rbac()],
  *   database: { type: 'sqlite', connectionString: 'file:./dev.db' },
- *   encryptionKey: process.env.INVECT_ENCRYPTION_KEY!,
+ *   encryptionKey: process.env.FLOWLIB_ENCRYPTION_KEY!,
  * });
  * ```
  */
 
 // Re-export types only — no runtime code from these modules
 export type {
-  InvectConfig,
-  InvectDatabaseConfig,
+  FlowlibConfig,
+  FlowlibDatabaseConfig,
   ExecutionConfig,
   LoggingConfig,
 } from './schemas/flowlib-config';
-export type { InvectPluginDefinition } from './types/plugin.types';
+export type { FlowlibPluginDefinition } from './types/plugin.types';
 
 /**
  * Identity function that provides TypeScript type inference and
- * autocompletion for Invect configuration objects.
+ * autocompletion for Flowlib configuration objects.
  *
  * Works identically in Node.js and browser environments.
  * No runtime validation — same pattern as Vite's `defineConfig`.

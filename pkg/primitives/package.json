@@ -1,7 +1,7 @@
 {
   "name": "@flowlib/primitives",
   "version": "0.1.1",
-  "description": "TypeScript-native flow execution primitives — run Invect flows in any JS runtime without a database or framework",
+  "description": "TypeScript-native flow execution primitives — run Flowlib flows in any JS runtime without a database or framework",
   "license": "MIT",
   "author": "robase <team@flowlib.dev>",
   "repository": {

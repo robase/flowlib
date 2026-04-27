@@ -9,7 +9,7 @@ const viteBaseUrl = process.env.PLAYWRIGHT_VITE_URL ?? `http://localhost:${viteP
 const nextjsBaseUrl = process.env.NEXTJS_URL ?? `http://localhost:${nextjsPort}`;
 
 /**
- * Playwright config for Invect cross-platform E2E tests.
+ * Playwright config for Flowlib cross-platform E2E tests.
  *
  * ALL API tests (Express, NestJS, Next.js) spin up isolated per-worker
  * servers with disposable SQLite databases — no shared state, fully parallel.

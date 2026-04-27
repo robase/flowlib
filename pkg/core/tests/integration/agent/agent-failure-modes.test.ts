@@ -2,7 +2,7 @@
  * Integration tests: Agent failure modes
  *
  * Targets the brittle edges of the agent loop — surfaces that unit tests
- * usually skip because they require a real Invect core, real tool registry,
+ * usually skip because they require a real Flowlib core, real tool registry,
  * and real orchestrator:
  *
  * - Conversation truncation when `maxConversationTokens` is exceeded
@@ -19,10 +19,10 @@ import { setupServer } from 'msw/node';
 import { respondWithChatCompletion } from '../helpers/openai-sse';
 import { http, HttpResponse, delay } from 'msw';
 import { FlowRunStatus } from '../../../src';
-import type { InvectInstance } from '../../../src/api/types';
-import type { InvectDefinition } from '../../../src/services/flow-versions/schemas-fresh';
+import type { FlowlibInstance } from '../../../src/api/types';
+import type { FlowlibDefinition } from '../../../src/services/flow-versions/schemas-fresh';
 import type { AgentExecutionOutput } from '../../../src/types/agent-tool.types';
-import { createTestInvect } from '../helpers/test-flowlib';
+import { createTestFlowlib } from '../helpers/test-flowlib';
 
 // ---------------------------------------------------------------------------
 // MSW helpers
@@ -80,7 +80,7 @@ function toolCallResponse(
 // Shared fixtures
 // ---------------------------------------------------------------------------
 
-let flowlib: InvectInstance;
+let flowlib: FlowlibInstance;
 let credentialId: string;
 let openAiQueue: Array<Record<string, unknown> | (() => Response | Promise<Response>)> = [];
 let capturedOpenAiRequests: Array<Record<string, unknown>> = [];
@@ -110,7 +110,7 @@ const mswServer = setupServer(
 
 beforeAll(async () => {
   mswServer.listen({ onUnhandledRequest: 'bypass' });
-  flowlib = await createTestInvect();
+  flowlib = await createTestFlowlib();
   const cred = await flowlib.credentials.create({
     name: 'Test OpenAI',
     type: 'llm',
@@ -139,9 +139,9 @@ afterEach(() => {
 // Helpers
 // ---------------------------------------------------------------------------
 
-async function runFlow(definition: InvectDefinition, inputs: Record<string, unknown> = {}) {
+async function runFlow(definition: FlowlibDefinition, inputs: Record<string, unknown> = {}) {
   const flow = await flowlib.flows.create({ name: `agent-fail-${Date.now()}-${Math.random()}` });
-  await flowlib.versions.create(flow.id, { invectDefinition: definition });
+  await flowlib.versions.create(flow.id, { flowlibDefinition: definition });
   return flowlib.runs.start(flow.id, inputs, { useBatchProcessing: false });
 }
 
@@ -155,7 +155,7 @@ function getAgentOutput(
   return node?.data?.variables?.output?.value as AgentExecutionOutput | undefined;
 }
 
-function baseAgent(overrides: Record<string, unknown> = {}): InvectDefinition['nodes'][number] {
+function baseAgent(overrides: Record<string, unknown> = {}): FlowlibDefinition['nodes'][number] {
   return {
     id: 'agent',
     type: 'core.agent',

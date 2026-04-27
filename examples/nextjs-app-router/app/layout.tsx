@@ -7,8 +7,8 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: 'Invect Next.js Example',
-  description: 'Invect workflow automation platform integrated with Next.js',
+  title: 'Flowlib Next.js Example',
+  description: 'Flowlib workflow automation platform integrated with Next.js',
 };
 
 export default function RootLayout({

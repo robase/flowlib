@@ -415,8 +415,8 @@ export class EncryptionService {
 /**
  * Factory function to create an encryption service from a base64-encoded
  * master key. Caller is responsible for sourcing the key (e.g. from
- * `process.env.INVECT_ENCRYPTION_KEY` in a Node host, from
- * `env.INVECT_ENCRYPTION_KEY` in a Cloudflare Worker, etc.). Core does not
+ * `process.env.FLOWLIB_ENCRYPTION_KEY` in a Node host, from
+ * `env.FLOWLIB_ENCRYPTION_KEY` in a Cloudflare Worker, etc.). Core does not
  * sniff `process.env` so it stays portable to edge runtimes.
  */
 export function createEncryptionService(masterKey: string | undefined): EncryptionService {
@@ -424,7 +424,7 @@ export function createEncryptionService(masterKey: string | undefined): Encrypti
     throw new Error(
       'masterKey is required. Generate one with: npx flowlib-cli secret. ' +
         'Pass it explicitly to createEncryptionService(masterKey) — core no longer reads ' +
-        'process.env.INVECT_ENCRYPTION_KEY automatically (this lets it run on edge runtimes).',
+        'process.env.FLOWLIB_ENCRYPTION_KEY automatically (this lets it run on edge runtimes).',
     );
   }
 

@@ -1,7 +1,7 @@
 <p align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="../../.github/assets/logo-light.svg">
-    <img alt="Invect" src="../../.github/assets/logo-dark.svg" width="50">
+    <img alt="Flowlib" src="../../.github/assets/logo-dark.svg" width="50">
   </picture>
 </p>
 
@@ -15,7 +15,7 @@
 
 ---
 
-The core engine behind Invect. Contains all business logic — flows, execution, actions, agents, credentials, and database — independent of any web framework.
+The core engine behind Flowlib. Contains all business logic — flows, execution, actions, agents, credentials, and database — independent of any web framework.
 
 Framework packages ([`@flowlib/express`](../express), [`@flowlib/nestjs`](../nestjs), [`@flowlib/nextjs`](../nextjs)) are thin adapters that wrap this core.
 
@@ -34,14 +34,14 @@ npm install @flowlib/core
 ## Usage
 
 ```ts
-import { createInvect } from '@flowlib/core';
+import { createFlowlib } from '@flowlib/core';
 
-const flowlib = await createInvect({
+const flowlib = await createFlowlib({
   database: {
     type: 'sqlite',
     connectionString: 'file:./dev.db',
   },
-  encryptionKey: process.env.INVECT_ENCRYPTION_KEY, // npx flowlib-cli secret
+  encryptionKey: process.env.FLOWLIB_ENCRYPTION_KEY, // npx flowlib-cli secret
 });
 
 // Create and run flows programmatically

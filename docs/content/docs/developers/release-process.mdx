@@ -1,9 +1,9 @@
 ---
 title: Release Process
-description: How Invect packages are versioned, released, and published to npm.
+description: How Flowlib packages are versioned, released, and published to npm.
 ---
 
-Invect is a monorepo of `@flowlib/*` packages published to npm. Releases are automated via [Changesets](https://github.com/changesets/changesets) and GitHub Actions.
+Flowlib is a monorepo of `@flowlib/*` packages published to npm. Releases are automated via [Changesets](https://github.com/changesets/changesets) and GitHub Actions.
 
 ## Branching strategy: trunk + `next` channel
 
@@ -14,7 +14,7 @@ We run a **trunk-based** workflow with a single long-lived branch (`main`) and t
 | `next`   | `main` in pre-release mode     | `pnpm add @flowlib/core@next`          | Early adopters, internal dogfooding |
 | `latest` | `main` after `pre exit` + ship | `pnpm add @flowlib/core` (the default) | Stable users                        |
 
-While Invect is pre-1.0 and iterating quickly, `main` sits in **pre-release mode** (`pnpm changeset pre enter next`). Every merge to `main` cuts a `-next.N` version and publishes it under the `next` tag. `latest` is only updated when we deliberately `pre exit`, ship, and re-enter pre-release mode.
+While Flowlib is pre-1.0 and iterating quickly, `main` sits in **pre-release mode** (`pnpm changeset pre enter next`). Every merge to `main` cuts a `-next.N` version and publishes it under the `next` tag. `latest` is only updated when we deliberately `pre exit`, ship, and re-enter pre-release mode.
 
 This means:
 

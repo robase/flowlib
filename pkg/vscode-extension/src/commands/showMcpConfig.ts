@@ -1,7 +1,7 @@
 /**
  * `flowlib.showMcpConfig` — opens an editor tab containing the JSON
  * snippet the user pastes into Claude Code / Cursor / Claude Desktop
- * to register the embedded Invect server as an MCP source.
+ * to register the embedded Flowlib server as an MCP source.
  *
  * The embedded server URL is dynamic (random loopback port chosen at
  * boot time), so this command resolves it live and inlines the right
@@ -58,9 +58,9 @@ function renderMarkdown(mcpEndpoint: string): string {
     null,
     2,
   );
-  return `# Invect MCP — Quick Config
+  return `# Flowlib MCP — Quick Config
 
-Your embedded Invect MCP server is live at:
+Your embedded Flowlib MCP server is live at:
 
 \`\`\`
 ${mcpEndpoint}
@@ -70,7 +70,7 @@ Paste the JSON below into your MCP client's config. The server is
 loopback-only — only your machine can reach it.
 
 > ⚠️ The port is random and changes on every extension reload. If your MCP
-> client stops responding after a reload, re-run **Invect: Show MCP Config**
+> client stops responding after a reload, re-run **Flowlib: Show MCP Config**
 > and paste the new URL.
 
 ---
@@ -84,7 +84,7 @@ Add to \`~/.claude/settings.json\` (global) or \`.claude/settings.local.json\`
 ${config}
 \`\`\`
 
-Then restart Claude Code. The Invect tools (list flows, get flow, run,
+Then restart Claude Code. The Flowlib tools (list flows, get flow, run,
 get run logs, validate, etc.) become available to the assistant.
 
 ---

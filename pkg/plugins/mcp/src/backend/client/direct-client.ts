@@ -1,11 +1,11 @@
 /**
- * DirectClient — wraps InvectInstance for plugin mode (zero HTTP overhead).
+ * DirectClient — wraps FlowlibInstance for plugin mode (zero HTTP overhead).
  */
 
-import type { InvectInstance } from '@flowlib/core';
+import type { FlowlibInstance } from '@flowlib/core';
 import { emitSdkSource, SdkEmitError } from '@flowlib/sdk';
 import type {
-  InvectClient,
+  FlowlibClient,
   CredentialSummary,
   FlowSdkSourceResult,
   GetFlowSdkSourceOptions,
@@ -26,8 +26,8 @@ function toCredentialSummary(c: Record<string, unknown>): CredentialSummary {
   };
 }
 
-export class DirectClient implements InvectClient {
-  constructor(private readonly flowlib: InvectInstance) {}
+export class DirectClient implements FlowlibClient {
+  constructor(private readonly flowlib: FlowlibInstance) {}
 
   // ===== Flows =====
 
@@ -52,9 +52,9 @@ export class DirectClient implements InvectClient {
     if (!version) {
       throw new Error(`Flow ${flowId} has no version "${requestedVersion}"`);
     }
-    const def = (version as { invectDefinition?: unknown }).invectDefinition;
+    const def = (version as { flowlibDefinition?: unknown }).flowlibDefinition;
     if (!def) {
-      throw new Error(`Version "${requestedVersion}" of flow ${flowId} has no invectDefinition`);
+      throw new Error(`Version "${requestedVersion}" of flow ${flowId} has no flowlibDefinition`);
     }
     try {
       const result = emitSdkSource(def as Parameters<typeof emitSdkSource>[0], {
@@ -124,7 +124,7 @@ export class DirectClient implements InvectClient {
   async publishVersion(flowId: string, data: unknown) {
     return await this.flowlib.versions.create(
       flowId,
-      data as Parameters<InvectInstance['versions']['create']>[1],
+      data as Parameters<FlowlibInstance['versions']['create']>[1],
     );
   }
 
@@ -225,14 +225,14 @@ export class DirectClient implements InvectClient {
 
   async createTrigger(input: unknown) {
     return await this.flowlib.triggers.create(
-      input as Parameters<InvectInstance['triggers']['create']>[0],
+      input as Parameters<FlowlibInstance['triggers']['create']>[0],
     );
   }
 
   async updateTrigger(triggerId: string, input: unknown) {
     return await this.flowlib.triggers.update(
       triggerId,
-      input as Parameters<InvectInstance['triggers']['update']>[1],
+      input as Parameters<FlowlibInstance['triggers']['update']>[1],
     );
   }
 
@@ -243,7 +243,7 @@ export class DirectClient implements InvectClient {
   async syncTriggers(flowId: string, definition: unknown) {
     return await this.flowlib.triggers.sync(
       flowId,
-      definition as Parameters<InvectInstance['triggers']['sync']>[1],
+      definition as Parameters<FlowlibInstance['triggers']['sync']>[1],
     );
   }
 

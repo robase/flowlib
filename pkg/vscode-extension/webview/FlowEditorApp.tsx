@@ -1,11 +1,11 @@
 /**
- * Webview app — renders the full `<Invect>` UI from `@flowlib/ui`,
+ * Webview app — renders the full `<Flowlib>` UI from `@flowlib/ui`,
  * pointed at the in-process Express server the host bootstrapped on
  * `127.0.0.1:<port>`.
  *
  * The host posts an `init` message with the server URL and the optional
  * deep-link path (e.g. `/flowlib/flow/<id>` or
- * `/flowlib/flow/<id>/runs?runId=...`). We mount Invect inside our own
+ * `/flowlib/flow/<id>/runs?runId=...`). We mount Flowlib inside our own
  * MemoryRouter so we can control the initial entry; subsequent
  * navigation happens internally via the standard ModeSwitcher / sidebar.
  */
@@ -13,7 +13,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { MemoryRouter, useNavigate } from 'react-router';
 import { QueryClient } from '@tanstack/react-query';
-import { Invect } from '@flowlib/ui';
+import { Flowlib } from '@flowlib/ui';
 import { webhooks } from '@flowlib/webhooks';
 
 import { logToHost, onHostMessage, postToHost, type HostToWebview } from './vscode-bridge';
@@ -128,13 +128,13 @@ export function FlowEditorApp(): JSX.Element {
     return unsubscribe;
   }, [readyAnnounced]);
 
-  // Apply theme to body so Invect's ThemeProvider picks the right tokens.
+  // Apply theme to body so Flowlib's ThemeProvider picks the right tokens.
   useEffect(() => {
     document.body.classList.toggle('vscode-dark', state.theme === 'dark');
     document.body.classList.toggle('vscode-light', state.theme === 'light');
   }, [state.theme]);
 
-  // Frontend plugins to enable inside the embedded Invect UI. The
+  // Frontend plugins to enable inside the embedded Flowlib UI. The
   // webhooks plugin contributes the /webhooks route + sidebar entry —
   // the backend half lives in the in-process express server.
   const plugins = useMemo(() => [webhooks()], []);
@@ -181,7 +181,7 @@ export function FlowEditorApp(): JSX.Element {
     <MemoryRouter initialEntries={[state.initialPath]}>
       <Navigator pendingNav={state.pendingNav} onApplied={clearPendingNav} />
       {state.parseError && <ParseErrorBanner error={state.parseError} />}
-      <Invect config={config} reactQueryClient={queryClient} />
+      <Flowlib config={config} reactQueryClient={queryClient} />
     </MemoryRouter>
   );
 }

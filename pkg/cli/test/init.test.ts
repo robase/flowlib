@@ -215,7 +215,7 @@ describe('generateConfigFile()', () => {
   it('should include encryptionKey config field', () => {
     const config = generateConfigFile(expressFramework, sqliteDb);
     expect(config).toContain('encryptionKey');
-    expect(config).toContain('INVECT_ENCRYPTION_KEY');
+    expect(config).toContain('FLOWLIB_ENCRYPTION_KEY');
   });
 });
 
@@ -362,11 +362,11 @@ describe('getDefaultDrizzleSchemaPath()', () => {
 // =============================================================================
 
 describe('getPreferredPackageSpec()', () => {
-  it('should keep non-Invect packages unchanged', () => {
+  it('should keep non-Flowlib packages unchanged', () => {
     expect(getPreferredPackageSpec('react')).toBe('react');
   });
 
-  it('should prefer workspace protocol for local Invect packages', () => {
+  it('should prefer workspace protocol for local Flowlib packages', () => {
     const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'flowlib-cli-workspace-'));
 
     try {
@@ -386,7 +386,7 @@ describe('getPreferredPackageSpec()', () => {
     }
   });
 
-  it('should leave Invect packages unchanged outside a workspace', () => {
+  it('should leave Flowlib packages unchanged outside a workspace', () => {
     const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'flowlib-cli-no-workspace-'));
 
     try {

@@ -1,5 +1,5 @@
 /**
- * Bridge between Invect's existing DatabaseConnection (Drizzle-based)
+ * Bridge between Flowlib's existing DatabaseConnection (Drizzle-based)
  * and the new Kysely-based adapter system.
  *
  * Creates a Kysely instance that shares the underlying database
@@ -18,20 +18,20 @@ import {
 } from 'kysely';
 import type { DatabaseConnection } from '../connection';
 import type { DatabaseDriver } from '../drivers/types';
-import type { InvectAdapter, AdapterConfig } from '../adapter';
+import type { FlowlibAdapter, AdapterConfig } from '../adapter';
 import { createKyselyAdapter } from './kysely-adapter';
-import { createInvectAdapterFactory } from '../adapter-factory';
-import { INVECT_SCHEMA_META } from '../schema-metadata';
+import { createFlowlibAdapterFactory } from '../adapter-factory';
+import { FLOWLIB_SCHEMA_META } from '../schema-metadata';
 
 type KyselyDb = Kysely<Record<string, Record<string, unknown>>>;
 
 /**
- * Create an InvectAdapter from an existing DatabaseConnection.
+ * Create an FlowlibAdapter from an existing DatabaseConnection.
  *
  * The Kysely instance shares the same underlying database client
  * (no new connections are created).
  */
-export function createAdapterFromConnection(connection: DatabaseConnection): InvectAdapter {
+export function createAdapterFromConnection(connection: DatabaseConnection): FlowlibAdapter {
   const kyselyDb = createKyselyFromConnection(connection);
 
   const config: AdapterConfig = {
@@ -39,7 +39,7 @@ export function createAdapterFromConnection(connection: DatabaseConnection): Inv
   };
 
   const rawAdapter = createKyselyAdapter(kyselyDb, config);
-  return createInvectAdapterFactory(rawAdapter, config, INVECT_SCHEMA_META);
+  return createFlowlibAdapterFactory(rawAdapter, config, FLOWLIB_SCHEMA_META);
 }
 
 /**

@@ -1,16 +1,16 @@
 ---
 title: Build Your Own
-description: Create a custom Invect plugin with hooks, actions, database tables, and API endpoints.
+description: Create a custom Flowlib plugin with hooks, actions, database tables, and API endpoints.
 ---
 
 import { Callout } from 'fumadocs-ui/components/callout';
 
-An Invect plugin is a plain object with an `id`. Everything else is opt-in — add only what you need.
+An Flowlib plugin is a plain object with an `id`. Everything else is opt-in — add only what you need.
 
 ```ts
-import type { InvectPlugin } from '@flowlib/core';
+import type { FlowlibPlugin } from '@flowlib/core';
 
-export function myPlugin(): InvectPlugin {
+export function myPlugin(): FlowlibPlugin {
   return {
     id: 'my-plugin',
     name: 'My Plugin',
@@ -21,7 +21,7 @@ export function myPlugin(): InvectPlugin {
 Register it in your config:
 
 ```ts
-const router = await createInvectRouter({
+const router = await createFlowlibRouter({
   // ...
   plugins: [myPlugin()],
 });
@@ -32,7 +32,7 @@ const router = await createInvectRouter({
 Hooks let you run logic before or after requests and flow executions. Return `{ response }` to short-circuit, or `{}` to continue normally.
 
 ```ts
-export function rateLimiter(): InvectPlugin {
+export function rateLimiter(): FlowlibPlugin {
   const counts = new Map<string, number>();
 
   return {
@@ -89,7 +89,7 @@ const myAction = defineAction({
   },
 });
 
-export function myPlugin(): InvectPlugin {
+export function myPlugin(): FlowlibPlugin {
   return {
     id: 'my-plugin',
     actions: [myAction],
@@ -102,7 +102,7 @@ export function myPlugin(): InvectPlugin {
 Declare tables in an abstract, dialect-agnostic format. The CLI generates the Drizzle schema files for you.
 
 ```ts
-export function myPlugin(): InvectPlugin {
+export function myPlugin(): FlowlibPlugin {
   return {
     id: 'my-plugin',
     schema: {
@@ -127,7 +127,7 @@ npx flowlib-cli generate
 npx flowlib-cli migrate --push
 ```
 
-Invect verifies required tables exist at startup and shows a clear error if they're missing.
+Flowlib verifies required tables exist at startup and shows a clear error if they're missing.
 
 You can also extend core tables (additive only):
 
@@ -146,7 +146,7 @@ schema: {
 Plugin endpoints are mounted at `/plugins/{pluginId}/`:
 
 ```ts
-export function myPlugin(): InvectPlugin {
+export function myPlugin(): FlowlibPlugin {
   return {
     id: 'my-plugin',
     endpoints: [
@@ -173,8 +173,8 @@ endpoints: [
     handler: async (ctx) => {
       const { id } = ctx.params;
       const { name } = ctx.body;
-      const flowlib = ctx.getInvect();
-      // Access flows, runs, etc. via the Invect instance
+      const flowlib = ctx.getFlowlib();
+      // Access flows, runs, etc. via the Flowlib instance
       return { status: 201, body: { id, name } };
     },
   },
@@ -185,10 +185,10 @@ Auth hooks still apply unless the endpoint declares `isPublic: true`.
 
 ## Init and shutdown
 
-Use `init` for setup work and `shutdown` for cleanup. Init runs during `Invect.initialize()` in declaration order. Shutdown runs in reverse.
+Use `init` for setup work and `shutdown` for cleanup. Init runs during `Flowlib.initialize()` in declaration order. Shutdown runs in reverse.
 
 ```ts
-export function myPlugin(): InvectPlugin {
+export function myPlugin(): FlowlibPlugin {
   let interval: NodeJS.Timeout;
 
   return {
@@ -208,7 +208,7 @@ export function myPlugin(): InvectPlugin {
 
 ## Frontend plugins
 
-Frontend plugins contribute UI elements to the Invect editor:
+Frontend plugins contribute UI elements to the Flowlib editor:
 
 | Contribution    | What it adds                            |
 | --------------- | --------------------------------------- |
@@ -219,7 +219,7 @@ Frontend plugins contribute UI elements to the Invect editor:
 | `providers`     | React context providers                 |
 | `apiHeaders`    | Headers injected into every API request |
 
-Frontend plugins are passed to the `Invect` component and composed at render time.
+Frontend plugins are passed to the `Flowlib` component and composed at render time.
 
 <Callout type="info">
   Keep backend and frontend code in separate directories (`src/backend/`, `src/frontend/`). Shared

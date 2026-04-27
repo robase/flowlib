@@ -1,6 +1,6 @@
 // Export all graph components
 
-// Export new Invect-inspired components
+// Export new Flowlib-inspired components
 export { BatchFlowEdge, defaultEdgeOptions } from './BatchFlowEdge';
 export { LayoutSelector } from './LayoutSelector';
 
@@ -10,13 +10,13 @@ export type { BatchFlowEdgeData } from './BatchFlowEdge';
 // Import types from core
 import type { NodeExecutionStatus } from '@flowlib/core/types';
 
-// Types matching Invect's node structure, extending ReactFlow's expected types
+// Types matching Flowlib's node structure, extending ReactFlow's expected types
 export interface BatchFlowNodeData extends Record<string, unknown> {
   id: string;
   type: string; // This is the key used for style mapping, e.g., "OpenAIModel"
   display_name: string;
   description?: string;
-  icon?: string; // Invect's icon name (e.g., "OpenAI", "MessagesSquare")
+  icon?: string; // Flowlib's icon name (e.g., "OpenAI", "MessagesSquare")
   frozen?: boolean;
   beta?: boolean;
   deprecated?: boolean;
@@ -48,7 +48,7 @@ export interface BatchFlowNodeData extends Record<string, unknown> {
       placeholder?: string;
       password?: boolean;
       advanced?: boolean; // If it's an advanced parameter
-      _input_type?: string; // Invect input type for handle generation
+      _input_type?: string; // Flowlib input type for handle generation
     }
   >;
   connectedTemplateFields?: Set<string>; // Set of template field names that are connected
@@ -56,6 +56,6 @@ export interface BatchFlowNodeData extends Record<string, unknown> {
   executionError?: string; // Execution error message
   executionOutput?: unknown; // Output data from completed node execution
   // selected?: boolean; // Provided by NodeProps
-  // showNode?: boolean; // Invect specific, might map to a local state like isExpanded
+  // showNode?: boolean; // Flowlib specific, might map to a local state like isExpanded
   flow?: unknown; // Flow context if needed
 }

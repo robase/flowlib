@@ -1,12 +1,12 @@
 ---
 name: create-action
-description: 'Scaffold a new Invect provider action from scratch. Use when: creating a new defineAction, adding a new tool/node to a provider, implementing a new API integration action, scaffolding OAuth2 actions, adding actions to existing providers.'
+description: 'Scaffold a new Flowlib provider action from scratch. Use when: creating a new defineAction, adding a new tool/node to a provider, implementing a new API integration action, scaffolding OAuth2 actions, adding actions to existing providers.'
 argument-hint: "Provider name and action (e.g. 'stripe create_charge')"
 ---
 
 # Create Action
 
-Scaffold a complete Invect provider action using the `defineAction()` pattern. The resulting action auto-registers as both a **flow node** and an **agent tool**.
+Scaffold a complete Flowlib provider action using the `defineAction()` pattern. The resulting action auto-registers as both a **flow node** and an **agent tool**.
 
 ## When to Use
 

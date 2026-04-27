@@ -94,7 +94,7 @@ export class OpenRouterAdapter extends OpenAIAdapter {
     super(logger, apiKey, defaultModelOverride, 'https://openrouter.ai/api/v1');
 
     this._defaultModel = defaultModelOverride || 'openai/gpt-4o-mini';
-    this.appName = options?.appName || 'Invect';
+    this.appName = options?.appName || 'Flowlib';
     this.siteUrl = options?.siteUrl || 'https://flowlib.dev';
 
     // Recreate client with OpenRouter-specific headers + timeout
@@ -171,7 +171,7 @@ export class OpenRouterAdapter extends OpenAIAdapter {
         headers: {
           Authorization: `Bearer ${this.apiKey}`,
           'HTTP-Referer': this.siteUrl || 'https://flowlib.dev',
-          'X-Title': this.appName || 'Invect',
+          'X-Title': this.appName || 'Flowlib',
         },
       });
 

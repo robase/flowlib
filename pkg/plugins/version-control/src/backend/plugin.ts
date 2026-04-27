@@ -2,7 +2,7 @@
 // Version Control Plugin — Main Entry Point
 // =============================================================================
 
-import type { InvectPlugin, InvectPluginDefinition, PluginEndpointContext } from '@flowlib/core';
+import type { FlowlibPlugin, FlowlibPluginDefinition, PluginEndpointContext } from '@flowlib/core';
 
 import type { VersionControlPluginOptions } from './types';
 import { VC_SCHEMA } from './schema';
@@ -12,13 +12,13 @@ import { configureSyncInputSchema, historyLimitSchema } from './validation';
 /**
  * Create the Version Control plugin.
  *
- * Syncs Invect flows to a Git remote as readable `.flow.ts` files.
+ * Syncs Flowlib flows to a Git remote as readable `.flow.ts` files.
  *
  * ```ts
  * import { versionControl } from '@flowlib/version-control';
  * import { githubProvider } from '@flowlib/version-control/providers/github';
  *
- * new Invect({
+ * new Flowlib({
  *   plugins: [
  *     versionControl({
  *       provider: githubProvider({ auth: { type: 'token', token: process.env.GITHUB_TOKEN! } }),
@@ -29,7 +29,7 @@ import { configureSyncInputSchema, historyLimitSchema } from './validation';
  * });
  * ```
  */
-export function versionControl(options: VersionControlPluginOptions): InvectPluginDefinition {
+export function versionControl(options: VersionControlPluginOptions): FlowlibPluginDefinition {
   const { frontend, ...backendOptions } = options;
   return {
     id: 'version-control',
@@ -39,7 +39,7 @@ export function versionControl(options: VersionControlPluginOptions): InvectPlug
   };
 }
 
-function _vcBackendPlugin(options: Omit<VersionControlPluginOptions, 'frontend'>): InvectPlugin {
+function _vcBackendPlugin(options: Omit<VersionControlPluginOptions, 'frontend'>): FlowlibPlugin {
   let syncService: VcSyncService;
   let pluginLogger: { debug: Function; info: Function; warn: Function; error: Function } = console;
 
@@ -50,7 +50,7 @@ function _vcBackendPlugin(options: Omit<VersionControlPluginOptions, 'frontend'>
     schema: VC_SCHEMA,
 
     setupInstructions:
-      'Run `npx flowlib-cli generate` then `npx flowlib-cli migrate` to create the invect_vc_sync_config and invect_vc_sync_history tables.',
+      'Run `npx flowlib-cli generate` then `npx flowlib-cli migrate` to create the flowlib_vc_sync_config and flowlib_vc_sync_history tables.',
 
     // =======================================================================
     // Initialization
@@ -306,7 +306,7 @@ function _vcBackendPlugin(options: Omit<VersionControlPluginOptions, 'frontend'>
       flow_id: string;
       draft_branch: string | null;
       repo: string;
-    }>('SELECT flow_id, draft_branch, repo FROM invect_vc_sync_config WHERE active_pr_number = ?', [
+    }>('SELECT flow_id, draft_branch, repo FROM flowlib_vc_sync_config WHERE active_pr_number = ?', [
       prNumber,
     ]);
 
@@ -322,7 +322,7 @@ function _vcBackendPlugin(options: Omit<VersionControlPluginOptions, 'frontend'>
 
       // Clear PR state, update sync status
       await db.execute(
-        `UPDATE invect_vc_sync_config
+        `UPDATE flowlib_vc_sync_config
          SET active_pr_number = NULL, active_pr_url = NULL, draft_branch = NULL, updated_at = ?
          WHERE flow_id = ?`,
         [new Date().toISOString(), row.flow_id],
@@ -330,7 +330,7 @@ function _vcBackendPlugin(options: Omit<VersionControlPluginOptions, 'frontend'>
 
       // Record history
       await db.execute(
-        `INSERT INTO invect_vc_sync_history (id, flow_id, action, pr_number, message, created_at)
+        `INSERT INTO flowlib_vc_sync_history (id, flow_id, action, pr_number, message, created_at)
          VALUES (?, ?, ?, ?, ?, ?)`,
         [
           crypto.randomUUID(),

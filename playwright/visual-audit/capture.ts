@@ -185,7 +185,7 @@ test.describe('Visual Audit — Screenshot Capture', () => {
       }
 
       await request.post(`${apiBase}/flows/${flowId}/versions`, {
-        data: { invectDefinition: flow.definition },
+        data: { flowlibDefinition: flow.definition },
       });
     }
   });

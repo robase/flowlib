@@ -2,7 +2,7 @@ import * as React from 'react';
 import * as TooltipPrimitive from '@radix-ui/react-tooltip';
 
 import { cn } from '~/lib/utils';
-import { useInvectPortalClass } from '~/hooks/use-flowlib-portal-class';
+import { useFlowlibPortalClass } from '~/hooks/use-flowlib-portal-class';
 
 function TooltipProvider({
   delayDuration = 0,
@@ -31,7 +31,7 @@ function TooltipContent({
   children,
   ...props
 }: React.ComponentProps<typeof TooltipPrimitive.Content>) {
-  const portalClass = useInvectPortalClass();
+  const portalClass = useFlowlibPortalClass();
   return (
     <TooltipPrimitive.Portal>
       <div className={portalClass}>

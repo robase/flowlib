@@ -12,13 +12,13 @@ import { RbacProvider, useRbac } from './providers/RbacProvider';
 import { ShareButton } from './components/ShareButton';
 import { FlowAccessPanel } from './components/FlowAccessPanel';
 import { AccessControlPage } from './components/AccessControlPage';
-import type { InvectFrontendPlugin } from './types';
+import type { FlowlibFrontendPlugin } from './types';
 
 // ─────────────────────────────────────────────────────────────
 // RBAC Frontend Plugin Definition
 // ─────────────────────────────────────────────────────────────
 
-export const rbacFrontend: InvectFrontendPlugin = {
+export const rbacFrontend: FlowlibFrontendPlugin = {
   id: 'rbac',
   name: 'Role-Based Access Control',
 
@@ -135,7 +135,7 @@ export {
 
 // Types
 export type {
-  InvectFrontendPlugin,
+  FlowlibFrontendPlugin,
   PluginSidebarContribution,
   PluginRouteContribution,
   PluginPanelTabContribution,

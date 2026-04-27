@@ -1,15 +1,15 @@
 import { Module } from '@nestjs/common';
-import { InvectModule } from '@flowlib/nestjs';
+import { FlowlibModule } from '@flowlib/nestjs';
 
 /**
- * Example usage of InvectModule in a NestJS application
+ * Example usage of FlowlibModule in a NestJS application
  */
 
 // Basic usage with static configuration
 @Module({
   imports: [
-    InvectModule.forRoot({
-      encryptionKey: process.env.INVECT_ENCRYPTION_KEY ?? '',
+    FlowlibModule.forRoot({
+      encryptionKey: process.env.FLOWLIB_ENCRYPTION_KEY ?? '',
       database: {
         type: 'sqlite',
         connectionString: 'file:./dev.db',
@@ -25,9 +25,9 @@ export class AppModule {}
 // Async configuration example
 @Module({
   imports: [
-    InvectModule.forRootAsync({
+    FlowlibModule.forRootAsync({
       useFactory: () => ({
-        encryptionKey: process.env.INVECT_ENCRYPTION_KEY ?? '',
+        encryptionKey: process.env.FLOWLIB_ENCRYPTION_KEY ?? '',
         database: {
           type: 'sqlite',
           connectionString: process.env.DATABASE_URL || 'file:./dev.db',

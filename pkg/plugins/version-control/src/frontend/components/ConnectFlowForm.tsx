@@ -107,8 +107,8 @@ export function ConnectFlowForm({ flowId, onCancel }: ConnectFlowFormProps) {
           onChange={(e) => setSyncDirection(e.target.value as VcSyncDirection)}
           className="w-full rounded-md border border-imp-border bg-imp-background px-2.5 py-1.5 text-sm focus:border-imp-primary focus:outline-none"
         >
-          <option value="push">Push (Invect → Git)</option>
-          <option value="pull">Pull (Git → Invect)</option>
+          <option value="push">Push (Flowlib → Git)</option>
+          <option value="pull">Pull (Git → Flowlib)</option>
           <option value="bidirectional">Bidirectional</option>
         </select>
       </div>

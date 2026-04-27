@@ -1,8 +1,8 @@
 /**
- * Invect Authentication & Authorization Types
+ * Flowlib Authentication & Authorization Types
  *
  * Authentication is handled by the auth plugin (better-auth).
- * Invect handles authorization based on the identity resolved by the plugin's onRequest hook.
+ * Flowlib handles authorization based on the identity resolved by the plugin's onRequest hook.
  */
 
 // =============================================================================
@@ -11,9 +11,9 @@
 
 /**
  * Identity resolved from the host app's authentication system.
- * Invect doesn't care HOW you authenticated - just WHO you are.
+ * Flowlib doesn't care HOW you authenticated - just WHO you are.
  */
-export interface InvectIdentity {
+export interface FlowlibIdentity {
   /** Unique user identifier from host app (e.g., user ID, email, API key ID) */
   id: string;
 
@@ -21,12 +21,12 @@ export interface InvectIdentity {
   name?: string;
 
   /**
-   * Role within Invect (maps to permissions).
+   * Role within Flowlib (maps to permissions).
    * Host app can either:
-   * 1. Provide a Invect role directly (if they store it)
-   * 2. Use roleMapper in config to map their roles → Invect roles
+   * 1. Provide a Flowlib role directly (if they store it)
+   * 2. Use roleMapper in config to map their roles → Flowlib roles
    */
-  role?: InvectRole;
+  role?: FlowlibRole;
 
   /**
    * Team IDs this user belongs to (from host app).
@@ -38,7 +38,7 @@ export interface InvectIdentity {
    * Optional: Direct permission overrides (advanced use case).
    * These are checked IN ADDITION to role-based permissions.
    */
-  permissions?: InvectPermission[];
+  permissions?: FlowlibPermission[];
 
   /**
    * Optional: Resource-level access control.
@@ -51,7 +51,7 @@ export interface InvectIdentity {
    * Note: When the auth plugin is active, flow access is looked up from
    * the database instead of this field.
    */
-  resourceAccess?: InvectResourceAccess;
+  resourceAccess?: FlowlibResourceAccess;
 
   /** Any additional metadata from host app (for audit logs, etc.) */
   metadata?: Record<string, unknown>;
@@ -64,7 +64,7 @@ export interface InvectIdentity {
  * - '*' to allow access to all resources
  * - undefined to not restrict (use role permissions only)
  */
-export interface InvectResourceAccess {
+export interface FlowlibResourceAccess {
   /** Flow IDs the user can access */
   flows?: string[] | '*';
   /** Credential IDs the user can access */
@@ -79,17 +79,17 @@ export interface InvectResourceAccess {
  * Built-in roles with predefined permission sets.
  * Custom roles can be defined via config.customRoles.
  */
-export type InvectBuiltInRole = 'admin' | 'editor' | 'operator' | 'viewer';
+export type FlowlibBuiltInRole = 'admin' | 'editor' | 'operator' | 'viewer';
 
 /**
- * Invect role - either a built-in role or a custom role string.
+ * Flowlib role - either a built-in role or a custom role string.
  */
-export type InvectRole = InvectBuiltInRole | string;
+export type FlowlibRole = FlowlibBuiltInRole | string;
 
 /**
- * Granular permissions for Invect resources.
+ * Granular permissions for Flowlib resources.
  */
-export type InvectPermission =
+export type FlowlibPermission =
   // Flow permissions
   | 'flow:create'
   | 'flow:read'
@@ -119,7 +119,7 @@ export type InvectPermission =
 /**
  * Resource types that can be protected by authorization.
  */
-export type InvectResourceType =
+export type FlowlibResourceType =
   | 'flow'
   | 'flow-version'
   | 'flow-run'
@@ -136,14 +136,14 @@ export type InvectResourceType =
  */
 export interface AuthorizationContext {
   /** The identity making the request (null if unauthenticated) */
-  identity: InvectIdentity | null;
+  identity: FlowlibIdentity | null;
 
   /** The permission being checked */
-  action: InvectPermission;
+  action: FlowlibPermission;
 
   /** The resource being accessed (if applicable) */
   resource?: {
-    type: InvectResourceType;
+    type: FlowlibResourceType;
     id?: string;
   };
 }
@@ -169,12 +169,12 @@ export interface AuthEventBase {
   /** Timestamp of the event */
   timestamp: Date;
   /** Identity that triggered the event (null if unauthenticated) */
-  identity: InvectIdentity | null;
+  identity: FlowlibIdentity | null;
   /** The permission that was checked */
-  action: InvectPermission;
+  action: FlowlibPermission;
   /** The resource involved (if applicable) */
   resource?: {
-    type: InvectResourceType;
+    type: FlowlibResourceType;
     id?: string;
   };
 }
@@ -203,10 +203,10 @@ export interface AuthUnauthenticatedEvent {
   type: 'auth:unauthenticated';
   timestamp: Date;
   /** The permission that was attempted */
-  action: InvectPermission;
+  action: FlowlibPermission;
   /** The resource involved (if applicable) */
   resource?: {
-    type: InvectResourceType;
+    type: FlowlibResourceType;
     id?: string;
   };
 }
@@ -234,9 +234,9 @@ export type CustomAuthorizeFn = (
 ) => Promise<boolean | undefined> | boolean | undefined;
 
 /**
- * Authentication/Authorization configuration for Invect.
+ * Authentication/Authorization configuration for Flowlib.
  */
-export interface InvectAuthConfig {
+export interface FlowlibAuthConfig {
   /**
    * Enable RBAC (Role-Based Access Control).
    * When false, all requests are allowed without authentication checks.
@@ -245,12 +245,12 @@ export interface InvectAuthConfig {
   enabled?: boolean;
 
   /**
-   * Map host app roles to Invect roles.
+   * Map host app roles to Flowlib roles.
    * Useful when host app has different role names.
    *
    * @example { 'super_admin': 'admin', 'content_editor': 'editor' }
    */
-  roleMapper?: Record<string, InvectRole>;
+  roleMapper?: Record<string, FlowlibRole>;
 
   /**
    * Define custom roles with specific permissions.
@@ -258,7 +258,7 @@ export interface InvectAuthConfig {
    *
    * @example { 'qa_tester': ['flow:read', 'flow-run:create', 'flow-run:read'] }
    */
-  customRoles?: Record<string, InvectPermission[]>;
+  customRoles?: Record<string, FlowlibPermission[]>;
 
   /**
    * Callback for custom authorization logic.
@@ -279,7 +279,7 @@ export interface InvectAuthConfig {
    * Default role for authenticated users without an explicit role.
    * @default 'viewer'
    */
-  defaultRole?: InvectRole;
+  defaultRole?: FlowlibRole;
 
   /**
    * Behavior when auth fails.
@@ -298,7 +298,7 @@ export interface InvectAuthConfig {
 /**
  * Default permission sets for built-in roles.
  */
-export const DEFAULT_ROLE_PERMISSIONS: Record<InvectBuiltInRole, InvectPermission[]> = {
+export const DEFAULT_ROLE_PERMISSIONS: Record<FlowlibBuiltInRole, FlowlibPermission[]> = {
   admin: ['admin:*'],
 
   editor: [
@@ -339,7 +339,7 @@ export const DEFAULT_ROLE_PERMISSIONS: Record<InvectBuiltInRole, InvectPermissio
  * Map of actions to the permission required.
  * Used for route-level authorization.
  */
-export const ACTION_PERMISSION_MAP: Record<string, InvectPermission> = {
+export const ACTION_PERMISSION_MAP: Record<string, FlowlibPermission> = {
   // Flows
   listFlows: 'flow:read',
   getFlow: 'flow:read',

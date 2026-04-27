@@ -26,7 +26,7 @@ import type {
   FlowRunResult,
   FlowVersion,
   FlowValidationResult,
-  InvectDefinition,
+  FlowlibDefinition,
   Model,
   NodeExecution,
   PaginatedResponse,
@@ -48,12 +48,12 @@ import type {
   OAuth2StartResult,
   ReactFlowDataOptions,
 } from '../api/types';
-import { invectDefinitionToReactFlowData } from './flow-adapter';
+import { flowlibDefinitionToReactFlowData } from './flow-adapter';
 import type { ActionMetadata, NodeRunStatus } from './types';
 
 export interface InMemoryState {
   flowId: string;
-  flow: InvectDefinition;
+  flow: FlowlibDefinition;
   actions: ActionMetadata[];
   credentials: Credential[];
   agentTools: AgentToolDefinition[];
@@ -69,7 +69,7 @@ export interface InMemoryState {
 }
 
 export interface InMemoryCallbacks {
-  onEdit?: (flow: InvectDefinition) => void;
+  onEdit?: (flow: FlowlibDefinition) => void;
   onRequestRun?: (inputs: Record<string, unknown>) => void;
   onOpenCredentialManager?: () => void;
 }
@@ -181,14 +181,14 @@ export class InMemoryApiClient extends ApiClient {
 
   override async createFlowVersion(
     flowId: string,
-    data: { invectDefinition: InvectDefinition },
+    data: { flowlibDefinition: FlowlibDefinition },
   ): Promise<FlowVersion> {
-    this.state.flow = data.invectDefinition;
-    this.callbacks.onEdit?.(data.invectDefinition);
+    this.state.flow = data.flowlibDefinition;
+    this.callbacks.onEdit?.(data.flowlibDefinition);
     return {
       flowId,
       version: 1,
-      invectDefinition: data.invectDefinition,
+      flowlibDefinition: data.flowlibDefinition,
       createdAt: new Date().toISOString(),
       createdBy: null,
     } as unknown as FlowVersion;
@@ -276,7 +276,7 @@ export class InMemoryApiClient extends ApiClient {
       }
       runStatus = next;
     }
-    return invectDefinitionToReactFlowData({
+    return flowlibDefinitionToReactFlowData({
       flow: this.state.flow,
       actions: this.state.actions,
       nodeRunStatus: runStatus,

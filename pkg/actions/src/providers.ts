@@ -9,7 +9,7 @@ import type { ProviderDef } from '@flowlib/action-kit';
 
 export const CORE_PROVIDER: ProviderDef = {
   id: 'core',
-  name: 'Invect Core',
+  name: 'Flowlib Core',
   icon: 'Blocks',
   category: 'core',
   nodeCategory: 'Common',

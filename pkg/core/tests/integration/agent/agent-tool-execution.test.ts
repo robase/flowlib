@@ -20,10 +20,10 @@ import { setupServer } from 'msw/node';
 import { http, HttpResponse } from 'msw';
 import { respondWithChatCompletion } from '../helpers/openai-sse';
 import { FlowRunStatus } from '../../../src';
-import type { InvectInstance } from '../../../src/api/types';
-import type { InvectDefinition } from '../../../src/services/flow-versions/schemas-fresh';
+import type { FlowlibInstance } from '../../../src/api/types';
+import type { FlowlibDefinition } from '../../../src/services/flow-versions/schemas-fresh';
 import type { AgentExecutionOutput } from '../../../src/types/agent-tool.types';
-import { createTestInvect } from '../helpers/test-flowlib';
+import { createTestFlowlib } from '../helpers/test-flowlib';
 
 // ---------------------------------------------------------------------------
 // MSW helpers — build OpenAI-shaped responses
@@ -80,7 +80,7 @@ function toolCallResponse(
 // Shared state
 // ---------------------------------------------------------------------------
 
-let flowlib: InvectInstance;
+let flowlib: FlowlibInstance;
 let credentialId: string;
 /** Ordered list of responses the mock server should return */
 let responseQueue: Array<Record<string, unknown>> = [];
@@ -111,7 +111,7 @@ const mswServer = setupServer(
 
 beforeAll(async () => {
   mswServer.listen({ onUnhandledRequest: 'bypass' });
-  flowlib = await createTestInvect();
+  flowlib = await createTestFlowlib();
 
   // Create an OpenAI credential for agent tests
   const cred = await flowlib.credentials.create({
@@ -144,7 +144,7 @@ afterEach(() => {
 
 function agentNode(
   overrides: Partial<Record<string, unknown>> = {},
-): InvectDefinition['nodes'][number] {
+): FlowlibDefinition['nodes'][number] {
   return {
     id: 'agent-1',
     type: 'core.agent',
@@ -175,9 +175,9 @@ function agentNode(
   };
 }
 
-async function runAgentFlow(definition: InvectDefinition, inputs: Record<string, unknown> = {}) {
+async function runAgentFlow(definition: FlowlibDefinition, inputs: Record<string, unknown> = {}) {
   const flow = await flowlib.flows.create({ name: `agent-test-${Date.now()}` });
-  await flowlib.versions.create(flow.id, { invectDefinition: definition });
+  await flowlib.versions.create(flow.id, { flowlibDefinition: definition });
   return flowlib.runs.start(flow.id, inputs, { useBatchProcessing: false });
 }
 

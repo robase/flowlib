@@ -6,6 +6,6 @@ const connectionString =
 
 /**
  * Shared Drizzle database instance.
- * Used by both the Acme Dashboard app and the Invect integration.
+ * Used by both the Acme Dashboard app and the Flowlib integration.
  */
 export const db = drizzle(connectionString, { schema });

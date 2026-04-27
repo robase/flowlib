@@ -13,20 +13,20 @@
 import { z } from 'zod/v4';
 import { newToolInstanceId } from '@flowlib/action-kit';
 import type { ChatToolDefinition, ChatToolContext, ChatToolResult } from '../chat-types';
-import type { InvectInstance } from 'src/api/types';
+import type { FlowlibInstance } from 'src/api/types';
 import type { AddedToolInstance } from 'src/types/agent-tool.types';
 import type { FlowNodeDefinitions, FlowEdge } from 'src/services/flow-versions/schemas-fresh';
 
 /**
  * Helper: Load the latest flow version's nodes and edges.
  */
-async function loadLatestDefinition(flowlib: InvectInstance, flowId: string) {
+async function loadLatestDefinition(flowlib: FlowlibInstance, flowId: string) {
   const version = await flowlib.versions.get(flowId, 'latest');
   if (!version) {
     throw new Error('No flow version found — publish a version first');
   }
 
-  const definition = version.invectDefinition;
+  const definition = version.flowlibDefinition;
   const nodes = structuredClone(definition.nodes) as FlowNodeDefinitions[];
   const edges = structuredClone(definition.edges) as FlowEdge[];
 
@@ -37,13 +37,13 @@ async function loadLatestDefinition(flowlib: InvectInstance, flowId: string) {
  * Helper: Save a mutated definition as a new flow version.
  */
 async function saveNewVersion(
-  flowlib: InvectInstance,
+  flowlib: FlowlibInstance,
   flowId: string,
   nodes: FlowNodeDefinitions[],
   edges: FlowEdge[],
 ) {
   return flowlib.versions.create(flowId, {
-    invectDefinition: { nodes, edges },
+    flowlibDefinition: { nodes, edges },
   });
 }
 

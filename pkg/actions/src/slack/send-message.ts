@@ -67,7 +67,7 @@ export const slackSendMessageAction = defineAction({
         label: 'Message',
         type: 'textarea',
         required: true,
-        placeholder: 'Hello from Invect! :wave:',
+        placeholder: 'Hello from Flowlib! :wave:',
         description: 'Message text. Supports Slack mrkdwn formatting (*bold*, _italic_, `code`).',
         aiProvided: true,
       },

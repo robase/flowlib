@@ -1,17 +1,17 @@
 ---
 title: Plugins
-description: Extend Invect with authentication, access control, webhooks, version control, and more.
+description: Extend Flowlib with authentication, access control, webhooks, version control, and more.
 ---
 
 import { Card, Cards } from 'fumadocs-ui/components/card';
 
-Plugins extend Invect with additional capabilities — database tables, API endpoints, flow execution hooks, and frontend components. Pass them in the `plugins` config array:
+Plugins extend Flowlib with additional capabilities — database tables, API endpoints, flow execution hooks, and frontend components. Pass them in the `plugins` config array:
 
 ```ts
 import { auth } from '@flowlib/user-auth';
 import { rbac } from '@flowlib/rbac';
 
-const router = await createInvectRouter({
+const router = await createFlowlibRouter({
   // ...
   plugins: [
     auth({

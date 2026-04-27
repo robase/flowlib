@@ -1,37 +1,37 @@
 /**
  * Plugin Manager
  *
- * Manages the lifecycle of Invect plugins: initialization, hook execution,
+ * Manages the lifecycle of Flowlib plugins: initialization, hook execution,
  * endpoint collection, and shutdown.
  *
- * Created during `Invect.initialize()` and shared with framework adapters.
+ * Created during `Flowlib.initialize()` and shared with framework adapters.
  */
 
 import type {
-  InvectPlugin,
-  InvectPluginContext,
-  InvectPluginInitResult,
+  FlowlibPlugin,
+  FlowlibPluginContext,
+  FlowlibPluginInitResult,
   PluginHookRunner,
   FlowRunHookContext,
   NodeExecutionHookContext,
-  InvectPluginEndpoint,
+  FlowlibPluginEndpoint,
   PluginDatabaseApi,
 } from 'src/types/plugin.types';
-import type { InvectIdentity, InvectPermission, AuthorizationResult } from 'src/types/auth.types';
+import type { FlowlibIdentity, FlowlibPermission, AuthorizationResult } from 'src/types/auth.types';
 import type { ActionDefinition } from 'src/actions/types';
-import type { InvectInstance } from 'src/api/types';
+import type { FlowlibInstance } from 'src/api/types';
 
 // =============================================================================
 // Plugin Manager
 // =============================================================================
 
 export class PluginManager implements PluginHookRunner {
-  private plugins: InvectPlugin[] = [];
-  private pluginMap = new Map<string, InvectPlugin>();
+  private plugins: FlowlibPlugin[] = [];
+  private pluginMap = new Map<string, FlowlibPlugin>();
   private pluginStores = new Map<string, Map<string, unknown>>();
   private _initialized = false;
 
-  constructor(plugins: InvectPlugin[] = []) {
+  constructor(plugins: FlowlibPlugin[] = []) {
     // Validate: no duplicate IDs
     const ids = new Set<string>();
     for (const plugin of plugins) {
@@ -47,7 +47,7 @@ export class PluginManager implements PluginHookRunner {
 
   /**
    * Initialize all plugins in order.
-   * Called during `Invect.initialize()` after action registry is created.
+   * Called during `Flowlib.initialize()` after action registry is created.
    */
   async initializePlugins(opts: {
     config: Record<string, unknown>;
@@ -58,19 +58,19 @@ export class PluginManager implements PluginHookRunner {
       error: (...args: unknown[]) => void;
     };
     registerAction: (action: ActionDefinition) => void;
-    getInvect: () => InvectInstance;
-  }): Promise<InvectPluginInitResult[]> {
-    const results: InvectPluginInitResult[] = [];
+    getFlowlib: () => FlowlibInstance;
+  }): Promise<FlowlibPluginInitResult[]> {
+    const results: FlowlibPluginInitResult[] = [];
 
     for (const plugin of this.plugins) {
-      const context: InvectPluginContext = {
+      const context: FlowlibPluginContext = {
         config: opts.config,
         logger: opts.logger,
         hasPlugin: (id: string) => this.pluginMap.has(id),
         getPlugin: (id: string) => this.pluginMap.get(id) ?? null,
         registerAction: opts.registerAction,
         store: this.pluginStores.get(plugin.id) ?? new Map(),
-        getInvect: opts.getInvect,
+        getFlowlib: opts.getFlowlib,
       };
 
       opts.logger.debug(`Initializing plugin: ${plugin.id}`);
@@ -135,18 +135,18 @@ export class PluginManager implements PluginHookRunner {
     return this.pluginMap.has(id);
   }
 
-  getPlugin(id: string): InvectPlugin | null {
+  getPlugin(id: string): FlowlibPlugin | null {
     return this.pluginMap.get(id) ?? null;
   }
 
-  getPlugins(): readonly InvectPlugin[] {
+  getPlugins(): readonly FlowlibPlugin[] {
     return this.plugins;
   }
 
   /**
    * Collect all endpoints from all plugins.
    */
-  getPluginEndpoints(): InvectPluginEndpoint[] {
+  getPluginEndpoints(): FlowlibPluginEndpoint[] {
     return this.plugins.flatMap((p) => p.endpoints ?? []);
   }
 
@@ -276,7 +276,7 @@ export class PluginManager implements PluginHookRunner {
 
   async runOnRequest(
     request: Request,
-    context: { path: string; method: string; identity: InvectIdentity | null },
+    context: { path: string; method: string; identity: FlowlibIdentity | null },
   ): Promise<{ intercepted: boolean; response?: Response; request?: Request }> {
     let currentRequest = request;
 
@@ -304,7 +304,7 @@ export class PluginManager implements PluginHookRunner {
 
   async runOnResponse(
     response: Response,
-    context: { path: string; method: string; identity: InvectIdentity | null },
+    context: { path: string; method: string; identity: FlowlibIdentity | null },
   ): Promise<Response> {
     let currentResponse = response;
 
@@ -328,8 +328,8 @@ export class PluginManager implements PluginHookRunner {
   }
 
   async runOnAuthorize(context: {
-    identity: InvectIdentity | null;
-    action: InvectPermission;
+    identity: FlowlibIdentity | null;
+    action: FlowlibPermission;
     resource?: { type: string; id?: string };
     database?: PluginDatabaseApi;
   }): Promise<AuthorizationResult | null> {

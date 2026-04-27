@@ -1,6 +1,6 @@
 # Credentials System Implementation
 
-This directory contains the complete credentials management system for Invect.
+This directory contains the complete credentials management system for Flowlib.
 
 ## Components
 
@@ -18,7 +18,7 @@ This directory contains the complete credentials management system for Invect.
 ```typescript
 import { createEncryptionService } from './services/credentials';
 
-// Requires INVECT_ENCRYPTION_KEY environment variable
+// Requires FLOWLIB_ENCRYPTION_KEY environment variable
 const encryption = createEncryptionService();
 
 // Encrypt
@@ -77,7 +77,7 @@ GET    /api/credentials/:id/usage - Get usage info
 node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
 
 # Add to .env
-INVECT_ENCRYPTION_KEY=your_generated_key_here
+FLOWLIB_ENCRYPTION_KEY=your_generated_key_here
 ```
 
 ### 2. Database Migration
@@ -95,7 +95,7 @@ pnpm drizzle-kit migrate
 
 ### 3. Initialize Services
 
-Credentials are managed automatically when using `createInvect()` or a framework adapter. For direct usage:
+Credentials are managed automatically when using `createFlowlib()` or a framework adapter. For direct usage:
 
 ```typescript
 import { EncryptionService, CredentialsService } from '@flowlib/core';

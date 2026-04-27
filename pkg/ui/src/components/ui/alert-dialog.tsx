@@ -2,7 +2,7 @@ import * as React from 'react';
 import * as AlertDialogPrimitive from '@radix-ui/react-alert-dialog';
 
 import { cn } from '~/lib/utils';
-import { useInvectPortalClass } from '~/hooks/use-flowlib-portal-class';
+import { useFlowlibPortalClass } from '~/hooks/use-flowlib-portal-class';
 import { buttonVariants } from '~/components/ui/button';
 
 function AlertDialog({ ...props }: React.ComponentProps<typeof AlertDialogPrimitive.Root>) {
@@ -22,7 +22,7 @@ function AlertDialogPortal({
 }: React.ComponentProps<typeof AlertDialogPrimitive.Portal> & {
   container?: HTMLElement | null;
 }) {
-  const portalClass = useInvectPortalClass();
+  const portalClass = useFlowlibPortalClass();
   return (
     <AlertDialogPrimitive.Portal
       data-slot="alert-dialog-portal"

@@ -2,7 +2,7 @@
   "name": "flowlib-express-simple",
   "version": "0.0.1",
   "private": true,
-  "description": "Simple Express.js example using Invect",
+  "description": "Simple Express.js example using Flowlib",
   "type": "module",
   "main": "dist/index.js",
   "scripts": {

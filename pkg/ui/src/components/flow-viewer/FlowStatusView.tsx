@@ -19,7 +19,7 @@ import { FlowRunStatus, NodeExecutionStatus, ReactFlowNodeData } from '@flowlib/
 import { FlowRun } from '@flowlib/core/types';
 import { Node } from '@xyflow/react';
 import { useTheme } from '~/contexts/ThemeProvider';
-import { InvectLoader } from '../shared/InvectLoader';
+import { FlowlibLoader } from '../shared/FlowlibLoader';
 
 // Import shared hook
 import { useFlowData } from '../../hooks/use-flow-data';
@@ -288,7 +288,7 @@ export function FlowStatusView({
 
   // Loading state
   if (loading) {
-    return <InvectLoader className="w-full h-full" iconClassName="h-16" label="Loading flow..." />;
+    return <FlowlibLoader className="w-full h-full" iconClassName="h-16" label="Loading flow..." />;
   }
 
   // Error state

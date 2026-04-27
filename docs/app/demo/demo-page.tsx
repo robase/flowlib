@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import '@flowlib/ui/styles';
 
-type DemoInvectType = React.ComponentType<{ data: unknown; useMemoryRouter?: boolean }>;
+type DemoFlowlibType = React.ComponentType<{ data: unknown; useMemoryRouter?: boolean }>;
 type DemoData = unknown;
 
 const DISMISSED_KEY = 'flowlib-demo-modal-dismissed';
@@ -45,7 +45,7 @@ function InfoModal({ open, onClose }: { open: boolean; onClose: () => void }) {
         }}
       >
         <h2 style={{ margin: '0 0 8px', fontSize: 20, fontWeight: 600, color: '#fff' }}>
-          Welcome to the Invect demo
+          Welcome to the Flowlib demo
         </h2>
         <p style={{ margin: '0 0 16px', color: '#a1a1aa', fontSize: 13 }}>
           A live preview of the workflow editor — no backend, everything runs in your browser.
@@ -101,7 +101,7 @@ function GitHubIcon() {
 /* -------------------------------------------------------------------------- */
 
 export function DemoPage() {
-  const [DemoInvect, setDemoInvect] = useState<DemoInvectType | null>(null);
+  const [DemoFlowlib, setDemoFlowlib] = useState<DemoFlowlibType | null>(null);
   const [data, setData] = useState<DemoData | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
 
@@ -130,7 +130,7 @@ export function DemoPage() {
     let cancelled = false;
     import('@flowlib/ui/demo').then((mod) => {
       if (cancelled) return;
-      setDemoInvect(() => mod.DemoInvect as unknown as DemoInvectType);
+      setDemoFlowlib(() => mod.DemoFlowlib as unknown as DemoFlowlibType);
       setData(mod.sampleDemoData);
     });
     return () => {
@@ -138,7 +138,7 @@ export function DemoPage() {
     };
   }, []);
 
-  if (!DemoInvect || !data) {
+  if (!DemoFlowlib || !data) {
     return (
       <div
         style={{
@@ -222,7 +222,7 @@ export function DemoPage() {
           <span
             style={{ fontWeight: 600, fontSize: 15, color: '#fafafa', letterSpacing: '-0.01em' }}
           >
-            Invect demo
+            Flowlib demo
           </span>
         </div>
 
@@ -278,7 +278,7 @@ export function DemoPage() {
         </button>
       </header>
 
-      {/* Inset Invect component — override h-screen from Invect root */}
+      {/* Inset Flowlib component — override h-screen from Flowlib root */}
       <div
         className="[&_.imp-shell]:!h-full"
         style={{
@@ -290,7 +290,7 @@ export function DemoPage() {
           border: '1px solid #27272a',
         }}
       >
-        <DemoInvect data={data} useMemoryRouter />
+        <DemoFlowlib data={data} useMemoryRouter />
       </div>
 
       <InfoModal open={modalOpen} onClose={closeModal} />

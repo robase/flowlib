@@ -2,17 +2,17 @@
  * Integration tests: Flow CRUD operations
  *
  * Tests creating, reading, updating, listing, and deleting flows
- * through the real Invect core with an in-memory SQLite database.
+ * through the real Flowlib core with an in-memory SQLite database.
  */
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import type { InvectInstance } from '../../../src/api/types';
-import { createTestInvect } from '../helpers/test-flowlib';
+import type { FlowlibInstance } from '../../../src/api/types';
+import { createTestFlowlib } from '../helpers/test-flowlib';
 
 describe('Flow CRUD', () => {
-  let flowlib: InvectInstance;
+  let flowlib: FlowlibInstance;
 
   beforeAll(async () => {
-    flowlib = await createTestInvect();
+    flowlib = await createTestFlowlib();
   });
 
   afterAll(async () => {
@@ -67,7 +67,7 @@ describe('Flow CRUD', () => {
       const flow = await flowlib.flows.create({ name: 'Versioned Flow' });
 
       const version = await flowlib.versions.create(flow.id, {
-        invectDefinition: {
+        flowlibDefinition: {
           nodes: [
             {
               id: 'input-1',
@@ -91,7 +91,7 @@ describe('Flow CRUD', () => {
       const flow = await flowlib.flows.create({ name: 'Latest Version Flow' });
 
       await flowlib.versions.create(flow.id, {
-        invectDefinition: {
+        flowlibDefinition: {
           nodes: [
             {
               id: 'n1',
@@ -107,7 +107,7 @@ describe('Flow CRUD', () => {
       });
 
       await flowlib.versions.create(flow.id, {
-        invectDefinition: {
+        flowlibDefinition: {
           nodes: [
             {
               id: 'n2',
@@ -132,10 +132,10 @@ describe('Flow CRUD', () => {
       const flow = await flowlib.flows.create({ name: 'Multi Version Flow' });
 
       await flowlib.versions.create(flow.id, {
-        invectDefinition: { nodes: [], edges: [] },
+        flowlibDefinition: { nodes: [], edges: [] },
       });
       await flowlib.versions.create(flow.id, {
-        invectDefinition: { nodes: [], edges: [] },
+        flowlibDefinition: { nodes: [], edges: [] },
       });
 
       const result = await flowlib.versions.list(flow.id);

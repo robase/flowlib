@@ -1,13 +1,13 @@
 #!/usr/bin/env node
 
 /**
- * @flowlib/cli — CLI for managing Invect projects
+ * @flowlib/cli — CLI for managing Flowlib projects
  *
  * Commands:
- *   init      — Initialize Invect in your project
+ *   init      — Initialize Flowlib in your project
  *   generate  — Generate Drizzle schema files from core + plugin schemas
  *   migrate   — Apply pending database migrations via Drizzle Kit
- *   info      — Display diagnostic information about the Invect setup
+ *   info      — Display diagnostic information about the Flowlib setup
  *   secret    — Generate a secure encryption key
  *
  * Usage:
@@ -41,7 +41,7 @@ async function main() {
   const program = new Command('flowlib');
 
   program
-    .description('CLI for managing Invect workflow engine projects')
+    .description('CLI for managing Flowlib workflow engine projects')
     .version(version)
     .option('--debug', 'Show detailed error messages and stack traces');
 
@@ -60,6 +60,6 @@ async function main() {
 main()
   .then(() => process.exit(0))
   .catch((error) => {
-    console.error('Error running Invect CLI:', error);
+    console.error('Error running Flowlib CLI:', error);
     process.exit(1);
   });

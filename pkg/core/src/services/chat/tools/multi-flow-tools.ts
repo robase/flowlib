@@ -111,7 +111,7 @@ export const getFlowDefinitionTool: ChatToolDefinition = {
         };
       }
 
-      const definition = version.invectDefinition;
+      const definition = version.flowlibDefinition;
 
       return {
         success: true,

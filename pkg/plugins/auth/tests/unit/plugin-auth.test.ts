@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { authentication } from '../../src/backend/plugin';
 import type { BetterAuthInstance } from '../../src/backend/types';
-import type { InvectIdentity } from '@flowlib/core/types';
+import type { FlowlibIdentity } from '@flowlib/core/types';
 
 // ---------------------------------------------------------------------------
 // Mock better-auth instance factory
@@ -123,10 +123,10 @@ describe('authentication', () => {
       const plugin = authentication({ auth });
 
       expect(plugin.requiredTables).toBeDefined();
-      expect(plugin.requiredTables).toContain('invect_user');
-      expect(plugin.requiredTables).toContain('invect_session');
-      expect(plugin.requiredTables).toContain('invect_account');
-      expect(plugin.requiredTables).toContain('invect_verification');
+      expect(plugin.requiredTables).toContain('flowlib_user');
+      expect(plugin.requiredTables).toContain('flowlib_session');
+      expect(plugin.requiredTables).toContain('flowlib_account');
+      expect(plugin.requiredTables).toContain('flowlib_verification');
     });
 
     it('provides setup instructions referencing the CLI', () => {
@@ -148,7 +148,7 @@ describe('authentication', () => {
       expect(plugin.schema!.verification).toBeDefined();
 
       // Each table should have fields and a tableName
-      expect(plugin.schema!.user.tableName).toBe('invect_user');
+      expect(plugin.schema!.user.tableName).toBe('flowlib_user');
       expect(plugin.schema!.user.fields.id).toBeDefined();
       expect(plugin.schema!.user.fields.email).toBeDefined();
       expect(plugin.schema!.session.fields.userId).toBeDefined();
@@ -162,14 +162,14 @@ describe('authentication', () => {
 
       // session.userId should reference user.id
       expect(plugin.schema!.session.fields.userId.references).toEqual({
-        table: 'invect_user',
+        table: 'flowlib_user',
         field: 'id',
         onDelete: 'cascade',
       });
 
       // account.userId should reference user.id
       expect(plugin.schema!.account.fields.userId.references).toEqual({
-        table: 'invect_user',
+        table: 'flowlib_user',
         field: 'id',
         onDelete: 'cascade',
       });
@@ -263,7 +263,7 @@ describe('authentication', () => {
       const request = new Request('http://localhost/flows', {
         headers: { cookie },
       });
-      const context = { path: '/flows', method: 'GET', identity: null as InvectIdentity | null };
+      const context = { path: '/flows', method: 'GET', identity: null as FlowlibIdentity | null };
       await plugin.hooks!.onRequest!(request, context);
       return context.identity;
     }
@@ -435,7 +435,7 @@ describe('session resolution via onRequest hook', () => {
   ) {
     const plugin = authentication({ auth, ...pluginOptions });
     const request = new Request('http://localhost/flows', { headers });
-    const context = { path: '/flows', method: 'GET', identity: null as InvectIdentity | null };
+    const context = { path: '/flows', method: 'GET', identity: null as FlowlibIdentity | null };
     await plugin.hooks!.onRequest!(request, context);
     return context.identity;
   }
@@ -560,7 +560,7 @@ describe('schema and apiKey option', () => {
     expect(plugin.schema!.apikey).toBeDefined();
     expect(plugin.schema!.apikey.fields.key).toBeDefined();
     expect(plugin.schema!.apikey.fields.referenceId).toBeDefined();
-    expect(plugin.requiredTables).toContain('invect_apikey');
+    expect(plugin.requiredTables).toContain('flowlib_apikey');
   });
 
   it('includes apikey table when apiKey is an options object', () => {
@@ -568,7 +568,7 @@ describe('schema and apiKey option', () => {
     const plugin = authentication({ auth, apiKey: { defaultPrefix: 'inv_' } });
 
     expect(plugin.schema!.apikey).toBeDefined();
-    expect(plugin.requiredTables).toContain('invect_apikey');
+    expect(plugin.requiredTables).toContain('flowlib_apikey');
   });
 
   it('includes apikey table via betterAuthOptions.apiKey', () => {
@@ -576,7 +576,7 @@ describe('schema and apiKey option', () => {
     const plugin = authentication({ auth, betterAuthOptions: { apiKey: true } });
 
     expect(plugin.schema!.apikey).toBeDefined();
-    expect(plugin.requiredTables).toContain('invect_apikey');
+    expect(plugin.requiredTables).toContain('flowlib_apikey');
   });
 
   it('always includes core auth tables regardless of apiKey', () => {
@@ -589,11 +589,11 @@ describe('schema and apiKey option', () => {
     expect(plugin.schema!.verification).toBeDefined();
     expect(plugin.requiredTables).toEqual(
       expect.arrayContaining([
-        'invect_user',
-        'invect_session',
-        'invect_account',
-        'invect_verification',
-        'invect_flow_access',
+        'flowlib_user',
+        'flowlib_session',
+        'flowlib_account',
+        'flowlib_verification',
+        'flowlib_flow_access',
       ]),
     );
   });

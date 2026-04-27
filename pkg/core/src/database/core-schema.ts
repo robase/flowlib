@@ -1,8 +1,8 @@
 /**
  * Core Abstract Schema
  *
- * The single source of truth for Invect's database tables.
- * Defined using the abstract `InvectPluginSchema` format.
+ * The single source of truth for Flowlib's database tables.
+ * Defined using the abstract `FlowlibPluginSchema` format.
  *
  * The CLI schema generator (`npx flowlib-cli generate`) uses this + plugin schemas
  * to produce the three dialect-specific Drizzle schema files:
@@ -13,7 +13,7 @@
  * When modifying the database schema, edit THIS file, then run `npx flowlib-cli generate`.
  */
 
-import type { InvectPluginSchema } from 'src/types/plugin.types';
+import type { FlowlibPluginSchema } from 'src/types/plugin.types';
 
 // =============================================================================
 // Enum Definitions
@@ -50,10 +50,10 @@ export const CORE_ENUMS = {
 // Core Schema Definition
 // =============================================================================
 
-export const CORE_SCHEMA: InvectPluginSchema = {
+export const CORE_SCHEMA: FlowlibPluginSchema = {
   // ----- Flow definition table -----
   flows: {
-    tableName: 'invect_flows',
+    tableName: 'flowlib_flows',
     order: 10,
     fields: {
       id: { type: 'string', primaryKey: true },
@@ -69,20 +69,20 @@ export const CORE_SCHEMA: InvectPluginSchema = {
 
   // ----- Flow version table -----
   flowVersions: {
-    tableName: 'invect_flow_versions',
+    tableName: 'flowlib_flow_versions',
     order: 20,
     compositePrimaryKey: ['version', 'flowId'],
     fields: {
       flowId: {
         type: 'string',
         required: true,
-        references: { table: 'invect_flows', field: 'id', onDelete: 'cascade' },
+        references: { table: 'flowlib_flows', field: 'id', onDelete: 'cascade' },
       },
       version: { type: 'number', required: true },
-      invectDefinition: {
+      flowlibDefinition: {
         type: 'json',
         required: true,
-        typeAnnotation: 'InvectDefinitionRuntime',
+        typeAnnotation: 'FlowlibDefinitionRuntime',
       },
       createdAt: { type: 'date', required: true, defaultValue: 'now()' },
       createdBy: { type: 'string', required: false },
@@ -91,14 +91,14 @@ export const CORE_SCHEMA: InvectPluginSchema = {
 
   // ----- Flow execution (runs) table -----
   flowRuns: {
-    tableName: 'invect_flow_executions',
+    tableName: 'flowlib_flow_executions',
     order: 30,
     fields: {
       id: { type: 'uuid', primaryKey: true, defaultValue: 'uuid()' },
       flowId: {
         type: 'string',
         required: true,
-        references: { table: 'invect_flows', field: 'id', onDelete: 'cascade' },
+        references: { table: 'flowlib_flows', field: 'id', onDelete: 'cascade' },
       },
       flowVersion: { type: 'number', required: true },
       status: {
@@ -125,10 +125,10 @@ export const CORE_SCHEMA: InvectPluginSchema = {
        * Populated only at flow-run completion (success OR failure) — never
        * during an in-flight run. Stores a JSON-encoded array of
        * `NodeExecution` rows that would otherwise have been written to
-       * `invect_action_traces` one-row-per-node-per-state.
+       * `flowlib_action_traces` one-row-per-node-per-state.
        *
        * NOT written by `'per-node'` (default) mode — readers must check
-       * both this column AND `invect_action_traces` so a single deployment
+       * both this column AND `flowlib_action_traces` so a single deployment
        * can serve historical runs that were captured under either mode.
        *
        * Stored as JSONB on PostgreSQL, JSON on MySQL, and TEXT (json mode)
@@ -140,19 +140,19 @@ export const CORE_SCHEMA: InvectPluginSchema = {
 
   // ----- Action traces (node executions + agent tool executions, unified) -----
   actionTraces: {
-    tableName: 'invect_action_traces',
+    tableName: 'flowlib_action_traces',
     order: 40,
     fields: {
       id: { type: 'uuid', primaryKey: true, defaultValue: 'uuid()' },
       flowRunId: {
         type: 'uuid',
         required: true,
-        references: { table: 'invect_flow_executions', field: 'id', onDelete: 'cascade' },
+        references: { table: 'flowlib_flow_executions', field: 'id', onDelete: 'cascade' },
       },
       parentNodeExecutionId: {
         type: 'uuid',
         required: false,
-        references: { table: 'invect_action_traces', field: 'id', onDelete: 'cascade' },
+        references: { table: 'flowlib_action_traces', field: 'id', onDelete: 'cascade' },
       },
       // Node execution fields (null for tool traces)
       nodeId: { type: 'string', required: false },
@@ -184,14 +184,14 @@ export const CORE_SCHEMA: InvectPluginSchema = {
 
   // ----- Batch jobs table -----
   batchJobs: {
-    tableName: 'invect_batch_jobs',
+    tableName: 'flowlib_batch_jobs',
     order: 50,
     fields: {
       id: { type: 'uuid', primaryKey: true, defaultValue: 'uuid()' },
       flowRunId: {
         type: 'uuid',
         required: true,
-        references: { table: 'invect_flow_executions', field: 'id', onDelete: 'cascade' },
+        references: { table: 'flowlib_flow_executions', field: 'id', onDelete: 'cascade' },
       },
       nodeId: { type: 'string', required: true },
       provider: {
@@ -218,7 +218,7 @@ export const CORE_SCHEMA: InvectPluginSchema = {
 
   // ----- Credentials table -----
   credentials: {
-    tableName: 'invect_credentials',
+    tableName: 'flowlib_credentials',
     order: 10,
     fields: {
       id: { type: 'uuid', primaryKey: true, defaultValue: 'uuid()' },
@@ -240,14 +240,14 @@ export const CORE_SCHEMA: InvectPluginSchema = {
 
   // ----- Flow triggers table -----
   flowTriggers: {
-    tableName: 'invect_flow_triggers',
+    tableName: 'flowlib_flow_triggers',
     order: 20,
     fields: {
       id: { type: 'uuid', primaryKey: true, defaultValue: 'uuid()' },
       flowId: {
         type: 'string',
         required: true,
-        references: { table: 'invect_flows', field: 'id', onDelete: 'cascade' },
+        references: { table: 'flowlib_flows', field: 'id', onDelete: 'cascade' },
       },
       nodeId: { type: 'string', required: true },
       type: { type: 'string', required: true, typeAnnotation: 'TriggerType' },
@@ -264,14 +264,14 @@ export const CORE_SCHEMA: InvectPluginSchema = {
 
   // ----- Chat messages table -----
   chatMessages: {
-    tableName: 'invect_chat_messages',
+    tableName: 'flowlib_chat_messages',
     order: 30,
     fields: {
       id: { type: 'uuid', primaryKey: true, defaultValue: 'uuid()' },
       flowId: {
         type: 'string',
         required: true,
-        references: { table: 'invect_flows', field: 'id', onDelete: 'cascade' },
+        references: { table: 'flowlib_flows', field: 'id', onDelete: 'cascade' },
       },
       role: {
         type: 'string',

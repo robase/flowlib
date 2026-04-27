@@ -1,12 +1,12 @@
 /**
- * Kysely-based raw adapter for Invect.
+ * Kysely-based raw adapter for Flowlib.
  *
- * Implements RawInvectAdapter using Kysely's type-safe query builder.
+ * Implements RawFlowlibAdapter using Kysely's type-safe query builder.
  * Dialect-specific quirks (e.g. MySQL's lack of RETURNING) are handled here.
  */
 
 import { Kysely, sql, type Transaction } from 'kysely';
-import type { RawInvectAdapter, WhereClause, AdapterConfig } from '../adapter';
+import type { RawFlowlibAdapter, WhereClause, AdapterConfig } from '../adapter';
 
 // ---------------------------------------------------------------------------
 // Factory
@@ -15,7 +15,7 @@ import type { RawInvectAdapter, WhereClause, AdapterConfig } from '../adapter';
 export function createKyselyAdapter(
   db: Kysely<Record<string, Record<string, unknown>>>,
   config: AdapterConfig,
-): RawInvectAdapter {
+): RawFlowlibAdapter {
   const supportsReturning = config.supportsReturning ?? config.dialect !== 'mysql';
 
   /**
@@ -76,7 +76,7 @@ export function createKyselyAdapter(
     dbInstance:
       | Kysely<Record<string, Record<string, unknown>>>
       | Transaction<Record<string, Record<string, unknown>>>,
-  ): RawInvectAdapter {
+  ): RawFlowlibAdapter {
     return {
       // -------------------------------------------------------------------
       // CREATE
@@ -320,7 +320,7 @@ export function createKyselyAdapter(
       // -------------------------------------------------------------------
       // TRANSACTION
       // -------------------------------------------------------------------
-      async transaction<R>(callback: (trx: RawInvectAdapter) => Promise<R>): Promise<R> {
+      async transaction<R>(callback: (trx: RawFlowlibAdapter) => Promise<R>): Promise<R> {
         return dbInstance.transaction().execute(async (trx) => {
           const transactionAdapter = buildAdapter(
             trx as Transaction<Record<string, Record<string, unknown>>>,

@@ -1,19 +1,19 @@
 /**
- * Invect Plugin System
+ * Flowlib Plugin System
  *
- * Plugins extend Invect with new capabilities: actions (nodes/tools),
+ * Plugins extend Flowlib with new capabilities: actions (nodes/tools),
  * lifecycle hooks, API endpoints, database schema, and middleware.
  *
- * Inspired by better-auth's plugin architecture, adapted for Invect's
+ * Inspired by better-auth's plugin architecture, adapted for Flowlib's
  * framework-adapter pattern and action-based node system.
  *
  * @example
  * ```typescript
- * import { Invect } from '@flowlib/core';
+ * import { Flowlib } from '@flowlib/core';
  * import { rbac } from '@flowlib/plugin-rbac';
  * import { auditLog } from '@flowlib/plugin-audit-log';
  *
- * const flowlib = new Invect({
+ * const flowlib = new Flowlib({
  *   plugins: [
  *     rbac({ resolveUser: (req) => req.user }),
  *     auditLog({ destination: 'database' }),
@@ -23,10 +23,10 @@
  */
 
 import type { ActionDefinition } from 'src/actions/types';
-import type { InvectInstance } from 'src/api/types';
+import type { FlowlibInstance } from 'src/api/types';
 import type {
-  InvectIdentity,
-  InvectPermission,
+  FlowlibIdentity,
+  FlowlibPermission,
   AuthorizationResult,
   AuthorizationContext,
 } from './auth.types';
@@ -173,7 +173,7 @@ export interface PluginTableDefinition {
  *
  * @example
  * ```typescript
- * const schema: InvectPluginSchema = {
+ * const schema: FlowlibPluginSchema = {
  *   // New table
  *   auditLogs: {
  *     fields: {
@@ -194,7 +194,7 @@ export interface PluginTableDefinition {
  * };
  * ```
  */
-export type InvectPluginSchema = Record<string, PluginTableDefinition>;
+export type FlowlibPluginSchema = Record<string, PluginTableDefinition>;
 
 // =============================================================================
 // Plugin Endpoint Types
@@ -206,19 +206,19 @@ export type InvectPluginSchema = Record<string, PluginTableDefinition>;
  * Framework adapters (Express, Next.js, NestJS) mount these automatically.
  * The handler receives a framework-agnostic request/response interface.
  */
-export interface InvectPluginEndpoint {
+export interface FlowlibPluginEndpoint {
   /** HTTP method */
   method: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
 
   /**
-   * Path relative to the Invect base path.
+   * Path relative to the Flowlib base path.
    * Supports Express-style params: `/my-plugin/items/:id`
    */
   path: string;
 
   /**
    * The handler function.
-   * Receives parsed body/params/query and the Invect core instance.
+   * Receives parsed body/params/query and the Flowlib core instance.
    * Must return a serializable response.
    */
   handler: (context: PluginEndpointContext) => Promise<PluginEndpointResponse>;
@@ -227,7 +227,7 @@ export interface InvectPluginEndpoint {
    * Required permission to access this endpoint.
    * If set, the framework adapter enforces authorization before calling the handler.
    */
-  permission?: InvectPermission;
+  permission?: FlowlibPermission;
 
   /**
    * If true, this endpoint does not require authentication.
@@ -240,16 +240,16 @@ export interface InvectPluginEndpoint {
  * Narrow API surface exposed to plugin endpoint handlers.
  *
  * This gives plugins access to core functionality (auth, flow access, etc.)
- * without coupling them to the full Invect class. Framework adapters
+ * without coupling them to the full Flowlib class. Framework adapters
  * populate this from their core instance.
  */
 export interface PluginEndpointCoreApi {
   /** Get all permissions for an identity (based on role) */
-  getPermissions(identity: InvectIdentity | null): InvectPermission[];
+  getPermissions(identity: FlowlibIdentity | null): FlowlibPermission[];
   /** Get available roles and their permission definitions */
-  getAvailableRoles(): Array<{ role: string; permissions: InvectPermission[] }>;
+  getAvailableRoles(): Array<{ role: string; permissions: FlowlibPermission[] }>;
   /** Get the resolved role string for an identity */
-  getResolvedRole(identity: InvectIdentity): string | null;
+  getResolvedRole(identity: FlowlibIdentity): string | null;
   /** Authorize an action for an identity */
   authorize(context: AuthorizationContext): Promise<AuthorizationResult>;
 }
@@ -286,7 +286,7 @@ export interface PluginEndpointContext {
   /** Request headers */
   headers: Record<string, string | undefined>;
   /** Resolved identity (null if unauthenticated or public route) */
-  identity: InvectIdentity | null;
+  identity: FlowlibIdentity | null;
   /** Database API for plugin-owned tables */
   database: PluginDatabaseApi;
   /** The raw Request object (Web API Request) */
@@ -298,18 +298,18 @@ export interface PluginEndpointContext {
   core: PluginEndpointCoreApi;
 
   /**
-   * Access the full Invect instance for advanced operations.
+   * Access the full Flowlib instance for advanced operations.
    *
    * Use this when the narrow `core` API is insufficient — e.g., for
    * reading flows, executing runs, accessing credentials, etc.
    *
    * @example
    * ```typescript
-   * const flowlib = ctx.getInvect();
+   * const flowlib = ctx.getFlowlib();
    * const flows = await flowlib.flows.list();
    * ```
    */
-  getInvect: () => InvectInstance;
+  getFlowlib: () => FlowlibInstance;
 }
 
 /**
@@ -337,7 +337,7 @@ export interface FlowRunHookContext {
   /** Input data for the flow run */
   inputs: Record<string, unknown>;
   /** Identity of the user who triggered the run (if available) */
-  identity?: InvectIdentity | null;
+  identity?: FlowlibIdentity | null;
 }
 
 /**
@@ -367,12 +367,12 @@ export interface NodeExecutionHookResult {
 }
 
 /**
- * Plugin hooks for intercepting Invect lifecycle events.
+ * Plugin hooks for intercepting Flowlib lifecycle events.
  *
  * Hooks run in plugin array order. A hook returning `{ cancel: true }`
  * short-circuits the operation (remaining plugins are skipped).
  */
-export interface InvectPluginHooks {
+export interface FlowlibPluginHooks {
   /**
    * Runs before a flow execution starts.
    * Return `{ cancel: true, reason: '...' }` to prevent the run.
@@ -424,7 +424,7 @@ export interface InvectPluginHooks {
    */
   onRequest?: (
     request: Request,
-    context: { path: string; method: string; identity: InvectIdentity | null },
+    context: { path: string; method: string; identity: FlowlibIdentity | null },
   ) => Promise<void | { response: Response } | { request: Request }>;
 
   /**
@@ -433,7 +433,7 @@ export interface InvectPluginHooks {
    */
   onResponse?: (
     response: Response,
-    context: { path: string; method: string; identity: InvectIdentity | null },
+    context: { path: string; method: string; identity: FlowlibIdentity | null },
   ) => Promise<void | { response: Response }>;
 
   /**
@@ -442,8 +442,8 @@ export interface InvectPluginHooks {
    * Return void to use the default authorization logic.
    */
   onAuthorize?: (context: {
-    identity: InvectIdentity | null;
-    action: InvectPermission;
+    identity: FlowlibIdentity | null;
+    action: FlowlibPermission;
     resource?: { type: string; id?: string };
     database?: PluginDatabaseApi;
   }) => Promise<void | AuthorizationResult>;
@@ -456,11 +456,11 @@ export interface InvectPluginHooks {
 /**
  * Context provided to a plugin's `init()` function.
  *
- * Gives plugins access to Invect's internals for deep integration.
+ * Gives plugins access to Flowlib's internals for deep integration.
  */
-export interface InvectPluginContext {
+export interface FlowlibPluginContext {
   /**
-   * The full Invect configuration (read-only).
+   * The full Flowlib configuration (read-only).
    * Plugins can read config but not modify it after init.
    */
   config: Record<string, unknown>;
@@ -489,7 +489,7 @@ export interface InvectPluginContext {
    * Get another registered plugin by ID.
    * Returns null if the plugin is not registered.
    */
-  getPlugin: (pluginId: string) => InvectPlugin | null;
+  getPlugin: (pluginId: string) => FlowlibPlugin | null;
 
   /**
    * Register additional actions at init time.
@@ -504,18 +504,18 @@ export interface InvectPluginContext {
   store: Map<string, unknown>;
 
   /**
-   * Access the full Invect instance.
+   * Access the full Flowlib instance.
    *
    * Available only after core initialization completes. Use for advanced
    * operations that go beyond the basic plugin context (e.g., executing
    * flows, accessing credentials, running tests).
    *
    * **Note:** This is a lazy accessor. The instance is not available during
-   * `init()` if called before `Invect.initialize()` finishes building
+   * `init()` if called before `Flowlib.initialize()` finishes building
    * the service layer. For init-time operations, use `registerAction`,
    * `hasPlugin`, and `store` instead.
    */
-  getInvect: () => InvectInstance;
+  getFlowlib: () => FlowlibInstance;
 }
 
 // =============================================================================
@@ -524,11 +524,11 @@ export interface InvectPluginContext {
 
 /**
  * Optional return value from `init()`.
- * Allows plugins to modify Invect's configuration or provide additional context.
+ * Allows plugins to modify Flowlib's configuration or provide additional context.
  */
-export interface InvectPluginInitResult {
+export interface FlowlibPluginInitResult {
   /**
-   * Additional options to merge into the Invect config.
+   * Additional options to merge into the Flowlib config.
    * Shallow-merged with the existing config. Cannot override core fields.
    */
   options?: Record<string, unknown>;
@@ -545,16 +545,16 @@ export interface InvectPluginInitResult {
 // =============================================================================
 
 /**
- * The Invect Plugin interface.
+ * The Flowlib Plugin interface.
  *
  * Only `id` is required. All other properties are optional and enable
  * specific extension capabilities.
  *
  * @example
  * ```typescript
- * import type { InvectPlugin } from '@flowlib/core';
+ * import type { FlowlibPlugin } from '@flowlib/core';
  *
- * export function myPlugin(options?: MyPluginOptions): InvectPlugin {
+ * export function myPlugin(options?: MyPluginOptions): FlowlibPlugin {
  *   return {
  *     id: 'my-plugin',
  *
@@ -593,7 +593,7 @@ export interface InvectPluginInitResult {
  * }
  * ```
  */
-export interface InvectPlugin {
+export interface FlowlibPlugin {
   /**
    * Unique plugin identifier.
    * Used for `hasPlugin()` / `getPlugin()` lookups and logging.
@@ -606,7 +606,7 @@ export interface InvectPlugin {
   name?: string;
 
   /**
-   * Called during `Invect.initialize()`, after the action registry is created
+   * Called during `Flowlib.initialize()`, after the action registry is created
    * but before the service factory is built.
    *
    * Use this to:
@@ -616,25 +616,25 @@ export interface InvectPlugin {
    * - Validate plugin prerequisites
    */
   init?: (
-    context: InvectPluginContext,
-  ) => Promise<InvectPluginInitResult | void> | InvectPluginInitResult | void;
+    context: FlowlibPluginContext,
+  ) => Promise<FlowlibPluginInitResult | void> | FlowlibPluginInitResult | void;
 
   /**
    * Database schema required by this plugin.
    *
-   * Declared using the abstract `InvectPluginSchema` format.
-   * The Invect CLI generates the concrete Drizzle schema files
+   * Declared using the abstract `FlowlibPluginSchema` format.
+   * The Flowlib CLI generates the concrete Drizzle schema files
    * from core + plugin schemas combined.
    *
    * Run `npx flowlib-cli generate` after adding/changing plugin schemas.
    */
-  schema?: InvectPluginSchema;
+  schema?: FlowlibPluginSchema;
 
   /**
    * Table names that this plugin requires to exist in the database.
    *
    * Used during startup to verify that all required tables are present.
-   * If any are missing, Invect logs a clear, developer-friendly error
+   * If any are missing, Flowlib logs a clear, developer-friendly error
    * explaining which plugin needs which tables and how to fix it.
    *
    * This is separate from `schema` — use `requiredTables` when your plugin
@@ -668,15 +668,15 @@ export interface InvectPlugin {
    * API endpoints provided by this plugin.
    *
    * Framework adapters (Express, Next.js, NestJS) automatically mount
-   * these alongside the core Invect routes.
+   * these alongside the core Flowlib routes.
    */
-  endpoints?: InvectPluginEndpoint[];
+  endpoints?: FlowlibPluginEndpoint[];
 
   /**
    * Lifecycle hooks for intercepting flow execution, API requests,
    * and authorization.
    */
-  hooks?: InvectPluginHooks;
+  hooks?: FlowlibPluginHooks;
 
   /**
    * Human-readable setup instructions shown when required tables are missing.
@@ -696,7 +696,7 @@ export interface InvectPlugin {
   $ERROR_CODES?: Record<string, { message: string; status?: number }>;
 
   /**
-   * Called during `Invect.shutdown()`.
+   * Called during `Flowlib.shutdown()`.
    * Clean up connections, timers, or other resources.
    */
   shutdown?: () => Promise<void> | void;
@@ -710,7 +710,7 @@ export interface InvectPlugin {
  * A unified plugin definition that bundles both backend and frontend parts.
  *
  * Returned by plugin factory functions and passed to `defineConfig({ plugins: [...] })`.
- * The backend extracts `.backend`, the `<Invect>` component extracts `.frontend`.
+ * The backend extracts `.backend`, the `<Flowlib>` component extracts `.frontend`.
  *
  * @example
  * ```typescript
@@ -724,13 +724,13 @@ export interface InvectPlugin {
  * });
  * ```
  */
-export interface InvectPluginDefinition {
+export interface FlowlibPluginDefinition {
   /** Unique plugin identifier */
   id: string;
   /** Human-readable name */
   name?: string;
   /** Backend plugin (hooks, endpoints, schema, actions) */
-  backend?: InvectPlugin;
+  backend?: FlowlibPlugin;
   /** Frontend plugin (sidebar, routes, providers, components). Typed as `unknown` to avoid React dependency in core. */
   frontend?: unknown;
 }
@@ -741,7 +741,7 @@ export interface InvectPluginDefinition {
 
 /**
  * Collects and executes hooks from all registered plugins.
- * Used internally by `Invect` and framework adapters.
+ * Used internally by `Flowlib` and framework adapters.
  */
 export interface PluginHookRunner {
   /** Run all beforeFlowRun hooks in order */
@@ -778,19 +778,19 @@ export interface PluginHookRunner {
   /** Run all onRequest hooks in order */
   runOnRequest: (
     request: Request,
-    context: { path: string; method: string; identity: InvectIdentity | null },
+    context: { path: string; method: string; identity: FlowlibIdentity | null },
   ) => Promise<{ intercepted: boolean; response?: Response; request?: Request }>;
 
   /** Run all onResponse hooks in order */
   runOnResponse: (
     response: Response,
-    context: { path: string; method: string; identity: InvectIdentity | null },
+    context: { path: string; method: string; identity: FlowlibIdentity | null },
   ) => Promise<Response>;
 
   /** Run all onAuthorize hooks in order */
   runOnAuthorize: (context: {
-    identity: InvectIdentity | null;
-    action: InvectPermission;
+    identity: FlowlibIdentity | null;
+    action: FlowlibPermission;
     resource?: { type: string; id?: string };
     database?: PluginDatabaseApi;
   }) => Promise<AuthorizationResult | null>;

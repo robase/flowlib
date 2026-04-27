@@ -1,4 +1,4 @@
-// Framework-agnostic Service Factory for Invect core
+// Framework-agnostic Service Factory for Flowlib core
 import { FlowsService } from './flows/flows.service';
 import { FlowRunsService } from './flow-runs/flow-runs.service';
 import { NodeExecutionService } from './node-executions/node-execution.service';
@@ -15,7 +15,7 @@ import { CronSchedulerService } from './triggers/cron-scheduler.service';
 import { ChatStreamService } from './chat/chat-stream.service';
 import { ExecutionEventBus, getExecutionEventBus } from './execution-event-bus';
 import { DatabaseError } from 'src/types/common/errors.types';
-import { Logger, InvectConfig } from 'src/schemas';
+import { Logger, FlowlibConfig } from 'src/schemas';
 import { FlowVersionsService } from './flow-versions/flow-versions.service';
 import { ReactFlowRendererService } from './react-flow-renderer.service';
 import type { PluginHookRunner } from 'src/types/plugin.types';
@@ -54,7 +54,7 @@ interface CoreServices {
   cronScheduler: CronSchedulerService;
   chatStreamService: ChatStreamService;
   executionEventBus: ExecutionEventBus;
-  // Adapter handles for `InvectInstance` lifecycle methods. These resolve
+  // Adapter handles for `FlowlibInstance` lifecycle methods. These resolve
   // to either the user-supplied override (`config.services?.X`) or a
   // default-wrapping bridge created at init time.
   encryptionAdapter: EncryptionAdapter;
@@ -79,7 +79,7 @@ export class ServiceFactory {
   logger: Logger;
 
   constructor(
-    private readonly config: InvectConfig,
+    private readonly config: FlowlibConfig,
     /** Action registry for chat system prompt context */
     private readonly actionRegistryRef?: unknown,
     /** Plugin hook runner for lifecycle hooks */
@@ -110,13 +110,13 @@ export class ServiceFactory {
       const dbStart = Date.now();
       const verificationOpts = {
         strict: false,
-        plugins: (this.config.plugins || []) as import('src/types/plugin.types').InvectPlugin[],
+        plugins: (this.config.plugins || []) as import('src/types/plugin.types').FlowlibPlugin[],
       };
       const databaseService = new DatabaseService(
         this.config.database,
         this.logger,
         verificationOpts,
-        (this.config.plugins || []) as import('src/types/plugin.types').InvectPlugin[],
+        (this.config.plugins || []) as import('src/types/plugin.types').FlowlibPlugin[],
       );
       await databaseService.initialize();
       this.logger.info(`DatabaseService initialized in ${Date.now() - dbStart}ms`);
@@ -234,7 +234,7 @@ export class ServiceFactory {
         flowsService,
         flowVersionsService,
         (this.actionRegistryRef as import('src/actions').ActionRegistry) ?? null,
-        null, // flowlib instance wired post-init via chatStreamService.setInvectInstance()
+        null, // flowlib instance wired post-init via chatStreamService.setFlowlibInstance()
       );
 
       // 6e. Wire execution event bus to services that write state.
@@ -358,7 +358,7 @@ export class ServiceFactory {
    * Get the config the factory was constructed with. Useful for callers that
    * need a non-service config field (e.g. `execution.sseHeartbeatIntervalMs`).
    */
-  getConfig(): InvectConfig {
+  getConfig(): FlowlibConfig {
     return this.config;
   }
 
@@ -466,7 +466,7 @@ export class ServiceFactory {
 
   /**
    * Background job runner (PR 13/14) — override or default
-   * `InProcessJobRunner`. Hosts use this from `InvectInstance`
+   * `InProcessJobRunner`. Hosts use this from `FlowlibInstance`
    * lifecycle / maintenance methods to drive the in-process queue.
    */
   getJobRunner(): JobRunnerAdapter {

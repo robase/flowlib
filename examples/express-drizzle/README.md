@@ -1,19 +1,19 @@
 <p align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="../../.github/assets/logo-light.svg">
-    <img alt="Invect" src="../../.github/assets/logo-dark.svg" width="50">
+    <img alt="Flowlib" src="../../.github/assets/logo-dark.svg" width="50">
   </picture>
 </p>
 
 <h1 align="center">Express + Drizzle Example</h1>
 
 <p align="center">
-  Minimal Express backend for Invect with SQLite.
+  Minimal Express backend for Flowlib with SQLite.
 </p>
 
 ---
 
-Primary development server for the Invect monorepo. Pair with the [Vite React frontend](../vite-react-frontend) for fullstack development.
+Primary development server for the Flowlib monorepo. Pair with the [Vite React frontend](../vite-react-frontend) for fullstack development.
 
 ## Quick Start
 
@@ -25,7 +25,7 @@ pnpm dev         # Starts Express on http://localhost:3000
 
 `pnpm dev` auto-runs `db:prepare` when `dev.db` doesn't exist, so a fresh clone boots without manual setup.
 
-This example now includes the version control plugin. It uses a placeholder GitHub token by default, so Git sync actions will fail until you set `GITHUB_TOKEN` and, if needed, `INVECT_VC_REPO`.
+This example now includes the version control plugin. It uses a placeholder GitHub token by default, so Git sync actions will fail until you set `GITHUB_TOKEN` and, if needed, `FLOWLIB_VC_REPO`.
 
 ## Test the API
 

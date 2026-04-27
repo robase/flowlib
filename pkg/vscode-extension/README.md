@@ -1,6 +1,6 @@
 # @flowlib/vscode
 
-VSCode extension for editing Invect flows visually. `.flow.ts` files are the source of truth — open one and the visual editor opens as a custom editor; save to write the file back.
+VSCode extension for editing Flowlib flows visually. `.flow.ts` files are the source of truth — open one and the visual editor opens as a custom editor; save to write the file back.
 
 This is the Phase 1 / Lane L4 scaffold. The real editor loop, webview app, action catalogue, diagnostics, and backend client land in subsequent lanes.
 

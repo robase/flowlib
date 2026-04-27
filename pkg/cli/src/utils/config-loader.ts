@@ -1,7 +1,7 @@
 /**
  * Config Loader
  *
- * Resolves and loads the user's Invect configuration file to discover
+ * Resolves and loads the user's Flowlib configuration file to discover
  * plugins and their schemas. Uses jiti for runtime TypeScript loading
  * Discovers and loads the user's flowlib.config.ts file.
  *
@@ -173,7 +173,7 @@ function getPathAliasesRecursive(configPath: string, visited: Set<string>): Reco
 }
 
 /**
- * Load and resolve the Invect configuration file.
+ * Load and resolve the Flowlib configuration file.
  *
  * Uses jiti for TypeScript/ESM loading with path alias support.
  * Resolves TSConfig path aliases so imports like @/lib/auth work.
@@ -213,7 +213,7 @@ export async function loadConfig(configPath: string): Promise<ResolvedConfig> {
 
   if (!raw || typeof raw !== 'object') {
     throw new Error(
-      `Config file at ${configPath} does not export a valid Invect config object.\n` +
+      `Config file at ${configPath} does not export a valid Flowlib config object.\n` +
         `Expected: export default { database: ..., plugins: [...] }`,
     );
   }
@@ -282,9 +282,9 @@ export function resolveConfigExport(module: unknown): unknown {
     return mod.config;
   }
 
-  // Handle: export const invectConfig = ...
-  if ('invectConfig' in mod) {
-    return mod.invectConfig;
+  // Handle: export const flowlibConfig = ...
+  if ('flowlibConfig' in mod) {
+    return mod.flowlibConfig;
   }
 
   // Handle: module itself is the config (has database)

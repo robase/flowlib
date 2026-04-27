@@ -2,15 +2,15 @@
 // Version Control Plugin — Database Schema (abstract, dialect-agnostic)
 // =============================================================================
 
-import type { InvectPluginSchema } from '@flowlib/core';
+import type { FlowlibPluginSchema } from '@flowlib/core';
 
 const SYNC_MODES = ['direct-commit', 'pr-per-save', 'pr-per-publish'] as const;
 const SYNC_DIRECTIONS = ['push', 'pull', 'bidirectional'] as const;
 const SYNC_ACTIONS = ['push', 'pull', 'pr-created', 'pr-merged', 'conflict'] as const;
 
-export const VC_SCHEMA: InvectPluginSchema = {
+export const VC_SCHEMA: FlowlibPluginSchema = {
   vc_sync_config: {
-    tableName: 'invect_vc_sync_config',
+    tableName: 'flowlib_vc_sync_config',
     order: 10,
     fields: {
       id: { type: 'string', primaryKey: true },
@@ -18,7 +18,7 @@ export const VC_SCHEMA: InvectPluginSchema = {
         type: 'string',
         required: true,
         unique: true,
-        references: { table: 'invect_flows', field: 'id', onDelete: 'cascade' },
+        references: { table: 'flowlib_flows', field: 'id', onDelete: 'cascade' },
         index: true,
       },
       provider: { type: 'string', required: true },
@@ -40,14 +40,14 @@ export const VC_SCHEMA: InvectPluginSchema = {
   },
 
   vc_sync_history: {
-    tableName: 'invect_vc_sync_history',
+    tableName: 'flowlib_vc_sync_history',
     order: 20,
     fields: {
       id: { type: 'uuid', primaryKey: true, defaultValue: 'uuid()' },
       flowId: {
         type: 'string',
         required: true,
-        references: { table: 'invect_flows', field: 'id', onDelete: 'cascade' },
+        references: { table: 'flowlib_flows', field: 'id', onDelete: 'cascade' },
         index: true,
       },
       action: { type: [...SYNC_ACTIONS], required: true },

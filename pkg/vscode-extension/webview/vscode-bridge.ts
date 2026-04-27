@@ -59,7 +59,7 @@ export function postToHost(message: WebviewToHost): void {
   getVsCodeApi()?.postMessage(message);
 }
 
-/** Forward a webview-side log line to the host's `Invect (Webview)` channel. */
+/** Forward a webview-side log line to the host's `Flowlib (Webview)` channel. */
 export function logToHost(level: 'info' | 'warn' | 'error', msg: string, data?: unknown): void {
   postToHost({ type: 'log', level, msg, data });
 }

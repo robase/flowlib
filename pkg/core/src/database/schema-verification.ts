@@ -22,7 +22,7 @@
 import type { DatabaseConnection } from './connection';
 import type { Logger } from 'src/schemas';
 import { mergeSchemas } from './schema-merger';
-import type { InvectPlugin } from 'src/types/plugin.types';
+import type { FlowlibPlugin } from 'src/types/plugin.types';
 
 // =============================================================================
 // Types
@@ -48,7 +48,7 @@ export interface SchemaVerificationOptions {
   /**
    * Plugins that extend the schema (their tables/columns will also be verified).
    */
-  plugins?: InvectPlugin[];
+  plugins?: FlowlibPlugin[];
 }
 
 // =============================================================================

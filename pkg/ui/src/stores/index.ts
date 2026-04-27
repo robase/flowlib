@@ -1,4 +1,4 @@
-// Zustand stores for Invect frontend state management
+// Zustand stores for Flowlib frontend state management
 //
 // Architecture:
 // - React Query: Server state (API data, caching, sync)

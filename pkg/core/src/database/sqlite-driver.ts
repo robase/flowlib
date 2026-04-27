@@ -8,7 +8,7 @@
  * SQLite operations should use `SqliteDriver` instead.
  */
 
-import type { InvectDatabaseConfig } from 'src/schemas';
+import type { FlowlibDatabaseConfig } from 'src/schemas';
 import type { Logger } from 'src/schemas';
 
 // ---------------------------------------------------------------------------
@@ -50,7 +50,7 @@ export interface SqliteDriver {
  * as a heuristic: `libsql://` URLs always get the libsql driver; everything
  * else defaults to `better-sqlite3`.
  */
-export function resolveSqliteDriverType(config: InvectDatabaseConfig): SqliteDriverType {
+export function resolveSqliteDriverType(config: FlowlibDatabaseConfig): SqliteDriverType {
   const d = config.driver;
   if (d === 'better-sqlite3' || d === 'libsql') {
     return d;
@@ -68,7 +68,7 @@ export function resolveSqliteDriverType(config: InvectDatabaseConfig): SqliteDri
  * driver's native binary / WASM blob is never loaded.
  */
 export async function createSqliteDriver(
-  config: InvectDatabaseConfig,
+  config: FlowlibDatabaseConfig,
   filePath: string,
   logger: Logger,
 ): Promise<SqliteDriver> {

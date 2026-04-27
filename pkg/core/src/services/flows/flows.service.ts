@@ -1,4 +1,4 @@
-// Framework-agnostic Flow Service for Invect core
+// Framework-agnostic Flow Service for Flowlib core
 // Updated to delegate all database operations to DatabaseService for better separation of concerns
 
 import type { DatabaseService } from '../database/database.service';
@@ -49,7 +49,7 @@ export class FlowsService {
 
       const flow = await this.databaseService.flows.create(createFlowRequest);
       const flowVersion = await this.databaseService.flowVersions.create(flow.id, {
-        invectDefinition: {
+        flowlibDefinition: {
           nodes: [],
           edges: [],
           metadata: {},

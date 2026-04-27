@@ -1,9 +1,9 @@
-// Demo / preview components for embedding Invect UI without a backend.
+// Demo / preview components for embedding Flowlib UI without a backend.
 //
 // These components are designed for documentation, marketing pages,
-// and interactive previews where no Invect server is available.
+// and interactive previews where no Flowlib server is available.
 
-export { DemoInvect, type DemoInvectProps } from './DemoInvect';
+export { DemoFlowlib, type DemoFlowlibProps } from './DemoFlowlib';
 export { FlowViewer, type FlowViewerProps } from './FlowViewer';
 export { createDemoApiClient, type DemoData } from './demo-api-client';
 export {

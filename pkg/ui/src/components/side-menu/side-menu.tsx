@@ -6,7 +6,7 @@ import { Button } from '../ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '../ui/tooltip';
 import { useTheme } from '~/contexts/ThemeProvider';
 import { usePluginRegistry } from '~/contexts/PluginRegistryContext';
-import { InvectLogo } from '../shared/InvectLogo';
+import { FlowlibLogo } from '../shared/FlowlibLogo';
 
 export interface AppSideMenuProps {
   basePath?: string;
@@ -109,10 +109,10 @@ export function AppSideMenu({ basePath = '' }: AppSideMenuProps) {
               onClick={() => setIsCollapsed(false)}
               className="flex items-center justify-center w-8 h-8 transition-opacity rounded cursor-pointer text-primary-foreground hover:opacity-90"
             >
-              <InvectLogo iconClassName="h-6" />
+              <FlowlibLogo iconClassName="h-6" />
             </button>
           ) : (
-            <InvectLogo
+            <FlowlibLogo
               showLabel
               className="pl-2.5"
               iconClassName="h-6"

@@ -10,7 +10,7 @@ import {
   type Flow,
   type FlowVersion,
   type ReactFlowData,
-  type InvectDefinition,
+  type FlowlibDefinition,
 } from '@flowlib/core/types';
 
 export function useDashboardStats() {
@@ -185,7 +185,7 @@ export function useValidateFlow() {
   const apiClient = useApiClient();
 
   return useMutation({
-    mutationFn: ({ flowId, flowData }: { flowId: string; flowData: InvectDefinition }) =>
+    mutationFn: ({ flowId, flowData }: { flowId: string; flowData: FlowlibDefinition }) =>
       apiClient.validateFlow(flowId, flowData),
     retry: false,
     onError: (error) => {

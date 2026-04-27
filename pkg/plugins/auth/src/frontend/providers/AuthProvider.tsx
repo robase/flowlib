@@ -75,7 +75,7 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 export interface AuthProviderProps {
   children: ReactNode;
   /**
-   * Base URL for the Invect API (e.g. 'http://localhost:3000/flowlib').
+   * Base URL for the Flowlib API (e.g. 'http://localhost:3000/flowlib').
    * Auth endpoints are at `${baseUrl}/plugins/auth/api/auth/*`.
    */
   baseUrl: string;

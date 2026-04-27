@@ -1,7 +1,7 @@
 {
   "name": "@flowlib/vercel-workflows",
   "version": "0.1.1",
-  "description": "Run Invect primitive flows as Vercel Workflows — server plugin and single-step wrapping helpers",
+  "description": "Run Flowlib primitive flows as Vercel Workflows — server plugin and single-step wrapping helpers",
   "license": "MIT",
   "author": "robase <team@flowlib.dev>",
   "repository": {

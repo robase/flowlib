@@ -7,7 +7,7 @@
  * source (branch wiring, step names, and metadata).
  */
 import { describe, it, expect } from 'vitest';
-import type { InvectDefinition } from '@flowlib/core/types';
+import type { FlowlibDefinition } from '@flowlib/core/types';
 import { compileFlow } from '../src/compiler/flow-compiler';
 
 const baseMeta = {
@@ -16,7 +16,7 @@ const baseMeta = {
   version: 1,
 };
 
-function buildIfElseFlow(prefix: 'core' | 'primitives'): InvectDefinition {
+function buildIfElseFlow(prefix: 'core' | 'primitives'): FlowlibDefinition {
   return {
     nodes: [
       {
@@ -60,7 +60,7 @@ function buildIfElseFlow(prefix: 'core' | 'primitives'): InvectDefinition {
   };
 }
 
-function buildModelFlow(prefix: 'core' | 'primitives'): InvectDefinition {
+function buildModelFlow(prefix: 'core' | 'primitives'): FlowlibDefinition {
   return {
     nodes: [
       {

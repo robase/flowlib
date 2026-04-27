@@ -8,7 +8,7 @@ import {
 } from '../test-support/sqlite-isolation';
 
 /**
- * Custom Playwright fixtures for Invect E2E tests.
+ * Custom Playwright fixtures for Flowlib E2E tests.
  *
  * Provides helpers for navigating flows, opening the config panel,
  * running nodes, and asserting on JSON content.
@@ -640,7 +640,7 @@ async function seedBaselineFlow(flowName: string) {
   await requestJson(`/flows/${createdFlow.id}/versions`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ invectDefinition: definition }),
+    body: JSON.stringify({ flowlibDefinition: definition }),
   });
 }
 
@@ -678,7 +678,7 @@ async function resetTestFlow(flowName: string) {
   await requestJson(`/flows/${createdFlow.id}/versions`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ invectDefinition: definition }),
+    body: JSON.stringify({ flowlibDefinition: definition }),
   });
 
   activeTestFlow = {

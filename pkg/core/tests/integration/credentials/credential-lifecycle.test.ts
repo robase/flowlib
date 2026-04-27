@@ -2,18 +2,18 @@
  * Integration tests: Credential lifecycle
  *
  * Tests creating, reading, updating, and deleting credentials through
- * the Invect core with real AES-256-GCM encryption and an in-memory
+ * the Flowlib core with real AES-256-GCM encryption and an in-memory
  * SQLite database.
  */
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import type { InvectInstance } from '../../../src/api/types';
-import { createTestInvect } from '../helpers/test-flowlib';
+import type { FlowlibInstance } from '../../../src/api/types';
+import { createTestFlowlib } from '../helpers/test-flowlib';
 
 describe('Credential Lifecycle', () => {
-  let flowlib: InvectInstance;
+  let flowlib: FlowlibInstance;
 
   beforeAll(async () => {
-    flowlib = await createTestInvect();
+    flowlib = await createTestFlowlib();
   });
 
   afterAll(async () => {

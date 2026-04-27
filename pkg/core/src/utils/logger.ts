@@ -4,7 +4,7 @@ import { Logger, LoggingConfig } from 'src/schemas';
 export type LogLevel = 'debug' | 'info' | 'warn' | 'error' | 'silent';
 
 /**
- * Predefined log scopes for Invect feature areas.
+ * Predefined log scopes for Flowlib feature areas.
  * Use these when creating scoped loggers for consistent naming.
  */
 export const LogScope = {
@@ -257,13 +257,13 @@ export class ScopedLogger implements Logger {
 /**
  * Logger manager that creates and manages scoped loggers with independent log levels.
  *
- * This allows different feature areas of Invect to have different log levels,
+ * This allows different feature areas of Flowlib to have different log levels,
  * making it easier to debug specific functionality without noise from other areas.
  *
  * @example
  * ```typescript
- * // In Invect config:
- * const config: InvectConfig = {
+ * // In Flowlib config:
+ * const config: FlowlibConfig = {
  *   logging: {
  *     level: 'info',  // Default level
  *     scopes: {

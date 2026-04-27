@@ -12,7 +12,7 @@
  *       author is the same party as the host.
  *
  * Consumers select an evaluator via FlowRunnerConfig (primitives) or
- * InvectConfig (server). Actions read it from `ctx.functions.evaluator`.
+ * FlowlibConfig (server). Actions read it from `ctx.functions.evaluator`.
  */
 import { JsExpressionEvaluationError, type JsExpressionEvaluator } from '@flowlib/action-kit';
 export type { JsExpressionEvaluator };
@@ -95,7 +95,7 @@ export interface DirectEvaluatorOptions {
    * without trusting runtime sniffing. When true, `evaluate()` always
    * delegates to `fallback`.
    *
-   * Mirrors `InvectConfig.execution.disableNativeEval`.
+   * Mirrors `FlowlibConfig.execution.disableNativeEval`.
    *
    * @default false
    */

@@ -259,10 +259,10 @@ export class TemplateService {
 // ── Factory helpers ──────────────────────────────────────────────────────────
 //
 // PR 14 (`flowlib-hosted/UPSTREAM.md`): the previous `getTemplateService()`
-// memoized a module-level instance. That meant the first `createInvect()`
+// memoized a module-level instance. That meant the first `createFlowlib()`
 // call's `JsExpressionService` won — subsequent instances silently reused
 // the same `TemplateService` and ignored their own QuickJS runtime. Per-
-// instance state belongs on the `InvectInstance`, so `createTemplateService`
+// instance state belongs on the `FlowlibInstance`, so `createTemplateService`
 // is now the canonical factory and `getTemplateService` is a deprecated
 // pass-through that always returns a fresh instance.
 
@@ -275,9 +275,9 @@ export function createTemplateService(
 
 /**
  * @deprecated Use `createTemplateService(jsExpressionService, logger)` and
- * hold the resulting instance on your `ServiceFactory` / `InvectInstance`.
+ * hold the resulting instance on your `ServiceFactory` / `FlowlibInstance`.
  * Returning a module-level singleton breaks correctness when multiple
- * `createInvect()` instances share a process — they would unknowingly
+ * `createFlowlib()` instances share a process — they would unknowingly
  * share the first instance's `JsExpressionService`.
  */
 export function getTemplateService(

@@ -2,7 +2,7 @@
  * Emitter input/output types.
  *
  * The emitter operates on a `DbFlowDefinition` — a structural shape that the
- * concrete `InvectDefinition` from `@flowlib/core` satisfies. Keeping the input
+ * concrete `FlowlibDefinition` from `@flowlib/core` satisfies. Keeping the input
  * loose means the emitter package has no hard dep on core.
  */
 

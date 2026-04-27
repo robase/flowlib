@@ -2,7 +2,7 @@ import * as React from 'react';
 import * as PopoverPrimitive from '@radix-ui/react-popover';
 
 import { cn } from '~/lib/utils';
-import { useInvectPortalClass } from '~/hooks/use-flowlib-portal-class';
+import { useFlowlibPortalClass } from '~/hooks/use-flowlib-portal-class';
 
 const Popover = PopoverPrimitive.Root;
 
@@ -19,7 +19,7 @@ const PopoverContent = React.forwardRef<
     { className, align = 'center', sideOffset = 4, container, disablePortal = false, ...props },
     ref,
   ) => {
-    const portalClass = useInvectPortalClass();
+    const portalClass = useFlowlibPortalClass();
     const content = (
       <PopoverPrimitive.Content
         ref={ref}

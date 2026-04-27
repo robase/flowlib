@@ -18,8 +18,8 @@ import pc from 'picocolors';
 import { findConfigPath, loadConfig } from '../utils/config-loader.js';
 
 export const infoCommand = new Command('info')
-  .description('Display diagnostic information about your Invect setup')
-  .option('--config <path>', 'Path to your Invect config file')
+  .description('Display diagnostic information about your Flowlib setup')
+  .option('--config <path>', 'Path to your Flowlib config file')
   .option('--json', 'Output as JSON')
   .action(async (options: { config?: string; json?: boolean }) => {
     const info: Record<string, unknown> = {};
@@ -35,7 +35,7 @@ export const infoCommand = new Command('info')
     // Package manager detection
     info.packageManager = detectPackageManager();
 
-    // Invect version
+    // Flowlib version
     info.flowlib = {
       cliVersion: '0.1.0',
       coreVersion: await detectPackageVersion('@flowlib/core'),
@@ -81,7 +81,7 @@ export const infoCommand = new Command('info')
   });
 
 function printInfo(info: Record<string, unknown>): void {
-  console.log(pc.bold('\n📋 Invect Info\n'));
+  console.log(pc.bold('\n📋 Flowlib Info\n'));
 
   // System
   const sys = info.system as Record<string, string>;
@@ -98,9 +98,9 @@ function printInfo(info: Record<string, unknown>): void {
   console.log(pc.dim(`    ${pm}`));
   console.log('');
 
-  // Invect
+  // Flowlib
   const imp = info.flowlib as Record<string, string>;
-  console.log(pc.bold('  Invect:'));
+  console.log(pc.bold('  Flowlib:'));
   console.log(pc.dim(`    CLI:   ${imp.cliVersion}`));
   console.log(pc.dim(`    Core:  ${imp.coreVersion}`));
   console.log('');

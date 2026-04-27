@@ -1,5 +1,5 @@
 ---
-description: 'Enforce quality standards for Invect provider action definitions. Use when: editing defineAction() calls, modifying action descriptions, adding params to actions, reviewing action metadata.'
+description: 'Enforce quality standards for Flowlib provider action definitions. Use when: editing defineAction() calls, modifying action descriptions, adding params to actions, reviewing action metadata.'
 applyTo: 'pkg/core/src/actions/**'
 ---
 

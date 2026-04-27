@@ -1,5 +1,5 @@
 /**
- * `npx flowlib-cli init` — Initialize Invect in your project
+ * `npx flowlib-cli init` — Initialize Flowlib in your project
  *
  * Interactive setup wizard that:
  *   1. Detects your framework (Express, NestJS, Next.js)
@@ -170,7 +170,7 @@ type SchemaTool = (typeof SCHEMA_TOOLS)[number];
 // =============================================================================
 
 export const initCommand = new Command('init')
-  .description('Initialize Invect in your project')
+  .description('Initialize Flowlib in your project')
   .option('--framework <framework>', 'Framework to use (express, nestjs, nextjs)')
   .option('--database <database>', 'Database to use (sqlite, postgresql, mysql)')
   .option('--package-manager <pm>', 'Package manager (npm, pnpm, yarn, bun)')
@@ -186,8 +186,8 @@ export const initCommand = new Command('init')
       console.log(
         '\n' +
           [
-            `   ${pc.bold('Invect CLI')} ${pc.dim('(v0.1.0)')}`,
-            `   ${pc.gray("Let's set up Invect in your project.")}`,
+            `   ${pc.bold('Flowlib CLI')} ${pc.dim('(v0.1.0)')}`,
+            `   ${pc.gray("Let's set up Flowlib in your project.")}`,
           ].join('\n') +
           '\n',
       );
@@ -501,19 +501,19 @@ export const initCommand = new Command('init')
 
       // Check for .env file
       const envPath = path.join(process.cwd(), '.env');
-      const envLine = `INVECT_ENCRYPTION_KEY="${encryptionKey}"`;
+      const envLine = `FLOWLIB_ENCRYPTION_KEY="${encryptionKey}"`;
 
       if (fs.existsSync(envPath)) {
         const envContent = fs.readFileSync(envPath, 'utf-8');
-        if (!envContent.includes('INVECT_ENCRYPTION_KEY')) {
+        if (!envContent.includes('FLOWLIB_ENCRYPTION_KEY')) {
           fs.appendFileSync(envPath, `\n${envLine}\n`);
-          console.log(pc.green(`  ✓ Added INVECT_ENCRYPTION_KEY to .env`));
+          console.log(pc.green(`  ✓ Added FLOWLIB_ENCRYPTION_KEY to .env`));
         } else {
-          console.log(pc.dim('  ℹ INVECT_ENCRYPTION_KEY already set in .env'));
+          console.log(pc.dim('  ℹ FLOWLIB_ENCRYPTION_KEY already set in .env'));
         }
       } else {
         fs.writeFileSync(envPath, `${envLine}\n`);
-        console.log(pc.green(`  ✓ Created .env with INVECT_ENCRYPTION_KEY`));
+        console.log(pc.green(`  ✓ Created .env with FLOWLIB_ENCRYPTION_KEY`));
       }
 
       // 7. Setup ORM config (Drizzle only — Prisma/SQL don't need one from us)
@@ -538,7 +538,7 @@ export const initCommand = new Command('init')
             schemaTool.id === 'sql'
               ? 'Generate SQL migration file now?'
               : existingSchemaPath
-                ? 'Append Invect tables to your existing schema now?'
+                ? 'Append Flowlib tables to your existing schema now?'
                 : 'Generate schema files now?',
           initial: true,
         },
@@ -600,7 +600,7 @@ export const initCommand = new Command('init')
       }
 
       // 9. Summary
-      console.log(pc.bold(pc.green('\n✓ Invect initialized successfully!\n')));
+      console.log(pc.bold(pc.green('\n✓ Flowlib initialized successfully!\n')));
 
       console.log(pc.dim('  Next steps:'));
       const nextSteps: string[] = [];
@@ -630,7 +630,7 @@ export const initCommand = new Command('init')
 
       if (framework.id === 'express') {
         nextSteps.push(
-          `  ${n++}. Mount the router: ${pc.cyan("app.use('/flowlib', createInvectRouter(config))")}`,
+          `  ${n++}. Mount the router: ${pc.cyan("app.use('/flowlib', createFlowlibRouter(config))")}`,
         );
       } else if (framework.id === 'nextjs') {
         const routeFile = 'app/api/flowlib/[...flowlib]/route.ts';
@@ -641,10 +641,10 @@ export const initCommand = new Command('init')
           .replace(/\.ts$/, '');
 
         const routeSnippet = [
-          `import { createInvectHandler } from '@flowlib/nextjs';`,
+          `import { createFlowlibHandler } from '@flowlib/nextjs';`,
           `import { config } from '${routeImportPath}';`,
           ``,
-          `const handler = createInvectHandler(config);`,
+          `const handler = createFlowlibHandler(config);`,
           ``,
           `export const GET = handler.GET;`,
           `export const POST = handler.POST;`,
@@ -660,10 +660,10 @@ export const initCommand = new Command('init')
         // Cron maintenance route for Vercel / serverless deployments
         const cronRouteFile = 'app/api/flowlib/cron/route.ts';
         const cronRouteSnippet = [
-          `import { createInvectCronHandler } from '@flowlib/nextjs';`,
+          `import { createFlowlibCronHandler } from '@flowlib/nextjs';`,
           `import { config } from '${routeImportPath}';`,
           ``,
-          `export const GET = createInvectCronHandler(config);`,
+          `export const GET = createFlowlibCronHandler(config);`,
         ]
           .map((l) => `  ${pc.cyan(l)}`)
           .join('\n');
@@ -681,7 +681,7 @@ export const initCommand = new Command('init')
         );
       } else if (framework.id === 'nestjs') {
         nextSteps.push(
-          `  ${n++}. Import ${pc.cyan('InvectModule.forRoot(config)')} in your AppModule`,
+          `  ${n++}. Import ${pc.cyan('FlowlibModule.forRoot(config)')} in your AppModule`,
         );
       }
 
@@ -701,13 +701,13 @@ export const initCommand = new Command('init')
           `import '@flowlib/ui/styles';`,
           `import config from '${pageImportPath}';`,
           ``,
-          `const Invect = dynamic(`,
-          `  () => import('@flowlib/ui').then((mod) => ({ default: mod.Invect })),`,
+          `const Flowlib = dynamic(`,
+          `  () => import('@flowlib/ui').then((mod) => ({ default: mod.Flowlib })),`,
           `  { ssr: false },`,
           `);`,
           ``,
-          `export default function InvectPage() {`,
-          `  return <Invect config={config} />;`,
+          `export default function FlowlibPage() {`,
+          `  return <Flowlib config={config} />;`,
           `}`,
         ]
           .map((l) => `  ${pc.cyan(l)}`)
@@ -842,9 +842,9 @@ export function generateConfigFile(framework: Framework, database: Database): st
   const apiPath = framework.id === 'nextjs' ? '/api/flowlib' : '/flowlib';
 
   return `/**
- * Invect Configuration
+ * Flowlib Configuration
  *
- * This file is read by the Invect CLI for schema generation
+ * This file is read by the Flowlib CLI for schema generation
  * and by your application at runtime.
  *
  * Docs: https://flowlib.dev/docs
@@ -853,7 +853,7 @@ export function generateConfigFile(framework: Framework, database: Database): st
 import { defineConfig } from '@flowlib/core';
 ${adapterImport}
 export const config = defineConfig({
-  encryptionKey: process.env.INVECT_ENCRYPTION_KEY,
+  encryptionKey: process.env.FLOWLIB_ENCRYPTION_KEY,
 ${dbConfig}
   frontendPath: '/flowlib',
   apiPath: '${apiPath}',
@@ -1067,7 +1067,7 @@ async function askSchemaPath(
     {
       type: 'select',
       name: 'selected',
-      message: `Which ${schemaTool.name} schema file should Invect use?`,
+      message: `Which ${schemaTool.name} schema file should Flowlib use?`,
       choices,
       initial: 0,
     },

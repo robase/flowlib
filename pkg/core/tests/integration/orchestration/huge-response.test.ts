@@ -20,9 +20,9 @@ import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http';
 import { AddressInfo } from 'node:net';
 import { FlowRunStatus } from '../../../src';
-import type { InvectInstance } from '../../../src/api/types';
-import type { InvectDefinition } from '../../../src/services/flow-versions/schemas-fresh';
-import { createTestInvect } from '../helpers/test-flowlib';
+import type { FlowlibInstance } from '../../../src/api/types';
+import type { FlowlibDefinition } from '../../../src/services/flow-versions/schemas-fresh';
+import { createTestFlowlib } from '../helpers/test-flowlib';
 
 // ---------------------------------------------------------------------------
 // Local HTTP server — serves a configurable payload per request
@@ -39,7 +39,7 @@ let server: Server;
 let serverBase: string;
 const originalOpenAIBaseUrl = process.env.OPENAI_BASE_URL;
 
-let flowlib: InvectInstance;
+let flowlib: FlowlibInstance;
 let httpCredentialId: string;
 let openaiCredentialId: string;
 
@@ -50,7 +50,7 @@ beforeAll(async () => {
   serverBase = `http://127.0.0.1:${port}`;
   process.env.OPENAI_BASE_URL = `${serverBase}/v1`;
 
-  flowlib = await createTestInvect();
+  flowlib = await createTestFlowlib();
 
   const httpCred = await flowlib.credentials.create({
     name: 'Huge-response HTTP (none)',
@@ -101,9 +101,9 @@ afterEach(() => {
 // Helpers
 // ---------------------------------------------------------------------------
 
-async function runFlow(definition: InvectDefinition) {
+async function runFlow(definition: FlowlibDefinition) {
   const flow = await flowlib.flows.create({ name: `huge-${Date.now()}-${Math.random()}` });
-  await flowlib.versions.create(flow.id, { invectDefinition: definition });
+  await flowlib.versions.create(flow.id, { flowlibDefinition: definition });
   return flowlib.runs.start(flow.id, {}, { useBatchProcessing: false });
 }
 
@@ -175,7 +175,7 @@ describe('Huge payload handling', () => {
         res.end(bodyString);
       };
 
-      const definition: InvectDefinition = {
+      const definition: FlowlibDefinition = {
         nodes: [
           {
             id: 'http',
@@ -223,7 +223,7 @@ describe('Huge payload handling', () => {
   it(
     'mapper iteration runs to completion over 1000 items and downstream can aggregate',
     async () => {
-      const definition: InvectDefinition = {
+      const definition: FlowlibDefinition = {
         nodes: [
           {
             id: 'src',
@@ -241,7 +241,7 @@ describe('Huge payload handling', () => {
             params: { code: 'return n * 2' },
             mapper: { enabled: true, expression: 'src', concurrency: 25 },
             position: { x: 200, y: 0 },
-          } as unknown as InvectDefinition['nodes'][number],
+          } as unknown as FlowlibDefinition['nodes'][number],
           {
             id: 'sum',
             type: 'core.javascript',
@@ -303,7 +303,7 @@ describe('Huge payload handling', () => {
         res.end();
       };
 
-      const definition: InvectDefinition = {
+      const definition: FlowlibDefinition = {
         nodes: [
           {
             id: 'model',
@@ -365,7 +365,7 @@ describe('Huge payload handling', () => {
       };
 
       try {
-        const definition: InvectDefinition = {
+        const definition: FlowlibDefinition = {
           nodes: [
             {
               id: 'slow',

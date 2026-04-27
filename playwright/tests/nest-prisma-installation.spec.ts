@@ -1,15 +1,15 @@
 /**
- * E2E Test — Invect Installation into an Existing NestJS + Prisma + PostgreSQL App
+ * E2E Test — Flowlib Installation into an Existing NestJS + Prisma + PostgreSQL App
  *
  * Validates the full installation flow that a developer would follow
- * when adding Invect to their pre-existing NestJS SaaS application:
+ * when adding Flowlib to their pre-existing NestJS SaaS application:
  *
  *   1. Start with a clean PostgreSQL database (via Docker)
- *   2. Push the app-only Prisma schema (SaaS tables, no Invect)
- *   3. Run `npx flowlib generate --adapter prisma` to merge Invect models
- *   4. Push the updated schema (SaaS + Invect tables)
+ *   2. Push the app-only Prisma schema (SaaS tables, no Flowlib)
+ *   3. Run `npx flowlib generate --adapter prisma` to merge Flowlib models
+ *   4. Push the updated schema (SaaS + Flowlib tables)
  *   5. Start the NestJS server
- *   6. Verify Invect API is functional (flow CRUD, credentials, agent tools)
+ *   6. Verify Flowlib API is functional (flow CRUD, credentials, agent tools)
  *
  * Requires Docker to be running.
  */
@@ -27,7 +27,7 @@ const SCHEMA_FILE = path.join(EXAMPLE_DIR, 'prisma/schema.prisma');
 // Docker container name and test database — isolated per test run
 const CONTAINER_NAME = `flowlib-pw-nestprisma-${process.pid}`;
 const PG_PORT = 5490 + (process.pid % 100); // semi-random port to avoid collisions
-const DB_NAME = `invect_test_${Date.now()}`;
+const DB_NAME = `flowlib_test_${Date.now()}`;
 const DATABASE_URL = `postgresql://flowlib:flowlib@localhost:${PG_PORT}/${DB_NAME}`;
 
 const NEST_PORT = 4100 + (process.pid % 100);
@@ -110,7 +110,7 @@ function waitForPostgres(timeoutMs = 30_000): void {
 
 // ─── Test Suite ──────────────────────────────────────────────────
 
-test.describe('NestJS + Prisma + PostgreSQL — Invect Installation', () => {
+test.describe('NestJS + Prisma + PostgreSQL — Flowlib Installation', () => {
   let serverProcess: ChildProcess | null = null;
   let originalSchema: string;
 
@@ -168,7 +168,7 @@ test.describe('NestJS + Prisma + PostgreSQL — Invect Installation', () => {
   // ─── Step 1: Push app-only schema ─────────────────────────────
 
   test('Step 1: Push SaaS-only schema to PostgreSQL', () => {
-    // The prisma schema currently has only SaaS tables (no Invect).
+    // The prisma schema currently has only SaaS tables (no Flowlib).
     // Push it to the test database.
     run('npx prisma db push --skip-generate --accept-data-loss', {
       DATABASE_URL,
@@ -182,7 +182,7 @@ test.describe('NestJS + Prisma + PostgreSQL — Invect Installation', () => {
     expect(tables).toContain('projects');
     expect(tables).toContain('api_keys');
 
-    // Invect tables should NOT exist yet
+    // Flowlib tables should NOT exist yet
     expect(tables).not.toContain('flows');
     expect(tables).not.toContain('flow_versions');
     expect(tables).not.toContain('flow_executions');
@@ -191,13 +191,13 @@ test.describe('NestJS + Prisma + PostgreSQL — Invect Installation', () => {
 
   // ─── Step 2: Run flowlib generate ─────────────────────────────
 
-  test('Step 2: Run `npx flowlib generate --adapter prisma` to merge Invect tables', () => {
+  test('Step 2: Run `npx flowlib generate --adapter prisma` to merge Flowlib tables', () => {
     const output = run(
       'npx flowlib generate --adapter prisma --config flowlib.config.ts --dialect postgresql --yes',
       { DATABASE_URL },
     );
 
-    // The schema file should now include Invect models
+    // The schema file should now include Flowlib models
     const schema = fs.readFileSync(SCHEMA_FILE, 'utf-8');
 
     // Original SaaS models preserved
@@ -207,7 +207,7 @@ test.describe('NestJS + Prisma + PostgreSQL — Invect Installation', () => {
     expect(schema).toContain('model Project');
     expect(schema).toContain('model ApiKey');
 
-    // Invect core models added
+    // Flowlib core models added
     expect(schema).toContain('flows');
     expect(schema).toContain('flow_versions');
     expect(schema).toContain('flow_executions');
@@ -219,7 +219,7 @@ test.describe('NestJS + Prisma + PostgreSQL — Invect Installation', () => {
 
   // ─── Step 3: Push merged schema ───────────────────────────────
 
-  test('Step 3: Push merged schema (SaaS + Invect) to PostgreSQL', () => {
+  test('Step 3: Push merged schema (SaaS + Flowlib) to PostgreSQL', () => {
     run('npx prisma db push --skip-generate --accept-data-loss', {
       DATABASE_URL,
     });
@@ -233,7 +233,7 @@ test.describe('NestJS + Prisma + PostgreSQL — Invect Installation', () => {
     expect(tables).toContain('projects');
     expect(tables).toContain('api_keys');
 
-    // Invect core tables now present
+    // Flowlib core tables now present
     expect(tables).toContain('flows');
     expect(tables).toContain('flow_versions');
     expect(tables).toContain('flow_executions');
@@ -244,7 +244,7 @@ test.describe('NestJS + Prisma + PostgreSQL — Invect Installation', () => {
 
   // ─── Step 4: Boot NestJS server and verify API ────────────────
 
-  test('Step 4: Start NestJS server and verify Invect API works', async ({ request }) => {
+  test('Step 4: Start NestJS server and verify Flowlib API works', async ({ request }) => {
     // Spawn the NestJS server against the test database
     serverProcess = spawn('npx', ['nest', 'start'], {
       cwd: EXAMPLE_DIR,
@@ -252,7 +252,7 @@ test.describe('NestJS + Prisma + PostgreSQL — Invect Installation', () => {
         ...process.env,
         DATABASE_URL,
         PORT: String(NEST_PORT),
-        INVECT_BASE_PATH: '/flowlib',
+        FLOWLIB_BASE_PATH: '/flowlib',
         NODE_ENV: 'development',
       },
       stdio: ['pipe', 'pipe', 'pipe'],

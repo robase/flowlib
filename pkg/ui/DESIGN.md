@@ -1,15 +1,15 @@
 ---
 title: Design System
-description: Linear-inspired theme system for Invect UI components.
+description: Linear-inspired theme system for Flowlib UI components.
 ---
 
-# Design System — Linear-Inspired Theme for Invect
+# Design System — Linear-Inspired Theme for Flowlib
 
 ## 1. Visual Theme & Atmosphere
 
 A dark-mode-first design language where content emerges from darkness with surgical precision. The overall impression is one of extreme precision engineering: every element exists in a carefully calibrated hierarchy of luminance, managed through subtle gradations of opacity rather than color variation.
 
-This document maps that vision onto Invect's `imp-*` token system, `.flowlib` CSS scope, Tailwind utility classes, and component architecture (CVA variants, Radix primitives, shadcn/ui foundation).
+This document maps that vision onto Flowlib's `imp-*` token system, `.flowlib` CSS scope, Tailwind utility classes, and component architecture (CVA variants, Radix primitives, shadcn/ui foundation).
 
 ### Core Design Principles
 
@@ -145,7 +145,7 @@ Geist Variable is loaded at **weight 100–900** (variable font). Iosevka is loa
 
 ### Type Scale
 
-Invect uses Tailwind's default type scale. In this Linear-inspired direction, the following specific treatments apply:
+Flowlib uses Tailwind's default type scale. In this Linear-inspired direction, the following specific treatments apply:
 
 | Role         | Tailwind Classes                        | Size            | Weight  | Letter Spacing | Notes                                |
 | ------------ | --------------------------------------- | --------------- | ------- | -------------- | ------------------------------------ |
@@ -174,7 +174,7 @@ Invect uses Tailwind's default type scale. In this Linear-inspired direction, th
 
 ## 4. Component Styling Patterns
 
-All Invect components use [class-variance-authority (CVA)](https://cva.style/docs) for variant management and are built on shadcn/ui + Radix primitives. Styles use Tailwind classes referencing `imp-*` tokens.
+All Flowlib components use [class-variance-authority (CVA)](https://cva.style/docs) for variant management and are built on shadcn/ui + Radix primitives. Styles use Tailwind classes referencing `imp-*` tokens.
 
 ### Buttons
 
@@ -256,7 +256,7 @@ Key properties:
 
 ### Spacing System
 
-Invect uses Tailwind's default 4px-based spacing scale:
+Flowlib uses Tailwind's default 4px-based spacing scale:
 
 | Tailwind       | Pixels | Use                            |
 | -------------- | ------ | ------------------------------ |
@@ -436,7 +436,7 @@ Destructive:       bg-destructive        (#e5484d)
   /* Navigation bar */
 }
 <nav className="bg-sidebar border-b border-sidebar-border px-4 py-3 flex items-center justify-between">
-  <span className="text-sm font-medium text-sidebar-foreground">Invect</span>
+  <span className="text-sm font-medium text-sidebar-foreground">Flowlib</span>
   <div className="flex gap-4">
     <a className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
       Flows

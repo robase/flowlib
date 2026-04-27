@@ -1,21 +1,21 @@
 <p align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="../../../.github/assets/logo-light.svg">
-    <img alt="Invect" src="../../../.github/assets/logo-dark.svg" width="50">
+    <img alt="Flowlib" src="../../../.github/assets/logo-dark.svg" width="50">
   </picture>
 </p>
 
 <h1 align="center">@flowlib/rbac</h1>
 
 <p align="center">
-  Role-based access control plugin for Invect.
+  Role-based access control plugin for Flowlib.
   <br />
   <a href="https://flowlib.dev/docs/plugins"><strong>Docs</strong></a>
 </p>
 
 ---
 
-Adds flow-level permissions, sharing UI, and access control enforcement to Invect. Requires [`@flowlib/user-auth`](../auth) for session resolution.
+Adds flow-level permissions, sharing UI, and access control enforcement to Flowlib. Requires [`@flowlib/user-auth`](../auth) for session resolution.
 
 ## Install
 
@@ -29,25 +29,25 @@ pnpm add @flowlib/rbac
 import { auth } from '@flowlib/user-auth';
 import { rbac } from '@flowlib/rbac';
 
-const invectRouter = await createInvectRouter({
+const flowlibRouter = await createFlowlibRouter({
   database: { type: 'sqlite', connectionString: 'file:./dev.db' },
-  encryptionKey: process.env.INVECT_ENCRYPTION_KEY,
+  encryptionKey: process.env.FLOWLIB_ENCRYPTION_KEY,
   plugins: [
     auth({ globalAdmins: [{ email: 'admin@example.com', pw: 'secret' }] }), // Must come first
     rbac(),
   ],
 });
 
-app.use('/flowlib', invectRouter);
+app.use('/flowlib', flowlibRouter);
 ```
 
 ## Frontend
 
 ```tsx
-import { Invect } from '@flowlib/ui';
+import { Flowlib } from '@flowlib/ui';
 import { rbacFrontend } from '@flowlib/rbac/ui';
 
-<Invect apiBaseUrl="http://localhost:3000/flowlib" plugins={[rbacFrontend]} />;
+<Flowlib apiBaseUrl="http://localhost:3000/flowlib" plugins={[rbacFrontend]} />;
 ```
 
 The plugin contributes sidebar items, an access management page, a flow-level access panel tab, and a share button in the flow editor header.

@@ -1,6 +1,6 @@
 // Node Data Service - Framework-agnostic node testing and data helpers
 import { DatabaseService } from './database/database.service';
-import { Logger, InvectConfig } from 'src/schemas';
+import { Logger, FlowlibConfig } from 'src/schemas';
 import { DatabaseError, ValidationError } from 'src/types/common/errors.types';
 import { Model, BaseAIClient, BatchProvider } from './ai/base-client';
 
@@ -28,7 +28,7 @@ export class NodeDataService {
   private readonly CACHE_DURATION = 60 * 60 * 1000; // 60 minutes in milliseconds
 
   constructor(
-    private readonly config: InvectConfig,
+    private readonly config: FlowlibConfig,
     private readonly logger: Logger,
     private readonly databaseService: DatabaseService,
     private readonly aiClient: BaseAIClient,

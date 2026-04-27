@@ -249,9 +249,9 @@ export function OAuth2ConnectButton({
 /**
  * OAuth2 Callback Handler Component
  *
- * Used by the internal Invect route at `<frontendPath>/oauth/callback`.
+ * Used by the internal Flowlib route at `<frontendPath>/oauth/callback`.
  * Host apps normally do not need to mount this manually unless they are
- * implementing a custom routing setup outside the built-in Invect router.
+ * implementing a custom routing setup outside the built-in Flowlib router.
  * It extracts the code/state from URL and sends it to the parent window.
  */
 export function OAuth2CallbackHandler() {

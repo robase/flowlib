@@ -1,12 +1,12 @@
 /**
  * @flowlib/mcp — Plugin entry point
  *
- * Exports the `mcp()` factory that creates an InvectPluginDefinition providing
+ * Exports the `mcp()` factory that creates an FlowlibPluginDefinition providing
  * MCP (Model Context Protocol) endpoints for AI coding agents.
  */
 
 import { randomUUID } from 'node:crypto';
-import type { InvectPlugin, InvectPluginDefinition, InvectPluginContext } from '@flowlib/core';
+import type { FlowlibPlugin, FlowlibPluginDefinition, FlowlibPluginContext } from '@flowlib/core';
 import { WebStandardStreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js';
 import type { McpPluginOptions } from '../shared/types';
 import { DirectClient } from './client/direct-client';
@@ -21,7 +21,7 @@ const MCP_SESSION_HEADER = 'mcp-session-id';
 /**
  * Create the MCP plugin.
  *
- * When registered with Invect, this plugin mounts Streamable HTTP endpoints
+ * When registered with Flowlib, this plugin mounts Streamable HTTP endpoints
  * at `/plugins/mcp/` that implement the Model Context Protocol. MCP clients
  * (Claude Desktop, VS Code Copilot, Cursor, etc.) connect to these endpoints.
  *
@@ -34,7 +34,7 @@ const MCP_SESSION_HEADER = 'mcp-session-id';
  * });
  * ```
  */
-export function mcp(options: McpPluginOptions = {}): InvectPluginDefinition {
+export function mcp(options: McpPluginOptions = {}): FlowlibPluginDefinition {
   return {
     id: 'mcp',
     name: 'Model Context Protocol',
@@ -42,7 +42,7 @@ export function mcp(options: McpPluginOptions = {}): InvectPluginDefinition {
   };
 }
 
-function _mcpBackendPlugin(options: McpPluginOptions = {}): InvectPlugin {
+function _mcpBackendPlugin(options: McpPluginOptions = {}): FlowlibPlugin {
   const sessionTtlMs = options.sessionTtlMs ?? 30 * 60 * 1000;
   const sessionManager = new SessionManager(sessionTtlMs);
   let auditLogger: AuditLogger | undefined;
@@ -57,7 +57,7 @@ function _mcpBackendPlugin(options: McpPluginOptions = {}): InvectPlugin {
     id: 'mcp',
     name: 'Model Context Protocol',
 
-    init(ctx: InvectPluginContext) {
+    init(ctx: FlowlibPluginContext) {
       auditLogger = new AuditLogger(ctx.logger, options.audit);
 
       ctx.store.set('sessionManager', sessionManager);
@@ -92,7 +92,7 @@ function _mcpBackendPlugin(options: McpPluginOptions = {}): InvectPlugin {
             ctx.body,
             sessionManager,
             () =>
-              createMcpServer(new DirectClient(ctx.getInvect()), {
+              createMcpServer(new DirectClient(ctx.getFlowlib()), {
                 auditLogger,
                 getSessionContext: () => currentSessionCtx,
               }),

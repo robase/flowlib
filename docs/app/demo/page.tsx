@@ -1,9 +1,9 @@
 import { DemoPage } from './demo-page';
 
 export const metadata = {
-  title: 'Live Demo — Invect',
+  title: 'Live Demo — Flowlib',
   description:
-    'Interactive demo of the full Invect workflow editor — sidebar, flow canvas, and node palette — rendered entirely in the browser with no backend.',
+    'Interactive demo of the full Flowlib workflow editor — sidebar, flow canvas, and node palette — rendered entirely in the browser with no backend.',
 };
 
 export default function Page() {

@@ -30,7 +30,7 @@ import { useOAuth2Providers } from '../../api/credentials.api';
 import { buildOAuthCallbackUri, useFrontendPath } from '../../contexts/FrontendPathContext';
 import { OAuth2ConnectButton } from './OAuth2ConnectButton';
 import type { OAuth2ProviderDefinition, Credential } from '../../api/types';
-import { InvectLoader } from '../shared/InvectLoader';
+import { FlowlibLoader } from '../shared/FlowlibLoader';
 
 // Icon mapping for providers
 const providerIcons: Record<string, React.ElementType> = {
@@ -182,7 +182,7 @@ export function OAuth2ProviderSelector({
 
         {isLoading ? (
           <div className="flex items-center justify-center py-8">
-            <InvectLoader iconClassName="h-14" label="Loading providers..." />
+            <FlowlibLoader iconClassName="h-14" label="Loading providers..." />
           </div>
         ) : selectedProvider ? (
           // Configuration form for selected provider

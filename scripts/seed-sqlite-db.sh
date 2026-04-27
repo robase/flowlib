@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Ensure a SQLite database has the Invect schema by running
+# Ensure a SQLite database has the Flowlib schema by running
 # the flattened Drizzle migration. Safe to re-run (CREATE TABLE
 # uses IF NOT EXISTS... wait, Drizzle migrations don't. So we
 # check if tables exist first.)
@@ -22,7 +22,7 @@ fi
 TABLE_COUNT=$(sqlite3 "$DB_PATH" "SELECT count(*) FROM sqlite_master WHERE type='table' AND name='flows';" 2>/dev/null || echo "0")
 
 if [ "$TABLE_COUNT" = "0" ]; then
-  echo "Creating Invect schema in $DB_PATH..."
+  echo "Creating Flowlib schema in $DB_PATH..."
   # Filter out Drizzle's --> statement-breakpoint markers and run SQL
   grep -v '^\-\->' "$MIGRATION_SQL" | sqlite3 "$DB_PATH"
   echo "Done."

@@ -69,7 +69,7 @@ export async function generateSchema(opts: {
   }
 
   throw new Error(
-    `Unsupported adapter "${opts.adapter}". Invect supports: ${Object.keys(adapters).join(', ')}`,
+    `Unsupported adapter "${opts.adapter}". Flowlib supports: ${Object.keys(adapters).join(', ')}`,
   );
 }
 

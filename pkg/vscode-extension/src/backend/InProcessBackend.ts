@@ -55,7 +55,7 @@ export class InProcessBackend implements Backend {
   /** Reverse: dbFlowId → fileUri. Kept in sync with fileToDbFlow. */
   private readonly dbFlowToFile = new Map<string, string>();
   /**
-   * dbFlowId → hash of the last `invectDefinition` we pushed for that
+   * dbFlowId → hash of the last `flowlibDefinition` we pushed for that
    * flow. Idempotency guard: if a caller (file watcher, sendInit retry,
    * subscribeFlowRuns) tries to push the same content twice, skip it.
    * Catches feedback loops at the source instead of the round-trip.
@@ -179,10 +179,10 @@ export class InProcessBackend implements Backend {
     const c = await this.client();
     let prior: DbFlowDefinition | null = null;
     try {
-      const latest = await c.get<{ invectDefinition?: DbFlowDefinition }>(
+      const latest = await c.get<{ flowlibDefinition?: DbFlowDefinition }>(
         `/flows/${encodeURIComponent(dbFlowId)}/versions/latest`,
       );
-      prior = latest?.invectDefinition ?? null;
+      prior = latest?.flowlibDefinition ?? null;
     } catch (err) {
       // 404 on first save is normal — no prior version exists yet.
       const msg = (err as Error).message ?? '';
@@ -210,7 +210,7 @@ export class InProcessBackend implements Backend {
       prior,
     );
     await c.post(`/flows/${encodeURIComponent(dbFlowId)}/versions`, {
-      invectDefinition: merged,
+      flowlibDefinition: merged,
     });
     this.lastPushedDefHash.set(dbFlowId, parsedHash);
   }

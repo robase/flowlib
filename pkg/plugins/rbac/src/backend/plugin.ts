@@ -13,12 +13,12 @@
  */
 
 import type {
-  InvectPlugin,
-  InvectPluginDefinition,
-  InvectPluginContext,
-  InvectPermission,
-  InvectPluginSchema,
-  InvectIdentity,
+  FlowlibPlugin,
+  FlowlibPluginDefinition,
+  FlowlibPluginContext,
+  FlowlibPermission,
+  FlowlibPluginSchema,
+  FlowlibIdentity,
   PluginDatabaseApi,
   PluginEndpointContext,
 } from '@flowlib/core';
@@ -59,7 +59,7 @@ import type {
  */
 export async function resolveTeamIds(db: PluginDatabaseApi, userId: string): Promise<string[]> {
   const rows = await db.query<{ team_id: string }>(
-    'SELECT team_id FROM invect_rbac_team_members WHERE user_id = ?',
+    'SELECT team_id FROM flowlib_rbac_team_members WHERE user_id = ?',
     [userId],
   );
   return rows.map((r) => r.team_id);
@@ -75,7 +75,7 @@ export interface RbacPluginOptions {
    *
    * @default 'flow:read'
    */
-  adminPermission?: InvectPermission;
+  adminPermission?: FlowlibPermission;
 
   /**
    * Enable teams feature for grouping users.
@@ -187,7 +187,7 @@ function normalizeTeamRow(row: {
 
 async function getFlowScopeId(db: PluginDatabaseApi, flowId: string): Promise<string | null> {
   const rows = await db.query<{ scope_id: string | null }>(
-    'SELECT scope_id FROM invect_flows WHERE id = ?',
+    'SELECT scope_id FROM flowlib_flows WHERE id = ?',
     [flowId],
   );
   return rows[0]?.scope_id ?? null;
@@ -196,10 +196,10 @@ async function getFlowScopeId(db: PluginDatabaseApi, flowId: string): Promise<st
 async function getAncestorScopeIds(db: PluginDatabaseApi, scopeId: string): Promise<string[]> {
   const rows = await db.query<{ id: string }>(
     `WITH RECURSIVE ancestors AS (
-      SELECT id, parent_id FROM invect_rbac_teams WHERE id = ?
+      SELECT id, parent_id FROM flowlib_rbac_teams WHERE id = ?
       UNION ALL
       SELECT parent.id, parent.parent_id
-      FROM invect_rbac_teams parent
+      FROM flowlib_rbac_teams parent
       INNER JOIN ancestors current ON parent.id = current.parent_id
     )
     SELECT id FROM ancestors`,
@@ -211,10 +211,10 @@ async function getAncestorScopeIds(db: PluginDatabaseApi, scopeId: string): Prom
 async function getDescendantScopeIds(db: PluginDatabaseApi, scopeId: string): Promise<string[]> {
   const rows = await db.query<{ id: string }>(
     `WITH RECURSIVE descendants AS (
-      SELECT id FROM invect_rbac_teams WHERE id = ?
+      SELECT id FROM flowlib_rbac_teams WHERE id = ?
       UNION ALL
       SELECT child.id
-      FROM invect_rbac_teams child
+      FROM flowlib_rbac_teams child
       INNER JOIN descendants current ON child.parent_id = current.id
     )
     SELECT id FROM descendants`,
@@ -236,7 +236,7 @@ async function listScopeAccessForScopeIds(
   const params: unknown[] = [...scopeIds, userId];
   let sql =
     `SELECT id, scope_id, user_id, team_id, permission, granted_by, granted_at ` +
-    `FROM invect_rbac_scope_access WHERE (scope_id IN (${createInClause(scopeIds.length)}) ` +
+    `FROM flowlib_rbac_scope_access WHERE (scope_id IN (${createInClause(scopeIds.length)}) ` +
     `AND user_id = ?)`;
 
   if (teamIds.length > 0) {
@@ -257,7 +257,7 @@ async function listDirectFlowAccessForIdentity(
   const params: unknown[] = [flowId, userId];
   let sql =
     'SELECT id, flow_id, user_id, team_id, permission, granted_by, granted_at, expires_at ' +
-    'FROM invect_flow_access WHERE (flow_id = ? AND user_id = ?)';
+    'FROM flowlib_flow_access WHERE (flow_id = ? AND user_id = ?)';
 
   if (teamIds.length > 0) {
     sql += ` OR (flow_id = ? AND team_id IN (${createInClause(teamIds.length)}))`;
@@ -293,7 +293,7 @@ async function getEffectiveFlowAccessRecords(
   }
 
   const scopeRows = await db.query<{ id: string; name: string }>(
-    `SELECT id, name FROM invect_rbac_teams WHERE id IN (${createInClause(ancestorIds.length)})`,
+    `SELECT id, name FROM flowlib_rbac_teams WHERE id IN (${createInClause(ancestorIds.length)})`,
     ancestorIds,
   );
   const scopeNames = new Map(scopeRows.map((row) => [row.id, row.name]));
@@ -319,7 +319,7 @@ async function getEffectiveFlowAccessRecords(
 async function getEffectiveFlowPermission(
   db: PluginDatabaseApi,
   flowId: string,
-  identity: InvectIdentity,
+  identity: FlowlibIdentity,
 ): Promise<FlowAccessPermission | null> {
   const records = await getEffectiveFlowAccessRecords(
     db,
@@ -337,9 +337,9 @@ async function getEffectiveFlowPermission(
 
 async function getCurrentUserAccessibleFlows(
   db: PluginDatabaseApi,
-  identity: InvectIdentity,
+  identity: FlowlibIdentity,
 ): Promise<{ flowIds: string[]; permissions: Record<string, FlowAccessPermission | null> }> {
-  const rows = await db.query<{ id: string }>('SELECT id FROM invect_flows');
+  const rows = await db.query<{ id: string }>('SELECT id FROM flowlib_flows');
   const permissions: Record<string, FlowAccessPermission | null> = {};
 
   await Promise.all(
@@ -359,10 +359,10 @@ async function getScopePath(db: PluginDatabaseApi, scopeId: string | null): Prom
 
   const rows = await db.query<{ id: string; name: string }>(
     `WITH RECURSIVE ancestors AS (
-      SELECT id, name, parent_id, 0 AS depth FROM invect_rbac_teams WHERE id = ?
+      SELECT id, name, parent_id, 0 AS depth FROM flowlib_rbac_teams WHERE id = ?
       UNION ALL
       SELECT parent.id, parent.name, parent.parent_id, current.depth + 1
-      FROM invect_rbac_teams parent
+      FROM flowlib_rbac_teams parent
       INNER JOIN ancestors current ON parent.id = current.parent_id
     )
     SELECT id, name FROM ancestors ORDER BY depth DESC`,
@@ -380,7 +380,7 @@ async function listAllScopeAccessForScopeIds(
   }
   const rows = await db.query<Record<string, unknown>>(
     `SELECT id, scope_id, user_id, team_id, permission, granted_by, granted_at
-      FROM invect_rbac_scope_access
+      FROM flowlib_rbac_scope_access
       WHERE scope_id IN (${createInClause(scopeIds.length)})`,
     scopeIds,
   );
@@ -392,7 +392,7 @@ async function listAllDirectFlowAccess(
   flowId: string,
 ): Promise<FlowAccessRecord[]> {
   const rows = await db.query<Record<string, unknown>>(
-    'SELECT id, flow_id, user_id, team_id, permission, granted_by, granted_at, expires_at FROM invect_flow_access WHERE flow_id = ?',
+    'SELECT id, flow_id, user_id, team_id, permission, granted_by, granted_at, expires_at FROM flowlib_flow_access WHERE flow_id = ?',
     [flowId],
   );
   const now = Date.now();
@@ -416,14 +416,14 @@ async function grantDirectFlowAccess(
 
   // Check for existing access
   const existingRows = await db.query<Record<string, unknown>>(
-    'SELECT id FROM invect_flow_access WHERE flow_id = ? AND user_id IS ? AND team_id IS ?',
+    'SELECT id FROM flowlib_flow_access WHERE flow_id = ? AND user_id IS ? AND team_id IS ?',
     [input.flowId, input.userId ?? null, input.teamId ?? null],
   );
 
   if (existingRows.length > 0) {
     const existingId = String(existingRows[0].id);
     await db.execute(
-      'UPDATE invect_flow_access SET permission = ?, granted_by = ?, granted_at = ?, expires_at = ? WHERE id = ?',
+      'UPDATE flowlib_flow_access SET permission = ?, granted_by = ?, granted_at = ?, expires_at = ? WHERE id = ?',
       [input.permission, input.grantedBy ?? null, now, input.expiresAt ?? null, existingId],
     );
     return {
@@ -440,7 +440,7 @@ async function grantDirectFlowAccess(
 
   const id = crypto.randomUUID();
   await db.execute(
-    'INSERT INTO invect_flow_access (id, flow_id, user_id, team_id, permission, granted_by, granted_at, expires_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+    'INSERT INTO flowlib_flow_access (id, flow_id, user_id, team_id, permission, granted_by, granted_at, expires_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
     [
       id,
       input.flowId,
@@ -465,7 +465,7 @@ async function grantDirectFlowAccess(
 }
 
 async function revokeDirectFlowAccess(db: PluginDatabaseApi, accessId: string): Promise<void> {
-  await db.execute('DELETE FROM invect_flow_access WHERE id = ?', [accessId]);
+  await db.execute('DELETE FROM flowlib_flow_access WHERE id = ?', [accessId]);
 }
 
 async function listAllEffectiveFlowAccessForPreview(
@@ -508,7 +508,7 @@ async function listAllEffectiveFlowAccessRecords(
   }
 
   const scopeRows = await db.query<{ id: string; name: string }>(
-    `SELECT id, name FROM invect_rbac_teams WHERE id IN (${createInClause(ancestorIds.length)})`,
+    `SELECT id, name FROM flowlib_rbac_teams WHERE id IN (${createInClause(ancestorIds.length)})`,
     ancestorIds,
   );
   const scopeNames = new Map(scopeRows.map((row) => [row.id, row.name]));
@@ -521,7 +521,7 @@ async function listAllEffectiveFlowAccessRecords(
   const teamMembersByTeamId = new Map<string, string[]>();
   if (teamIds.length > 0) {
     const memberRows = await db.query<{ team_id: string; user_id: string }>(
-      `SELECT team_id, user_id FROM invect_rbac_team_members WHERE team_id IN (${createInClause(teamIds.length)})`,
+      `SELECT team_id, user_id FROM flowlib_rbac_team_members WHERE team_id IN (${createInClause(teamIds.length)})`,
       teamIds,
     );
     for (const row of memberRows) {
@@ -601,13 +601,13 @@ async function resolveAccessChangeNames(
   const [userRows, teamRows] = await Promise.all([
     userIds.length > 0
       ? db.query<{ id: string; name: string | null; email: string | null }>(
-          `SELECT id, name, email FROM invect_user WHERE id IN (${createInClause(userIds.length)})`,
+          `SELECT id, name, email FROM flowlib_user WHERE id IN (${createInClause(userIds.length)})`,
           userIds,
         )
       : Promise.resolve([]),
     teamIds.length > 0
       ? db.query<{ id: string; name: string }>(
-          `SELECT id, name FROM invect_rbac_teams WHERE id IN (${createInClause(teamIds.length)})`,
+          `SELECT id, name FROM flowlib_rbac_teams WHERE id IN (${createInClause(teamIds.length)})`,
           teamIds,
         )
       : Promise.resolve([]),
@@ -633,7 +633,7 @@ async function resolveAccessChangeNames(
 // Plugin factory
 // ─────────────────────────────────────────────────────────────
 
-export function rbac(options: RbacPluginOptions = {}): InvectPluginDefinition {
+export function rbac(options: RbacPluginOptions = {}): FlowlibPluginDefinition {
   const { frontend, ...backendOptions } = options;
   return {
     id: 'rbac',
@@ -643,24 +643,24 @@ export function rbac(options: RbacPluginOptions = {}): InvectPluginDefinition {
   };
 }
 
-function _rbacBackendPlugin(options: Omit<RbacPluginOptions, 'frontend'> = {}): InvectPlugin {
+function _rbacBackendPlugin(options: Omit<RbacPluginOptions, 'frontend'> = {}): FlowlibPlugin {
   const { adminPermission = 'flow:read', enableTeams = true } = options;
 
   // ── Plugin-owned tables ─────────────────────────────────────
-  const teamsSchema: InvectPluginSchema = enableTeams
+  const teamsSchema: FlowlibPluginSchema = enableTeams
     ? {
         flows: {
           fields: {
             scope_id: {
               type: 'string',
               required: false,
-              references: { table: 'invect_rbac_teams', field: 'id', onDelete: 'set null' },
+              references: { table: 'flowlib_rbac_teams', field: 'id', onDelete: 'set null' },
               index: true,
             },
           },
         },
         rbac_teams: {
-          tableName: 'invect_rbac_teams',
+          tableName: 'flowlib_rbac_teams',
           fields: {
             id: { type: 'string', primaryKey: true },
             name: { type: 'string', required: true },
@@ -668,45 +668,45 @@ function _rbacBackendPlugin(options: Omit<RbacPluginOptions, 'frontend'> = {}): 
             parent_id: {
               type: 'string',
               required: false,
-              references: { table: 'invect_rbac_teams', field: 'id', onDelete: 'set null' },
+              references: { table: 'flowlib_rbac_teams', field: 'id', onDelete: 'set null' },
               index: true,
             },
             created_by: {
               type: 'string',
               required: false,
-              references: { table: 'invect_user', field: 'id' },
+              references: { table: 'flowlib_user', field: 'id' },
             },
             created_at: { type: 'date', required: true, defaultValue: 'now()' },
             updated_at: { type: 'date', required: false },
           },
         },
         rbac_team_members: {
-          tableName: 'invect_rbac_team_members',
+          tableName: 'flowlib_rbac_team_members',
           fields: {
             id: { type: 'string', primaryKey: true },
             team_id: {
               type: 'string',
               required: true,
-              references: { table: 'invect_rbac_teams', field: 'id', onDelete: 'cascade' },
+              references: { table: 'flowlib_rbac_teams', field: 'id', onDelete: 'cascade' },
               index: true,
             },
             user_id: {
               type: 'string',
               required: true,
-              references: { table: 'invect_user', field: 'id', onDelete: 'cascade' },
+              references: { table: 'flowlib_user', field: 'id', onDelete: 'cascade' },
               index: true,
             },
             created_at: { type: 'date', required: true, defaultValue: 'now()' },
           },
         },
         rbac_scope_access: {
-          tableName: 'invect_rbac_scope_access',
+          tableName: 'flowlib_rbac_scope_access',
           fields: {
             id: { type: 'string', primaryKey: true },
             scope_id: {
               type: 'string',
               required: true,
-              references: { table: 'invect_rbac_teams', field: 'id', onDelete: 'cascade' },
+              references: { table: 'flowlib_rbac_teams', field: 'id', onDelete: 'cascade' },
               index: true,
             },
             user_id: { type: 'string', required: false, index: true },
@@ -777,20 +777,20 @@ function _rbacBackendPlugin(options: Omit<RbacPluginOptions, 'frontend'> = {}): 
     // Declaring them here ensures a clear error if the developer has the
     // RBAC plugin enabled but forgot the auth tables.
     requiredTables: [
-      'invect_user',
-      'invect_session',
+      'flowlib_user',
+      'flowlib_session',
       ...(enableTeams
-        ? ['invect_rbac_teams', 'invect_rbac_team_members', 'invect_rbac_scope_access']
+        ? ['flowlib_rbac_teams', 'flowlib_rbac_team_members', 'flowlib_rbac_scope_access']
         : []),
     ],
     setupInstructions:
-      'The RBAC plugin requires user-auth tables (invect_user, invect_session). ' +
+      'The RBAC plugin requires user-auth tables (flowlib_user, flowlib_session). ' +
       'Make sure @flowlib/user-auth is configured, then run ' +
       '`npx flowlib-cli generate` followed by `npx drizzle-kit push`.',
 
     // ─── Initialization ───────────────────────────────────────
 
-    init: async (ctx: InvectPluginContext) => {
+    init: async (ctx: FlowlibPluginContext) => {
       // Verify that the auth plugin is loaded
       if (!ctx.hasPlugin('user-auth')) {
         ctx.logger.warn(
@@ -1109,7 +1109,7 @@ function _rbacBackendPlugin(options: Omit<RbacPluginOptions, 'frontend'> = {}): 
 
           if (scopeId) {
             const scopeRows = await ctx.database.query<{ id: string }>(
-              'SELECT id FROM invect_rbac_teams WHERE id = ?',
+              'SELECT id FROM flowlib_rbac_teams WHERE id = ?',
               [scopeId],
             );
             if (scopeRows.length === 0) {
@@ -1117,7 +1117,7 @@ function _rbacBackendPlugin(options: Omit<RbacPluginOptions, 'frontend'> = {}): 
             }
           }
 
-          await ctx.database.execute('UPDATE invect_flows SET scope_id = ? WHERE id = ?', [
+          await ctx.database.execute('UPDATE flowlib_flows SET scope_id = ? WHERE id = ?', [
             scopeId ?? null,
             flowId,
           ]);
@@ -1149,19 +1149,19 @@ function _rbacBackendPlugin(options: Omit<RbacPluginOptions, 'frontend'> = {}): 
                       created_at: string;
                       updated_at: string | null;
                     }>(
-                      'SELECT id, name, description, parent_id, created_by, created_at, updated_at FROM invect_rbac_teams ORDER BY name',
+                      'SELECT id, name, description, parent_id, created_by, created_at, updated_at FROM flowlib_rbac_teams ORDER BY name',
                     ),
                     ctx.database.query<{ id: string; name: string; scope_id: string | null }>(
-                      'SELECT id, name, scope_id FROM invect_flows ORDER BY name',
+                      'SELECT id, name, scope_id FROM flowlib_flows ORDER BY name',
                     ),
                     ctx.database.query<{ team_id: string; member_count: number }>(
-                      'SELECT team_id, COUNT(*) AS member_count FROM invect_rbac_team_members GROUP BY team_id',
+                      'SELECT team_id, COUNT(*) AS member_count FROM flowlib_rbac_team_members GROUP BY team_id',
                     ),
                     ctx.database.query<{ scope_id: string; access_count: number }>(
-                      'SELECT scope_id, COUNT(*) AS access_count FROM invect_rbac_scope_access GROUP BY scope_id',
+                      'SELECT scope_id, COUNT(*) AS access_count FROM flowlib_rbac_scope_access GROUP BY scope_id',
                     ),
                     ctx.database.query<{ scope_id: string; permission: FlowAccessPermission }>(
-                      'SELECT scope_id, permission FROM invect_rbac_scope_access WHERE team_id = scope_id AND team_id IS NOT NULL',
+                      'SELECT scope_id, permission FROM flowlib_rbac_scope_access WHERE team_id = scope_id AND team_id IS NOT NULL',
                     ),
                   ]);
 
@@ -1221,7 +1221,7 @@ function _rbacBackendPlugin(options: Omit<RbacPluginOptions, 'frontend'> = {}): 
                 }
 
                 const rows = await ctx.database.query<Record<string, unknown>>(
-                  'SELECT id, scope_id, user_id, team_id, permission, granted_by, granted_at FROM invect_rbac_scope_access WHERE scope_id = ?',
+                  'SELECT id, scope_id, user_id, team_id, permission, granted_by, granted_at FROM flowlib_rbac_scope_access WHERE scope_id = ?',
                   [ctx.params.scopeId],
                 );
                 return { status: 200, body: { access: rows.map(normalizeScopeAccessRecord) } };
@@ -1280,14 +1280,14 @@ function _rbacBackendPlugin(options: Omit<RbacPluginOptions, 'frontend'> = {}): 
                 }
 
                 const existing = await ctx.database.query<{ id: string }>(
-                  'SELECT id FROM invect_rbac_scope_access WHERE scope_id = ? AND user_id IS ? AND team_id IS ?',
+                  'SELECT id FROM flowlib_rbac_scope_access WHERE scope_id = ? AND user_id IS ? AND team_id IS ?',
                   [scopeId, userId ?? null, teamId ?? null],
                 );
 
                 const now = new Date().toISOString();
                 if (existing[0]) {
                   await ctx.database.execute(
-                    'UPDATE invect_rbac_scope_access SET permission = ?, granted_by = ?, granted_at = ? WHERE id = ?',
+                    'UPDATE flowlib_rbac_scope_access SET permission = ?, granted_by = ?, granted_at = ? WHERE id = ?',
                     [permission, ctx.identity.id, now, existing[0].id],
                   );
                   return {
@@ -1306,7 +1306,7 @@ function _rbacBackendPlugin(options: Omit<RbacPluginOptions, 'frontend'> = {}): 
 
                 const id = crypto.randomUUID();
                 await ctx.database.execute(
-                  'INSERT INTO invect_rbac_scope_access (id, scope_id, user_id, team_id, permission, granted_by, granted_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
+                  'INSERT INTO flowlib_rbac_scope_access (id, scope_id, user_id, team_id, permission, granted_by, granted_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
                   [id, scopeId, userId ?? null, teamId ?? null, permission, ctx.identity.id, now],
                 );
 
@@ -1341,7 +1341,7 @@ function _rbacBackendPlugin(options: Omit<RbacPluginOptions, 'frontend'> = {}): 
                   };
                 }
 
-                await ctx.database.execute('DELETE FROM invect_rbac_scope_access WHERE id = ?', [
+                await ctx.database.execute('DELETE FROM flowlib_rbac_scope_access WHERE id = ?', [
                   ctx.params.accessId,
                 ]);
                 return { status: 204, body: null };
@@ -1378,7 +1378,7 @@ function _rbacBackendPlugin(options: Omit<RbacPluginOptions, 'frontend'> = {}): 
                 let itemName = id;
                 if (type === 'flow') {
                   const rows = await ctx.database.query<{ id: string; name: string }>(
-                    'SELECT id, name FROM invect_flows WHERE id = ?',
+                    'SELECT id, name FROM flowlib_flows WHERE id = ?',
                     [id],
                   );
                   if (!rows[0]) {
@@ -1388,7 +1388,7 @@ function _rbacBackendPlugin(options: Omit<RbacPluginOptions, 'frontend'> = {}): 
                   affectedFlowIds = [id];
                 } else {
                   const scopeRows = await ctx.database.query<{ id: string; name: string }>(
-                    'SELECT id, name FROM invect_rbac_teams WHERE id = ?',
+                    'SELECT id, name FROM flowlib_rbac_teams WHERE id = ?',
                     [id],
                   );
                   if (!scopeRows[0]) {
@@ -1403,7 +1403,7 @@ function _rbacBackendPlugin(options: Omit<RbacPluginOptions, 'frontend'> = {}): 
                     };
                   }
                   const flowRows = await ctx.database.query<{ id: string }>(
-                    `SELECT id FROM invect_flows WHERE scope_id IN (${createInClause(descendantScopeIds.length)})`,
+                    `SELECT id FROM flowlib_flows WHERE scope_id IN (${createInClause(descendantScopeIds.length)})`,
                     descendantScopeIds,
                   );
                   affectedFlowIds = flowRows.map((row) => row.id);
@@ -1511,7 +1511,7 @@ function _rbacBackendPlugin(options: Omit<RbacPluginOptions, 'frontend'> = {}): 
                   created_at: string;
                   updated_at: string | null;
                 }>(
-                  'SELECT id, name, description, parent_id, created_by, created_at, updated_at FROM invect_rbac_teams ORDER BY name',
+                  'SELECT id, name, description, parent_id, created_by, created_at, updated_at FROM flowlib_rbac_teams ORDER BY name',
                 );
 
                 const teams = rows.map((r) => normalizeTeamRow(r));
@@ -1548,7 +1548,7 @@ function _rbacBackendPlugin(options: Omit<RbacPluginOptions, 'frontend'> = {}): 
 
                 if (parentId) {
                   const parentRows = await ctx.database.query<{ id: string }>(
-                    'SELECT id FROM invect_rbac_teams WHERE id = ?',
+                    'SELECT id FROM flowlib_rbac_teams WHERE id = ?',
                     [parentId],
                   );
                   if (parentRows.length === 0) {
@@ -1559,7 +1559,7 @@ function _rbacBackendPlugin(options: Omit<RbacPluginOptions, 'frontend'> = {}): 
                 const id = crypto.randomUUID();
                 const now = new Date().toISOString();
                 await ctx.database.execute(
-                  'INSERT INTO invect_rbac_teams (id, name, description, parent_id, created_by, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
+                  'INSERT INTO flowlib_rbac_teams (id, name, description, parent_id, created_by, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
                   [
                     id,
                     name.trim(),
@@ -1611,7 +1611,7 @@ function _rbacBackendPlugin(options: Omit<RbacPluginOptions, 'frontend'> = {}): 
                 };
 
                 const existing = await ctx.database.query<{ id: string }>(
-                  'SELECT id FROM invect_rbac_teams WHERE id = ?',
+                  'SELECT id FROM flowlib_rbac_teams WHERE id = ?',
                   [teamId],
                 );
                 if (existing.length === 0) {
@@ -1623,7 +1623,7 @@ function _rbacBackendPlugin(options: Omit<RbacPluginOptions, 'frontend'> = {}): 
                 }
                 if (parentId) {
                   const parentRows = await ctx.database.query<{ id: string }>(
-                    'SELECT id FROM invect_rbac_teams WHERE id = ?',
+                    'SELECT id FROM flowlib_rbac_teams WHERE id = ?',
                     [parentId],
                   );
                   if (parentRows.length === 0) {
@@ -1664,7 +1664,7 @@ function _rbacBackendPlugin(options: Omit<RbacPluginOptions, 'frontend'> = {}): 
                 values.push(teamId);
 
                 await ctx.database.execute(
-                  `UPDATE invect_rbac_teams SET ${updates.join(', ')} WHERE id = ?`,
+                  `UPDATE flowlib_rbac_teams SET ${updates.join(', ')} WHERE id = ?`,
                   values,
                 );
 
@@ -1691,7 +1691,7 @@ function _rbacBackendPlugin(options: Omit<RbacPluginOptions, 'frontend'> = {}): 
 
                 const { teamId } = ctx.params;
                 const teams = await ctx.database.query<{ id: string; parent_id: string | null }>(
-                  'SELECT id, parent_id FROM invect_rbac_teams WHERE id = ?',
+                  'SELECT id, parent_id FROM flowlib_rbac_teams WHERE id = ?',
                   [teamId],
                 );
                 if (teams.length === 0) {
@@ -1700,12 +1700,12 @@ function _rbacBackendPlugin(options: Omit<RbacPluginOptions, 'frontend'> = {}): 
 
                 const parentId = teams[0].parent_id ?? null;
                 await ctx.database.execute(
-                  'UPDATE invect_flows SET scope_id = ? WHERE scope_id = ?',
+                  'UPDATE flowlib_flows SET scope_id = ? WHERE scope_id = ?',
                   [parentId, teamId],
                 );
 
                 // CASCADE on team_members handles cleanup
-                await ctx.database.execute('DELETE FROM invect_rbac_teams WHERE id = ?', [teamId]);
+                await ctx.database.execute('DELETE FROM flowlib_rbac_teams WHERE id = ?', [teamId]);
                 return { status: 204, body: null };
               },
             },
@@ -1730,7 +1730,7 @@ function _rbacBackendPlugin(options: Omit<RbacPluginOptions, 'frontend'> = {}): 
                   created_at: string;
                   updated_at: string | null;
                 }>(
-                  'SELECT id, name, description, parent_id, created_by, created_at, updated_at FROM invect_rbac_teams WHERE id = ?',
+                  'SELECT id, name, description, parent_id, created_by, created_at, updated_at FROM flowlib_rbac_teams WHERE id = ?',
                   [teamId],
                 );
 
@@ -1744,7 +1744,7 @@ function _rbacBackendPlugin(options: Omit<RbacPluginOptions, 'frontend'> = {}): 
                   user_id: string;
                   created_at: string;
                 }>(
-                  'SELECT id, team_id, user_id, created_at FROM invect_rbac_team_members WHERE team_id = ?',
+                  'SELECT id, team_id, user_id, created_at FROM flowlib_rbac_team_members WHERE team_id = ?',
                   [teamId],
                 );
 
@@ -1789,7 +1789,7 @@ function _rbacBackendPlugin(options: Omit<RbacPluginOptions, 'frontend'> = {}): 
 
                 // Check team exists
                 const teams = await ctx.database.query<{ id: string }>(
-                  'SELECT id FROM invect_rbac_teams WHERE id = ?',
+                  'SELECT id FROM flowlib_rbac_teams WHERE id = ?',
                   [teamId],
                 );
                 if (teams.length === 0) {
@@ -1798,7 +1798,7 @@ function _rbacBackendPlugin(options: Omit<RbacPluginOptions, 'frontend'> = {}): 
 
                 // Check not already a member
                 const existing = await ctx.database.query<{ id: string }>(
-                  'SELECT id FROM invect_rbac_team_members WHERE team_id = ? AND user_id = ?',
+                  'SELECT id FROM flowlib_rbac_team_members WHERE team_id = ? AND user_id = ?',
                   [teamId, userId.trim()],
                 );
                 if (existing.length > 0) {
@@ -1808,7 +1808,7 @@ function _rbacBackendPlugin(options: Omit<RbacPluginOptions, 'frontend'> = {}): 
                 const id = crypto.randomUUID();
                 const now = new Date().toISOString();
                 await ctx.database.execute(
-                  'INSERT INTO invect_rbac_team_members (id, team_id, user_id, created_at) VALUES (?, ?, ?, ?)',
+                  'INSERT INTO flowlib_rbac_team_members (id, team_id, user_id, created_at) VALUES (?, ?, ?, ?)',
                   [id, teamId, userId.trim(), now],
                 );
 
@@ -1838,7 +1838,7 @@ function _rbacBackendPlugin(options: Omit<RbacPluginOptions, 'frontend'> = {}): 
 
                 const { teamId, userId } = ctx.params;
                 await ctx.database.execute(
-                  'DELETE FROM invect_rbac_team_members WHERE team_id = ? AND user_id = ?',
+                  'DELETE FROM flowlib_rbac_team_members WHERE team_id = ? AND user_id = ?',
                   [teamId, userId],
                 );
                 return { status: 204, body: null };
@@ -1865,7 +1865,7 @@ function _rbacBackendPlugin(options: Omit<RbacPluginOptions, 'frontend'> = {}): 
                   updated_at: string | null;
                 }>(
                   'SELECT t.id, t.name, t.description, t.parent_id, t.created_by, t.created_at, t.updated_at ' +
-                    'FROM invect_rbac_teams t INNER JOIN invect_rbac_team_members tm ON t.id = tm.team_id ' +
+                    'FROM flowlib_rbac_teams t INNER JOIN flowlib_rbac_team_members tm ON t.id = tm.team_id ' +
                     'WHERE tm.user_id = ? ORDER BY t.name',
                   [ctx.identity.id],
                 );
@@ -1888,7 +1888,7 @@ function _rbacBackendPlugin(options: Omit<RbacPluginOptions, 'frontend'> = {}): 
       onRequest: enableTeams
         ? async (
             _request: Request,
-            context: { path: string; method: string; identity: InvectIdentity | null },
+            context: { path: string; method: string; identity: FlowlibIdentity | null },
           ) => {
             if (!context.identity || !capturedDbApi) {
               return;
@@ -1900,7 +1900,7 @@ function _rbacBackendPlugin(options: Omit<RbacPluginOptions, 'frontend'> = {}): 
 
             try {
               const rows = await capturedDbApi.query<{ team_id: string }>(
-                'SELECT team_id FROM invect_rbac_team_members WHERE user_id = ?',
+                'SELECT team_id FROM flowlib_rbac_team_members WHERE user_id = ?',
                 [context.identity.id],
               );
               if (rows.length > 0) {

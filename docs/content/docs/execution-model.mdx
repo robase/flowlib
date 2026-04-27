@@ -1,13 +1,13 @@
 ---
 title: Execution Model
-description: How Invect flows run — edges, data passing, templates, iteration, and how it compares to tools like n8n.
+description: How Flowlib flows run — edges, data passing, templates, iteration, and how it compares to tools like n8n.
 ---
 
-Invect takes a different approach to workflow execution than most automation tools. This page explains how data moves through a flow, how nodes talk to each other, and how iteration works.
+Flowlib takes a different approach to workflow execution than most automation tools. This page explains how data moves through a flow, how nodes talk to each other, and how iteration works.
 
 ## How a flow runs
 
-When you trigger a flow, Invect follows a simple sequence:
+When you trigger a flow, Flowlib follows a simple sequence:
 
 1. **Load the flow** — fetch the flow definition (nodes + edges) from the database
 2. **Sort the nodes** — use the edges to figure out which nodes depend on which, then line them up in order (topological sort)
@@ -23,7 +23,7 @@ Edges are the connections between nodes on the canvas. They serve two purposes:
 1. **Execution order** — edges determine which nodes run before others
 2. **Data availability** — a node can only reference data from nodes that are upstream of it (connected via edges)
 
-Unlike some tools where data is automatically pushed forward, Invect uses a **pull-based** model. Each node explicitly chooses what upstream data to reference using template expressions. Just because Node A connects to Node B doesn't mean B automatically receives A's output — B's config params must reference A's data with a `{{ }}` expression.
+Unlike some tools where data is automatically pushed forward, Flowlib uses a **pull-based** model. Each node explicitly chooses what upstream data to reference using template expressions. Just because Node A connects to Node B doesn't mean B automatically receives A's output — B's config params must reference A's data with a `{{ }}` expression.
 
 ### Direct parents vs. ancestors
 
@@ -49,7 +49,7 @@ Each node has a reference ID derived from its label, normalized to `snake_case`:
 - "Send Email" → `send_email`
 - "API Response" → `api_response`
 
-These reference IDs become the keys in the incoming data object. If two upstream nodes would produce the same key, Invect appends numbers to avoid collisions (`some_node`, `some_node1`).
+These reference IDs become the keys in the incoming data object. If two upstream nodes would produce the same key, Flowlib appends numbers to avoid collisions (`some_node`, `some_node1`).
 
 ### Example
 
@@ -91,9 +91,9 @@ Expressions run in a sandboxed JavaScript environment (QuickJS via WebAssembly),
 
 ## Iteration and the data mapper
 
-Most automation tools (like n8n) pass arrays of "items" through the entire workflow, processing each item individually at every node. Invect works differently.
+Most automation tools (like n8n) pass arrays of "items" through the entire workflow, processing each item individually at every node. Flowlib works differently.
 
-In Invect, **nodes process single values by default**. If a node returns an array, the downstream node receives that array as one value. There's no automatic item-by-item processing.
+In Flowlib, **nodes process single values by default**. If a node returns an array, the downstream node receives that array as one value. There's no automatic item-by-item processing.
 
 When you **do** need iteration, you enable the **data mapper** on a specific node. The mapper is a per-node configuration that says: "take this array, and run this node once for each item."
 
@@ -123,7 +123,7 @@ So if you're iterating over a list of users, each iteration can reference `{{ na
 
 With `concurrency: 1` (default), items process one at a time. Set it higher to process items in parallel batches — `concurrency: 5` runs 5 items simultaneously before moving to the next batch.
 
-## How Invect differs from n8n
+## How Flowlib differs from n8n
 
 If you're coming from n8n, the biggest conceptual difference is how data flows between nodes.
 
@@ -135,9 +135,9 @@ In n8n, every node receives an array of **items**. Each item is a JSON object, a
 - To stop automatic iteration, you need a specific "loop" or "batch" node
 - All nodes in the chain see and operate on the same items array
 
-### Invect: nodes produce values, downstream nodes reference them
+### Flowlib: nodes produce values, downstream nodes reference them
 
-In Invect, each node produces a **single output value** (which can be an object, array, string, or number). Downstream nodes explicitly choose what to reference using template expressions.
+In Flowlib, each node produces a **single output value** (which can be an object, array, string, or number). Downstream nodes explicitly choose what to reference using template expressions.
 
 - A node that returns an array of 10 users passes that array as **one value**
 - The next node decides what to do with it — use the whole array, pick one field, or enable the mapper to iterate
@@ -145,7 +145,7 @@ In Invect, each node produces a **single output value** (which can be an object,
 
 ### Key differences at a glance
 
-|                        | n8n                                         | Invect                                               |
+|                        | n8n                                         | Flowlib                                               |
 | ---------------------- | ------------------------------------------- | ---------------------------------------------------- |
 | **Core data model**    | Array of items flows through every node     | Each node produces a single output value             |
 | **Iteration**          | Automatic — every node processes every item | Opt-in — enable the mapper on specific nodes         |
@@ -154,7 +154,7 @@ In Invect, each node produces a **single output value** (which can be an object,
 | **Parallelism**        | Mainly at workflow level                    | Per-node — mapper supports concurrent iteration      |
 | **Scope of iteration** | Affects the entire downstream chain         | Affects only the node with the mapper enabled        |
 
-The Invect approach gives you more control. You decide exactly which node iterates, how many items run in parallel, and how results are packaged. The tradeoff is that you need to be more explicit about data references — but this also makes flows easier to reason about since there's no hidden implicit data passing.
+The Flowlib approach gives you more control. You decide exactly which node iterates, how many items run in parallel, and how results are packaged. The tradeoff is that you need to be more explicit about data references — but this also makes flows easier to reason about since there's no hidden implicit data passing.
 
 ## Branching
 
@@ -170,7 +170,7 @@ The Switch node extends this to multiple branches. You define cases with JavaScr
 
 ### How skipping works
 
-When a branching node runs, Invect looks at which output branches are active and which are inactive. Nodes connected to inactive branches are marked as skipped — but only if **all** of their incoming edges come from skipped or inactive branches. If a node has another active path leading into it, it still runs.
+When a branching node runs, Flowlib looks at which output branches are active and which are inactive. Nodes connected to inactive branches are marked as skipped — but only if **all** of their incoming edges come from skipped or inactive branches. If a node has another active path leading into it, it still runs.
 
 ## Agent nodes
 

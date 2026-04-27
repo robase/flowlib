@@ -1,10 +1,10 @@
 /**
  * Boot a real `@flowlib/express` server inside the extension process and
- * return the URL. Replaces the previous "headless InvectInstance" model
+ * return the URL. Replaces the previous "headless FlowlibInstance" model
  * — now the embedded backend IS an HTTP backend, just one that happens
  * to be running on `127.0.0.1:<random>` inside this extension.
  *
- * Why an actual server: it lets the webview render the full `<Invect>`
+ * Why an actual server: it lets the webview render the full `<Flowlib>`
  * UI pointed at this URL and get every feature for free (Edit/Runs
  * toggle, runs view, dashboard, credentials, etc.) without per-feature
  * shimming through a fake `InMemoryApiClient`.
@@ -16,7 +16,7 @@
  *   - `disposeEmbeddedServer()` closes the HTTP listener (called from
  *     the extension's `deactivate` path / `ctx.subscriptions`).
  *
- * Note: `createInvect` does NOT run migrations on its own — we still
+ * Note: `createFlowlib` does NOT run migrations on its own — we still
  * have to generate + execute the Drizzle DDL ourselves before the core
  * boots, exactly like the previous embedded.ts did.
  */
@@ -52,7 +52,7 @@ export interface EmbeddedServer {
 
 export interface EmbeddedServerOptions {
   /**
-   * Optional middleware mounted UNDER `/flowlib` BEFORE the Invect
+   * Optional middleware mounted UNDER `/flowlib` BEFORE the Flowlib
    * router. The express JSON parser runs first so `req.body` is
    * populated. Used by `FileSync` to intercept canvas-driven flow
    * mutations and write them back to `.flow.ts` files.
@@ -94,19 +94,19 @@ async function init(
     logger.info('embedded server: generated new encryption key');
   }
 
-  // DDL bootstrap — required because `createInvect` doesn't run
+  // DDL bootstrap — required because `createFlowlib` doesn't run
   // migrations itself.
   await runSchemaBootstrap(dbPath, logger);
 
-  // Build the Express app + Invect router.
+  // Build the Express app + Flowlib router.
   const expressMod = await import('express');
   const corsMod = await import('cors');
-  const { createInvectRouter } = await import('@flowlib/express');
+  const { createFlowlibRouter } = await import('@flowlib/express');
 
   const express = (expressMod as { default?: typeof import('express') }).default ?? expressMod;
   const cors = (corsMod as { default?: typeof import('cors') }).default ?? corsMod;
   const app = (express as unknown as () => import('express').Express)();
-  // Invect's ApiClient sends `credentials: 'include'`; CORS forbids the
+  // Flowlib's ApiClient sends `credentials: 'include'`; CORS forbids the
   // wildcard `Access-Control-Allow-Origin: *` for credentialed requests.
   // Reflect the request's `Origin` header back instead so the webview's
   // `vscode-webview://...` origin is whitelisted, with credentials on.
@@ -116,7 +116,7 @@ async function init(
   }) => import('express').RequestHandler;
   app.use((cors as unknown as CorsFn)({ origin: true, credentials: true }));
   // Parse JSON BEFORE the file-sync middleware so it can introspect
-  // request bodies. The Invect router parses again internally — that's
+  // request bodies. The Flowlib router parses again internally — that's
   // a no-op when `req.body` is already set, so harmless.
   const exp = express as unknown as typeof import('express');
   app.use(exp.json({ limit: '10mb' }));
@@ -124,7 +124,7 @@ async function init(
   const { webhooks } = await import('@flowlib/webhooks');
   const { mcp } = await import('@flowlib/mcp');
 
-  const router = await createInvectRouter({
+  const router = await createFlowlibRouter({
     database: { type: 'sqlite', connectionString: `file:${dbPath}`, driver: 'libsql' },
     encryptionKey,
     // MCP plugin contributes a `/mcp` endpoint exposing flows / runs /
@@ -136,11 +136,11 @@ async function init(
     // Triggers can be edited and tested in the canvas, but cron must not fire
     // on its own — the embedded backend runs whenever the editor is open and
     // would otherwise execute scheduled flows in the background. Batch polling
-    // (started unconditionally by createInvectRouter) stays active so flows
+    // (started unconditionally by createFlowlibRouter) stays active so flows
     // with batch-mode AI nodes can be tested end-to-end.
     triggers: { cronEnabled: false },
   });
-  // The router's createInvect() initialises the ExecutionEventBus
+  // The router's createFlowlib() initialises the ExecutionEventBus
   // singleton; grab a reference now so consumers can subscribe.
   const { getExecutionEventBus } = await import('@flowlib/core');
   const bus = getExecutionEventBus();
@@ -174,7 +174,7 @@ async function runSchemaBootstrap(
   // Plugin schemas extend the core schema. Each enabled plugin's
   // backend.schema (if any) gets merged in so its tables are bootstrapped
   // alongside the core ones. The webhooks plugin contributes
-  // `invect_webhook_triggers`; the mcp plugin contributes nothing today
+  // `flowlib_webhook_triggers`; the mcp plugin contributes nothing today
   // but is included so a future schema lands automatically.
   const backendPlugins = [webhooks(), mcp()]
     .map((p) => p.backend)

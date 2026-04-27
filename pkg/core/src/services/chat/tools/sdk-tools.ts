@@ -25,7 +25,7 @@ import { transformArrowsToStrings } from '@flowlib/sdk/transform';
 import { mergeParsedIntoDefinition } from '@flowlib/sdk';
 import type { DbFlowDefinition, NodeSpan } from '@flowlib/sdk';
 import type { ChatToolContext, ChatToolDefinition, ChatToolResult } from '../chat-types';
-import type { InvectInstance } from 'src/api/types';
+import type { FlowlibInstance } from 'src/api/types';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Shared helpers: hashing, failure payloads, node index
@@ -191,7 +191,7 @@ function findAllMatchLocations(source: string, needle: string): AmbiguousMatch[]
 /** Load + emit canonical source. Shared by `get_flow_source` and the edit
  *  tools so they stay in sync on emit options. */
 async function emitCurrentSource(
-  flowlib: InvectInstance,
+  flowlib: FlowlibInstance,
   flowId: string,
 ): Promise<
   | { ok: true; code: string; nodeSpans: Record<string, NodeSpan>; def: DbFlowDefinition }
@@ -202,10 +202,10 @@ async function emitCurrentSource(
       flowlib.flows.get(flowId),
       flowlib.versions.get(flowId, 'latest'),
     ]);
-    if (!version?.invectDefinition) {
+    if (!version?.flowlibDefinition) {
       return { ok: false, error: 'Flow has no versions yet' };
     }
-    const def = version.invectDefinition as DbFlowDefinition;
+    const def = version.flowlibDefinition as DbFlowDefinition;
     const { code, nodeSpans } = emitSdkSource(def, {
       flowName: toFlowExportName(flow.name),
       metadata: {
@@ -311,14 +311,14 @@ export const getFlowSourceTool: ChatToolDefinition = {
         ctx.flowlib.flows.get(flowId),
         ctx.flowlib.versions.get(flowId, 'latest'),
       ]);
-      if (!version?.invectDefinition) {
+      if (!version?.flowlibDefinition) {
         return {
           success: false,
           error: 'Flow has no versions yet — create the initial definition first',
         };
       }
 
-      const def = version.invectDefinition as DbFlowDefinition;
+      const def = version.flowlibDefinition as DbFlowDefinition;
       const { code, sdkImports, actionImports, nodeSpans } = emitSdkSource(def, {
         flowName: toFlowExportName(flow.name),
         metadata: {
@@ -574,8 +574,8 @@ export const writeFlowSourceTool: ChatToolDefinition = {
       let priorDef: DbFlowDefinition | null = null;
       try {
         const version = await ctx.flowlib.versions.get(flowId, 'latest');
-        if (version?.invectDefinition) {
-          priorDef = version.invectDefinition as DbFlowDefinition;
+        if (version?.flowlibDefinition) {
+          priorDef = version.flowlibDefinition as DbFlowDefinition;
         }
       } catch {
         // No prior version — fine; merge will generate fresh ids.
@@ -660,7 +660,7 @@ export const writeFlowSourceTool: ChatToolDefinition = {
  * the LLM can see exactly what went wrong.
  */
 async function saveFlowFromSource(
-  flowlib: InvectInstance,
+  flowlib: FlowlibInstance,
   flowId: string,
   source: string,
   priorDef: DbFlowDefinition | null,
@@ -726,13 +726,13 @@ async function saveFlowFromSource(
 
   // 4. Save — publish a new flow version via the standard versions API.
   //    The `DbFlowDefinition` from `@flowlib/sdk` is structurally compatible
-  //    with core's Zod-typed `InvectDefinition`; the cast bridges the
+  //    with core's Zod-typed `FlowlibDefinition`; the cast bridges the
   //    weaker-types-at-the-boundary gap without a runtime conversion.
   try {
     const version = await flowlib.versions.create(flowId, {
-      invectDefinition: merged as unknown as Parameters<
+      flowlibDefinition: merged as unknown as Parameters<
         typeof flowlib.versions.create
-      >[1]['invectDefinition'],
+      >[1]['flowlibDefinition'],
     });
     return {
       success: true,

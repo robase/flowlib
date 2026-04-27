@@ -1,5 +1,5 @@
-// Batch Jobs Model for Invect core — adapter-based implementation
-import type { InvectAdapter, WhereClause } from '../../database/adapter';
+// Batch Jobs Model for Flowlib core — adapter-based implementation
+import type { FlowlibAdapter, WhereClause } from '../../database/adapter';
 import { Logger } from 'src/schemas';
 import { DatabaseError } from 'src/types/common/errors.types';
 import { BatchProvider, BatchStatus, BatchResult } from '../ai/base-client';
@@ -47,14 +47,14 @@ interface _BatchJobQuery {
   offset?: number;
 }
 
-const TABLE = 'invect_batch_jobs';
+const TABLE = 'flowlib_batch_jobs';
 
 /**
- * Batch Jobs CRUD operations class — uses InvectAdapter.
+ * Batch Jobs CRUD operations class — uses FlowlibAdapter.
  */
 export class BatchJobsModel {
   constructor(
-    private readonly adapter: InvectAdapter,
+    private readonly adapter: FlowlibAdapter,
     private readonly logger: Logger,
   ) {}
 

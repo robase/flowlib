@@ -1,7 +1,7 @@
 /**
  * Adapter Factory
  *
- * Wraps a RawInvectAdapter with automatic type coercion based on dialect
+ * Wraps a RawFlowlibAdapter with automatic type coercion based on dialect
  * capabilities. Inspired by better-auth's createAdapterFactory.
  *
  * This layer handles:
@@ -11,7 +11,7 @@
  * - string[] ↔ JSON string (SQLite, MySQL)
  */
 
-import type { InvectAdapter, RawInvectAdapter, WhereClause, AdapterConfig } from './adapter';
+import type { FlowlibAdapter, RawFlowlibAdapter, WhereClause, AdapterConfig } from './adapter';
 import { getDefaultCapabilities } from './adapter';
 import { randomUUID } from 'crypto';
 
@@ -38,11 +38,11 @@ export type SchemaMetadata = Record<string, Record<string, ColumnMeta>>;
 // Factory
 // ---------------------------------------------------------------------------
 
-export function createInvectAdapterFactory(
-  rawAdapter: RawInvectAdapter,
+export function createFlowlibAdapterFactory(
+  rawAdapter: RawFlowlibAdapter,
   config: AdapterConfig,
   schemaMeta: SchemaMetadata,
-): InvectAdapter {
+): FlowlibAdapter {
   const caps = {
     ...getDefaultCapabilities(config.dialect),
     ...config,
@@ -217,7 +217,7 @@ export function createInvectAdapterFactory(
   // Build the wrapped adapter
   // -------------------------------------------------------------------------
 
-  function wrapAdapter(raw: RawInvectAdapter): InvectAdapter {
+  function wrapAdapter(raw: RawFlowlibAdapter): FlowlibAdapter {
     const executeRaw = raw.executeRaw;
 
     return {
@@ -338,7 +338,7 @@ export function createInvectAdapterFactory(
           }
         : undefined,
 
-      async transaction<R>(callback: (trx: InvectAdapter) => Promise<R>): Promise<R> {
+      async transaction<R>(callback: (trx: FlowlibAdapter) => Promise<R>): Promise<R> {
         return raw.transaction(async (rawTrx) => {
           const wrappedTrx = wrapAdapter(rawTrx);
           return callback(wrappedTrx);

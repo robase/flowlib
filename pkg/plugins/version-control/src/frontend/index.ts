@@ -8,13 +8,13 @@
 import { GitBranch } from 'lucide-react';
 import { VcSyncPanel } from './components/VcSyncPanel';
 import { VcHeaderButton } from './components/VcHeaderButton';
-import type { InvectFrontendPlugin } from '@flowlib/ui';
+import type { FlowlibFrontendPlugin } from '@flowlib/ui';
 
 // ─────────────────────────────────────────────────────────────────────
 // Version Control Frontend Plugin Definition
 // ─────────────────────────────────────────────────────────────────────
 
-export const vcFrontendPlugin: InvectFrontendPlugin = {
+export const vcFrontendPlugin: FlowlibFrontendPlugin = {
   id: 'version-control',
   name: 'Version Control',
 

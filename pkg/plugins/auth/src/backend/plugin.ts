@@ -1,9 +1,9 @@
 import type {
-  InvectPlugin,
-  InvectIdentity,
-  InvectRole,
-  InvectPermission,
-  InvectPluginSchema,
+  FlowlibPlugin,
+  FlowlibIdentity,
+  FlowlibRole,
+  FlowlibPermission,
+  FlowlibPluginSchema,
 } from '@flowlib/core';
 import type {
   AuthenticationPluginOptions,
@@ -67,7 +67,7 @@ const DEFAULT_PREFIX = 'auth';
 /**
  * Default role mapping: keep admin/RBAC roles aligned and fall back to default.
  */
-function defaultMapRole(role: string | null | undefined): InvectRole {
+function defaultMapRole(role: string | null | undefined): FlowlibRole {
   if (!role) {
     return AUTH_DEFAULT_ROLE;
   }
@@ -86,8 +86,8 @@ function defaultMapRole(role: string | null | undefined): InvectRole {
 function defaultMapUser(
   user: BetterAuthUser,
   _session: BetterAuthSession,
-  mapRole: (role: string | null | undefined) => InvectRole,
-): InvectIdentity {
+  mapRole: (role: string | null | undefined) => FlowlibRole,
+): FlowlibIdentity {
   const resolvedRole = mapRole(user.role);
 
   return {
@@ -425,16 +425,16 @@ function getErrorLogDetails(error: unknown): Record<string, unknown> {
 /**
  * Abstract schema for the user-auth plugin's database tables.
  *
- * These definitions allow the Invect CLI (`npx flowlib-cli generate`) to include
+ * These definitions allow the Flowlib CLI (`npx flowlib-cli generate`) to include
  * the auth tables when generating Drizzle/Prisma schema files.
  *
  * The shapes match Better Auth's default table structure. If your Better Auth
  * config adds extra fields (e.g., via plugins like `twoFactor`, `organization`),
  * you can extend these in your own config.
  */
-export const USER_AUTH_SCHEMA: InvectPluginSchema = {
+export const USER_AUTH_SCHEMA: FlowlibPluginSchema = {
   user: {
-    tableName: 'invect_user',
+    tableName: 'flowlib_user',
     order: 1,
     fields: {
       id: { type: 'string', primaryKey: true },
@@ -453,7 +453,7 @@ export const USER_AUTH_SCHEMA: InvectPluginSchema = {
   },
 
   session: {
-    tableName: 'invect_session',
+    tableName: 'flowlib_session',
     order: 2,
     fields: {
       id: { type: 'string', primaryKey: true },
@@ -467,13 +467,13 @@ export const USER_AUTH_SCHEMA: InvectPluginSchema = {
       userId: {
         type: 'string',
         required: true,
-        references: { table: 'invect_user', field: 'id', onDelete: 'cascade' },
+        references: { table: 'flowlib_user', field: 'id', onDelete: 'cascade' },
       },
     },
   },
 
   account: {
-    tableName: 'invect_account',
+    tableName: 'flowlib_account',
     order: 2,
     fields: {
       id: { type: 'string', primaryKey: true },
@@ -482,7 +482,7 @@ export const USER_AUTH_SCHEMA: InvectPluginSchema = {
       userId: {
         type: 'string',
         required: true,
-        references: { table: 'invect_user', field: 'id', onDelete: 'cascade' },
+        references: { table: 'flowlib_user', field: 'id', onDelete: 'cascade' },
       },
       accessToken: { type: 'string', required: false },
       refreshToken: { type: 'string', required: false },
@@ -497,7 +497,7 @@ export const USER_AUTH_SCHEMA: InvectPluginSchema = {
   },
 
   verification: {
-    tableName: 'invect_verification',
+    tableName: 'flowlib_verification',
     order: 2,
     fields: {
       id: { type: 'string', primaryKey: true },
@@ -511,14 +511,14 @@ export const USER_AUTH_SCHEMA: InvectPluginSchema = {
 
   // ----- Flow access control table (moved from core) -----
   flowAccess: {
-    tableName: 'invect_flow_access',
+    tableName: 'flowlib_flow_access',
     order: 3,
     fields: {
       id: { type: 'uuid', primaryKey: true, defaultValue: 'uuid()' },
       flowId: {
         type: 'string',
         required: true,
-        references: { table: 'invect_flows', field: 'id', onDelete: 'cascade' },
+        references: { table: 'flowlib_flows', field: 'id', onDelete: 'cascade' },
       },
       userId: { type: 'string', required: false },
       teamId: { type: 'string', required: false },
@@ -535,14 +535,14 @@ export const USER_AUTH_SCHEMA: InvectPluginSchema = {
 
   // ----- Two-Factor Authentication table (Better Auth 2FA plugin) -----
   twoFactor: {
-    tableName: 'invect_two_factor',
+    tableName: 'flowlib_two_factor',
     order: 3,
     fields: {
       id: { type: 'string', primaryKey: true },
       userId: {
         type: 'string',
         required: true,
-        references: { table: 'invect_user', field: 'id', onDelete: 'cascade' },
+        references: { table: 'flowlib_user', field: 'id', onDelete: 'cascade' },
       },
       secret: { type: 'string', required: true },
       backupCodes: { type: 'string', required: true },
@@ -558,9 +558,9 @@ export const USER_AUTH_SCHEMA: InvectPluginSchema = {
  *
  * @see https://better-auth.com/docs/plugins/api-key/reference#schema
  */
-const API_KEY_SCHEMA: InvectPluginSchema = {
+const API_KEY_SCHEMA: FlowlibPluginSchema = {
   apikey: {
-    tableName: 'invect_apikey',
+    tableName: 'flowlib_apikey',
     order: 3,
     fields: {
       id: { type: 'string', primaryKey: true },
@@ -594,7 +594,7 @@ const API_KEY_SCHEMA: InvectPluginSchema = {
 // ---------------------------------------------------------------------------
 
 /**
- * Create a Better Auth instance internally using Invect's database config.
+ * Create a Better Auth instance internally using Flowlib's database config.
  *
  * Dynamically imports `better-auth` (a required peer dependency) and creates
  * a fully-configured instance with email/password auth, the admin plugin,
@@ -602,10 +602,10 @@ const API_KEY_SCHEMA: InvectPluginSchema = {
  *
  * Database resolution order:
  * 1. Explicit `options.database` (any value `betterAuth({ database })` accepts)
- * 2. Auto-created client from Invect's `database.connectionString`
+ * 2. Auto-created client from Flowlib's `database.connectionString`
  */
 async function createInternalBetterAuth(
-  invectConfig: Record<string, unknown>,
+  flowlibConfig: Record<string, unknown>,
   options: AuthenticationPluginOptions,
   logger: PluginLoggerLike,
 ): Promise<BetterAuthInstance> {
@@ -636,7 +636,7 @@ async function createInternalBetterAuth(
   let database: unknown = options.database;
 
   if (!database) {
-    const dbConfig = invectConfig.database as
+    const dbConfig = flowlibConfig.database as
       | { type?: string; connectionString?: string }
       | undefined;
 
@@ -644,7 +644,7 @@ async function createInternalBetterAuth(
       throw new Error(
         'Cannot create internal Better Auth instance: no database configuration found. ' +
           'Either provide `auth` (a Better Auth instance), `database`, or ensure ' +
-          'Invect database has a connectionString.',
+          'Flowlib database has a connectionString.',
       );
     }
 
@@ -696,7 +696,7 @@ async function createInternalBetterAuth(
   };
 
   const session = {
-    modelName: 'invect_session',
+    modelName: 'flowlib_session',
     cookieCache: { enabled: true, maxAge: 5 * 60 },
     ...passthrough.session,
     // Merge cookieCache if both exist
@@ -711,18 +711,18 @@ async function createInternalBetterAuth(
       : {}),
   };
 
-  // 6. Resolve secret — fall back to INVECT_ENCRYPTION_KEY when no explicit
+  // 6. Resolve secret — fall back to FLOWLIB_ENCRYPTION_KEY when no explicit
   //    secret or secrets are provided.  This lets deployments that already set
-  //    INVECT_ENCRYPTION_KEY get a valid Better Auth secret for free.
+  //    FLOWLIB_ENCRYPTION_KEY get a valid Better Auth secret for free.
   let resolvedSecret = passthrough.secret;
   const resolvedSecrets = passthrough.secrets;
 
   if (!resolvedSecret && !resolvedSecrets) {
-    const envKey = process.env.INVECT_ENCRYPTION_KEY;
+    const envKey = process.env.FLOWLIB_ENCRYPTION_KEY;
     if (envKey) {
       resolvedSecret = envKey;
       logger.debug?.(
-        'Using INVECT_ENCRYPTION_KEY as Better Auth secret (no explicit secret/secrets provided)',
+        'Using FLOWLIB_ENCRYPTION_KEY as Better Auth secret (no explicit secret/secrets provided)',
       );
     }
   }
@@ -749,13 +749,13 @@ async function createInternalBetterAuth(
     const twoFactorOpt = options.twoFactor;
     const twoFactorConfig: Record<string, unknown> =
       typeof twoFactorOpt === 'object' ? { ...twoFactorOpt } : {};
-    // Default issuer to "Invect" if not provided
+    // Default issuer to "Flowlib" if not provided
     if (twoFactorConfig.issuer === undefined) {
-      twoFactorConfig.issuer = 'Invect';
+      twoFactorConfig.issuer = 'Flowlib';
     }
     // Use flowlib-prefixed table name for the two-factor table
     if (twoFactorConfig.twoFactorTable === undefined) {
-      twoFactorConfig.twoFactorTable = 'invect_two_factor';
+      twoFactorConfig.twoFactorTable = 'flowlib_two_factor';
     }
     betterAuthPlugins.push(twoFactorPlugin(twoFactorConfig));
     logger.info?.('Better Auth Two-Factor plugin enabled');
@@ -789,7 +789,7 @@ async function createInternalBetterAuth(
     }
     // Use flowlib-prefixed table name for the api-key table
     if (apiKeyConfig.schema === undefined) {
-      apiKeyConfig.schema = { apikey: { modelName: 'invect_apikey' } };
+      apiKeyConfig.schema = { apikey: { modelName: 'flowlib_apikey' } };
     }
     betterAuthPlugins.push(apiKeyPluginFn(apiKeyConfig));
     logger.info?.('Better Auth API Key plugin enabled');
@@ -806,9 +806,9 @@ async function createInternalBetterAuth(
     session,
     trustedOrigins,
     // Map Better Auth model names to flowlib-prefixed table names.
-    user: { modelName: 'invect_user' },
-    account: { modelName: 'invect_account', ...passthrough.account },
-    verification: { modelName: 'invect_verification' },
+    user: { modelName: 'flowlib_user' },
+    account: { modelName: 'flowlib_account', ...passthrough.account },
+    verification: { modelName: 'flowlib_verification' },
     // Spread optional passthrough fields
     ...(passthrough.socialProviders ? { socialProviders: passthrough.socialProviders } : {}),
     ...(passthrough.rateLimit ? { rateLimit: passthrough.rateLimit } : {}),
@@ -892,7 +892,7 @@ async function createMySQLPool(connectionString: string) {
 // ---------------------------------------------------------------------------
 
 /**
- * Create the Invect user-auth plugin (a light wrapper around Better Auth).
+ * Create the Flowlib user-auth plugin (a light wrapper around Better Auth).
  *
  * This plugin:
  *
@@ -900,9 +900,9 @@ async function createMySQLPool(connectionString: string) {
  *    (sign-in, sign-up, sign-out, OAuth callbacks, session, etc.) are mounted
  *    under the plugin endpoint space at `/plugins/auth/api/auth/*` (configurable).
  *
- * 2. **Resolves sessions → identities** — On every Invect API request, the
+ * 2. **Resolves sessions → identities** — On every Flowlib API request, the
  *    `onRequest` hook reads the session cookie / bearer token via
- *    `auth.api.getSession()` and populates `InvectIdentity`.
+ *    `auth.api.getSession()` and populates `FlowlibIdentity`.
  *
  * 3. **Handles authorization** — The `onAuthorize` hook lets Better Auth's
  *    session decide whether a request is allowed.
@@ -912,7 +912,7 @@ async function createMySQLPool(connectionString: string) {
  * // Simple: let the plugin manage Better Auth internally
  * import { authentication } from '@flowlib/user-auth';
  *
- * app.use('/flowlib', createInvectRouter({
+ * app.use('/flowlib', createFlowlibRouter({
  *   databaseUrl: 'file:./dev.db',
  *   plugins: [authentication({
  *     globalAdmins: [{ email: 'admin@co.com', pw: 'secret' }],
@@ -932,13 +932,13 @@ async function createMySQLPool(connectionString: string) {
  *   // ... your better-auth config
  * });
  *
- * app.use('/flowlib', createInvectRouter({
+ * app.use('/flowlib', createFlowlibRouter({
  *   databaseUrl: 'file:./dev.db',
  *   plugins: [authentication({ auth })],
  * }));
  * ```
  */
-export function authentication(options: AuthenticationPluginOptions): InvectPlugin {
+export function authentication(options: AuthenticationPluginOptions): FlowlibPlugin {
   const {
     prefix = DEFAULT_PREFIX,
     mapUser: customMapUser,
@@ -969,7 +969,7 @@ export function authentication(options: AuthenticationPluginOptions): InvectPlug
    */
   async function getIdentityFromHeaders(
     headers: Record<string, string | undefined>,
-  ): Promise<InvectIdentity | null> {
+  ): Promise<FlowlibIdentity | null> {
     if (!auth) {
       return null;
     }
@@ -986,7 +986,7 @@ export function authentication(options: AuthenticationPluginOptions): InvectPlug
     return defaultMapUser(result.user, result.session, mapRole);
   }
 
-  async function getIdentityFromRequest(request: Request): Promise<InvectIdentity | null> {
+  async function getIdentityFromRequest(request: Request): Promise<FlowlibIdentity | null> {
     if (!auth) {
       return null;
     }
@@ -1005,9 +1005,9 @@ export function authentication(options: AuthenticationPluginOptions): InvectPlug
   }
 
   async function resolveEndpointIdentity(ctx: {
-    identity: InvectIdentity | null;
+    identity: FlowlibIdentity | null;
     request: Request;
-  }): Promise<InvectIdentity | null> {
+  }): Promise<FlowlibIdentity | null> {
     if (ctx.identity) {
       return ctx.identity;
     }
@@ -1112,22 +1112,22 @@ export function authentication(options: AuthenticationPluginOptions): InvectPlug
   const apiKeyEnabled = !!(options.apiKey ?? options.betterAuthOptions?.apiKey);
 
   // ----- Build schema (always includes twoFactor, conditionally includes apikey) -----
-  let schema: InvectPluginSchema = { ...USER_AUTH_SCHEMA };
+  let schema: FlowlibPluginSchema = { ...USER_AUTH_SCHEMA };
 
   if (apiKeyEnabled) {
     schema = { ...schema, ...API_KEY_SCHEMA };
   }
 
   const requiredTables = [
-    'invect_user',
-    'invect_session',
-    'invect_account',
-    'invect_verification',
-    'invect_flow_access',
-    'invect_two_factor',
+    'flowlib_user',
+    'flowlib_session',
+    'flowlib_account',
+    'flowlib_verification',
+    'flowlib_flow_access',
+    'flowlib_two_factor',
   ];
   if (apiKeyEnabled) {
-    requiredTables.push('invect_apikey');
+    requiredTables.push('flowlib_apikey');
   }
 
   // ----- Build the plugin -----
@@ -1157,11 +1157,11 @@ export function authentication(options: AuthenticationPluginOptions): InvectPlug
           params: Record<string, string>;
           query: Record<string, string | undefined>;
           headers: Record<string, string | undefined>;
-          identity: InvectIdentity | null;
+          identity: FlowlibIdentity | null;
           request: Request;
           core: {
-            getPermissions: (identity: InvectIdentity | null) => string[];
-            getResolvedRole: (identity: InvectIdentity) => string | null;
+            getPermissions: (identity: FlowlibIdentity | null) => string[];
+            getResolvedRole: (identity: FlowlibIdentity) => string | null;
           };
         }) => {
           const identity = await resolveEndpointIdentity(ctx);
@@ -1195,7 +1195,7 @@ export function authentication(options: AuthenticationPluginOptions): InvectPlug
           params: Record<string, string>;
           query: Record<string, string | undefined>;
           headers: Record<string, string | undefined>;
-          identity: InvectIdentity | null;
+          identity: FlowlibIdentity | null;
           request: Request;
           core: { getAvailableRoles: () => unknown };
         }) => {
@@ -1221,7 +1221,7 @@ export function authentication(options: AuthenticationPluginOptions): InvectPlug
           params: Record<string, string>;
           query: Record<string, string | undefined>;
           headers: Record<string, string | undefined>;
-          identity: InvectIdentity | null;
+          identity: FlowlibIdentity | null;
           request: Request;
         }) => {
           const identity = await resolveEndpointIdentity(ctx);
@@ -1252,7 +1252,7 @@ export function authentication(options: AuthenticationPluginOptions): InvectPlug
           params: Record<string, string>;
           query: Record<string, string | undefined>;
           headers: Record<string, string | undefined>;
-          identity: InvectIdentity | null;
+          identity: FlowlibIdentity | null;
           request: Request;
         }) => {
           const identity = await resolveEndpointIdentity(ctx);
@@ -1300,7 +1300,7 @@ export function authentication(options: AuthenticationPluginOptions): InvectPlug
           params: Record<string, string>;
           query: Record<string, string | undefined>;
           headers: Record<string, string | undefined>;
-          identity: InvectIdentity | null;
+          identity: FlowlibIdentity | null;
           request: Request;
         }) => {
           const identity = await resolveEndpointIdentity(ctx);
@@ -1362,7 +1362,7 @@ export function authentication(options: AuthenticationPluginOptions): InvectPlug
           params: Record<string, string>;
           query: Record<string, string | undefined>;
           headers: Record<string, string | undefined>;
-          identity: InvectIdentity | null;
+          identity: FlowlibIdentity | null;
           request: Request;
         }) => {
           const identity = await resolveEndpointIdentity(ctx);
@@ -1414,7 +1414,7 @@ export function authentication(options: AuthenticationPluginOptions): InvectPlug
           params: Record<string, string>;
           query: Record<string, string | undefined>;
           headers: Record<string, string | undefined>;
-          identity: InvectIdentity | null;
+          identity: FlowlibIdentity | null;
           request: Request;
         }) => {
           const identity = await resolveEndpointIdentity(ctx);
@@ -1495,7 +1495,7 @@ export function authentication(options: AuthenticationPluginOptions): InvectPlug
           params: Record<string, string>;
           query: Record<string, string | undefined>;
           headers: Record<string, string | undefined>;
-          identity: InvectIdentity | null;
+          identity: FlowlibIdentity | null;
           request: Request;
         }) => {
           const identity = await resolveEndpointIdentity(ctx);
@@ -1630,7 +1630,7 @@ export function authentication(options: AuthenticationPluginOptions): InvectPlug
           params: Record<string, string>;
           query: Record<string, string | undefined>;
           headers: Record<string, string | undefined>;
-          identity: InvectIdentity | null;
+          identity: FlowlibIdentity | null;
           request: Request;
         }) => {
           const identity = await resolveEndpointIdentity(ctx);
@@ -1720,7 +1720,7 @@ export function authentication(options: AuthenticationPluginOptions): InvectPlug
           params: Record<string, string>;
           query: Record<string, string | undefined>;
           headers: Record<string, string | undefined>;
-          identity: InvectIdentity | null;
+          identity: FlowlibIdentity | null;
           request: Request;
         }) => {
           const identity = await resolveEndpointIdentity(ctx);
@@ -1810,7 +1810,7 @@ export function authentication(options: AuthenticationPluginOptions): InvectPlug
        */
       onRequest: async (
         request: Request,
-        context: { path: string; method: string; identity: InvectIdentity | null },
+        context: { path: string; method: string; identity: FlowlibIdentity | null },
       ) => {
         // Skip session resolution for auth proxy routes
         if (isBetterAuthRoute(context.path, prefix, betterAuthBasePath)) {
@@ -1868,8 +1868,8 @@ export function authentication(options: AuthenticationPluginOptions): InvectPlug
        * for cases where the identity wasn't resolved upstream.
        */
       onAuthorize: async (context: {
-        identity: InvectIdentity | null;
-        action: InvectPermission;
+        identity: FlowlibIdentity | null;
+        action: FlowlibPermission;
         resource?: { type: string; id?: string };
       }) => {
         // If an identity is already attached, let downstream authorization proceed

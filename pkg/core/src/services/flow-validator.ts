@@ -5,7 +5,7 @@ import {
   FlowValidationError,
   FlowValidationWarning,
 } from '../types/validation';
-import { InvectDefinition, FlowNodeDefinitions, FlowEdge } from './flow-versions/schemas-fresh';
+import { FlowlibDefinition, FlowNodeDefinitions, FlowEdge } from './flow-versions/schemas-fresh';
 import { GraphService } from './graph.service';
 
 /**
@@ -26,7 +26,7 @@ function isEntryPointNode(nodeType: string): boolean {
  * Warnings = the flow will run but something looks unintentional.
  */
 export class FlowValidator {
-  static validateFlowDefinition(flowDefinition: InvectDefinition): FlowValidationResult {
+  static validateFlowDefinition(flowDefinition: FlowlibDefinition): FlowValidationResult {
     try {
       const context = new ValidationContext(
         flowDefinition,

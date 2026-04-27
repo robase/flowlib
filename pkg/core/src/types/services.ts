@@ -1,7 +1,7 @@
 /**
  * Pluggable service adapter interfaces (PR 2/14 from flowlib-hosted/UPSTREAM.md).
  *
- * These interfaces define the seams that allow `createInvect()` users to swap
+ * These interfaces define the seams that allow `createFlowlib()` users to swap
  * the default implementations of cross-cutting infrastructure services
  * (encryption, event bus, chat sessions, cron, batch polling) for
  * runtime-specific alternatives. The hosted Cloudflare variant uses these to
@@ -218,14 +218,14 @@ export interface JobRunnerAdapter {
 // ─── Aggregate config ────────────────────────────────────────────────
 
 /**
- * Optional `services` block on `InvectConfig`.
+ * Optional `services` block on `FlowlibConfig`.
  *
  * Each field is independently swappable — omit any field to keep the
  * built-in default. All fields are typed as the corresponding adapter
- * interface here, but on `InvectConfig` they are stored as
+ * interface here, but on `FlowlibConfig` they are stored as
  * `z.unknown()` since adapter instances aren't Zod-validatable.
  */
-export interface InvectServiceOverrides {
+export interface FlowlibServiceOverrides {
   encryption?: EncryptionAdapter;
   eventBus?: ExecutionEventBusAdapter;
   chatSessionStore?: ChatSessionStore;

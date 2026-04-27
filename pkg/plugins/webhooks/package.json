@@ -1,7 +1,7 @@
 {
   "name": "@flowlib/webhooks",
   "version": "0.0.12",
-  "description": "Webhook trigger plugin for Invect — adds webhook management, ingestion, signature verification, and a dedicated webhooks UI page",
+  "description": "Webhook trigger plugin for Flowlib — adds webhook management, ingestion, signature verification, and a dedicated webhooks UI page",
   "keywords": [
     "flowlib",
     "plugin",

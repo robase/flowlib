@@ -68,7 +68,7 @@ export class BackendsExplorerProvider implements vscode.TreeDataProvider<Backend
     // connect-action
     const tree = new vscode.TreeItem('Connect to remote backend…');
     tree.iconPath = new vscode.ThemeIcon('plug');
-    tree.tooltip = 'Configure a remote (or localhost / Docker) Invect backend';
+    tree.tooltip = 'Configure a remote (or localhost / Docker) Flowlib backend';
     tree.command = { command: 'flowlib.connect', title: 'Connect…' };
     tree.contextValue = 'flowlib.backend.connect';
     return tree;

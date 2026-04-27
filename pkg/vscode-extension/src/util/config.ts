@@ -13,7 +13,7 @@ import * as vscode from 'vscode';
  * `flowlib.*` settings are declared `"scope": "resource"` so per-folder /
  * per-workspace overrides actually apply.
  */
-export interface InvectConfig {
+export interface FlowlibConfig {
   /**
    * Backend URL (e.g. `http://localhost:3000/flowlib`). Empty string means
    * "work offline" — L10 surfaces this as the disconnected state in the
@@ -55,7 +55,7 @@ const DEFAULTS = {
  * pass the value through, rather than re-reading inside hot paths — VSCode
  * caches settings cheaply but consistency-within-an-operation matters more.
  */
-export function readConfig(scope?: vscode.Uri): InvectConfig {
+export function readConfig(scope?: vscode.Uri): FlowlibConfig {
   const c = vscode.workspace.getConfiguration('flowlib', scope);
   const rawUrl = c.get<string>('backendUrl', DEFAULTS.backendUrl);
   return {
@@ -75,7 +75,7 @@ export function readConfig(scope?: vscode.Uri): InvectConfig {
  * forever, including across deactivations during dev iteration.
  */
 export function onConfigChange(
-  cb: (config: InvectConfig) => void,
+  cb: (config: FlowlibConfig) => void,
   scope?: vscode.Uri,
 ): vscode.Disposable {
   return vscode.workspace.onDidChangeConfiguration((e) => {

@@ -44,7 +44,7 @@ RUN pnpm --filter '@flowlib/*' --workspace-concurrency=1 run build
 # (no @flowlib/core external — must bundle everything for static serving)
 RUN cp docker/vite.config.docker.ts examples/vite-react-frontend/vite.config.docker.ts && \
     cd examples/vite-react-frontend && \
-    VITE_INVECT_API_BASE_URL=/flowlib npx vite build --config vite.config.docker.ts
+    VITE_FLOWLIB_API_BASE_URL=/flowlib npx vite build --config vite.config.docker.ts
 
 # Generate DB schema + migration files (--yes auto-accepts all prompts)
 RUN cd examples/express-drizzle && pnpm flowlib:generate
@@ -108,10 +108,10 @@ EXPOSE 3000
 
 ENV PORT=3000
 ENV DATABASE_URL=file:/app/data/flowlib.db
-ENV INVECT_DB_TYPE=sqlite
-ENV INVECT_LOG_LEVEL=info
+ENV FLOWLIB_DB_TYPE=sqlite
+ENV FLOWLIB_LOG_LEVEL=info
 ENV NODE_ENV=production
-# INVECT_ENCRYPTION_KEY is required — generate with: npx flowlib-cli secret
+# FLOWLIB_ENCRYPTION_KEY is required — generate with: npx flowlib-cli secret
 
 # Initialise DB schema and start the server
 # Uses drizzle-kit migrate (not push) to avoid the known SQLite CREATE INDEX bug

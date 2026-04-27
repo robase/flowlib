@@ -16,7 +16,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { verifySchema } from '../../../src/database/schema-verification';
 import type { DatabaseConnection } from '../../../src/database/connection';
 import { CORE_SCHEMA } from '../../../src/database/core-schema';
-import type { InvectPlugin } from '../../../src/types/plugin.types';
+import type { FlowlibPlugin } from '../../../src/types/plugin.types';
 
 function asSchemaDefinition(definition: unknown): {
   tableName?: string;
@@ -253,7 +253,7 @@ describe('Schema Verification', () => {
       };
 
       const result = await verifySchema(connection, logger, {
-        plugins: [plugin as unknown as InvectPlugin],
+        plugins: [plugin as unknown as FlowlibPlugin],
       });
 
       expect(result.valid).toBe(false);
@@ -283,7 +283,7 @@ describe('Schema Verification', () => {
       };
 
       const result = await verifySchema(connection, logger, {
-        plugins: [plugin as unknown as InvectPlugin],
+        plugins: [plugin as unknown as FlowlibPlugin],
       });
 
       expect(result.valid).toBe(true);

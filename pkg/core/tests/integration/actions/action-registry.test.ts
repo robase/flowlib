@@ -1,19 +1,19 @@
 /**
  * Integration tests: Action Registry
  *
- * Tests that the action registry is correctly populated after Invect
+ * Tests that the action registry is correctly populated after Flowlib
  * initialization, and that actions can be converted to both node
  * definitions and agent tool definitions.
  */
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import type { InvectInstance } from '../../../src/api/types';
-import { createTestInvect } from '../helpers/test-flowlib';
+import type { FlowlibInstance } from '../../../src/api/types';
+import { createTestFlowlib } from '../helpers/test-flowlib';
 
 describe('Action Registry', () => {
-  let flowlib: InvectInstance;
+  let flowlib: FlowlibInstance;
 
   beforeAll(async () => {
-    flowlib = await createTestInvect();
+    flowlib = await createTestFlowlib();
   });
 
   afterAll(async () => {
@@ -69,7 +69,7 @@ describe('Action Registry', () => {
   it('should register plugin actions when provided', async () => {
     const { z } = await import('zod/v4');
 
-    const customInvect = await createTestInvect({
+    const customFlowlib = await createTestFlowlib({
       plugins: [
         {
           id: 'custom-action-plugin',
@@ -97,12 +97,12 @@ describe('Action Registry', () => {
     });
 
     try {
-      const tools = await customInvect.agent.getTools();
+      const tools = await customFlowlib.agent.getTools();
       const ids = tools.map((t) => t.id);
 
       expect(ids).toContain('test.custom_action');
     } finally {
-      await customInvect.shutdown();
+      await customFlowlib.shutdown();
     }
   });
 });

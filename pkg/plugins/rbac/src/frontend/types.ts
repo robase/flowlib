@@ -12,10 +12,10 @@ import type { ComponentType, ReactNode } from 'react';
 // ─────────────────────────────────────────────────────────────
 
 /**
- * A frontend plugin that contributes UI to the Invect application.
- * Plugins are registered via `<Invect plugins={[myPlugin]} />`.
+ * A frontend plugin that contributes UI to the Flowlib application.
+ * Plugins are registered via `<Flowlib plugins={[myPlugin]} />`.
  */
-export interface InvectFrontendPlugin {
+export interface FlowlibFrontendPlugin {
   /** Unique plugin ID — should match backend plugin ID for manifest resolution */
   id: string;
 

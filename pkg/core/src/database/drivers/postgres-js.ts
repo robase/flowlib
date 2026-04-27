@@ -1,7 +1,7 @@
 /**
  * postgres.js (postgres npm package) driver implementation.
  *
- * This is the default PostgreSQL driver — the one Invect has always used.
+ * This is the default PostgreSQL driver — the one Flowlib has always used.
  */
 
 import type { DatabaseDriver } from './types';

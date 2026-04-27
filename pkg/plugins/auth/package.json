@@ -1,7 +1,7 @@
 {
   "name": "@flowlib/user-auth",
   "version": "0.0.12",
-  "description": "Better Auth plugin for Invect — adds user authentication, session management, identity resolution, and auth UI components",
+  "description": "Better Auth plugin for Flowlib — adds user authentication, session management, identity resolution, and auth UI components",
   "keywords": [
     "auth",
     "authentication",

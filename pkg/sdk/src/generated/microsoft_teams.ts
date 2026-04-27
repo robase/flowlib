@@ -147,7 +147,7 @@ export interface MicrosoftTeamsSendMessageParams {
   channelId: z.input<typeof _teamsSendMessageAction.params.schema>['channelId'];
   /**
    * The message body. Supports HTML formatting by default.
-   * @example <p>Hello from Invect!</p>
+   * @example <p>Hello from Flowlib!</p>
    */
   content: z.input<typeof _teamsSendMessageAction.params.schema>['content'];
   /**

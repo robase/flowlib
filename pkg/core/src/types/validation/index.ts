@@ -1,4 +1,4 @@
-// Invect API Validation Schemas
+// Flowlib API Validation Schemas
 // Centralized Zod schemas for type-safe API validation across all frameworks
 
 // Common validation utilities

@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import type { Node, Edge } from '@xyflow/react';
-import { computeSnapshot, transformToInvectDefinition } from '../src/utils/flowTransformations';
+import { computeSnapshot, transformToFlowlibDefinition } from '../src/utils/flowTransformations';
 
 // Helper: minimal valid node for tests
 function makeNode(overrides: Partial<Node> = {}): Node {
@@ -28,7 +28,7 @@ function makeEdge(overrides: Partial<Edge> = {}): Edge {
   };
 }
 
-describe('transformToInvectDefinition', () => {
+describe('transformToFlowlibDefinition', () => {
   it('strips ReactFlow-internal fields (selected, measured, dragging)', () => {
     const node: Node = {
       ...makeNode(),
@@ -37,7 +37,7 @@ describe('transformToInvectDefinition', () => {
       measured: { width: 200, height: 100 },
     };
 
-    const result = transformToInvectDefinition([node], []);
+    const result = transformToFlowlibDefinition([node], []);
     const serialized = JSON.stringify(result);
 
     expect(serialized).not.toContain('"selected"');
@@ -46,7 +46,7 @@ describe('transformToInvectDefinition', () => {
   });
 
   it('preserves structural fields (id, type, position, params, label)', () => {
-    const result = transformToInvectDefinition([makeNode()], []);
+    const result = transformToFlowlibDefinition([makeNode()], []);
 
     expect(result.nodes).toHaveLength(1);
     expect(result.nodes[0].id).toBe('node-1');
@@ -66,7 +66,7 @@ describe('transformToInvectDefinition', () => {
       targetHandle: null,
     };
 
-    const result = transformToInvectDefinition([], [edge]);
+    const result = transformToFlowlibDefinition([], [edge]);
 
     expect(result.edges).toHaveLength(1);
     expect(result.edges[0]).toEqual({

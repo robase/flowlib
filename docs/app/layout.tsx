@@ -19,10 +19,10 @@ const iosevkaMono = localFont({
 
 export const metadata = {
   title: {
-    template: '%s — Invect',
-    default: 'Invect Docs',
+    template: '%s — Flowlib',
+    default: 'Flowlib Docs',
   },
-  description: 'Documentation for Invect — drop-in workflow orchestration for any Node.js app.',
+  description: 'Documentation for Flowlib — drop-in workflow orchestration for any Node.js app.',
   icons: { icon: '/favicon.ico' },
 };
 

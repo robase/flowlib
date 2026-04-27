@@ -1,21 +1,21 @@
 <p align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="../../.github/assets/logo-light.svg">
-    <img alt="Invect" src="../../.github/assets/logo-dark.svg" width="50">
+    <img alt="Flowlib" src="../../.github/assets/logo-dark.svg" width="50">
   </picture>
 </p>
 
 <h1 align="center">@flowlib/cli</h1>
 
 <p align="center">
-  CLI for managing Invect projects.
+  CLI for managing Flowlib projects.
   <br />
   <a href="https://flowlib.dev/docs/cli"><strong>Docs</strong></a> · <a href="https://flowlib.dev/docs/quick-start"><strong>Quick Start</strong></a>
 </p>
 
 ---
 
-Schema generation, database migrations, and project setup for Invect. Merges core + plugin schemas and generates dialect-specific Drizzle files for SQLite, PostgreSQL, and MySQL.
+Schema generation, database migrations, and project setup for Flowlib. Merges core + plugin schemas and generates dialect-specific Drizzle files for SQLite, PostgreSQL, and MySQL.
 
 ## Install
 
@@ -57,7 +57,7 @@ Displays diagnostic info — system, frameworks, databases, config, and plugins.
 
 ### `flowlib-cli secret`
 
-Generates a cryptographically secure 32-byte base64 key for `INVECT_ENCRYPTION_KEY`.
+Generates a cryptographically secure 32-byte base64 key for `FLOWLIB_ENCRYPTION_KEY`.
 
 ```bash
 npx flowlib-cli secret

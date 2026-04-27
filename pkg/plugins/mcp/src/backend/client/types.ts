@@ -1,5 +1,5 @@
 /**
- * InvectClient — abstraction over Invect API access.
+ * FlowlibClient — abstraction over Flowlib API access.
  *
  * Both DirectClient (plugin mode) and HttpClient (CLI mode) implement this
  * interface so tool handlers remain transport-agnostic.
@@ -8,7 +8,7 @@
  * MCP layer JSON-stringifies everything. This avoids mapping internal
  * types to a duplicated schema.
  *
- * Note on identity: these methods do NOT take an `InvectIdentity`. Auth is
+ * Note on identity: these methods do NOT take an `FlowlibIdentity`. Auth is
  * handled at the transport layer — the plugin endpoint resolves identity
  * via the framework adapter's middleware before the MCP server dispatches
  * tool calls, and the stdio CLI authenticates via API key.
@@ -39,7 +39,7 @@ export interface GetFlowSdkSourceOptions {
   sdkImport?: string;
 }
 
-export interface InvectClient {
+export interface FlowlibClient {
   // ===== Flows =====
   listFlows(): Promise<unknown>;
   getFlow(flowId: string): Promise<unknown>;

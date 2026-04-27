@@ -1,7 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router';
-import { Invect } from '@flowlib/ui';
+import { Flowlib } from '@flowlib/ui';
 import '@flowlib/ui/styles';
 import { auth } from '@flowlib/user-auth';
 import { rbac } from '@flowlib/rbac';
@@ -21,7 +21,7 @@ export const App = () => {
           path="/*"
           element={
             <div className="h-screen">
-              <Invect
+              <Flowlib
                 config={{
                   apiPath: '/api/flowlib',
                   frontendPath: '/flowlib',

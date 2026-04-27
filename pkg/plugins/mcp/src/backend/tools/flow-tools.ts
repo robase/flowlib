@@ -4,7 +4,7 @@
 
 import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import type { InvectClient } from '../client/types';
+import type { FlowlibClient } from '../client/types';
 import { TOOL_IDS } from '../../shared/types';
 import {
   mapFlowList,
@@ -14,7 +14,7 @@ import {
   mapSdkSource,
 } from '../response-mappers';
 
-export function registerFlowTools(server: McpServer, client: InvectClient): void {
+export function registerFlowTools(server: McpServer, client: FlowlibClient): void {
   server.registerTool(
     TOOL_IDS.FLOW_LIST,
     {

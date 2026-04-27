@@ -68,7 +68,7 @@ interface ScreenAnalysis {
 // ─── Prompts ──────────────────────────────────────────────────────────────
 
 function perScreenPrompt(meta: ScreenshotMeta): string {
-  return `You are a senior product designer reviewing "Invect" — a workflow orchestration tool with a visual flow editor for building AI pipelines. The target audience is technical users (developers, data engineers) — think Figma, n8n, VS Code, or Retool.
+  return `You are a senior product designer reviewing "Flowlib" — a workflow orchestration tool with a visual flow editor for building AI pipelines. The target audience is technical users (developers, data engineers) — think Figma, n8n, VS Code, or Retool.
 
 Analyze this screenshot of: ${meta.description}
 Page URL: ${meta.url}
@@ -91,7 +91,7 @@ Be direct and opinionated. Compare against tools like Figma, Linear, Raycast, n8
 }
 
 function synthesisPrompt(count: number, allFindings: string): string {
-  return `You've reviewed ${count} screens of the Invect workflow editor — a developer tool comparable to Figma, n8n, or VS Code. Below are your per-screen findings.
+  return `You've reviewed ${count} screens of the Flowlib workflow editor — a developer tool comparable to Figma, n8n, or VS Code. Below are your per-screen findings.
 
 ${allFindings}
 
@@ -221,7 +221,7 @@ function generateReport(
   timestamp: string,
 ): string {
   const lines: string[] = [
-    '# Invect UI Visual Audit Report',
+    '# Flowlib UI Visual Audit Report',
     '',
     `> Generated: ${timestamp} | Model: ${provider.model} (${provider.name}) | Screenshots: ${analyses.length}`,
     '',

@@ -1,6 +1,6 @@
-// Credentials Model for Invect core — adapter-based implementation
+// Credentials Model for Flowlib core — adapter-based implementation
 import { randomUUID } from 'crypto';
-import type { InvectAdapter, WhereClause } from '../../database/adapter';
+import type { FlowlibAdapter, WhereClause } from '../../database/adapter';
 import { DatabaseError } from 'src/types/common/errors.types';
 import { Logger, PaginatedResponse, PaginationQuery, QueryOptions } from 'src/schemas';
 import type {
@@ -73,14 +73,14 @@ interface _CredentialQuery {
   pagination?: PaginationQuery;
 }
 
-const TABLE = 'invect_credentials';
+const TABLE = 'flowlib_credentials';
 
 /**
- * Credentials CRUD operations class — uses InvectAdapter.
+ * Credentials CRUD operations class — uses FlowlibAdapter.
  */
 export class CredentialsModel {
   constructor(
-    private readonly adapter: InvectAdapter,
+    private readonly adapter: FlowlibAdapter,
     private readonly logger: Logger,
   ) {}
 

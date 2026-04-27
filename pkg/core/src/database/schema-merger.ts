@@ -15,7 +15,7 @@
  */
 
 import type {
-  InvectPlugin,
+  FlowlibPlugin,
   PluginFieldAttribute,
   PluginTableDefinition,
 } from 'src/types/plugin.types';
@@ -162,7 +162,7 @@ export interface SchemaMergeError {
  * @throws SchemaConflictError if a transform injects a column that already exists on a target table
  */
 export function mergeSchemas(
-  plugins: InvectPlugin[],
+  plugins: FlowlibPlugin[],
   transforms?: SchemaTransform[],
 ): MergedSchema {
   const errors: SchemaMergeError[] = [];

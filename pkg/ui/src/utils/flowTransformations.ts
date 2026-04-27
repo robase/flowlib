@@ -1,5 +1,5 @@
 import type { Node, Edge } from '@xyflow/react';
-import type { InvectDefinition, FlowEdge, MapperConfig } from '@flowlib/core/types';
+import type { FlowlibDefinition, FlowEdge, MapperConfig } from '@flowlib/core/types';
 
 type NodeData = Record<string, unknown> & {
   params?: Record<string, unknown>;
@@ -9,9 +9,9 @@ type NodeData = Record<string, unknown> & {
 };
 
 /**
- * Transform ReactFlow nodes and edges back to InvectDefinition format for saving
+ * Transform ReactFlow nodes and edges back to FlowlibDefinition format for saving
  */
-export function transformToInvectDefinition(nodes: Node[], edges: Edge[]): InvectDefinition {
+export function transformToFlowlibDefinition(nodes: Node[], edges: Edge[]): FlowlibDefinition {
   // Transform nodes: extract only the data needed for backend
   const transformedNodes = nodes.map((node) => {
     const data = (node.data || {}) as NodeData;
@@ -32,7 +32,7 @@ export function transformToInvectDefinition(nodes: Node[], edges: Edge[]): Invec
       type: nodeType,
       position: node.position ?? { x: 0, y: 0 },
       params,
-    } as InvectDefinition['nodes'][number];
+    } as FlowlibDefinition['nodes'][number];
 
     if (displayName) {
       baseNode.label = displayName;
@@ -69,7 +69,7 @@ export function transformToInvectDefinition(nodes: Node[], edges: Edge[]): Invec
 
 /**
  * Compute a serialized snapshot of the flow definition for dirty-checking.
- * Uses `transformToInvectDefinition` to strip ReactFlow-internal state
+ * Uses `transformToFlowlibDefinition` to strip ReactFlow-internal state
  * (selected, measured, executionStatus, etc.), then JSON.stringify for
  * cheap string equality comparison.
  *
@@ -77,14 +77,14 @@ export function transformToInvectDefinition(nodes: Node[], edges: Edge[]): Invec
  * and saves), NOT inside selectors — so it doesn't run on every render.
  */
 export function computeSnapshot(nodes: Node[], edges: Edge[]): string {
-  const definition = transformToInvectDefinition(nodes, edges);
+  const definition = transformToFlowlibDefinition(nodes, edges);
   return JSON.stringify(definition);
 }
 
 /**
- * Validate that a InvectDefinition has required fields
+ * Validate that a FlowlibDefinition has required fields
  */
-function _validateInvectDefinition(definition: InvectDefinition): {
+function _validateFlowlibDefinition(definition: FlowlibDefinition): {
   isValid: boolean;
   errors: string[];
 } {

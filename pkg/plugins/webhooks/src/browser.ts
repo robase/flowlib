@@ -6,14 +6,14 @@
  */
 import { webhooksFrontend } from './frontend/index';
 
-interface InvectPluginDefinition {
+interface FlowlibPluginDefinition {
   id: string;
   name?: string;
   backend?: unknown;
   frontend?: unknown;
 }
 
-export function webhooks(_options?: Record<string, unknown>): InvectPluginDefinition {
+export function webhooks(_options?: Record<string, unknown>): FlowlibPluginDefinition {
   return {
     id: 'webhooks',
     name: 'Webhooks',

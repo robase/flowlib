@@ -4,7 +4,7 @@
 
 import { describe, it, expect } from 'vitest';
 import { mergeSchemas, diffSchemas } from '../../../src/database/schema-merger';
-import type { InvectPlugin } from '../../../src/types/plugin.types';
+import type { FlowlibPlugin } from '../../../src/types/plugin.types';
 
 describe('Schema Merger', () => {
   describe('mergeSchemas', () => {
@@ -20,7 +20,7 @@ describe('Schema Merger', () => {
     });
 
     it('should add a new table from a plugin', () => {
-      const plugin: InvectPlugin = {
+      const plugin: FlowlibPlugin = {
         id: 'audit-log',
         schema: {
           auditLogs: {
@@ -45,7 +45,7 @@ describe('Schema Merger', () => {
     });
 
     it('should extend an existing core table with new fields', () => {
-      const plugin: InvectPlugin = {
+      const plugin: FlowlibPlugin = {
         id: 'rbac',
         schema: {
           flows: {
@@ -66,7 +66,7 @@ describe('Schema Merger', () => {
     });
 
     it('should throw on duplicate field from different plugins', () => {
-      const plugin1: InvectPlugin = {
+      const plugin1: FlowlibPlugin = {
         id: 'plugin-a',
         schema: {
           flows: {
@@ -77,7 +77,7 @@ describe('Schema Merger', () => {
         },
       };
 
-      const plugin2: InvectPlugin = {
+      const plugin2: FlowlibPlugin = {
         id: 'plugin-b',
         schema: {
           flows: {
@@ -92,7 +92,7 @@ describe('Schema Merger', () => {
     });
 
     it('should track provenance for all tables and fields', () => {
-      const plugin: InvectPlugin = {
+      const plugin: FlowlibPlugin = {
         id: 'test-plugin',
         schema: {
           customTable: {
@@ -120,7 +120,7 @@ describe('Schema Merger', () => {
     });
 
     it('should skip tables with disableMigration', () => {
-      const plugin: InvectPlugin = {
+      const plugin: FlowlibPlugin = {
         id: 'skip-test',
         schema: {
           tempData: {
@@ -159,7 +159,7 @@ describe('Schema Merger', () => {
 
     it('should detect new tables from plugins', () => {
       const previous = mergeSchemas([]);
-      const plugin: InvectPlugin = {
+      const plugin: FlowlibPlugin = {
         id: 'new-table',
         schema: {
           analytics: {
@@ -177,7 +177,7 @@ describe('Schema Merger', () => {
 
     it('should detect new fields on existing tables', () => {
       const previous = mergeSchemas([]);
-      const plugin: InvectPlugin = {
+      const plugin: FlowlibPlugin = {
         id: 'field-adder',
         schema: {
           flows: {

@@ -1,7 +1,7 @@
 /**
  * Unit tests: core.switch action
  *
- * Tests evaluate against a mock context without a full Invect instance.
+ * Tests evaluate against a mock context without a full Flowlib instance.
  */
 import { describe, it, expect, vi } from 'vitest';
 import { switchAction } from '@flowlib/actions';

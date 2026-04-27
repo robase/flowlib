@@ -4,9 +4,9 @@
 
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { ResourceTemplate } from '@modelcontextprotocol/sdk/server/mcp.js';
-import type { InvectClient } from '../client/types';
+import type { FlowlibClient } from '../client/types';
 
-export function registerResources(server: McpServer, client: InvectClient): void {
+export function registerResources(server: McpServer, client: FlowlibClient): void {
   // Resource template: individual flow definition
   server.registerResource(
     'flow-definition',

@@ -2,21 +2,21 @@
  * Frontend Plugin Types
  *
  * Defines the extension points that frontend plugins can contribute to.
- * These types are consumed by the PluginRegistryContext and the Invect
+ * These types are consumed by the PluginRegistryContext and the Flowlib
  * component to render plugin-contributed UI elements.
  */
 
 import type { ComponentType, ReactNode } from 'react';
 
 // ─────────────────────────────────────────────────────────────
-// Unified Plugin Definition (mirrors @flowlib/core InvectPluginDefinition)
+// Unified Plugin Definition (mirrors @flowlib/core FlowlibPluginDefinition)
 // ─────────────────────────────────────────────────────────────
 
 /**
  * A unified plugin definition containing both backend and frontend parts.
  * The backend extracts `.backend`, the frontend extracts `.frontend`.
  */
-export interface InvectPluginDefinition {
+export interface FlowlibPluginDefinition {
   id: string;
   name?: string;
   backend?: unknown;
@@ -28,15 +28,15 @@ export interface InvectPluginDefinition {
 // ─────────────────────────────────────────────────────────────
 
 /**
- * Resolve an array of `InvectPluginDefinition` into `InvectFrontendPlugin[]`.
+ * Resolve an array of `FlowlibPluginDefinition` into `FlowlibFrontendPlugin[]`.
  * Extracts `.frontend` from each definition, filtering out backend-only plugins.
  */
-export function resolvePlugins(plugins: InvectPluginDefinition[]): InvectFrontendPlugin[] {
+export function resolvePlugins(plugins: FlowlibPluginDefinition[]): FlowlibFrontendPlugin[] {
   return plugins
     .map((p) =>
-      p.frontend !== null && p.frontend !== undefined ? (p.frontend as InvectFrontendPlugin) : null,
+      p.frontend !== null && p.frontend !== undefined ? (p.frontend as FlowlibFrontendPlugin) : null,
     )
-    .filter((p): p is InvectFrontendPlugin => p !== null);
+    .filter((p): p is FlowlibFrontendPlugin => p !== null);
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -44,10 +44,10 @@ export function resolvePlugins(plugins: InvectPluginDefinition[]): InvectFronten
 // ─────────────────────────────────────────────────────────────
 
 /**
- * A frontend plugin that contributes UI to the Invect application.
- * Plugins are registered via `<Invect plugins={[myPlugin]} />`.
+ * A frontend plugin that contributes UI to the Flowlib application.
+ * Plugins are registered via `<Flowlib plugins={[myPlugin]} />`.
  */
-export interface InvectFrontendPlugin {
+export interface FlowlibFrontendPlugin {
   /** Unique plugin ID — should match backend plugin ID for manifest resolution */
   id: string;
 
@@ -84,11 +84,11 @@ export interface InvectFrontendPlugin {
   providers?: ComponentType<{ children: ReactNode }>[];
 
   /**
-   * Application shell that wraps the entire Invect layout.
+   * Application shell that wraps the entire Flowlib layout.
    *
    * Unlike `providers` (which always render children), an appShell can
    * **conditionally** render children — e.g. showing a sign-in page when
-   * the user is not authenticated, then rendering the full Invect app once
+   * the user is not authenticated, then rendering the full Flowlib app once
    * they sign in.
    *
    * The shell renders inside the CSS scope and QueryClientProvider but

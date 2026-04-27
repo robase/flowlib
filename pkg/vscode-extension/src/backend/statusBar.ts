@@ -2,9 +2,9 @@
  * Status-bar indicator for backend connection state.
  *
  * Three states:
- *   - "● Invect: <host>"  — connected, click opens the disconnect prompt
- *   - "○ Invect: offline" — not connected, click runs `flowlib.connect`
- *   - "⚠ Invect: <host>"  — last health check failed, click retries
+ *   - "● Flowlib: <host>"  — connected, click opens the disconnect prompt
+ *   - "○ Flowlib: offline" — not connected, click runs `flowlib.connect`
+ *   - "⚠ Flowlib: <host>"  — last health check failed, click retries
  *
  * Thin wrapper around `vscode.window.createStatusBarItem`. Owned by the
  * extension lifetime.
@@ -30,26 +30,26 @@ export class BackendStatusBar implements vscode.Disposable {
   set(state: ConnectionState): void {
     switch (state.kind) {
       case 'embedded':
-        this.item.text = '$(home) Invect: embedded';
+        this.item.text = '$(home) Flowlib: embedded';
         this.item.tooltip =
           'Embedded local backend (SQLite). Click to connect to a remote backend.';
         this.item.command = 'flowlib.connect';
         this.item.backgroundColor = undefined;
         return;
       case 'offline':
-        this.item.text = '$(circle-large-outline) Invect: offline';
-        this.item.tooltip = 'Click to connect to an Invect backend or use the embedded backend';
+        this.item.text = '$(circle-large-outline) Flowlib: offline';
+        this.item.tooltip = 'Click to connect to an Flowlib backend or use the embedded backend';
         this.item.command = 'flowlib.connect';
         this.item.backgroundColor = undefined;
         return;
       case 'connected':
-        this.item.text = `$(circle-filled) Invect: ${displayHost(state.url)}`;
+        this.item.text = `$(circle-filled) Flowlib: ${displayHost(state.url)}`;
         this.item.tooltip = `Connected to ${state.url}\nClick to disconnect (returns to embedded backend)`;
         this.item.command = 'flowlib.disconnect';
         this.item.backgroundColor = undefined;
         return;
       case 'error':
-        this.item.text = `$(warning) Invect: ${displayHost(state.url)}`;
+        this.item.text = `$(warning) Flowlib: ${displayHost(state.url)}`;
         this.item.tooltip = `Backend error: ${state.message}\nClick to retry`;
         this.item.command = 'flowlib.connect';
         this.item.backgroundColor = new vscode.ThemeColor('statusBarItem.warningBackground');

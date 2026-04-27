@@ -12,8 +12,8 @@
  */
 
 import type { Logger } from 'src/schemas';
-import type { InvectIdentity } from 'src/types/auth.types';
-import type { InvectInstance } from 'src/api/types';
+import type { FlowlibIdentity } from 'src/types/auth.types';
+import type { FlowlibInstance } from 'src/api/types';
 import type { ActionRegistry } from 'src/actions';
 import type { ProviderAdapter } from '../ai/provider-adapter';
 import type {
@@ -43,7 +43,7 @@ import type { FlowVersionsService } from '../flow-versions/flow-versions.service
 export interface CreateChatStreamOptions {
   messages: ChatMessage[];
   context: ChatContext;
-  identity?: InvectIdentity;
+  identity?: FlowlibIdentity;
 }
 
 /**
@@ -66,8 +66,8 @@ export class ChatStreamService {
     private readonly flowsService: FlowsService,
     private readonly flowVersionsService: FlowVersionsService,
     private readonly actionRegistry: ActionRegistry | null,
-    /** Invect core instance — wired post-init via setInvectInstance() */
-    private flowlib: InvectInstance | null,
+    /** Flowlib core instance — wired post-init via setFlowlibInstance() */
+    private flowlib: FlowlibInstance | null,
   ) {
     // Parse and apply defaults to chat config
     this.chatConfig = ChatConfigSchema.parse({});
@@ -80,11 +80,11 @@ export class ChatStreamService {
   }
 
   /**
-   * Wire the InvectInstance reference post-construction.
-   * Called by createInvect() after the instance is fully assembled,
-   * breaking the circular dependency between ServiceFactory and InvectInstance.
+   * Wire the FlowlibInstance reference post-construction.
+   * Called by createFlowlib() after the instance is fully assembled,
+   * breaking the circular dependency between ServiceFactory and FlowlibInstance.
    */
-  setInvectInstance(instance: InvectInstance): void {
+  setFlowlibInstance(instance: FlowlibInstance): void {
     this.flowlib = instance;
   }
 
@@ -171,7 +171,7 @@ export class ChatStreamService {
       config: resolvedConfig,
       adapter,
       identity,
-      flowlib: this.flowlib as InvectInstance,
+      flowlib: this.flowlib as FlowlibInstance,
       actionRegistry: this.actionRegistry,
     });
 
@@ -239,7 +239,7 @@ export class ChatStreamService {
     }
   }
 
-  /** Called by InvectInstance.shutdown() — release any pending sessions. */
+  /** Called by FlowlibInstance.shutdown() — release any pending sessions. */
   shutdown(): void {
     this.activeSessions.shutdown();
   }
@@ -267,7 +267,7 @@ export class ChatStreamService {
    *
    * Resolution order:
    * 1. Per-request credentialId (from frontend)
-   * 2. chatConfig.credentialId (from InvectConfig)
+   * 2. chatConfig.credentialId (from FlowlibConfig)
    */
   private async resolveConfig(perRequestCredentialId?: string): Promise<ResolvedChatConfig> {
     const base: Partial<ResolvedChatConfig> = {
@@ -427,9 +427,9 @@ export class ChatStreamService {
 
       // Parse definition
       const definition =
-        typeof latestVersion.invectDefinition === 'string'
-          ? JSON.parse(latestVersion.invectDefinition)
-          : latestVersion.invectDefinition;
+        typeof latestVersion.flowlibDefinition === 'string'
+          ? JSON.parse(latestVersion.flowlibDefinition)
+          : latestVersion.flowlibDefinition;
 
       interface FlowNode {
         id: string;

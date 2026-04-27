@@ -5,13 +5,13 @@
  * Generates Prisma schema from the merged abstract schema (core + plugins).
  * Generates a complete Prisma schema from the merged abstract schema:
  *
- * 1. If a schema.prisma already exists, read it and ADD Invect models
+ * 1. If a schema.prisma already exists, read it and ADD Flowlib models
  *    into it (using `@mrleebo/prisma-ast` to parse + produce the AST).
  * 2. If no schema.prisma exists, generate a complete file including
  *    generator + datasource blocks.
  * 3. Compare with existing file and return `code: undefined` if unchanged.
  *
- * This allows users to have their own Prisma models alongside Invect's
+ * This allows users to have their own Prisma models alongside Flowlib's
  * auto-generated ones — just like we preserve user models.
  */
 
@@ -91,7 +91,7 @@ export interface PrismaSchemaGeneratorOptions {
 /**
  * Generate Prisma schema from merged abstract schema.
  *
- * If `file` points to an existing schema.prisma, Invect models are
+ * If `file` points to an existing schema.prisma, Flowlib models are
  * merged into it (existing user models preserved). If the file does not
  * exist, a complete schema.prisma is produced.
  */
@@ -116,7 +116,7 @@ export async function generatePrismaSchema(
   let code: string;
 
   if (fileExists) {
-    // Existing schema — merge Invect models into it
+    // Existing schema — merge Flowlib models into it
     const existingContent = readFileSync(filePath, 'utf-8');
     debug('Existing schema length:', existingContent.length);
     code = mergeIntoExistingSchema(existingContent, mergedSchema, provider);
@@ -204,10 +204,10 @@ datasource db {
 // =============================================================================
 
 /**
- * Merge Invect models into an existing Prisma schema.
+ * Merge Flowlib models into an existing Prisma schema.
  *
  * Uses `@mrleebo/prisma-ast` to parse the existing schema, then adds
- * Invect models/fields that don't already exist. This preserves all
+ * Flowlib models/fields that don't already exist. This preserves all
  * user-defined models, relations, and configuration.
  *
  * Generate the Prisma schema from the merged abstract schema.

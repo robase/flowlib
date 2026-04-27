@@ -10,15 +10,15 @@ import React, { useCallback, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { FlowCanvas } from '@flowlib/ui/flow-canvas';
 import '@flowlib/ui/styles';
-import type { InvectDefinition } from '@flowlib/core/types';
+import type { FlowlibDefinition } from '@flowlib/core/types';
 import { fixtureFlow, fixtureActions } from './fixture';
 
 function App() {
-  const [flow, setFlow] = useState<InvectDefinition>(fixtureFlow);
+  const [flow, setFlow] = useState<FlowlibDefinition>(fixtureFlow);
   const [tokensEnabled, setTokensEnabled] = useState(false);
   const [runStatus, setRunStatus] = useState<Record<string, 'success' | 'running' | 'failed'>>({});
 
-  const onEdit = useCallback((next: InvectDefinition) => {
+  const onEdit = useCallback((next: FlowlibDefinition) => {
     setFlow(next);
   }, []);
 

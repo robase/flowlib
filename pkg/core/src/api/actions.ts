@@ -30,7 +30,7 @@ export function createActionsAPI(
       const allDefs = actionRegistry.getAllNodeDefinitions();
       for (const def of allDefs) {
         if (!def.provider) {
-          def.provider = { id: 'core', name: 'Invect Core', icon: 'Blocks' };
+          def.provider = { id: 'core', name: 'Flowlib Core', icon: 'Blocks' };
         }
       }
       return allDefs;

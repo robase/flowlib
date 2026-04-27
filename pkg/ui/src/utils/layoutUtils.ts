@@ -3,7 +3,7 @@ import type { Node, Edge } from '@xyflow/react';
 import {
   applyDagreLayout as applyDagreLayoutFromPackage,
   applyElkLayout as applyElkLayoutFromPackage,
-  applyInvectLayout as applyInvectLayoutFromPackage,
+  applyFlowlibLayout as applyFlowlibLayoutFromPackage,
   type ElkLayoutNode,
 } from '@flowlib/layouts';
 
@@ -185,7 +185,7 @@ const runLayout = async (
       return { nodes: restored, edges };
     }
     case 'flowlib': {
-      const layoutedNodes = await applyInvectLayoutFromPackage(nodes, edges, {
+      const layoutedNodes = await applyFlowlibLayoutFromPackage(nodes, edges, {
         direction,
         nodeSpacing: options?.nodeSpacing ?? defaultLayoutOptions.nodeSpacing,
         rankSpacing: options?.rankSpacing ?? defaultLayoutOptions.rankSpacing,

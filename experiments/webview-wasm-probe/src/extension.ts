@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 
-const OUTPUT_CHANNEL = 'Invect WASM Probe';
+const OUTPUT_CHANNEL = 'Flowlib WASM Probe';
 
 export function activate(context: vscode.ExtensionContext) {
   const output = vscode.window.createOutputChannel(OUTPUT_CHANNEL);
@@ -22,8 +22,8 @@ export function activate(context: vscode.ExtensionContext) {
     output.show(true);
 
     const panel = vscode.window.createWebviewPanel(
-      'invectWasmProbe',
-      'Invect WASM Probe',
+      'flowlibWasmProbe',
+      'Flowlib WASM Probe',
       vscode.ViewColumn.One,
       {
         enableScripts: true,
@@ -53,7 +53,7 @@ export function activate(context: vscode.ExtensionContext) {
   <head>
     <meta charset="UTF-8" />
     <meta http-equiv="Content-Security-Policy" content="${csp}" />
-    <title>Invect WASM Probe</title>
+    <title>Flowlib WASM Probe</title>
     <style>
       body { font-family: var(--vscode-editor-font-family, monospace); padding: 16px; color: var(--vscode-foreground); background: var(--vscode-editor-background); }
       h1 { font-size: 14px; margin-top: 16px; }
@@ -63,7 +63,7 @@ export function activate(context: vscode.ExtensionContext) {
     </style>
   </head>
   <body>
-    <h1>Invect VSCode Webview + QuickJS WASM Probe</h1>
+    <h1>Flowlib VSCode Webview + QuickJS WASM Probe</h1>
     <div id="status">Initializing…</div>
     <h1>Results</h1>
     <pre id="results">(pending)</pre>

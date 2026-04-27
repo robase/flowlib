@@ -12,7 +12,7 @@
  *
  * No state is persisted — compilation is deterministic from the flow version.
  */
-import type { InvectPlugin, InvectDefinition, FlowNodeDefinitions } from '@flowlib/core';
+import type { FlowlibPlugin, FlowlibDefinition, FlowNodeDefinitions } from '@flowlib/core';
 import { emitSdkSource } from '@flowlib/sdk';
 import { compile } from '../compiler/flow-compiler';
 
@@ -38,10 +38,10 @@ function isOutputNode(node: FlowNodeDefinitions): boolean {
 // subgraph reachable from that trigger — needed when a flow has multiple
 // triggers, since the compiled workflow has a single entry.
 function stripTriggersAndOutputs(
-  def: InvectDefinition,
+  def: FlowlibDefinition,
   activeTriggerId?: string,
 ): {
-  filtered: InvectDefinition;
+  filtered: FlowlibDefinition;
   outputAssignments: Array<{ outputName: string; upstreamRef: string }>;
 } {
   const refById = new Map(def.nodes.map((n) => [n.id, n.referenceId ?? n.id]));
@@ -74,7 +74,7 @@ function stripTriggersAndOutputs(
     })
     .filter((x): x is { outputName: string; upstreamRef: string } => x !== null);
 
-  const filtered: InvectDefinition = {
+  const filtered: FlowlibDefinition = {
     nodes: scopedNodes.filter((n) => !skipIds.has(n.id)),
     edges: scopedEdges.filter((e) => !skipIds.has(e.source) && !skipIds.has(e.target)),
     metadata: def.metadata,
@@ -84,7 +84,7 @@ function stripTriggersAndOutputs(
 }
 
 // BFS forward from `startId` over directed edges; `startId` is included.
-function collectReachable(startId: string, edges: InvectDefinition['edges']): Set<string> {
+function collectReachable(startId: string, edges: FlowlibDefinition['edges']): Set<string> {
   const outgoing = new Map<string, string[]>();
   for (const e of edges) {
     const list = outgoing.get(e.source);
@@ -118,7 +118,7 @@ export interface VercelWorkflowsBackendOptions {
   defaultConfigImport?: string;
 }
 
-export function buildBackendPlugin(options: VercelWorkflowsBackendOptions = {}): InvectPlugin {
+export function buildBackendPlugin(options: VercelWorkflowsBackendOptions = {}): FlowlibPlugin {
   const defaultFlowImport = options.defaultFlowImport ?? './flow';
   const defaultConfigImport = options.defaultConfigImport ?? './flow.config';
 
@@ -136,7 +136,7 @@ export function buildBackendPlugin(options: VercelWorkflowsBackendOptions = {}):
             return { status: 400, body: { error: 'flowId is required' } };
           }
 
-          const flowlib = ctx.getInvect();
+          const flowlib = ctx.getFlowlib();
           const flow = await flowlib.flows.get(flowId);
           if (!flow) {
             return { status: 404, body: { error: `Flow ${flowId} not found` } };
@@ -144,7 +144,7 @@ export function buildBackendPlugin(options: VercelWorkflowsBackendOptions = {}):
 
           const version = ctx.query.version ?? 'latest';
           const flowVersion = await flowlib.versions.get(flowId, version);
-          if (!flowVersion?.invectDefinition) {
+          if (!flowVersion?.flowlibDefinition) {
             return { status: 404, body: { error: `Flow version not found` } };
           }
 
@@ -158,7 +158,7 @@ export function buildBackendPlugin(options: VercelWorkflowsBackendOptions = {}):
           // A flow may have multiple trigger nodes (e.g. cron + webhook), but
           // a Vercel Workflow has a single entry. Require the caller to name
           // which trigger's subgraph to compile when more than one exists.
-          const triggerNodes = flowVersion.invectDefinition.nodes.filter(isTriggerNode);
+          const triggerNodes = flowVersion.flowlibDefinition.nodes.filter(isTriggerNode);
           const requestedTriggerId =
             typeof ctx.query.triggerNodeId === 'string' ? ctx.query.triggerNodeId : undefined;
 
@@ -202,7 +202,7 @@ export function buildBackendPlugin(options: VercelWorkflowsBackendOptions = {}):
           }
 
           const { filtered, outputAssignments } = stripTriggersAndOutputs(
-            flowVersion.invectDefinition,
+            flowVersion.flowlibDefinition,
             activeTriggerId,
           );
 
@@ -305,7 +305,7 @@ export function buildBackendPlugin(options: VercelWorkflowsBackendOptions = {}):
             ],
             description:
               'Only primitive action types compile to Vercel Workflows. Integration actions ' +
-              '(gmail, slack, http, etc.) require either a companion Invect runtime call from ' +
+              '(gmail, slack, http, etc.) require either a companion Flowlib runtime call from ' +
               'inside the workflow or must be replaced with equivalent fetch-based code nodes.',
           },
         }),

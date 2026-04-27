@@ -10,7 +10,7 @@ import {
 } from '~/components/ui/table';
 import { StatusBadge, formatRelativeTime, formatDuration } from './status-helpers';
 import type { Flow, FlowRun } from '@flowlib/core/types';
-import { InvectLoader } from '../shared/InvectLoader';
+import { FlowlibLoader } from '../shared/FlowlibLoader';
 
 interface RecentActivityTableProps {
   runs: FlowRun[];
@@ -28,7 +28,7 @@ export function RecentActivityTable({
   const flowMap = new Map(flows.map((f) => [f.id, f]));
 
   if (isLoading) {
-    return <InvectLoader className="py-8" iconClassName="h-10" label="Loading activity..." />;
+    return <FlowlibLoader className="py-8" iconClassName="h-10" label="Loading activity..." />;
   }
 
   if (runs.length === 0) {

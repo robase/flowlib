@@ -49,12 +49,12 @@ describe('secret command', () => {
     expect(key1).not.toBe(key2);
   });
 
-  it('should output usage instructions mentioning INVECT_ENCRYPTION_KEY', async () => {
+  it('should output usage instructions mentioning FLOWLIB_ENCRYPTION_KEY', async () => {
     const { secretCommand } = await import('src/commands/secret');
     await secretCommand.parseAsync([], { from: 'user' });
 
     const allOutput = consoleLogSpy.mock.calls.map((c) => c[0]).join('\n');
-    expect(allOutput).toContain('INVECT_ENCRYPTION_KEY');
+    expect(allOutput).toContain('FLOWLIB_ENCRYPTION_KEY');
   });
 
   it('should mention AES-256-GCM encryption', async () => {

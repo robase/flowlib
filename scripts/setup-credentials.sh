@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 
 # Credentials System Setup Script
-# This script helps set up the credentials system in your Invect installation
+# This script helps set up the credentials system in your Flowlib installation
 
 set -e
 
-echo "🔐 Invect Credentials System Setup"
+echo "🔐 Flowlib Credentials System Setup"
 echo "======================================="
 echo ""
 
@@ -19,7 +19,7 @@ fi
 echo "📝 Step 1: Generate Encryption Key"
 echo "-----------------------------------"
 
-if [ -z "$INVECT_ENCRYPTION_KEY" ]; then
+if [ -z "$FLOWLIB_ENCRYPTION_KEY" ]; then
     echo "Generating new encryption key..."
     ENCRYPTION_KEY=$(node -e "console.log(require('crypto').randomBytes(32).toString('base64'))")
     echo ""
@@ -27,7 +27,7 @@ if [ -z "$INVECT_ENCRYPTION_KEY" ]; then
     echo ""
     echo "Add this to your .env file:"
     echo ""
-    echo "INVECT_ENCRYPTION_KEY=$ENCRYPTION_KEY"
+    echo "FLOWLIB_ENCRYPTION_KEY=$ENCRYPTION_KEY"
     echo ""
     echo "⚠️  IMPORTANT: Keep this key secure and never commit it to version control!"
     echo ""
@@ -41,11 +41,11 @@ if [ -z "$INVECT_ENCRYPTION_KEY" ]; then
         fi
         echo "" >> .env
         echo "# Credentials encryption key (generated $(date))" >> .env
-        echo "INVECT_ENCRYPTION_KEY=$ENCRYPTION_KEY" >> .env
+        echo "FLOWLIB_ENCRYPTION_KEY=$ENCRYPTION_KEY" >> .env
         echo "✅ Added to .env file"
     fi
 else
-    echo "✅ INVECT_ENCRYPTION_KEY already set"
+    echo "✅ FLOWLIB_ENCRYPTION_KEY already set"
 fi
 
 echo ""

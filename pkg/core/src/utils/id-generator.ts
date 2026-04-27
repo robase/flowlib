@@ -1,4 +1,4 @@
-// Framework-agnostic ID generation utilities for Invect core
+// Framework-agnostic ID generation utilities for Flowlib core
 import { createUrlSafeIdGenerator } from './url-safe-id';
 
 /**

@@ -165,7 +165,7 @@ export const updateFlowDefinitionTool: ChatToolDefinition = {
       });
 
       const version = await flowlib.versions.create(flowId, {
-        invectDefinition: {
+        flowlibDefinition: {
           nodes: positionedNodes,
           edges,
         },
@@ -232,9 +232,9 @@ export const runFlowTool: ChatToolDefinition = {
         const version = await flowlib.versions.get(flowId, 'latest');
         if (version) {
           const def =
-            typeof version.invectDefinition === 'string'
-              ? JSON.parse(version.invectDefinition)
-              : version.invectDefinition;
+            typeof version.flowlibDefinition === 'string'
+              ? JSON.parse(version.flowlibDefinition)
+              : version.flowlibDefinition;
           const triggerNode = (def?.nodes ?? []).find(
             (n: { type?: string }) => n.type === 'trigger.manual',
           );
@@ -401,7 +401,7 @@ export const validateFlowTool: ChatToolDefinition = {
         return { success: false, error: 'No flow version found to validate' };
       }
 
-      const result = await flowlib.flows.validate(flowId, version.invectDefinition);
+      const result = await flowlib.flows.validate(flowId, version.flowlibDefinition);
 
       if (result.isValid) {
         return {
@@ -409,8 +409,8 @@ export const validateFlowTool: ChatToolDefinition = {
           data: {
             valid: true,
             message: 'Flow definition is valid ✓',
-            nodeCount: version.invectDefinition.nodes?.length ?? 0,
-            edgeCount: version.invectDefinition.edges?.length ?? 0,
+            nodeCount: version.flowlibDefinition.nodes?.length ?? 0,
+            edgeCount: version.flowlibDefinition.edges?.length ?? 0,
             warnings: result.warnings,
           },
         };

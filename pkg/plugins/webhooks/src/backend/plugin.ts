@@ -8,10 +8,10 @@
  */
 
 import type {
-  InvectPlugin,
-  InvectPluginDefinition,
-  InvectPluginSchema,
-  InvectPluginEndpoint,
+  FlowlibPlugin,
+  FlowlibPluginDefinition,
+  FlowlibPluginSchema,
+  FlowlibPluginEndpoint,
   PluginEndpointContext,
 } from '@flowlib/core';
 import { WebhookSignatureService } from './webhook-signature.service';
@@ -45,9 +45,9 @@ export interface WebhooksPluginOptions {
   frontend?: unknown;
 }
 
-const WEBHOOK_TRIGGERS_SCHEMA: InvectPluginSchema = {
+const WEBHOOK_TRIGGERS_SCHEMA: FlowlibPluginSchema = {
   webhook_triggers: {
-    tableName: 'invect_webhook_triggers',
+    tableName: 'flowlib_webhook_triggers',
     fields: {
       id: { type: 'uuid', primaryKey: true, defaultValue: 'uuid()' },
       name: { type: 'string', required: true },
@@ -63,7 +63,7 @@ const WEBHOOK_TRIGGERS_SCHEMA: InvectPluginSchema = {
       flowId: {
         type: 'string',
         required: false,
-        references: { table: 'invect_flows', field: 'id' },
+        references: { table: 'flowlib_flows', field: 'id' },
       },
       nodeId: { type: 'string', required: false },
       lastTriggeredAt: { type: 'date', required: false },
@@ -82,7 +82,7 @@ interface PluginState {
   rateLimiter: WebhookRateLimiter;
   dedupService: WebhookDedupService;
   webhookBaseUrl?: string;
-  /** Reference to the Invect core instance stored during init */
+  /** Reference to the Flowlib core instance stored during init */
   coreInstance?: unknown;
 }
 
@@ -112,7 +112,7 @@ function generateWebhookPath(): string {
 
 // ─── Plugin Factory ─────────────────────────────────────────────────
 
-export function webhooks(options?: WebhooksPluginOptions): InvectPluginDefinition {
+export function webhooks(options?: WebhooksPluginOptions): FlowlibPluginDefinition {
   const { frontend, ...backendOptions } = options ?? {};
   return {
     id: 'webhooks',
@@ -122,12 +122,12 @@ export function webhooks(options?: WebhooksPluginOptions): InvectPluginDefinitio
   };
 }
 
-function _webhooksBackendPlugin(options?: Omit<WebhooksPluginOptions, 'frontend'>): InvectPlugin {
+function _webhooksBackendPlugin(options?: Omit<WebhooksPluginOptions, 'frontend'>): FlowlibPlugin {
   let state: PluginState | null = null;
 
   // ── Endpoints ────────────────────────────────────────────────────
 
-  function createEndpoints(): InvectPluginEndpoint[] {
+  function createEndpoints(): FlowlibPluginEndpoint[] {
     return [
       // List all webhook triggers
       {
@@ -436,6 +436,6 @@ function _webhooksBackendPlugin(options?: Omit<WebhooksPluginOptions, 'frontend'
     },
 
     setupInstructions:
-      'Run `npx flowlib-cli generate` to generate the invect_webhook_triggers table schema, then `npx flowlib-cli migrate` to apply it.',
+      'Run `npx flowlib-cli generate` to generate the flowlib_webhook_triggers table schema, then `npx flowlib-cli migrate` to apply it.',
   };
 }

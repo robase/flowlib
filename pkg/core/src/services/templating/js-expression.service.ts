@@ -105,7 +105,7 @@ export class JsExpressionService implements JsExpressionEvaluator {
   }
 
   /**
-   * Dispose the QuickJS module reference. Call on Invect shutdown.
+   * Dispose the QuickJS module reference. Call on Flowlib shutdown.
    */
   dispose(): void {
     this.quickJS = null;
@@ -149,9 +149,9 @@ function isPromiseStateResult(result: unknown): boolean {
 // **module** is genuinely stateless and is cached internally by
 // `getQuickJS()` — that cache is fine to share. The **service** instance,
 // however, owns config (memory limit, CPU time limit) and a logger, so
-// sharing it across `createInvect()` instances would silently apply the
-// first instance's config to all subsequent ones. `createInvect()` and the
-// legacy `Invect` class both already construct their own service via
+// sharing it across `createFlowlib()` instances would silently apply the
+// first instance's config to all subsequent ones. `createFlowlib()` and the
+// legacy `Flowlib` class both already construct their own service via
 // `new JsExpressionService(...)`; `getJsExpressionService` is retained
 // as a deprecated convenience for external callers.
 
@@ -167,8 +167,8 @@ export function createJsExpressionService(
 /**
  * @deprecated Construct a `new JsExpressionService(config, logger)` and
  * call `await service.initialize()` instead, keeping the instance on your
- * `ServiceFactory` / `InvectInstance`. The module-level singleton this
- * function used to return shared QuickJS state across `createInvect()`
+ * `ServiceFactory` / `FlowlibInstance`. The module-level singleton this
+ * function used to return shared QuickJS state across `createFlowlib()`
  * instances — incorrect under multi-isolate runtimes.
  */
 export async function getJsExpressionService(logger?: Logger): Promise<JsExpressionService> {

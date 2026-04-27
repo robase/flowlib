@@ -150,7 +150,7 @@ import type { ActionRegistry } from './action-registry';
 
 /**
  * Register all built-in actions into the given registry.
- * Called during `Invect.initialize()`.
+ * Called during `Flowlib.initialize()`.
  */
 export function registerBuiltinActions(registry: ActionRegistry): void {
   registry.registerMany(allBuiltinActions);

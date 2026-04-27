@@ -37,7 +37,7 @@ export const getCurrentFlowContextTool: ChatToolDefinition = {
         return { success: false, error: 'No flow version found' };
       }
 
-      const definition = version.invectDefinition;
+      const definition = version.flowlibDefinition;
 
       if (nodeId) {
         const node =

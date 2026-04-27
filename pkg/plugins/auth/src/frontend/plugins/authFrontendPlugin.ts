@@ -13,14 +13,14 @@ import { ProfilePage } from '../components/ProfilePage';
 import { UserManagementPage } from '../components/UserManagementPage';
 import { SidebarUserMenu } from '../components/SidebarUserMenu';
 import { AuthAppShell } from '../components/AuthAppShell';
-import type { InvectFrontendPlugin } from '@flowlib/ui';
+import type { FlowlibFrontendPlugin } from '@flowlib/ui';
 
-export const authFrontend: InvectFrontendPlugin = {
+export const authFrontend: FlowlibFrontendPlugin = {
   id: 'user-auth',
   name: 'User Authentication',
 
   // ─── App Shell (auth gate) ───
-  // Wraps the entire Invect layout with AuthProvider + AuthGate.
+  // Wraps the entire Flowlib layout with AuthProvider + AuthGate.
   // Shows sign-in page when not authenticated.
   appShell: AuthAppShell,
 

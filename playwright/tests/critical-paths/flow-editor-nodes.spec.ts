@@ -76,7 +76,7 @@ test.describe('Flow Editor — Node Operations', () => {
       jqFlowId = flow.id;
       await request.post(`${apiBase}/flows/${jqFlowId}/versions`, {
         data: {
-          invectDefinition: {
+          flowlibDefinition: {
             nodes: [
               {
                 id: 'node-1',
@@ -222,7 +222,7 @@ test.describe('Flow Editor — Node Operations', () => {
     expect(flow.id, 'Created flow must have an id').toBeTruthy();
     await request.post(`${apiBase}/flows/${flow.id}/versions`, {
       data: {
-        invectDefinition: {
+        flowlibDefinition: {
           nodes: [
             {
               id: 'node-1',

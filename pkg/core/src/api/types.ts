@@ -1,7 +1,7 @@
 /**
- * Invect Sub-API Type Definitions
+ * Flowlib Sub-API Type Definitions
  *
- * These interfaces define the namespaced public API surface returned by createInvect().
+ * These interfaces define the namespaced public API surface returned by createFlowlib().
  * Each interface groups related operations into a cohesive domain.
  */
 
@@ -40,7 +40,7 @@ import type { PaginatedResponse, QueryOptions } from '../schemas';
 import type {
   CreateFlowVersionRequest,
   FlowEdge,
-  InvectDefinition,
+  FlowlibDefinition,
 } from '../services/flow-versions/schemas-fresh';
 import type { ExecutionStreamEvent } from '../services/execution-event-bus';
 import type { ActionDefinition, ProviderDef, LoadOptionsResult } from '../actions';
@@ -52,14 +52,14 @@ import type {
   NodeConfigUpdateResponse,
 } from '../types/node-config-update.types';
 import type {
-  InvectIdentity,
-  InvectPermission,
+  FlowlibIdentity,
+  FlowlibPermission,
   AuthorizationContext,
   AuthorizationResult,
   AuthEvent,
 } from '../types/auth.types';
 import type { AuthorizationService } from '../services/auth';
-import type { InvectPlugin, InvectPluginEndpoint, PluginHookRunner } from '../types/plugin.types';
+import type { FlowlibPlugin, FlowlibPluginEndpoint, PluginHookRunner } from '../types/plugin.types';
 import type { DatabaseConnection } from '../database/connection';
 import type { LoggerManager, ScopedLogger, LogLevel } from '../utils/logger';
 import type { DashboardStats } from '../flowlib-core';
@@ -67,7 +67,7 @@ import type { ChatMessageRecord } from '../services/chat/chat-messages.model';
 
 import type { ChatMessage, ChatContext, ChatStreamEvent } from '../services/chat/chat-types';
 
-export interface InvectMaintenanceOptions {
+export interface FlowlibMaintenanceOptions {
   now?: Date | string;
   pollBatchJobs?: boolean;
   resumePausedFlows?: boolean;
@@ -75,7 +75,7 @@ export interface InvectMaintenanceOptions {
   executeCronTriggers?: boolean;
 }
 
-export interface InvectMaintenanceResult {
+export interface FlowlibMaintenanceResult {
   timestamp: string;
   batchPolling?: BatchPollingRunResult;
   flowResumption?: {
@@ -168,7 +168,7 @@ export interface FlowRunsAPI {
    * subscribe to for live execution events.
    */
   runEphemeral(
-    definition: InvectDefinition,
+    definition: FlowlibDefinition,
     inputs?: FlowInputs,
     options?: { initiatedBy?: string; name?: string; useBatchProcessing?: boolean },
   ): Promise<{
@@ -274,7 +274,7 @@ export interface ChatAPI {
   createStream(options: {
     messages: ChatMessage[];
     context: ChatContext;
-    identity?: InvectIdentity;
+    identity?: FlowlibIdentity;
   }): Promise<AsyncGenerator<ChatStreamEvent>>;
   /**
    * Reattach to an in-flight chat session by id. Replays the full event
@@ -366,11 +366,11 @@ export interface TestingAPI {
 
 export interface AuthAPI {
   authorize(context: AuthorizationContext): Promise<AuthorizationResult>;
-  hasPermission(identity: InvectIdentity | null, permission: InvectPermission): boolean;
-  getPermissions(identity: InvectIdentity | null): InvectPermission[];
+  hasPermission(identity: FlowlibIdentity | null, permission: FlowlibPermission): boolean;
+  getPermissions(identity: FlowlibIdentity | null): FlowlibPermission[];
   getService(): AuthorizationService;
   getAvailableRoles(): ReturnType<AuthorizationService['getAvailableRoles']>;
-  getResolvedRole(identity: InvectIdentity | null): string | null;
+  getResolvedRole(identity: FlowlibIdentity | null): string | null;
   onEvent<T extends AuthEvent['type']>(
     event: T,
     listener: (event: Extract<AuthEvent, { type: T }>) => void,
@@ -385,9 +385,9 @@ export interface AuthAPI {
 
 export interface PluginsAPI {
   has(pluginId: string): boolean;
-  get(pluginId: string): InvectPlugin | null;
-  getAll(): readonly InvectPlugin[];
-  getEndpoints(): InvectPluginEndpoint[];
+  get(pluginId: string): FlowlibPlugin | null;
+  getAll(): readonly FlowlibPlugin[];
+  getEndpoints(): FlowlibPluginEndpoint[];
   getHookRunner(): PluginHookRunner;
   getDatabaseConnection(): DatabaseConnection;
 }
@@ -423,10 +423,10 @@ export interface MaintenanceAPI {
 }
 
 // =====================================
-// INVECT INSTANCE (top-level)
+// FLOWLIB INSTANCE (top-level)
 // =====================================
 
-export interface InvectInstance {
+export interface FlowlibInstance {
   readonly flows: FlowsAPI;
   readonly versions: FlowVersionsAPI;
   readonly runs: FlowRunsAPI;
@@ -458,6 +458,6 @@ export interface InvectInstance {
   startCronScheduler(): Promise<void>;
   stopCronScheduler(): void;
   refreshCronScheduler(): Promise<void>;
-  runMaintenance(options?: InvectMaintenanceOptions): Promise<InvectMaintenanceResult>;
+  runMaintenance(options?: FlowlibMaintenanceOptions): Promise<FlowlibMaintenanceResult>;
   healthCheck(): Promise<Record<string, boolean>>;
 }

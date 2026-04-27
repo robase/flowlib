@@ -2,18 +2,18 @@
  * Integration tests: Plugin Hooks
  *
  * Tests that plugin hooks fire correctly during flow execution when wired
- * through the real Invect core. Uses lightweight test plugins that record
+ * through the real Flowlib core. Uses lightweight test plugins that record
  * hook invocations so assertions can inspect ordering and side effects.
  */
 import { describe, it, expect, vi } from 'vitest';
 import { FlowRunStatus } from '../../../src';
 import type {
-  InvectPlugin,
+  FlowlibPlugin,
   FlowRunHookContext,
   NodeExecutionHookContext,
 } from '../../../src/types/plugin.types';
-import { createTestInvect } from '../helpers/test-flowlib';
-import type { InvectInstance } from '../../../src/api/types';
+import { createTestFlowlib } from '../helpers/test-flowlib';
+import type { FlowlibInstance } from '../../../src/api/types';
 
 /** Simple flow definition used across hook tests */
 const simpleFlowDef = {
@@ -30,9 +30,9 @@ const simpleFlowDef = {
   edges: [] as Array<{ id: string; source: string; target: string }>,
 };
 
-async function createAndRunFlow(flowlib: InvectInstance) {
+async function createAndRunFlow(flowlib: FlowlibInstance) {
   const flow = await flowlib.flows.create({ name: `hook-test-${Date.now()}` });
-  await flowlib.versions.create(flow.id, { invectDefinition: simpleFlowDef });
+  await flowlib.versions.create(flow.id, { flowlibDefinition: simpleFlowDef });
   return flowlib.runs.start(flow.id, {}, { useBatchProcessing: false });
 }
 
@@ -45,7 +45,7 @@ describe('Plugin Hooks — Flow Run Lifecycle', () => {
     const beforeCalls: FlowRunHookContext[] = [];
     const afterCalls: FlowRunHookContext[] = [];
 
-    const plugin: InvectPlugin = {
+    const plugin: FlowlibPlugin = {
       id: 'hook-recorder',
       hooks: {
         beforeFlowRun: async (ctx) => {
@@ -57,7 +57,7 @@ describe('Plugin Hooks — Flow Run Lifecycle', () => {
       },
     };
 
-    const flowlib = await createTestInvect({ plugins: [plugin] });
+    const flowlib = await createTestFlowlib({ plugins: [plugin] });
 
     try {
       const result = await createAndRunFlow(flowlib);
@@ -73,7 +73,7 @@ describe('Plugin Hooks — Flow Run Lifecycle', () => {
   });
 
   it('should cancel flow execution when beforeFlowRun returns cancel', async () => {
-    const plugin: InvectPlugin = {
+    const plugin: FlowlibPlugin = {
       id: 'canceller',
       hooks: {
         beforeFlowRun: async () => {
@@ -82,11 +82,11 @@ describe('Plugin Hooks — Flow Run Lifecycle', () => {
       },
     };
 
-    const flowlib = await createTestInvect({ plugins: [plugin] });
+    const flowlib = await createTestFlowlib({ plugins: [plugin] });
 
     try {
       const flow = await flowlib.flows.create({ name: `cancel-test-${Date.now()}` });
-      await flowlib.versions.create(flow.id, { invectDefinition: simpleFlowDef });
+      await flowlib.versions.create(flow.id, { flowlibDefinition: simpleFlowDef });
       const result = await flowlib.runs.start(flow.id, {}, { useBatchProcessing: false });
 
       // Flow should be failed when cancelled by plugin hook
@@ -107,7 +107,7 @@ describe('Plugin Hooks — Node Execution Lifecycle', () => {
     const beforeCalls: NodeExecutionHookContext[] = [];
     const afterCalls: NodeExecutionHookContext[] = [];
 
-    const plugin: InvectPlugin = {
+    const plugin: FlowlibPlugin = {
       id: 'node-hook-recorder',
       hooks: {
         beforeNodeExecute: async (ctx) => {
@@ -119,7 +119,7 @@ describe('Plugin Hooks — Node Execution Lifecycle', () => {
       },
     };
 
-    const flowlib = await createTestInvect({ plugins: [plugin] });
+    const flowlib = await createTestFlowlib({ plugins: [plugin] });
 
     try {
       const result = await createAndRunFlow(flowlib);
@@ -143,7 +143,7 @@ describe('Plugin Hooks — Ordering', () => {
   it('should execute hooks in plugin registration order', async () => {
     const order: string[] = [];
 
-    const pluginA: InvectPlugin = {
+    const pluginA: FlowlibPlugin = {
       id: 'order-a',
       hooks: {
         beforeFlowRun: async () => {
@@ -155,7 +155,7 @@ describe('Plugin Hooks — Ordering', () => {
       },
     };
 
-    const pluginB: InvectPlugin = {
+    const pluginB: FlowlibPlugin = {
       id: 'order-b',
       hooks: {
         beforeFlowRun: async () => {
@@ -167,7 +167,7 @@ describe('Plugin Hooks — Ordering', () => {
       },
     };
 
-    const flowlib = await createTestInvect({ plugins: [pluginA, pluginB] });
+    const flowlib = await createTestFlowlib({ plugins: [pluginA, pluginB] });
 
     try {
       await createAndRunFlow(flowlib);
@@ -190,14 +190,14 @@ describe('Plugin Hooks — Init & Shutdown', () => {
   it('should call plugin init during initialize', async () => {
     const initSpy = vi.fn();
 
-    const plugin: InvectPlugin = {
+    const plugin: FlowlibPlugin = {
       id: 'init-test',
       init: async () => {
         initSpy();
       },
     };
 
-    const flowlib = await createTestInvect({ plugins: [plugin] });
+    const flowlib = await createTestFlowlib({ plugins: [plugin] });
 
     try {
       expect(initSpy).toHaveBeenCalledOnce();
@@ -209,21 +209,21 @@ describe('Plugin Hooks — Init & Shutdown', () => {
   it('should call plugin shutdown in reverse order', async () => {
     const order: string[] = [];
 
-    const pluginA: InvectPlugin = {
+    const pluginA: FlowlibPlugin = {
       id: 'shutdown-a',
       shutdown: async () => {
         order.push('A');
       },
     };
 
-    const pluginB: InvectPlugin = {
+    const pluginB: FlowlibPlugin = {
       id: 'shutdown-b',
       shutdown: async () => {
         order.push('B');
       },
     };
 
-    const flowlib = await createTestInvect({ plugins: [pluginA, pluginB] });
+    const flowlib = await createTestFlowlib({ plugins: [pluginA, pluginB] });
     await flowlib.shutdown();
 
     // Shutdown should be reverse order (B before A)

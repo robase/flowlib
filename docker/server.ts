@@ -2,7 +2,7 @@ import express from 'express';
 import type { ErrorRequestHandler } from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { createInvectRouter } from '@flowlib/express';
+import { createFlowlibRouter } from '@flowlib/express';
 import { auth } from '@flowlib/user-auth';
 import { rbac } from '@flowlib/rbac';
 import { webhooks } from '@flowlib/webhooks';
@@ -14,32 +14,32 @@ const port = parseInt(process.env.PORT || '3000', 10);
 const staticDir = process.env.STATIC_DIR || '/app/frontend';
 
 // --- Database ---
-const dbType = (process.env.INVECT_DB_TYPE as 'sqlite' | 'postgres' | 'mysql') || 'sqlite';
+const dbType = (process.env.FLOWLIB_DB_TYPE as 'sqlite' | 'postgres' | 'mysql') || 'sqlite';
 const dbConnectionString = process.env.DATABASE_URL || 'file:./data/flowlib.db';
 
 // --- Encryption key (required) ---
-const encryptionKey = process.env.INVECT_ENCRYPTION_KEY;
+const encryptionKey = process.env.FLOWLIB_ENCRYPTION_KEY;
 if (!encryptionKey) {
   console.error(
-    'FATAL: INVECT_ENCRYPTION_KEY is required. Generate one with: npx flowlib-cli secret',
+    'FATAL: FLOWLIB_ENCRYPTION_KEY is required. Generate one with: npx flowlib-cli secret',
   );
   process.exit(1);
 }
 
 // --- Auth ---
-const adminEmail = process.env.INVECT_ADMIN_EMAIL || 'admin@flowlib.local';
-const adminPassword = process.env.INVECT_ADMIN_PASSWORD || 'changeme';
+const adminEmail = process.env.FLOWLIB_ADMIN_EMAIL || 'admin@flowlib.local';
+const adminPassword = process.env.FLOWLIB_ADMIN_PASSWORD || 'changeme';
 
 // --- Webhooks ---
-const webhookBaseUrl = process.env.INVECT_WEBHOOK_BASE_URL || `http://localhost:${port}/flowlib`;
+const webhookBaseUrl = process.env.FLOWLIB_WEBHOOK_BASE_URL || `http://localhost:${port}/flowlib`;
 
 // --- Trusted Origins (comma-separated) ---
-const trustedOrigins = process.env.INVECT_TRUSTED_ORIGINS
-  ? process.env.INVECT_TRUSTED_ORIGINS.split(',').map((o) => o.trim())
+const trustedOrigins = process.env.FLOWLIB_TRUSTED_ORIGINS
+  ? process.env.FLOWLIB_TRUSTED_ORIGINS.split(',').map((o) => o.trim())
   : [`http://localhost:${port}`];
 
 // --- Logging ---
-const logLevel = (process.env.INVECT_LOG_LEVEL as 'debug' | 'info' | 'warn' | 'error') || 'info';
+const logLevel = (process.env.FLOWLIB_LOG_LEVEL as 'debug' | 'info' | 'warn' | 'error') || 'info';
 
 // --- Plugins ---
 const plugins = [
@@ -63,8 +63,8 @@ const plugins = [
 // --- Body parsing ---
 app.use(express.json());
 
-// --- Mount Invect API ---
-const invectRouter = await createInvectRouter({
+// --- Mount Flowlib API ---
+const flowlibRouter = await createFlowlibRouter({
   encryptionKey,
   database: {
     id: 'flowlib-docker',
@@ -82,8 +82,8 @@ app.get('/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-// --- Mount Invect API ---
-app.use('/flowlib', invectRouter);
+// --- Mount Flowlib API ---
+app.use('/flowlib', flowlibRouter);
 
 // --- Serve static frontend ---
 app.use(express.static(staticDir));
@@ -105,7 +105,7 @@ app.use(errorHandler);
 
 // --- Start ---
 app.listen(port, '0.0.0.0', () => {
-  console.log(`Invect server running on http://0.0.0.0:${port}`);
+  console.log(`Flowlib server running on http://0.0.0.0:${port}`);
   console.log(`  Database: ${dbType} (${dbConnectionString})`);
   console.log(`  Admin: ${adminEmail}`);
   console.log(`  Static: ${staticDir}`);

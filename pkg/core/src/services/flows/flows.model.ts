@@ -1,5 +1,5 @@
-// Flows Model for Invect core — adapter-based implementation
-import type { InvectAdapter, WhereClause } from '../../database/adapter';
+// Flows Model for Flowlib core — adapter-based implementation
+import type { FlowlibAdapter, WhereClause } from '../../database/adapter';
 import { IdGenerator } from '../../utils/id-generator';
 import type { FlowVersion } from '../../database';
 import { Logger, PaginatedResponse, QueryOptions, FilterQuery } from 'src/schemas';
@@ -52,15 +52,15 @@ interface _FlowQuery {
   offset?: number;
 }
 
-const TABLE = 'invect_flows';
+const TABLE = 'flowlib_flows';
 
 /**
- * Flows CRUD operations class — uses InvectAdapter for all database operations,
+ * Flows CRUD operations class — uses FlowlibAdapter for all database operations,
  * eliminating 3-way dialect branching.
  */
 export class FlowsModel {
   constructor(
-    private readonly adapter: InvectAdapter,
+    private readonly adapter: FlowlibAdapter,
     private readonly logger: Logger,
   ) {}
 
@@ -188,7 +188,7 @@ export class FlowsModel {
       }
 
       const version = await this.adapter.findOne<Record<string, unknown>>({
-        model: 'invect_flow_versions',
+        model: 'flowlib_flow_versions',
         where: [
           { field: 'flow_id', value: id },
           { field: 'version', value: flow.liveVersionNumber },
@@ -201,7 +201,7 @@ export class FlowsModel {
           ? {
               version: Number(version.version),
               flowId: String(version.flow_id),
-              invectDefinition: version.invect_definition as FlowVersion['invectDefinition'],
+              flowlibDefinition: version.flowlib_definition as FlowVersion['flowlibDefinition'],
               createdAt: String(version.created_at),
               createdBy: version.created_by ? String(version.created_by) : null,
             }

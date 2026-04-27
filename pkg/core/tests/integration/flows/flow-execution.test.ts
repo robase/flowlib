@@ -1,7 +1,7 @@
 /**
  * Integration tests: Flow Execution
  *
- * Tests executing flows through the Invect core with a real in-memory
+ * Tests executing flows through the Flowlib core with a real in-memory
  * SQLite database. Covers input→node→output data flow, JavaScript transformations,
  * template strings, and if/else branching.
  *
@@ -9,16 +9,16 @@
  */
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { FlowRunStatus } from '../../../src';
-import type { InvectInstance } from '../../../src/api/types';
-import type { InvectDefinition } from '../../../src/services/flow-versions/schemas-fresh';
+import type { FlowlibInstance } from '../../../src/api/types';
+import type { FlowlibDefinition } from '../../../src/services/flow-versions/schemas-fresh';
 import type { NodeOutput } from '../../../src/types/node-io-types';
-import { createTestInvect } from '../helpers/test-flowlib';
+import { createTestFlowlib } from '../helpers/test-flowlib';
 
 describe('Flow Execution', () => {
-  let flowlib: InvectInstance;
+  let flowlib: FlowlibInstance;
 
   beforeAll(async () => {
-    flowlib = await createTestInvect();
+    flowlib = await createTestFlowlib();
   });
 
   afterAll(async () => {
@@ -26,9 +26,9 @@ describe('Flow Execution', () => {
   });
 
   /** Helper: create a flow, save a version, and execute it */
-  async function runFlow(name: string, definition: InvectDefinition) {
+  async function runFlow(name: string, definition: FlowlibDefinition) {
     const flow = await flowlib.flows.create({ name: `exec-${name}-${Date.now()}` });
-    await flowlib.versions.create(flow.id, { invectDefinition: definition });
+    await flowlib.versions.create(flow.id, { flowlibDefinition: definition });
     return flowlib.runs.start(flow.id, {}, { useBatchProcessing: false });
   }
 
@@ -280,7 +280,7 @@ describe('Flow Execution', () => {
   // ---------------------------------------------------------------------------
 
   it('should execute a full Input → JavaScript → If-Else → Template chain', async () => {
-    const definition: InvectDefinition = {
+    const definition: FlowlibDefinition = {
       nodes: [
         {
           id: 'input-user',
@@ -382,7 +382,7 @@ describe('Flow Execution', () => {
   it('should persist flow run records', async () => {
     const flow = await flowlib.flows.create({ name: `run-record-${Date.now()}` });
     await flowlib.versions.create(flow.id, {
-      invectDefinition: {
+      flowlibDefinition: {
         nodes: [
           {
             id: 'input-1',
@@ -413,7 +413,7 @@ describe('Flow Execution', () => {
   it('should persist node execution traces', async () => {
     const flow = await flowlib.flows.create({ name: `trace-test-${Date.now()}` });
     await flowlib.versions.create(flow.id, {
-      invectDefinition: {
+      flowlibDefinition: {
         nodes: [
           {
             id: 'input-1',
@@ -493,7 +493,7 @@ describe('Flow Execution', () => {
     it('should override defaults with caller inputs (code-triggered run)', async () => {
       const flow = await flowlib.flows.create({ name: `trigger-code-override-${Date.now()}` });
       await flowlib.versions.create(flow.id, {
-        invectDefinition: {
+        flowlibDefinition: {
           nodes: [
             {
               id: 'trigger-1',
@@ -528,7 +528,7 @@ describe('Flow Execution', () => {
     it('should pass through all flowInputs when no defaultInputs configured', async () => {
       const flow = await flowlib.flows.create({ name: `trigger-passthrough-${Date.now()}` });
       await flowlib.versions.create(flow.id, {
-        invectDefinition: {
+        flowlibDefinition: {
           nodes: [
             {
               id: 'trigger-1',

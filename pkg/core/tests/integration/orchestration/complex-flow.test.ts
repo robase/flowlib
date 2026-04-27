@@ -3,7 +3,7 @@
  *
  * Exercises multi-node flows that combine input → transform → HTTP →
  * branching → agent (with tools) → downstream template/output, all
- * against a real Invect core. External HTTP (OpenAI + arbitrary APIs)
+ * against a real Flowlib core. External HTTP (OpenAI + arbitrary APIs)
  * is mocked via MSW.
  *
  * The goal is to catch regressions that only surface when many subsystems
@@ -16,10 +16,10 @@ import { setupServer } from 'msw/node';
 import { respondWithChatCompletion } from '../helpers/openai-sse';
 import { http, HttpResponse } from 'msw';
 import { FlowRunStatus } from '../../../src';
-import type { InvectInstance } from '../../../src/api/types';
-import type { InvectDefinition } from '../../../src/services/flow-versions/schemas-fresh';
+import type { FlowlibInstance } from '../../../src/api/types';
+import type { FlowlibDefinition } from '../../../src/services/flow-versions/schemas-fresh';
 import type { AgentExecutionOutput } from '../../../src/types/agent-tool.types';
-import { createTestInvect } from '../helpers/test-flowlib';
+import { createTestFlowlib } from '../helpers/test-flowlib';
 
 // ---------------------------------------------------------------------------
 // MSW helpers
@@ -74,7 +74,7 @@ function toolCallResponse(
 // Shared fixtures
 // ---------------------------------------------------------------------------
 
-let flowlib: InvectInstance;
+let flowlib: FlowlibInstance;
 let credentialId: string;
 let openAiQueue: Array<Record<string, unknown>> = [];
 let capturedOpenAiRequests: Array<Record<string, unknown>> = [];
@@ -97,7 +97,7 @@ const mswServer = setupServer(
 
 beforeAll(async () => {
   mswServer.listen({ onUnhandledRequest: 'bypass' });
-  flowlib = await createTestInvect();
+  flowlib = await createTestFlowlib();
 
   const cred = await flowlib.credentials.create({
     name: 'Test OpenAI',
@@ -127,9 +127,9 @@ afterEach(() => {
 // Shared helpers
 // ---------------------------------------------------------------------------
 
-async function runFlow(definition: InvectDefinition, inputs: Record<string, unknown> = {}) {
+async function runFlow(definition: FlowlibDefinition, inputs: Record<string, unknown> = {}) {
   const flow = await flowlib.flows.create({ name: `complex-${Date.now()}-${Math.random()}` });
-  await flowlib.versions.create(flow.id, { invectDefinition: definition });
+  await flowlib.versions.create(flow.id, { flowlibDefinition: definition });
   return flowlib.runs.start(flow.id, inputs, { useBatchProcessing: false });
 }
 

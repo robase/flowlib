@@ -58,8 +58,8 @@ export interface FlowEditorState {
   definitionsLoadedTime: number | null;
 
   // Dirty tracking (content-based)
-  // currentSnapshot: serialized InvectDefinition from the latest structural mutation
-  // lastSavedSnapshot: serialized InvectDefinition from the last save or server sync
+  // currentSnapshot: serialized FlowlibDefinition from the latest structural mutation
+  // lastSavedSnapshot: serialized FlowlibDefinition from the last save or server sync
   // isDirty is derived: currentSnapshot !== lastSavedSnapshot
   currentSnapshot: string | null;
   lastSavedSnapshot: string | null;

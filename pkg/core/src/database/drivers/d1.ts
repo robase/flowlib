@@ -44,7 +44,7 @@ export interface D1DatabaseBinding {
  * Create a D1 driver from a `D1Database` binding.
  *
  * The binding is supplied by the Workers runtime at request time — the host
- * is responsible for plumbing it into `createInvect()` config.
+ * is responsible for plumbing it into `createFlowlib()` config.
  */
 export async function createD1Driver(
   binding: D1DatabaseBinding,

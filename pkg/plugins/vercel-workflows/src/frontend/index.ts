@@ -5,10 +5,10 @@
  * Import via: `import { vercelWorkflowsFrontendPlugin } from '@flowlib/vercel-workflows/ui'`
  */
 
-import type { InvectFrontendPlugin } from '@flowlib/ui';
+import type { FlowlibFrontendPlugin } from '@flowlib/ui';
 import { DeployButton } from './DeployButton';
 
-export const vercelWorkflowsFrontendPlugin: InvectFrontendPlugin = {
+export const vercelWorkflowsFrontendPlugin: FlowlibFrontendPlugin = {
   id: 'vercel-workflows',
   name: 'Vercel Workflows',
   headerActions: [{ context: 'flowHeader', component: DeployButton }],

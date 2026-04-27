@@ -5,7 +5,7 @@ description: Start flows manually, on a schedule, or from webhooks.
 
 import { Callout } from 'fumadocs-ui/components/callout';
 
-Triggers define how a flow starts. Invect includes three built-in trigger types, plus webhook triggers via the [Webhooks Plugin](/docs/plugins/webhooks).
+Triggers define how a flow starts. Flowlib includes three built-in trigger types, plus webhook triggers via the [Webhooks Plugin](/docs/plugins/webhooks).
 
 ## Manual trigger
 
@@ -62,9 +62,9 @@ Downstream nodes access the scheduled time via `{{ cron_trigger.scheduledTime }}
 </Callout>
 
 <Callout type="info">
-  Next.js deployments on Vercel need one dedicated Invect cron route, configured in `vercel.json`,
-  to drive scheduled work. Use a single Invect cron endpoint such as `/api/flowlib/cron`; it will
-  execute due Invect cron triggers and other background maintenance for the app.
+  Next.js deployments on Vercel need one dedicated Flowlib cron route, configured in `vercel.json`,
+  to drive scheduled work. Use a single Flowlib cron endpoint such as `/api/flowlib/cron`; it will
+  execute due Flowlib cron triggers and other background maintenance for the app.
 </Callout>
 
 ## Webhook trigger

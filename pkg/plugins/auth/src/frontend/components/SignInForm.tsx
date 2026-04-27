@@ -1,7 +1,7 @@
 /**
  * SignInForm — Email/password sign-in form component.
  *
- * Uses the AuthProvider's signIn action. Styled to match the Invect
+ * Uses the AuthProvider's signIn action. Styled to match the Flowlib
  * design system with grouped fields, clean labels, and themed inputs.
  */
 

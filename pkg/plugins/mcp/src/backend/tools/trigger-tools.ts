@@ -4,7 +4,7 @@
 
 import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import type { InvectClient } from '../client/types';
+import type { FlowlibClient } from '../client/types';
 import { TOOL_IDS } from '../../shared/types';
 import { mapTriggerList, mapTrigger } from '../response-mappers';
 
@@ -20,7 +20,7 @@ const triggerInputSchema = z
   })
   .passthrough();
 
-export function registerTriggerTools(server: McpServer, client: InvectClient): void {
+export function registerTriggerTools(server: McpServer, client: FlowlibClient): void {
   server.registerTool(
     TOOL_IDS.TRIGGER_LIST,
     {

@@ -2,7 +2,7 @@
 
 ## Application Overview
 
-Test plan for the Invect credential management system. Covers CRUD operations on the /flowlib/credentials page (create, read, update, delete), auth type variations (Bearer, API Key, Basic, Connection String), the test-connection feature, credential webhook lifecycle (enable, display URL/secret, ingest), and integration with flow execution. The credentials page is a React SPA at /flowlib/credentials backed by Express API routes at /api/credentials/\*. Credential secrets are AES-256-GCM encrypted at rest. Two seeded credentials exist: "Anthropic API Key" (bearer) and "Linear OAuth2" (oauth2, webhook-enabled).
+Test plan for the Flowlib credential management system. Covers CRUD operations on the /flowlib/credentials page (create, read, update, delete), auth type variations (Bearer, API Key, Basic, Connection String), the test-connection feature, credential webhook lifecycle (enable, display URL/secret, ingest), and integration with flow execution. The credentials page is a React SPA at /flowlib/credentials backed by Express API routes at /api/credentials/\*. Credential secrets are AES-256-GCM encrypted at rest. Two seeded credentials exist: "Anthropic API Key" (bearer) and "Linear OAuth2" (oauth2, webhook-enabled).
 
 ## Test Scenarios
 

@@ -1,21 +1,21 @@
 <p align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="../../.github/assets/logo-light.svg">
-    <img alt="Invect" src="../../.github/assets/logo-dark.svg" width="50">
+    <img alt="Flowlib" src="../../.github/assets/logo-dark.svg" width="50">
   </picture>
 </p>
 
 <h1 align="center">@flowlib/nestjs</h1>
 
 <p align="center">
-  NestJS module adapter for Invect.
+  NestJS module adapter for Flowlib.
   <br />
   <a href="https://flowlib.dev/docs/integrations/nestjs"><strong>Docs</strong></a> · <a href="https://flowlib.dev/docs/quick-start"><strong>Quick Start</strong></a>
 </p>
 
 ---
 
-Mount Invect into any NestJS app as a module. Provides a controller for all API endpoints and an injectable service for programmatic access.
+Mount Flowlib into any NestJS app as a module. Provides a controller for all API endpoints and an injectable service for programmatic access.
 
 ## Install
 
@@ -33,16 +33,16 @@ npm install @flowlib/core @flowlib/nestjs
 
 ```ts
 import { Module } from '@nestjs/common';
-import { InvectModule } from '@flowlib/nestjs';
+import { FlowlibModule } from '@flowlib/nestjs';
 
 @Module({
   imports: [
-    InvectModule.forRoot({
+    FlowlibModule.forRoot({
       database: {
         type: 'sqlite',
         connectionString: 'file:./dev.db',
       },
-      encryptionKey: process.env.INVECT_ENCRYPTION_KEY, // npx flowlib-cli secret
+      encryptionKey: process.env.FLOWLIB_ENCRYPTION_KEY, // npx flowlib-cli secret
     }),
   ],
 })
@@ -53,18 +53,18 @@ export class AppModule {}
 
 ```ts
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { InvectModule } from '@flowlib/nestjs';
+import { FlowlibModule } from '@flowlib/nestjs';
 
 @Module({
   imports: [
     ConfigModule.forRoot(),
-    InvectModule.forRootAsync({
+    FlowlibModule.forRootAsync({
       useFactory: (config: ConfigService) => ({
         database: {
           type: 'postgres',
           connectionString: config.get('DATABASE_URL'),
         },
-        encryptionKey: config.get('INVECT_ENCRYPTION_KEY'),
+        encryptionKey: config.get('FLOWLIB_ENCRYPTION_KEY'),
       }),
       inject: [ConfigService],
     }),
@@ -75,15 +75,15 @@ export class AppModule {}
 
 ### Programmatic Access
 
-Inject `InvectService` to call the core engine directly:
+Inject `FlowlibService` to call the core engine directly:
 
 ```ts
 import { Injectable } from '@nestjs/common';
-import { InvectService } from '@flowlib/nestjs';
+import { FlowlibService } from '@flowlib/nestjs';
 
 @Injectable()
 export class MyService {
-  constructor(private readonly flowlib: InvectService) {}
+  constructor(private readonly flowlib: FlowlibService) {}
 
   async runWorkflow(flowId: string, inputs: Record<string, unknown>) {
     return this.flowlib.getCore().runs.start(flowId, inputs);

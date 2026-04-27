@@ -3,7 +3,7 @@ import * as SelectPrimitive from '@radix-ui/react-select';
 import { CheckIcon, ChevronDownIcon, ChevronUpIcon } from 'lucide-react';
 
 import { cn } from '~/lib/utils';
-import { useInvectPortalClass } from '~/hooks/use-flowlib-portal-class';
+import { useFlowlibPortalClass } from '~/hooks/use-flowlib-portal-class';
 
 function Select({ ...props }: React.ComponentProps<typeof SelectPrimitive.Root>) {
   return <SelectPrimitive.Root data-slot="select" {...props} />;
@@ -55,7 +55,7 @@ function SelectContent({
   container,
   ...props
 }: SelectContentProps) {
-  const portalClass = useInvectPortalClass();
+  const portalClass = useFlowlibPortalClass();
   return (
     <SelectPrimitive.Portal container={container ?? undefined}>
       <div className={portalClass}>

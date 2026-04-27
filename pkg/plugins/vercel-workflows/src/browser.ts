@@ -6,14 +6,14 @@
  */
 import { vercelWorkflowsFrontendPlugin } from './frontend/index';
 
-interface InvectPluginDefinition {
+interface FlowlibPluginDefinition {
   id: string;
   name?: string;
   backend?: unknown;
   frontend?: unknown;
 }
 
-export function vercelWorkflowsPlugin(_options?: Record<string, unknown>): InvectPluginDefinition {
+export function vercelWorkflowsPlugin(_options?: Record<string, unknown>): FlowlibPluginDefinition {
   return {
     id: 'vercel-workflows',
     name: 'Vercel Workflows',

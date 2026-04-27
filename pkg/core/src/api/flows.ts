@@ -13,8 +13,8 @@ import * as Schemas from '../schemas';
 import { FlowRunStatus } from '../types/base';
 import type { DashboardStats } from '../flowlib-core';
 import { FlowValidator } from '../services/flow-validator';
-import { invectDefinitionSchema } from '../services/flow-versions/schemas-fresh';
-import type { InvectDefinition } from '../services/flow-versions/schemas-fresh';
+import { flowlibDefinitionSchema } from '../services/flow-versions/schemas-fresh';
+import type { FlowlibDefinition } from '../services/flow-versions/schemas-fresh';
 
 export function createFlowsAPI(sf: ServiceFactory, logger: Logger): FlowsAPI {
   const svc = sf.getFlowService();
@@ -52,7 +52,7 @@ export function createFlowsAPI(sf: ServiceFactory, logger: Logger): FlowsAPI {
     async validate(flowId, definition) {
       const { flowId: id } = Schemas.flow.FlowIdParamsSchema.parse({ flowId });
       logger.debug('Validating flow definition', { flowId: id });
-      const parsed = invectDefinitionSchema.safeParse(definition);
+      const parsed = flowlibDefinitionSchema.safeParse(definition);
       if (!parsed.success) {
         return {
           isValid: false,
@@ -66,7 +66,7 @@ export function createFlowsAPI(sf: ServiceFactory, logger: Logger): FlowsAPI {
           warnings: [],
         };
       }
-      const typedDefinition = parsed.data as InvectDefinition;
+      const typedDefinition = parsed.data as FlowlibDefinition;
       return FlowValidator.validateFlowDefinition(typedDefinition);
     },
 

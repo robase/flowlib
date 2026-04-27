@@ -28,7 +28,7 @@ export interface FlowRunContext {
   flowRunId: string;
 
   globalConfig: Record<string, string | number | boolean | null>;
-  // Optional overrides from the default global Invect config for this specific flow
+  // Optional overrides from the default global Flowlib config for this specific flow
   flowParams: Record<string, unknown>; // TODO: useBatchProcessing: boolean; should existi
 
   // inputs values provided to this flow (includes trigger data when triggered by webhook/cron)

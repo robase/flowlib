@@ -4,7 +4,7 @@ import type { Node, Edge } from '@xyflow/react';
 import { useFlowReactFlowData, useCreateFlowVersion } from '../../api/flows.api';
 import { useExecuteFlow } from '../../api/executions.api';
 import { useFlowEditorStore, useIsDirty, type LayoutDirection } from './flow-editor.store';
-import { transformToInvectDefinition } from '~/utils/flowTransformations';
+import { transformToFlowlibDefinition } from '~/utils/flowTransformations';
 import { applyLayout, type LayoutAlgorithm } from '~/utils/layoutUtils';
 
 // Simple toast helper (can be replaced with proper toast library)
@@ -102,11 +102,11 @@ export function useFlowEditor({ flowId, version, basePath = '' }: UseFlowEditorO
       }
 
       try {
-        const invectDefinition = transformToInvectDefinition(nodes, edges);
+        const flowlibDefinition = transformToFlowlibDefinition(nodes, edges);
 
         const result = await createVersionMutation.mutateAsync({
           flowId,
-          data: { invectDefinition },
+          data: { flowlibDefinition },
         });
 
         // Mark as saved with new version ID

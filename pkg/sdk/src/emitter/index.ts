@@ -1,5 +1,5 @@
 /**
- * Unified SDK emitter — `InvectDefinition` (DB form) → `@flowlib/sdk` source.
+ * Unified SDK emitter — `FlowlibDefinition` (DB form) → `@flowlib/sdk` source.
  *
  * Produces TypeScript source that imports from `@flowlib/sdk` and any relevant
  * `@flowlib/actions/<provider>` packages and uses the callable action helpers

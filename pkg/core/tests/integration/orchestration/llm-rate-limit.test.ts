@@ -20,9 +20,9 @@ import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from
 import { createServer, type Server, type IncomingMessage, type ServerResponse } from 'node:http';
 import { AddressInfo } from 'node:net';
 import { FlowRunStatus } from '../../../src';
-import type { InvectInstance } from '../../../src/api/types';
-import type { InvectDefinition } from '../../../src/services/flow-versions/schemas-fresh';
-import { createTestInvect } from '../helpers/test-flowlib';
+import type { FlowlibInstance } from '../../../src/api/types';
+import type { FlowlibDefinition } from '../../../src/services/flow-versions/schemas-fresh';
+import { createTestFlowlib } from '../helpers/test-flowlib';
 
 // ---------------------------------------------------------------------------
 // Response factories
@@ -221,7 +221,7 @@ function handleRequest(req: IncomingMessage, res: ServerResponse) {
 // Shared fixtures
 // ---------------------------------------------------------------------------
 
-let flowlib: InvectInstance;
+let flowlib: FlowlibInstance;
 let credentialId: string;
 
 const originalOpenAIBaseUrl = process.env.OPENAI_BASE_URL;
@@ -236,7 +236,7 @@ beforeAll(async () => {
   // the credential → adapter factory chain.
   process.env.OPENAI_BASE_URL = serverBaseUrl;
 
-  flowlib = await createTestInvect();
+  flowlib = await createTestFlowlib();
   const cred = await flowlib.credentials.create({
     name: 'Test OpenAI Rate-Limit',
     type: 'llm',
@@ -272,13 +272,13 @@ afterEach(() => {
 // Helpers
 // ---------------------------------------------------------------------------
 
-async function runFlow(definition: InvectDefinition) {
+async function runFlow(definition: FlowlibDefinition) {
   const flow = await flowlib.flows.create({ name: `ratelimit-${Date.now()}-${Math.random()}` });
-  await flowlib.versions.create(flow.id, { invectDefinition: definition });
+  await flowlib.versions.create(flow.id, { flowlibDefinition: definition });
   return flowlib.runs.start(flow.id, {}, { useBatchProcessing: false });
 }
 
-function modelNode(overrides: Record<string, unknown> = {}): InvectDefinition['nodes'][number] {
+function modelNode(overrides: Record<string, unknown> = {}): FlowlibDefinition['nodes'][number] {
   return {
     id: 'model',
     type: 'core.model',
@@ -297,7 +297,7 @@ function modelNode(overrides: Record<string, unknown> = {}): InvectDefinition['n
   };
 }
 
-function baseAgent(overrides: Record<string, unknown> = {}): InvectDefinition['nodes'][number] {
+function baseAgent(overrides: Record<string, unknown> = {}): FlowlibDefinition['nodes'][number] {
   return {
     id: 'agent',
     type: 'core.agent',

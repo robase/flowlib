@@ -48,7 +48,7 @@ async function createFlowWithDefinition(
   apiBase: string,
   request: APIRequestContext,
   name: string,
-  invectDefinition: Record<string, unknown>,
+  flowlibDefinition: Record<string, unknown>,
 ): Promise<string> {
   const createFlowResp = await request.post(`${apiBase}/flows`, {
     data: { name },
@@ -57,7 +57,7 @@ async function createFlowWithDefinition(
 
   const flow: { id: string } = await createFlowResp.json();
   const createVersionResp = await request.post(`${apiBase}/flows/${flow.id}/versions`, {
-    data: { invectDefinition },
+    data: { flowlibDefinition },
   });
   expect(createVersionResp.ok()).toBeTruthy();
 
@@ -154,7 +154,7 @@ test.describe('Execution Monitoring', () => {
         createdJqFlow = true;
         await request.post(`${apiBase}/flows/${jqFlowId}/versions`, {
           data: {
-            invectDefinition: {
+            flowlibDefinition: {
               nodes: [
                 {
                   id: 'node-1',
@@ -439,7 +439,7 @@ test.describe('Execution Monitoring', () => {
     // Step 2: Create a flow version with intentionally invalid JavaScript.
     const createVersionResp = await request.post(`${apiBase}/flows/${badFlowId}/versions`, {
       data: {
-        invectDefinition: {
+        flowlibDefinition: {
           nodes: [
             {
               id: 'jq-invalid',

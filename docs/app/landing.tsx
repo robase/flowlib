@@ -57,7 +57,7 @@ export default function LandingPage() {
           const isDark = () => document.documentElement.classList.contains('dark');
           let dark = isDark();
 
-          // Invect palette colours
+          // Flowlib palette colours
           const LIGHT_PRIMARY = 0x5b5bd6; // #5b5bd6
           const DARK_PRIMARY = 0x7b7bde; // #7b7bde
           const LIGHT_ACCENT = 0x8b8be8; // lighter indigo for fill light
@@ -431,17 +431,17 @@ export default function LandingPage() {
             <div className="screenshot-wrap">
               <img
                 src="/flow-screenshot.png"
-                alt="Invect flow editor showing a Linear ticket triage workflow with AI agent, switch routing, and integrations"
+                alt="Flowlib flow editor showing a Linear ticket triage workflow with AI agent, switch routing, and integrations"
                 className="screenshot-img"
               />
             </div>
           </div>
         </section>
 
-        {/* Why Invect */}
+        {/* Why Flowlib */}
         <section className="why-section" id="features">
           <div className="container">
-            <p className="section-label">Why Invect</p>
+            <p className="section-label">Why Flowlib</p>
             <h2 className="section-title">An open-source workflow engine embedded in your app</h2>
             <div className="why-grid">
               <div className="why-item">
@@ -466,11 +466,11 @@ export default function LandingPage() {
                   <pre
                     dangerouslySetInnerHTML={{
                       __html: `<span class="comment">// Your existing Express app</span>
-<span class="keyword">import</span> { <span class="type">createInvectRouter</span> } <span class="keyword">from</span> <span class="string">'@flowlib/express'</span>;
+<span class="keyword">import</span> { <span class="type">createFlowlibRouter</span> } <span class="keyword">from</span> <span class="string">'@flowlib/express'</span>;
 
 <span class="comment">// Mount alongside your existing routes</span>
 app.<span class="func">use</span>(<span class="string">'/api'</span>, yourRouter);
-app.<span class="func">use</span>(<span class="string">'/workflows'</span>, <span class="keyword">await</span> <span class="func">createInvectRouter</span>(...));
+app.<span class="func">use</span>(<span class="string">'/workflows'</span>, <span class="keyword">await</span> <span class="func">createFlowlibRouter</span>(...));
 
 <span class="comment">// that's it</span>
 `,
@@ -482,7 +482,7 @@ app.<span class="func">use</span>(<span class="string">'/workflows'</span>, <spa
               <div className="why-item">
                 <div className="why-item-text">
                   <h3>Not another LangChain wrapper</h3>
-                  <p>Invect has a custom-built execution engine from the ground up.</p>
+                  <p>Flowlib has a custom-built execution engine from the ground up.</p>
                   <ul>
                     <li>
                       Smart branching — inactive paths and their downstream nodes are&nbsp;skipped
@@ -805,7 +805,7 @@ app.<span class="func">use</span>(<span class="string">'/workflows'</span>, <spa
           <div className="container">
             <div className="cta-box">
               <h2>Start building workflows today</h2>
-              <p>Invect is free, open-source. Add it to your project in&nbsp;minutes.</p>
+              <p>Flowlib is free, open-source. Add it to your project in&nbsp;minutes.</p>
               <div className="cta-buttons">
                 <Link href="/docs/quickstart" className="btn-primary">
                   <svg
@@ -846,7 +846,7 @@ app.<span class="func">use</span>(<span class="string">'/workflows'</span>, <spa
         {/* Footer */}
         <footer>
           <div className="container">
-            <p>© 2026 Invect · MIT License</p>
+            <p>© 2026 Flowlib · MIT License</p>
             <ul className="footer-links">
               <li>
                 <Link href="/docs">Documentation</Link>
@@ -855,7 +855,7 @@ app.<span class="func">use</span>(<span class="string">'/workflows'</span>, <spa
                 <a href="https://github.com/robase/flowlib">GitHub</a>
               </li>
               <li>
-                <a href="https://www.npmjs.com/search?q=%40invect">npm</a>
+                <a href="https://www.npmjs.com/search?q=%40flowlib">npm</a>
               </li>
             </ul>
           </div>

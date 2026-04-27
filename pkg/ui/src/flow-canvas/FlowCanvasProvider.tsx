@@ -1,8 +1,8 @@
 /**
  * FlowCanvasProvider — wires up the minimal provider tree required by the
- * flow editor when it runs outside the full `<Invect>` app.
+ * flow editor when it runs outside the full `<Flowlib>` app.
  *
- * Unlike the hosted `<Invect>`:
+ * Unlike the hosted `<Flowlib>`:
  *   - no `BrowserRouter` on the outside — we always use a `MemoryRouter`
  *     with the single synthetic route `/flow-canvas/flow/__canvas__`
  *   - no `ApiProvider` pointing at a real backend — we inject an
@@ -29,7 +29,7 @@ import { queryKeys } from '../api/query-keys';
 import { useFlowEditorStore } from '../stores/flow-editor.store';
 import { FlowActionsContext, type FlowActionsContextType } from '../routes/flow-route-layout';
 import { InMemoryApiClient, type InMemoryCallbacks, type InMemoryState } from './InMemoryApiClient';
-import { invectDefinitionToReactFlowData, reactFlowToInvectDefinition } from './flow-adapter';
+import { flowlibDefinitionToReactFlowData, reactFlowToFlowlibDefinition } from './flow-adapter';
 import type { FlowCanvasProps } from './types';
 
 // Stable synthetic flow ID used internally. Consumers never see this.
@@ -131,7 +131,7 @@ function FlowStateSync({
   // Whenever the flow prop changes, rebuild the ReactFlow data and seed
   // both the React Query cache and the Zustand store.
   useEffect(() => {
-    const rf = invectDefinitionToReactFlowData({ flow, actions, nodeRunStatus });
+    const rf = flowlibDefinitionToReactFlowData({ flow, actions, nodeRunStatus });
     queryClient.setQueryData(queryKeys.reactFlow(CANVAS_FLOW_ID, '1'), rf);
     // Cast to any[] to satisfy Node/Edge type parameters — the adapter
     // produces the shape the store expects.
@@ -187,7 +187,7 @@ function FlowStateSync({
       if (!onEdit) {
         return;
       }
-      const def = reactFlowToInvectDefinition(state.nodes, state.edges);
+      const def = reactFlowToFlowlibDefinition(state.nodes, state.edges);
       onEdit(def);
     });
     return unsubscribe;

@@ -74,7 +74,7 @@ export const teamsSendMessageAction = defineAction({
         label: 'Message Content',
         type: 'textarea',
         required: true,
-        placeholder: '<p>Hello from Invect!</p>',
+        placeholder: '<p>Hello from Flowlib!</p>',
         description: 'The message body. Supports HTML formatting by default.',
         aiProvided: true,
       },

@@ -4,7 +4,7 @@
  * CRUD operations for the flow_triggers registration table.
  */
 
-import type { InvectAdapter } from '../../database/adapter';
+import type { FlowlibAdapter } from '../../database/adapter';
 import type { Logger } from 'src/schemas';
 import { DatabaseError } from 'src/types/common/errors.types';
 import type {
@@ -14,14 +14,14 @@ import type {
   UpdateTriggerInput,
 } from './trigger.types';
 
-const TABLE = 'invect_flow_triggers';
+const TABLE = 'flowlib_flow_triggers';
 
 /**
  * Model for flow_triggers table CRUD operations.
  */
 export class FlowTriggersModel {
   constructor(
-    private readonly adapter: InvectAdapter,
+    private readonly adapter: FlowlibAdapter,
     private readonly logger: Logger,
   ) {}
 

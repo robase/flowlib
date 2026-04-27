@@ -2,20 +2,20 @@ import { test, expect } from './fixtures';
 
 /**
  * Seed test — verifies the fullstack environment is running and the
- * Invect frontend can communicate with the Express backend.
+ * Flowlib frontend can communicate with the Express backend.
  *
  * This test is used by the Playwright planner/generator agents as:
  *   1. The bootstrap step that proves the app is alive
  *   2. An example of test style and fixture usage
  */
 test('seed', async ({ page }) => {
-  // 1. Navigate to the Invect app (basePath = /flowlib)
+  // 1. Navigate to the Flowlib app (basePath = /flowlib)
   await page.goto('/flowlib');
 
   // 2. The app shell should render
   await expect(page.locator('.imp-sidebar-shell')).toBeVisible();
 
-  // 3. The dashboard should load (proves the Invect component route matched)
+  // 3. The dashboard should load (proves the Flowlib component route matched)
   await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible({
     timeout: 15_000,
   });

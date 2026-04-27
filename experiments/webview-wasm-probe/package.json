@@ -1,9 +1,9 @@
 {
   "name": "flowlib-webview-wasm-probe",
-  "displayName": "Invect WASM Probe",
+  "displayName": "Flowlib WASM Probe",
   "version": "0.0.1",
   "private": true,
-  "description": "Throwaway VSCode extension to verify QuickJS WASM executes inside a webview under strict CSP. Part of Invect VSCode Extension Phase 0 Lane L3.",
+  "description": "Throwaway VSCode extension to verify QuickJS WASM executes inside a webview under strict CSP. Part of Flowlib VSCode Extension Phase 0 Lane L3.",
   "categories": [
     "Other"
   ],
@@ -29,7 +29,7 @@
     "commands": [
       {
         "command": "probe.run",
-        "title": "Invect Probe: Run QuickJS WASM in Webview"
+        "title": "Flowlib Probe: Run QuickJS WASM in Webview"
       }
     ]
   },

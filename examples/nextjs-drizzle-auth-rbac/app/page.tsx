@@ -19,9 +19,9 @@ export default function Home() {
 
       <div className="mt-4 max-w-md text-center text-sm text-muted">
         <p>
-          This example demonstrates <strong>Invect</strong> embedded inside a pre-existing Next.js
+          This example demonstrates <strong>Flowlib</strong> embedded inside a pre-existing Next.js
           admin dashboard. The app has its own Drizzle schema (customers, products, orders) and
-          Invect is added as a &ldquo;Workflows&rdquo; page.
+          Flowlib is added as a &ldquo;Workflows&rdquo; page.
         </p>
         <p className="mt-2">
           Auth is handled by <strong>better-auth</strong>, and the{' '}

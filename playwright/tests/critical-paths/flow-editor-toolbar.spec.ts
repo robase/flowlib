@@ -61,7 +61,7 @@ test.describe('Flow Editor — Toolbar & Canvas', () => {
       jqFlowId = flow.id;
       await request.post(`${apiBase}/flows/${jqFlowId}/versions`, {
         data: {
-          invectDefinition: {
+          flowlibDefinition: {
             nodes: [
               {
                 id: 'node-1',
@@ -105,7 +105,7 @@ test.describe('Flow Editor — Toolbar & Canvas', () => {
       templateFlowId = flow.id;
       await request.post(`${apiBase}/flows/${templateFlowId}/versions`, {
         data: {
-          invectDefinition: {
+          flowlibDefinition: {
             nodes: [
               {
                 id: 'node-1',

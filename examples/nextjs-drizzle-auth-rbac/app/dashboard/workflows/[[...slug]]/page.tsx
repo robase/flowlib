@@ -5,7 +5,7 @@ import '@flowlib/ui/styles';
 import { auth } from '@flowlib/user-auth';
 import { rbac } from '@flowlib/rbac';
 
-const Invect = dynamic(() => import('@flowlib/ui').then((m) => ({ default: m.Invect })), {
+const Flowlib = dynamic(() => import('@flowlib/ui').then((m) => ({ default: m.Flowlib })), {
   ssr: false,
   loading: () => <WorkflowsLoading />,
 });
@@ -24,7 +24,7 @@ function WorkflowsLoading() {
 export default function WorkflowsPage() {
   return (
     <div className="-m-6 h-screen">
-      <Invect
+      <Flowlib
         config={{
           apiPath: '/api/flowlib',
           frontendPath: '/dashboard/workflows',

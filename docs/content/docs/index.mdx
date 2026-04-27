@@ -1,12 +1,12 @@
 ---
-title: Invect
+title: Flowlib
 description: Drop-in workflow orchestration for any Node.js app.
 ---
 
 import { Card, Cards } from 'fumadocs-ui/components/card';
 import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
 
-Invect is an open-source workflow orchestration library that you mount directly into your existing Node.js application. Visual flow editor, AI agents, 190+ integrations, and batch processing — all as npm packages, not a separate platform.
+Flowlib is an open-source workflow orchestration library that you mount directly into your existing Node.js application. Visual flow editor, AI agents, 190+ integrations, and batch processing — all as npm packages, not a separate platform.
 
 ## Get started in one command
 
@@ -23,12 +23,12 @@ The CLI detects your framework, installs the right packages, creates your config
 
 ```ts title="index.ts"
 import express from 'express';
-import { createInvectRouter } from '@flowlib/express';
+import { createFlowlibRouter } from '@flowlib/express';
 
 const app = express();
-const router = await createInvectRouter({
+const router = await createFlowlibRouter({
   database: { type: 'sqlite', connectionString: 'file:./dev.db' },
-  encryptionKey: process.env.INVECT_ENCRYPTION_KEY,
+  encryptionKey: process.env.FLOWLIB_ENCRYPTION_KEY,
 });
 app.use('/flowlib', router);
 app.listen(3000);
@@ -39,13 +39,13 @@ app.listen(3000);
 
 ```ts title="app.module.ts"
 import { Module } from '@nestjs/common';
-import { InvectModule } from '@flowlib/nestjs';
+import { FlowlibModule } from '@flowlib/nestjs';
 
 @Module({
   imports: [
-    InvectModule.forRoot({
+    FlowlibModule.forRoot({
       database: { type: 'sqlite', connectionString: 'file:./dev.db' },
-      encryptionKey: process.env.INVECT_ENCRYPTION_KEY,
+      encryptionKey: process.env.FLOWLIB_ENCRYPTION_KEY,
     }),
   ],
 })
@@ -56,11 +56,11 @@ export class AppModule {}
 <Tab value="Next.js">
 
 ```ts title="app/api/flowlib/[...flowlib]/route.ts"
-import { createInvectHandler } from '@flowlib/nextjs';
+import { createFlowlibHandler } from '@flowlib/nextjs';
 
-const handler = createInvectHandler({
+const handler = createFlowlibHandler({
   database: { type: 'sqlite', connectionString: 'file:./dev.db' },
-  encryptionKey: process.env.INVECT_ENCRYPTION_KEY,
+  encryptionKey: process.env.FLOWLIB_ENCRYPTION_KEY,
 });
 
 export const GET = handler.GET;
@@ -85,7 +85,7 @@ That's it. You have a visual flow editor and a full REST API for managing and ex
   />
   <Card
     title="Installation"
-    description="Set up Invect with Express, NestJS, or Next.js."
+    description="Set up Flowlib with Express, NestJS, or Next.js."
     href="/docs/installation"
   />
   <Card

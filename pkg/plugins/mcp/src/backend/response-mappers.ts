@@ -98,7 +98,7 @@ export function mapFlowDefinition(raw: unknown): string {
     return 'No definition found.';
   }
 
-  const def = (v.invectDefinition ?? v.definition ?? v) as Record<string, unknown>;
+  const def = (v.flowlibDefinition ?? v.definition ?? v) as Record<string, unknown>;
   const nodes = Array.isArray(def.nodes) ? def.nodes : [];
   const edges = Array.isArray(def.edges) ? def.edges : [];
 

@@ -46,7 +46,7 @@ import {
 import type { UpstreamSlot } from '../flow-editor/node-config-panel/types';
 import { getIconComponent, formatNodeTypeLabel } from '../flow-editor/node-config-panel/utils';
 import { createPortal } from 'react-dom';
-import { useInvectPortalClass } from '../../hooks/use-flowlib-portal-class';
+import { useFlowlibPortalClass } from '../../hooks/use-flowlib-portal-class';
 
 interface CodeMirrorJsonEditorProps {
   value: string;
@@ -887,7 +887,7 @@ function SlotPopover({
   onMouseEnter: () => void;
   onMouseLeave: () => void;
 }) {
-  const portalClass = useInvectPortalClass();
+  const portalClass = useFlowlibPortalClass();
   const Icon = getIconComponent(slot.sourceIcon);
   const typeLabel = formatNodeTypeLabel(slot.sourceType);
 

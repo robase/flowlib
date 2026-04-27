@@ -6,7 +6,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { z } from 'zod/v4';
 import { PluginManager } from '../../../src/services/plugin-manager';
 import type {
-  InvectPlugin,
+  FlowlibPlugin,
   FlowRunHookContext,
   NodeExecutionHookContext,
 } from '../../../src/types/plugin.types';
@@ -27,23 +27,23 @@ describe('PluginManager', () => {
     });
 
     it('should accept plugins', () => {
-      const plugin: InvectPlugin = { id: 'test-plugin' };
+      const plugin: FlowlibPlugin = { id: 'test-plugin' };
       const pm = new PluginManager([plugin]);
       expect(pm.getPlugins()).toHaveLength(1);
       expect(pm.hasPlugin('test-plugin')).toBe(true);
     });
 
     it('should throw on duplicate plugin IDs', () => {
-      const p1: InvectPlugin = { id: 'dup' };
-      const p2: InvectPlugin = { id: 'dup' };
+      const p1: FlowlibPlugin = { id: 'dup' };
+      const p2: FlowlibPlugin = { id: 'dup' };
       expect(() => new PluginManager([p1, p2])).toThrow('Duplicate plugin ID: "dup"');
     });
   });
 
   describe('Plugin Lookup', () => {
     let pm: PluginManager;
-    const pluginA: InvectPlugin = { id: 'a', name: 'Plugin A' };
-    const pluginB: InvectPlugin = { id: 'b', name: 'Plugin B' };
+    const pluginA: FlowlibPlugin = { id: 'a', name: 'Plugin A' };
+    const pluginB: FlowlibPlugin = { id: 'b', name: 'Plugin B' };
 
     beforeEach(() => {
       pm = new PluginManager([pluginA, pluginB]);
@@ -67,14 +67,14 @@ describe('PluginManager', () => {
   describe('initializePlugins', () => {
     it('should call init on each plugin', async () => {
       const initFn = vi.fn();
-      const plugin: InvectPlugin = { id: 'init-test', init: initFn };
+      const plugin: FlowlibPlugin = { id: 'init-test', init: initFn };
       const pm = new PluginManager([plugin]);
 
       await pm.initializePlugins({
         config: {},
         logger: mockLogger,
         registerAction: vi.fn(),
-        getInvect: vi.fn() as never,
+        getFlowlib: vi.fn() as never,
       });
 
       expect(initFn).toHaveBeenCalledOnce();
@@ -96,21 +96,21 @@ describe('PluginManager', () => {
         params: { schema: z.object({}), fields: [] },
         execute: vi.fn(async () => ({ success: true })),
       };
-      const plugin: InvectPlugin = { id: 'action-test', actions: [fakeAction] };
+      const plugin: FlowlibPlugin = { id: 'action-test', actions: [fakeAction] };
       const pm = new PluginManager([plugin]);
 
       await pm.initializePlugins({
         config: {},
         logger: mockLogger,
         registerAction,
-        getInvect: vi.fn() as never,
+        getFlowlib: vi.fn() as never,
       });
 
       expect(registerAction).toHaveBeenCalledWith(fakeAction);
     });
 
     it('should throw when plugin init fails', async () => {
-      const plugin: InvectPlugin = {
+      const plugin: FlowlibPlugin = {
         id: 'fail-init',
         init: () => {
           throw new Error('boom');
@@ -123,7 +123,7 @@ describe('PluginManager', () => {
           config: {},
           logger: mockLogger,
           registerAction: vi.fn(),
-          getInvect: vi.fn() as never,
+          getFlowlib: vi.fn() as never,
         }),
       ).rejects.toThrow('Plugin "fail-init" initialization failed: boom');
     });
@@ -132,13 +132,13 @@ describe('PluginManager', () => {
   describe('shutdownPlugins', () => {
     it('should call shutdown in reverse order', async () => {
       const order: string[] = [];
-      const p1: InvectPlugin = {
+      const p1: FlowlibPlugin = {
         id: 'p1',
         shutdown: () => {
           order.push('p1');
         },
       };
-      const p2: InvectPlugin = {
+      const p2: FlowlibPlugin = {
         id: 'p2',
         shutdown: () => {
           order.push('p2');
@@ -151,13 +151,13 @@ describe('PluginManager', () => {
     });
 
     it('should continue if a plugin shutdown throws', async () => {
-      const p1: InvectPlugin = {
+      const p1: FlowlibPlugin = {
         id: 'p1',
         shutdown: () => {
           throw new Error('fail');
         },
       };
-      const p2: InvectPlugin = { id: 'p2', shutdown: vi.fn() };
+      const p2: FlowlibPlugin = { id: 'p2', shutdown: vi.fn() };
       const pm = new PluginManager([p1, p2]);
 
       // Should not throw
@@ -168,13 +168,13 @@ describe('PluginManager', () => {
 
   describe('getPluginEndpoints', () => {
     it('should collect endpoints from all plugins', () => {
-      const p1: InvectPlugin = {
+      const p1: FlowlibPlugin = {
         id: 'p1',
         endpoints: [
           { method: 'GET', path: '/p1/items', handler: async () => ({ body: [] }), isPublic: true },
         ],
       };
-      const p2: InvectPlugin = {
+      const p2: FlowlibPlugin = {
         id: 'p2',
         endpoints: [
           { method: 'POST', path: '/p2/create', handler: async () => ({ body: { ok: true } }) },
@@ -204,7 +204,7 @@ describe('PluginManager', () => {
     });
 
     it('should allow plugins to cancel a flow run', async () => {
-      const plugin: InvectPlugin = {
+      const plugin: FlowlibPlugin = {
         id: 'canceller',
         hooks: {
           beforeFlowRun: async () => ({ cancel: true, reason: 'Rate limited' }),
@@ -218,7 +218,7 @@ describe('PluginManager', () => {
     });
 
     it('should allow plugins to modify inputs', async () => {
-      const plugin: InvectPlugin = {
+      const plugin: FlowlibPlugin = {
         id: 'modifier',
         hooks: {
           beforeFlowRun: async (ctx) => ({ inputs: { ...ctx.inputs, added: true } }),
@@ -232,7 +232,7 @@ describe('PluginManager', () => {
     });
 
     it('should cancel on hook error', async () => {
-      const plugin: InvectPlugin = {
+      const plugin: FlowlibPlugin = {
         id: 'boom',
         hooks: {
           beforeFlowRun: async () => {
@@ -258,7 +258,7 @@ describe('PluginManager', () => {
     };
 
     it('should allow plugins to skip a node', async () => {
-      const plugin: InvectPlugin = {
+      const plugin: FlowlibPlugin = {
         id: 'skipper',
         hooks: {
           beforeNodeExecute: async () => ({ skip: true }),
@@ -271,7 +271,7 @@ describe('PluginManager', () => {
     });
 
     it('should allow plugins to override params', async () => {
-      const plugin: InvectPlugin = {
+      const plugin: FlowlibPlugin = {
         id: 'param-override',
         hooks: {
           beforeNodeExecute: async () => ({ params: { code: '$input.modified' } }),
@@ -287,7 +287,7 @@ describe('PluginManager', () => {
 
   describe('Hook Runner: afterNodeExecute', () => {
     it('should allow plugins to override output', async () => {
-      const plugin: InvectPlugin = {
+      const plugin: FlowlibPlugin = {
         id: 'output-modifier',
         hooks: {
           afterNodeExecute: async () => ({ output: { overridden: true } }),
@@ -312,11 +312,11 @@ describe('PluginManager', () => {
 
   describe('getPluginErrorCodes', () => {
     it('should merge error codes from all plugins', () => {
-      const p1: InvectPlugin = {
+      const p1: FlowlibPlugin = {
         id: 'p1',
         $ERROR_CODES: { 'p1:not_found': { message: 'Not found', status: 404 } },
       };
-      const p2: InvectPlugin = {
+      const p2: FlowlibPlugin = {
         id: 'p2',
         $ERROR_CODES: { 'p2:limit': { message: 'Rate limited', status: 429 } },
       };

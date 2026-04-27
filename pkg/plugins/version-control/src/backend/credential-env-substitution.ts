@@ -4,7 +4,7 @@
  * Emitted `.flow.ts` files carry raw credential ids (`credentialId: "cred_openai_abc"`)
  * in both the human-readable section and the `/* @flowlib-definition *\/`
  * footer. Raw ids are DB-instance-specific UUIDs — committing them means the
- * file isn't portable across Invect instances, and seeing `cred_xxx` in a PR
+ * file isn't portable across Flowlib instances, and seeing `cred_xxx` in a PR
  * diff trips the "is this a leaked secret?" instinct even though the ID
  * itself isn't secret.
  *

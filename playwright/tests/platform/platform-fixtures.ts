@@ -1,7 +1,7 @@
 /**
  * Playwright fixtures for parallelisable platform API tests.
  *
- * Each Playwright worker gets its own Invect server backed by a
+ * Each Playwright worker gets its own Flowlib server backed by a
  * disposable SQLite database. This allows all API test files to run
  * fully in parallel without port or data conflicts.
  *
@@ -33,7 +33,7 @@ interface ServerOptions {
   script: string;
   /** DB file prefix used in os.tmpdir() */
   dbFilePrefix: string;
-  /** Path prefix where the Invect API is mounted (e.g. "/flowlib") */
+  /** Path prefix where the Flowlib API is mounted (e.g. "/flowlib") */
   apiPrefix: string;
   /** Readiness probe path (must return 200 when ready) */
   readyPath: string;

@@ -3,23 +3,23 @@ title: Plugin API
 description: TypeScript interface reference for building plugins.
 ---
 
-## InvectPlugin
+## FlowlibPlugin
 
 ```ts
-interface InvectPlugin {
+interface FlowlibPlugin {
   id: string;
   name?: string;
 
   // Lifecycle
-  init?: (ctx: InvectPluginContext) => Promise<InvectPluginInitResult | void>;
+  init?: (ctx: FlowlibPluginContext) => Promise<FlowlibPluginInitResult | void>;
   shutdown?: () => Promise<void> | void;
 
   // Extensions
   actions?: ActionDefinition[];
-  schema?: InvectPluginSchema;
+  schema?: FlowlibPluginSchema;
   requiredTables?: string[];
-  endpoints?: InvectPluginEndpoint[];
-  hooks?: InvectPluginHooks;
+  endpoints?: FlowlibPluginEndpoint[];
+  hooks?: FlowlibPluginHooks;
 
   // Metadata
   setupInstructions?: string;
@@ -27,24 +27,24 @@ interface InvectPlugin {
 }
 ```
 
-## InvectPluginContext
+## FlowlibPluginContext
 
 Passed to `init()`:
 
 ```ts
-interface InvectPluginContext {
+interface FlowlibPluginContext {
   db: DatabaseConnection;
   dbType: DatabaseType;
   logger: Logger;
   registerTool: (def: AgentToolDefinition, executor: AgentToolExecutor) => void;
-  config: InvectConfig;
+  config: FlowlibConfig;
 }
 ```
 
-## InvectPluginHooks
+## FlowlibPluginHooks
 
 ```ts
-interface InvectPluginHooks {
+interface FlowlibPluginHooks {
   beforeFlowRun?: (ctx: FlowRunHookContext) => Promise<{ cancel?: boolean; inputs?: any } | void>;
   afterFlowRun?: (ctx: FlowRunHookContext) => Promise<void>;
   beforeNodeExecute?: (
@@ -69,14 +69,14 @@ interface InvectPluginHooks {
 | `onResponse`        | No                         | `{ response }` to replace     |
 | `onAuthorize`       | Yes (`{ allowed: false }`) | `{ allowed: true }` to allow  |
 
-## InvectPluginEndpoint
+## FlowlibPluginEndpoint
 
 ```ts
-interface InvectPluginEndpoint {
+interface FlowlibPluginEndpoint {
   method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
   path: string;
   handler: (context: PluginEndpointContext) => Promise<PluginEndpointResponse>;
-  permission?: InvectPermission;
+  permission?: FlowlibPermission;
   isPublic?: boolean;
 }
 ```
@@ -91,11 +91,11 @@ interface PluginEndpointContext {
   params: Record<string, string>;
   query: Record<string, string | undefined>;
   headers: Record<string, string | undefined>;
-  identity: InvectIdentity | null;
+  identity: FlowlibIdentity | null;
   database: PluginDatabaseApi;
   request: Request;
   core: PluginEndpointCoreApi;
-  getInvect: () => InvectInstance;
+  getFlowlib: () => FlowlibInstance;
 }
 ```
 
@@ -108,10 +108,10 @@ type PluginEndpointResponse =
   | Response; // Raw Web API Response
 ```
 
-## InvectPluginSchema
+## FlowlibPluginSchema
 
 ```ts
-type InvectPluginSchema = Record<
+type FlowlibPluginSchema = Record<
   string,
   {
     fields: Record<
@@ -129,10 +129,10 @@ type InvectPluginSchema = Record<
 >;
 ```
 
-## InvectFrontendPlugin
+## FlowlibFrontendPlugin
 
 ```ts
-interface InvectFrontendPlugin {
+interface FlowlibFrontendPlugin {
   id: string;
   name?: string;
   sidebar?: PluginSidebarContribution[];

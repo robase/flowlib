@@ -1,5 +1,5 @@
 /**
- * `@flowlib/actions` — built-in integration provider actions for Invect.
+ * `@flowlib/actions` — built-in integration provider actions for Flowlib.
  *
  * Exports per-provider action bundles plus a convenience `allProviderActions`
  * array for bulk registration. Includes integration providers (Gmail, Slack,

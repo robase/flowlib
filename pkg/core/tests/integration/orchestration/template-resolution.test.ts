@@ -6,16 +6,16 @@
  */
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { FlowRunStatus } from '../../../src';
-import type { InvectInstance } from '../../../src/api/types';
-import type { InvectDefinition } from '../../../src/services/flow-versions/schemas-fresh';
+import type { FlowlibInstance } from '../../../src/api/types';
+import type { FlowlibDefinition } from '../../../src/services/flow-versions/schemas-fresh';
 import type { NodeOutput } from '../../../src/types/node-io-types';
-import { createTestInvect } from '../helpers/test-flowlib';
+import { createTestFlowlib } from '../helpers/test-flowlib';
 
 describe('Template Resolution', () => {
-  let flowlib: InvectInstance;
+  let flowlib: FlowlibInstance;
 
   beforeAll(async () => {
-    flowlib = await createTestInvect();
+    flowlib = await createTestFlowlib();
   });
 
   afterAll(async () => {
@@ -39,9 +39,9 @@ describe('Template Resolution', () => {
     return raw;
   }
 
-  async function runFlow(name: string, definition: InvectDefinition) {
+  async function runFlow(name: string, definition: FlowlibDefinition) {
     const flow = await flowlib.flows.create({ name: `tmpl-${name}-${Date.now()}` });
-    await flowlib.versions.create(flow.id, { invectDefinition: definition });
+    await flowlib.versions.create(flow.id, { flowlibDefinition: definition });
     return flowlib.runs.start(flow.id, {}, { useBatchProcessing: false });
   }
 

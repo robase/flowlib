@@ -1,6 +1,6 @@
 import { NodeExecutionStatus } from 'src/types/base';
 import { NodeExecutionContext } from 'src/types.internal';
-import { InvectDefinition, FlowEdge, FlowNodeDefinitions } from '../flow-versions/schemas-fresh';
+import { FlowlibDefinition, FlowEdge, FlowNodeDefinitions } from '../flow-versions/schemas-fresh';
 import { NodeOutput, NodeIncomingDataObject } from 'src/types/node-io-types';
 import { generateNodeSlug } from 'src/utils/node-slug';
 import type { NodeExecution } from '../node-executions/node-executions.model';
@@ -396,7 +396,7 @@ export class NodeExecutionCoordinator {
     node: FlowNodeDefinitions,
     inputs: Record<string, unknown>,
     flowInputs: Record<string, unknown> = {},
-    definition?: InvectDefinition,
+    definition?: FlowlibDefinition,
     skippedNodeIds?: Set<string>,
     useBatchProcessing?: boolean,
     incomingData?: NodeIncomingDataObject,
@@ -450,7 +450,7 @@ export class NodeExecutionCoordinator {
     node: FlowNodeDefinitions,
     inputs: Record<string, unknown>,
     flowInputs: Record<string, unknown> = {},
-    definition?: InvectDefinition,
+    definition?: FlowlibDefinition,
     skippedNodeIds?: Set<string>,
     useBatchProcessing?: boolean,
     incomingData?: NodeIncomingDataObject,
@@ -801,7 +801,7 @@ export class NodeExecutionCoordinator {
     node: FlowNodeDefinitions,
     inputs: Record<string, unknown>,
     flowInputs: Record<string, unknown>,
-    definition: InvectDefinition | undefined,
+    definition: FlowlibDefinition | undefined,
     skippedNodeIds: Set<string> | undefined,
     useBatchProcessing: boolean | undefined,
     incomingData: NodeIncomingDataObject,
@@ -922,7 +922,7 @@ export class NodeExecutionCoordinator {
     node: FlowNodeDefinitions,
     inputs: Record<string, unknown>,
     flowInputs: Record<string, unknown>,
-    definition: InvectDefinition | undefined,
+    definition: FlowlibDefinition | undefined,
     skippedNodeIds: Set<string> | undefined,
     useBatchProcessing: boolean | undefined,
     incomingData: NodeIncomingDataObject,
@@ -1086,7 +1086,7 @@ export class NodeExecutionCoordinator {
     node: FlowNodeDefinitions,
     inputs: Record<string, unknown>,
     flowInputs: Record<string, unknown>,
-    definition: InvectDefinition | undefined,
+    definition: FlowlibDefinition | undefined,
     skippedNodeIds: Set<string> | undefined,
     useBatchProcessing: boolean | undefined,
     itemContext: NodeIncomingDataObject,

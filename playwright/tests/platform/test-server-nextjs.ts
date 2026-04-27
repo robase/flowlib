@@ -1,5 +1,5 @@
 /**
- * Standalone Next.js-adapter + Invect server for E2E test isolation.
+ * Standalone Next.js-adapter + Flowlib server for E2E test isolation.
  *
  * Mounts the @flowlib/nextjs Web-API handlers on a plain node:http server,
  * so we don't need the full Next.js build pipeline.
@@ -19,7 +19,7 @@ import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
 import path from 'node:path';
 import http from 'node:http';
 import { fileURLToPath } from 'node:url';
-import { createInvectHandler } from '../../../pkg/nextjs/dist/index.mjs';
+import { createFlowlibHandler } from '../../../pkg/nextjs/dist/index.mjs';
 import {
   startExternalApiMocks,
   stopExternalApiMocks,
@@ -43,7 +43,7 @@ await migrate(db, { migrationsFolder });
 sqlite.close();
 
 // ── 2. Create the Next.js adapter handler ─────────────────────────────
-const handler = createInvectHandler({
+const handler = createFlowlibHandler({
   encryptionKey: 'dGVzdC1lbmNyeXB0aW9uLWtleS0xMjM0NTY3ODkw',
   database: {
     type: 'sqlite',

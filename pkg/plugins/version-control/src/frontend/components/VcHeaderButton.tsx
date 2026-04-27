@@ -444,7 +444,7 @@ async function restoreVersion({
   version: FlowVersion;
   restore: (input: {
     flowId: string;
-    data: { invectDefinition: FlowVersion['invectDefinition'] };
+    data: { flowlibDefinition: FlowVersion['flowlibDefinition'] };
   }) => Promise<unknown>;
   onDone: () => void;
 }) {
@@ -459,7 +459,7 @@ async function restoreVersion({
 
   await restore({
     flowId,
-    data: { invectDefinition: version.invectDefinition },
+    data: { flowlibDefinition: version.flowlibDefinition },
   });
   onDone();
 

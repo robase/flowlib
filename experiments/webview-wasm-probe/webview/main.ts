@@ -98,7 +98,7 @@ async function run() {
     const QuickJS = await newQuickJSWASMModuleFromVariant(customVariant);
     log('info', `QuickJS module ready in ${(performance.now() - t3).toFixed(1)}ms`);
 
-    // Step 4: evaluate a template the way Invect does.
+    // Step 4: evaluate a template the way Flowlib does.
     const t4 = performance.now();
     const ctx = QuickJS.newContext();
     try {
@@ -166,7 +166,7 @@ async function run() {
     const msg =
       err instanceof Error ? `${err.name}: ${err.message}\n${err.stack ?? ''}` : String(err);
     log('error', msg);
-    setStatus('Failed — see Invect WASM Probe output channel', false);
+    setStatus('Failed — see Flowlib WASM Probe output channel', false);
     setResults({ success: false, error: msg });
     vscode.postMessage({
       type: 'result',

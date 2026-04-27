@@ -10,7 +10,7 @@ interface State {
 
 /**
  * Catches render errors so the webview never dies silently. Logs to the
- * host's `Invect (Webview)` OutputChannel and shows a usable fallback the
+ * host's `Flowlib (Webview)` OutputChannel and shows a usable fallback the
  * user can read (and hopefully copy + report).
  */
 export class ErrorBoundary extends Component<Props, State> {

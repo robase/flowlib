@@ -8,7 +8,7 @@
 
 import { CredentialsModel } from './credentials.model';
 import type { EncryptionAdapter, EncryptionContext } from '../../types/services';
-import type { InvectAdapter } from '../../database/adapter';
+import type { FlowlibAdapter } from '../../database/adapter';
 import type {
   CredentialConfig,
   CredentialAuthType,
@@ -66,7 +66,7 @@ export class CredentialsService {
   private oauth2Service: OAuth2Service;
 
   constructor(
-    private adapter: InvectAdapter,
+    private adapter: FlowlibAdapter,
     /**
      * Encryption adapter — accepts either the default `EncryptionService` or
      * any object conforming to `EncryptionAdapter` (the pluggable adapter

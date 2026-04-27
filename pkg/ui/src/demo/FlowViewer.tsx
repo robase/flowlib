@@ -232,7 +232,7 @@ function FlowViewerCanvas({
 
 /**
  * Self-contained flow viewer with all necessary providers.
- * Renders React Flow canvas with Invect node styling.
+ * Renders React Flow canvas with Flowlib node styling.
  */
 export function FlowViewer({
   theme = 'dark',

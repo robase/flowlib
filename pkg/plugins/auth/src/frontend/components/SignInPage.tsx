@@ -2,7 +2,7 @@
  * SignInPage — Full-page sign-in component with layout.
  *
  * Renders the SignInForm centered on the page with a logo, title,
- * and grouped fields matching the Invect design system.
+ * and grouped fields matching the Flowlib design system.
  * Sign-up is not offered — new users are created by admins.
  */
 

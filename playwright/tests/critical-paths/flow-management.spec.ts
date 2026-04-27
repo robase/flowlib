@@ -99,7 +99,7 @@ test.describe('Flow Management', () => {
       jqFlowId = flow.id;
       await request.post(`${apiBase}/flows/${jqFlowId}/versions`, {
         data: {
-          invectDefinition: {
+          flowlibDefinition: {
             nodes: [
               {
                 id: 'node-1',
@@ -143,7 +143,7 @@ test.describe('Flow Management', () => {
       templateFlowId = flow.id;
       await request.post(`${apiBase}/flows/${templateFlowId}/versions`, {
         data: {
-          invectDefinition: {
+          flowlibDefinition: {
             nodes: [
               {
                 id: 'node-1',

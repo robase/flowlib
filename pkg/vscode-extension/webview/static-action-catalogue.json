@@ -508,7 +508,7 @@
     "icon": "Bot",
     "provider": {
       "id": "core",
-      "name": "Invect Core",
+      "name": "Flowlib Core",
       "icon": "Blocks"
     },
     "input": {
@@ -526,7 +526,7 @@
     "paramFields": [
       {
         "name": "credentialId",
-        "label": "Invect Core Credential",
+        "label": "Flowlib Core Credential",
         "type": "credential",
         "required": true,
         "credentialTypes": ["llm"]
@@ -653,7 +653,7 @@
     "icon": "GitBranch",
     "provider": {
       "id": "core",
-      "name": "Invect Core",
+      "name": "Flowlib Core",
       "icon": "Blocks"
     },
     "input": {
@@ -704,7 +704,7 @@
     "icon": "LogIn",
     "provider": {
       "id": "core",
-      "name": "Invect Core",
+      "name": "Flowlib Core",
       "icon": "Blocks"
     },
     "input": {
@@ -748,7 +748,7 @@
     "icon": "Braces",
     "provider": {
       "id": "core",
-      "name": "Invect Core",
+      "name": "Flowlib Core",
       "icon": "Blocks"
     },
     "input": {
@@ -795,7 +795,7 @@
     "icon": "Sparkles",
     "provider": {
       "id": "core",
-      "name": "Invect Core",
+      "name": "Flowlib Core",
       "icon": "Blocks"
     },
     "input": {
@@ -813,7 +813,7 @@
     "paramFields": [
       {
         "name": "credentialId",
-        "label": "Invect Core Credential",
+        "label": "Flowlib Core Credential",
         "type": "credential",
         "required": true,
         "credentialTypes": ["llm"]
@@ -910,7 +910,7 @@
     "icon": "LogOut",
     "provider": {
       "id": "core",
-      "name": "Invect Core",
+      "name": "Flowlib Core",
       "icon": "Blocks"
     },
     "input": {
@@ -955,7 +955,7 @@
     "icon": "GitFork",
     "provider": {
       "id": "core",
-      "name": "Invect Core",
+      "name": "Flowlib Core",
       "icon": "Blocks"
     },
     "input": {
@@ -1018,7 +1018,7 @@
     "icon": "FileCode2",
     "provider": {
       "id": "core",
-      "name": "Invect Core",
+      "name": "Flowlib Core",
       "icon": "Blocks"
     },
     "input": {
@@ -7229,7 +7229,7 @@
     "icon": "Blocks",
     "provider": {
       "id": "core",
-      "name": "Invect Core",
+      "name": "Flowlib Core",
       "icon": "Blocks"
     },
     "input": {
@@ -7247,7 +7247,7 @@
     "paramFields": [
       {
         "name": "credentialId",
-        "label": "Invect Core Credential",
+        "label": "Flowlib Core Credential",
         "type": "credential",
         "required": false,
         "credentialTypes": ["api_key"]
@@ -8986,7 +8986,7 @@
     "icon": "Calculator",
     "provider": {
       "id": "core",
-      "name": "Invect Core",
+      "name": "Flowlib Core",
       "icon": "Blocks"
     },
     "input": {
@@ -9220,7 +9220,7 @@
         "label": "Message Content",
         "type": "textarea",
         "description": "The message body. Supports HTML formatting by default.",
-        "placeholder": "<p>Hello from Invect!</p>",
+        "placeholder": "<p>Hello from Flowlib!</p>",
         "required": true
       },
       {
@@ -13058,7 +13058,7 @@
         "label": "Message",
         "type": "textarea",
         "description": "Message text. Supports Slack mrkdwn formatting (*bold*, _italic_, `code`).",
-        "placeholder": "Hello from Invect! :wave:",
+        "placeholder": "Hello from Flowlib! :wave:",
         "required": true
       },
       {

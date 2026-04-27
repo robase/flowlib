@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { getExtensionLogger } from './util/logger';
 import { FlowEditorProvider } from './editor/FlowEditorProvider';
-import { InvectPanelProvider } from './editor/InvectPanel';
+import { FlowlibPanelProvider } from './editor/FlowlibPanel';
 import { BackendStatusBar } from './backend/statusBar';
 import type { Backend } from './backend/Backend';
 import { InProcessBackend } from './backend/InProcessBackend';
@@ -19,24 +19,24 @@ import { SimpleSectionViewProvider } from './views/SimpleSectionView';
  * Activation entry. Layout:
  *
  *   - Embedded backend boots a real `@flowlib/express` server in-process.
- *   - Custom editor for `.flow.ts` opens the full Invect UI in a webview
+ *   - Custom editor for `.flow.ts` opens the full Flowlib UI in a webview
  *     deep-linked to the flow row backing the file.
  *   - VSCode side panel hosts navigation:
  *       Backends → swap backends
  *       Flows    → expand to per-flow runs; click run to open + jump
  *       Credentials → open the embedded UI's /credentials page
  *       Webhooks    → open the embedded UI's /webhooks page (plugin)
- *   - Invect's own internal sidebar is hidden via CSS in theme-bridge.
+ *   - Flowlib's own internal sidebar is hidden via CSS in theme-bridge.
  */
 export function activate(ctx: vscode.ExtensionContext): void {
   const logger = getExtensionLogger();
-  logger.info('Invect extension activated', { trusted: vscode.workspace.isTrusted });
+  logger.info('Flowlib extension activated', { trusted: vscode.workspace.isTrusted });
 
   // Switch the SDK's `defineFlow` into lenient mode for the lifetime of
   // this extension host. Mid-edit flows often have dangling edges,
   // duplicate refs, etc.; we'd rather render the partial graph than
   // refuse to open the canvas. Production servers leave this unset.
-  process.env.INVECT_SDK_LENIENT = '1';
+  process.env.FLOWLIB_SDK_LENIENT = '1';
 
   // ── Backend (default = embedded) ───────────────────────────────────────────
   const statusBar = new BackendStatusBar();
@@ -68,8 +68,8 @@ export function activate(ctx: vscode.ExtensionContext): void {
     },
   ]);
 
-  // ── Invect panel — opens non-file routes (credentials, webhooks, etc.)
-  const invectPanel = new InvectPanelProvider(ctx, () => embeddedBackend.getServerUrl());
+  // ── Flowlib panel — opens non-file routes (credentials, webhooks, etc.)
+  const flowlibPanel = new FlowlibPanelProvider(ctx, () => embeddedBackend.getServerUrl());
 
   // ── Custom editor — needs the embedded server URL + a file→DB-flow
   // resolver. Only the embedded backend exposes those today.
@@ -83,12 +83,12 @@ export function activate(ctx: vscode.ExtensionContext): void {
 
   ctx.subscriptions.push(
     statusBar,
-    invectPanel,
+    flowlibPanel,
     { dispose: () => void embeddedBackend.shutdown().catch(() => undefined) },
 
     // ── Commands ──────────────────────────────────────────────────────────
     vscode.commands.registerCommand('flowlib.hello', () => {
-      vscode.window.showInformationMessage('Hello from Invect');
+      vscode.window.showInformationMessage('Hello from Flowlib');
     }),
     vscode.commands.registerCommand('flowlib.showLogs', () => {
       logger.show(true);
@@ -149,10 +149,10 @@ export function activate(ctx: vscode.ExtensionContext): void {
     ),
 
     vscode.commands.registerCommand('flowlib.openCredentials', () =>
-      invectPanel.open('credentials', 'Invect: Credentials', '/flowlib/credentials'),
+      flowlibPanel.open('credentials', 'Flowlib: Credentials', '/flowlib/credentials'),
     ),
     vscode.commands.registerCommand('flowlib.openWebhooks', () =>
-      invectPanel.open('webhooks', 'Invect: Webhooks', '/flowlib/webhooks'),
+      flowlibPanel.open('webhooks', 'Flowlib: Webhooks', '/flowlib/webhooks'),
     ),
 
     // ── Visual ↔ Code toggle ─────────────────────────────────────────────
@@ -269,7 +269,7 @@ export function activate(ctx: vscode.ExtensionContext): void {
     // Workspace file watcher:
     //   - Refresh the flows view when .flow.ts files come and go.
     //   - On change/create, push the new file content to the embedded
-    //     backend as a new flow_version. The Invect SSE stream
+    //     backend as a new flow_version. The Flowlib SSE stream
     //     propagates to any open canvases. FileSync's loop-prevention
     //     hashes suppress echoes from canvas-driven writes.
     (() => {

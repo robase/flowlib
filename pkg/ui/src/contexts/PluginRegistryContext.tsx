@@ -8,7 +8,7 @@
 
 import React, { createContext, useContext, useMemo, type ReactNode } from 'react';
 import type {
-  InvectFrontendPlugin,
+  FlowlibFrontendPlugin,
   PluginSidebarContribution,
   PluginRouteContribution,
   PluginPanelTabContribution,
@@ -74,7 +74,7 @@ const PluginRegistryContext = createContext<PluginRegistry>(defaultRegistry);
 // ─────────────────────────────────────────────────────────────
 
 interface PluginRegistryProviderProps {
-  plugins: InvectFrontendPlugin[];
+  plugins: FlowlibFrontendPlugin[];
   children: ReactNode;
 }
 
@@ -98,7 +98,7 @@ export function PluginRegistryProvider({ plugins, children }: PluginRegistryProv
 // ─────────────────────────────────────────────────────────────
 
 /**
- * Access the plugin registry from any component inside `<Invect />`.
+ * Access the plugin registry from any component inside `<Flowlib />`.
  * Returns a default (empty) registry if no plugins are registered.
  */
 export function usePluginRegistry(): PluginRegistry {
@@ -109,7 +109,7 @@ export function usePluginRegistry(): PluginRegistry {
 // Registry Builder
 // ─────────────────────────────────────────────────────────────
 
-function buildRegistry(plugins: InvectFrontendPlugin[]): PluginRegistry {
+function buildRegistry(plugins: FlowlibFrontendPlugin[]): PluginRegistry {
   const sidebarItems: PluginSidebarContribution[] = [];
   let SidebarFooter: React.ComponentType<{ collapsed: boolean; basePath: string }> | null = null;
   let AppShell: React.ComponentType<{

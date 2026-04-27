@@ -5,7 +5,7 @@
  * instance has a stable `instanceId` that flow-run metadata and the chat
  * assistant's history may reference. The Phase 3 merge helper promised to
  * preserve these `instanceId`s across source-level edits — these tests
- * verify that promise end-to-end against a real Invect instance via the
+ * verify that promise end-to-end against a real Flowlib instance via the
  * Phase 7 chat SDK tools.
  *
  * Scenarios covered:
@@ -21,14 +21,14 @@ import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
 import { execSync } from 'node:child_process';
 import fsSync from 'node:fs';
 import { join } from 'node:path';
-import type { InvectInstance } from '../../../src/api/types';
+import type { FlowlibInstance } from '../../../src/api/types';
 import type { ChatToolContext, ChatToolResult } from '../../../src/services/chat/chat-types';
 import {
   getFlowSourceTool,
   editFlowSourceTool,
   writeFlowSourceTool,
 } from '../../../src/services/chat/tools/sdk-tools';
-import { createTestInvect } from '../helpers/test-flowlib';
+import { createTestFlowlib } from '../helpers/test-flowlib';
 
 function ensureSdkBuilt(): void {
   const repoRoot = join(__dirname, '..', '..', '..', '..', '..');
@@ -46,23 +46,23 @@ interface ToolInstance {
   params: Record<string, unknown>;
 }
 
-function getAgentTools(flowlib: InvectInstance, flowId: string): Promise<ToolInstance[]> {
+function getAgentTools(flowlib: FlowlibInstance, flowId: string): Promise<ToolInstance[]> {
   return flowlib.versions.get(flowId, 'latest').then((v) => {
-    if (!v?.invectDefinition) {
+    if (!v?.flowlibDefinition) {
       return [];
     }
-    const agent = v.invectDefinition.nodes.find((n) => n.type === 'core.agent');
+    const agent = v.flowlibDefinition.nodes.find((n) => n.type === 'core.agent');
     return (agent?.params?.addedTools ?? []) as ToolInstance[];
   });
 }
 
 describe('Chat SDK tools — agent-tool lifecycle', () => {
-  let flowlib: InvectInstance;
+  let flowlib: FlowlibInstance;
   let baseCtx: Omit<ChatToolContext, 'chatContext'>;
 
   beforeAll(async () => {
     ensureSdkBuilt();
-    flowlib = await createTestInvect();
+    flowlib = await createTestFlowlib();
     baseCtx = { flowlib };
   });
 

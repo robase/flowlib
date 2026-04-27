@@ -15,7 +15,7 @@ import type { Credential } from '../../../api/types';
 import { cn } from '../../../lib/utils';
 import { getCredentialBranding } from '../../../utils/credentialBranding';
 
-const NO_CREDENTIAL_VALUE = '__invect_no_credential__';
+const NO_CREDENTIAL_VALUE = '__flowlib_no_credential__';
 
 interface Props {
   credentials: Credential[];

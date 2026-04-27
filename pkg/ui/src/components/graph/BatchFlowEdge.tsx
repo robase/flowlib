@@ -82,7 +82,7 @@ function deriveEdgeExecutionState(data?: BatchFlowEdgeData): EdgeExecutionState 
   return null;
 }
 
-// Edge styles based on type and state - Updated to match Invect's edge styling
+// Edge styles based on type and state - Updated to match Flowlib's edge styling
 const getEdgeStyles = (
   data: BatchFlowEdgeData | undefined,
   selected: boolean | undefined,
@@ -157,7 +157,7 @@ const getEdgeStyles = (
   }
 };
 
-// Main Invect Edge Component
+// Main Flowlib Edge Component
 export const BatchFlowEdge = memo(function BatchFlowEdge(props: EdgeProps) {
   const {
     id: _id,
@@ -293,7 +293,7 @@ export const BatchFlowEdge = memo(function BatchFlowEdge(props: EdgeProps) {
 
 BatchFlowEdge.displayName = 'BatchFlowEdge';
 
-// Predefined edge types matching Invect's patterns
+// Predefined edge types matching Flowlib's patterns
 const _edgeTypes = {
   // flowlib: BatchFlowEdge,
   default: BatchFlowEdge,

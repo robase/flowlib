@@ -1,21 +1,21 @@
 <p align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="../../../.github/assets/logo-light.svg">
-    <img alt="Invect" src="../../../.github/assets/logo-dark.svg" width="50">
+    <img alt="Flowlib" src="../../../.github/assets/logo-dark.svg" width="50">
   </picture>
 </p>
 
 <h1 align="center">@flowlib/mcp</h1>
 
 <p align="center">
-  Model Context Protocol server for Invect.
+  Model Context Protocol server for Flowlib.
   <br />
   <a href="https://flowlib.dev/docs/plugins"><strong>Docs</strong></a>
 </p>
 
 ---
 
-Exposes Invect flow building, editing, execution, and debugging as MCP tools. Works with Claude Desktop, VS Code Copilot, Cursor, and any MCP-compatible client.
+Exposes Flowlib flow building, editing, execution, and debugging as MCP tools. Works with Claude Desktop, VS Code Copilot, Cursor, and any MCP-compatible client.
 
 ## Install
 
@@ -30,13 +30,13 @@ Add the MCP plugin to enable the Streamable HTTP transport endpoint:
 ```ts
 import { mcp } from '@flowlib/mcp';
 
-const invectRouter = await createInvectRouter({
+const flowlibRouter = await createFlowlibRouter({
   database: { type: 'sqlite', connectionString: 'file:./dev.db' },
-  encryptionKey: process.env.INVECT_ENCRYPTION_KEY,
+  encryptionKey: process.env.FLOWLIB_ENCRYPTION_KEY,
   plugins: [mcp()],
 });
 
-app.use('/flowlib', invectRouter);
+app.use('/flowlib', flowlibRouter);
 ```
 
 ### Options

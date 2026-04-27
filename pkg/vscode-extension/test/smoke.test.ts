@@ -8,7 +8,7 @@ import * as vscode from 'vscode';
  *
  * Driven by `@vscode/test-cli` (see `.vscode-test.mjs`).
  */
-suite('Invect extension — smoke', () => {
+suite('Flowlib extension — smoke', () => {
   test('activate + flowlib.hello', async () => {
     // Activate the extension by ID. `package.json` registers `flowlib.hello`,
     // so the command must be present once activation completes.
@@ -62,6 +62,6 @@ suite('Invect extension — smoke', () => {
       ).showInformationMessage = original;
     }
 
-    assert.deepStrictEqual(seen, ['Hello from Invect']);
+    assert.deepStrictEqual(seen, ['Hello from Flowlib']);
   });
 });

@@ -12,27 +12,27 @@ services:
       # --- Database ---
       # SQLite (default): file path inside the container
       DATABASE_URL: 'file:/app/data/flowlib.db'
-      INVECT_DB_TYPE: sqlite
+      FLOWLIB_DB_TYPE: sqlite
       # PostgreSQL: uncomment and set
       # DATABASE_URL: "postgresql://user:pass@host:5432/flowlib"
-      # INVECT_DB_TYPE: postgres
+      # FLOWLIB_DB_TYPE: postgres
 
       # --- Admin user (created on first boot) ---
-      INVECT_ADMIN_EMAIL: admin@flowlib.local
-      INVECT_ADMIN_PASSWORD: changeme
+      FLOWLIB_ADMIN_EMAIL: admin@flowlib.local
+      FLOWLIB_ADMIN_PASSWORD: changeme
 
       # --- Security (required) ---
       # Generate with: npx flowlib-cli secret
-      INVECT_ENCRYPTION_KEY: '' # REQUIRED — used for credential encryption + auth sessions
+      FLOWLIB_ENCRYPTION_KEY: '' # REQUIRED — used for credential encryption + auth sessions
 
       # --- Webhooks ---
-      # INVECT_WEBHOOK_BASE_URL: "https://your-domain.com/flowlib"
+      # FLOWLIB_WEBHOOK_BASE_URL: "https://your-domain.com/flowlib"
 
       # --- Trusted origins (comma-separated, for CORS + auth) ---
-      # INVECT_TRUSTED_ORIGINS: "https://your-domain.com"
+      # FLOWLIB_TRUSTED_ORIGINS: "https://your-domain.com"
 
       # --- Logging ---
-      INVECT_LOG_LEVEL: info
+      FLOWLIB_LOG_LEVEL: info
 
 volumes:
   flowlib-data:

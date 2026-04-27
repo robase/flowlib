@@ -28,7 +28,7 @@ export function UserManagementPage() {
     return (
       <PageLayout
         title="User Management"
-        subtitle="Manage users for your Invect instance."
+        subtitle="Manage users for your Flowlib instance."
         icon={Users}
       >
         <div className="rounded-md bg-yellow-50 p-3 text-sm text-yellow-800 dark:bg-yellow-950/20 dark:text-yellow-400">
@@ -41,7 +41,7 @@ export function UserManagementPage() {
   return (
     <PageLayout
       title="User Management"
-      subtitle="Create, manage, and remove users for your Invect instance."
+      subtitle="Create, manage, and remove users for your Flowlib instance."
       icon={Users}
     >
       <UserManagement apiBaseUrl={apiBaseUrl} />

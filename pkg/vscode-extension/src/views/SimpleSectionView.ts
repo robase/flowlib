@@ -2,7 +2,7 @@
  * Tiny tree provider used for sidebar sections that just need a single
  * "Open <X>…" entry — Credentials and Webhooks today. Each section
  * fires a command when clicked; the command opens the corresponding
- * route inside the embedded Invect UI.
+ * route inside the embedded Flowlib UI.
  */
 
 import * as vscode from 'vscode';

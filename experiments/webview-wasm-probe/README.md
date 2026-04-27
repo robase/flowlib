@@ -1,8 +1,8 @@
-# Invect VSCode Extension — CSP/WASM Feasibility Probe (Lane L3, Phase 0)
+# Flowlib VSCode Extension — CSP/WASM Feasibility Probe (Lane L3, Phase 0)
 
 Throwaway VSCode extension. Its only job is to answer: **does QuickJS WebAssembly execute inside a VSCode webview under the strict CSP we plan to use for the real extension?**
 
-If yes, template preview for `{{ expressions }}` in the flow editor can run in-webview (fast, offline). If no, we fall back to a backend-delegated preview (round-trip over `postMessage` → Extension Host → HTTP → Invect `JsExpressionService`).
+If yes, template preview for `{{ expressions }}` in the flow editor can run in-webview (fast, offline). If no, we fall back to a backend-delegated preview (round-trip over `postMessage` → Extension Host → HTTP → Flowlib `JsExpressionService`).
 
 ## Outcome
 
@@ -81,7 +81,7 @@ code --new-window \
      /tmp/wasm-probe-workspace        # any workspace folder
 ```
 
-In the launched Extension Development Host, run the command palette (⇧⌘P) → **"Invect Probe: Run QuickJS WASM in Webview"**. A webview panel opens showing the result and CSP applied.
+In the launched Extension Development Host, run the command palette (⇧⌘P) → **"Flowlib Probe: Run QuickJS WASM in Webview"**. A webview panel opens showing the result and CSP applied.
 
 ### Headless (what Phase 0 used to capture the numbers above)
 

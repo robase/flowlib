@@ -66,7 +66,7 @@ Plugin database tables are verified at startup. Each plugin's `requiredTables` a
 
 ## Best practices
 
-- **Always set `INVECT_ENCRYPTION_KEY`** in production — without it, credentials cannot be encrypted
+- **Always set `FLOWLIB_ENCRYPTION_KEY`** in production — without it, credentials cannot be encrypted
 - **Use HTTPS** in production — credential data transits between the frontend and backend
 - **Use the Authentication Plugin** for shared instances — without it, the API is unauthenticated
 - **Review plugin code** — plugins have full access to the core instance and database

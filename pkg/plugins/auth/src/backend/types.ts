@@ -1,4 +1,4 @@
-import type { InvectIdentity, InvectRole } from '@flowlib/core';
+import type { FlowlibIdentity, FlowlibRole } from '@flowlib/core';
 
 // ---------------------------------------------------------------------------
 // Better Auth type stubs
@@ -261,7 +261,7 @@ export interface ApiKeyPluginOptions {
 export interface TwoFactorPluginOptions {
   /**
    * The issuer name displayed in authenticator apps (e.g. Google Authenticator).
-   * Defaults to `'Invect'` if not set.
+   * Defaults to `'Flowlib'` if not set.
    */
   issuer?: string;
   /** Skip the TOTP verification step when enabling 2FA. @default false */
@@ -287,7 +287,7 @@ export interface TwoFactorPluginOptions {
 }
 
 /**
- * Configuration for the User Auth Invect plugin.
+ * Configuration for the User Auth Flowlib plugin.
  *
  * A light wrapper around [Better Auth](https://better-auth.com).
  */
@@ -296,7 +296,7 @@ export interface AuthenticationPluginOptions {
    * A configured Better Auth instance (the return value of `betterAuth()`).
    *
    * When omitted, the plugin creates an internal Better Auth instance
-   * automatically using Invect's database configuration. This is the
+   * automatically using Flowlib's database configuration. This is the
    * recommended approach for simple setups — no separate `auth.ts` file needed.
    *
    * @example
@@ -318,7 +318,7 @@ export interface AuthenticationPluginOptions {
    * Accepts anything that `betterAuth({ database })` accepts — e.g. a
    * `better-sqlite3` instance, a `pg` Pool, etc.
    *
-   * When omitted, the plugin creates a database client from Invect's
+   * When omitted, the plugin creates a database client from Flowlib's
    * `database` (connection string + type).
    *
    * Only used when `auth` is **not** provided.
@@ -344,7 +344,7 @@ export interface AuthenticationPluginOptions {
   trustedOrigins?: string[] | ((request: Request) => string[]);
 
   /**
-   * URL path prefix where better-auth routes are mounted within Invect's
+   * URL path prefix where better-auth routes are mounted within Flowlib's
    * plugin endpoint space.
    *
    * Plugin endpoints are served at `/plugins/<prefix>/...`.
@@ -355,29 +355,29 @@ export interface AuthenticationPluginOptions {
   prefix?: string;
 
   /**
-   * Map a better-auth user + session to an `InvectIdentity`.
+   * Map a better-auth user + session to an `FlowlibIdentity`.
    *
    * Override this to customise role mapping, team resolution, or resource
    * access from your better-auth user model.
    *
-   * @default — Uses `user.id`, `user.name`, and maps `user.role` to an Invect role.
+   * @default — Uses `user.id`, `user.name`, and maps `user.role` to an Flowlib role.
    */
   mapUser?: (
     user: BetterAuthUser,
     session: BetterAuthSession,
-  ) => InvectIdentity | Promise<InvectIdentity>;
+  ) => FlowlibIdentity | Promise<FlowlibIdentity>;
 
   /**
-   * Map a better-auth user role string to an Invect role.
+   * Map a better-auth user role string to an Flowlib role.
    * Only used when `mapUser` is not provided.
    *
    * @default — Maps admin/RBAC roles directly, aliases readonly → viewer,
    * and falls back to default for missing or unknown roles.
    */
-  mapRole?: (role: string | null | undefined) => InvectRole;
+  mapRole?: (role: string | null | undefined) => FlowlibRole;
 
   /**
-   * Paths (relative to the Invect mount point) that should be accessible
+   * Paths (relative to the Flowlib mount point) that should be accessible
    * without a valid session.
    *
    * The better-auth proxy routes (sign-in, sign-up, callback, etc.) are

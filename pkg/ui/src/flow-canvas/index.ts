@@ -3,7 +3,7 @@
  *
  * See Contract C in `VSCODE_EXTENSION_TASKS.md` §3.2 and Lane L2 brief.
  *
- * Import the CSS entry from `@flowlib/ui/styles` (shared with `<Invect>`)
+ * Import the CSS entry from `@flowlib/ui/styles` (shared with `<Flowlib>`)
  * to pick up Tailwind utilities and theme tokens.
  */
 
@@ -15,4 +15,4 @@ export type { FlowCanvasProps, ActionMetadata, NodeRunStatus, ThemeTokenName } f
 // prop-backed client machinery without re-implementing it.
 export { InMemoryApiClient } from './InMemoryApiClient';
 export type { InMemoryState, InMemoryCallbacks } from './InMemoryApiClient';
-export { invectDefinitionToReactFlowData, reactFlowToInvectDefinition } from './flow-adapter';
+export { flowlibDefinitionToReactFlowData, reactFlowToFlowlibDefinition } from './flow-adapter';

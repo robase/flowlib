@@ -71,10 +71,10 @@ describe('generate core-only schema (no plugins)', () => {
     expect(sqlite).toContain(
       "import { BatchStatus, FlowRunStatus, NodeExecutionStatus } from '@flowlib/core';",
     );
-    expect(sqlite).toContain("sqliteTable('invect_flows'");
-    expect(sqlite).toContain("sqliteTable('invect_flow_versions'");
-    expect(sqlite).toContain("sqliteTable('invect_flow_executions'");
-    expect(sqlite).toContain("sqliteTable('invect_credentials'");
+    expect(sqlite).toContain("sqliteTable('flowlib_flows'");
+    expect(sqlite).toContain("sqliteTable('flowlib_flow_versions'");
+    expect(sqlite).toContain("sqliteTable('flowlib_flow_executions'");
+    expect(sqlite).toContain("sqliteTable('flowlib_credentials'");
     expect(sqlite).toContain('default(FlowRunStatus.PENDING)');
     expect(sqlite).toContain('default(NodeExecutionStatus.PENDING)');
     // SQLite uses text for dates
@@ -87,9 +87,9 @@ describe('generate core-only schema (no plugins)', () => {
 
   it('should generate valid PostgreSQL schema', () => {
     expect(postgres).toContain("from 'drizzle-orm/pg-core'");
-    expect(postgres).toContain("pgTable('invect_flows'");
-    expect(postgres).toContain("pgTable('invect_flow_executions'");
-    expect(postgres).toContain("pgTable('invect_credentials'");
+    expect(postgres).toContain("pgTable('flowlib_flows'");
+    expect(postgres).toContain("pgTable('flowlib_flow_executions'");
+    expect(postgres).toContain("pgTable('flowlib_credentials'");
     // PG uses timestamp for dates
     expect(postgres).toContain("timestamp('created_at')");
     // PG uses boolean natively
@@ -102,9 +102,9 @@ describe('generate core-only schema (no plugins)', () => {
 
   it('should generate valid MySQL schema', () => {
     expect(mysql).toContain("from 'drizzle-orm/mysql-core'");
-    expect(mysql).toContain("mysqlTable('invect_flows'");
-    expect(mysql).toContain("mysqlTable('invect_flow_executions'");
-    expect(mysql).toContain("mysqlTable('invect_credentials'");
+    expect(mysql).toContain("mysqlTable('flowlib_flows'");
+    expect(mysql).toContain("mysqlTable('flowlib_flow_executions'");
+    expect(mysql).toContain("mysqlTable('flowlib_credentials'");
     // MySQL uses timestamp for dates
     expect(mysql).toContain("timestamp('created_at')");
     // MySQL uses boolean
@@ -744,17 +744,17 @@ describe('foreign key references use correct JS variable names', () => {
 
   it('should generate action_traces table in all dialects', () => {
     // Verify core tables are present in all dialects
-    expect(sqlite).toContain("sqliteTable('invect_action_traces'");
-    expect(postgres).toContain("pgTable('invect_action_traces'");
-    expect(mysql).toContain("mysqlTable('invect_action_traces'");
+    expect(sqlite).toContain("sqliteTable('flowlib_action_traces'");
+    expect(postgres).toContain("pgTable('flowlib_action_traces'");
+    expect(mysql).toContain("mysqlTable('flowlib_action_traces'");
   });
 
   it('should reference flowRuns (not flowExecutions) in FK columns', () => {
-    // flowRuns has tableName: 'invect_flow_executions', so the DB name is flow_executions
+    // flowRuns has tableName: 'flowlib_flow_executions', so the DB name is flow_executions
     // but the JS variable is flowRuns. Naive camelCase would give flowExecutions.
     for (const dialect of [sqlite, postgres, mysql]) {
       expect(dialect).toContain('.references(() => flowRuns.id');
-      // A naive camelCase of 'invect_flow_executions' would be 'flowExecutions' — should NOT appear
+      // A naive camelCase of 'flowlib_flow_executions' would be 'flowExecutions' — should NOT appear
       expect(dialect).not.toContain('.references(() => flowExecutions.');
     }
   });
@@ -786,7 +786,7 @@ describe('append-mode schema generators', () => {
       expect.stringContaining('BatchStatus, FlowRunStatus, NodeExecutionStatus'),
     );
     expect(result.imports).toContainEqual(expect.stringContaining("from '@flowlib/core/types'"));
-    expect(result.code).toContain('Invect tables — AUTO-GENERATED');
+    expect(result.code).toContain('Flowlib tables — AUTO-GENERATED');
     expect(result.code).toContain('sqliteTable');
     expect(result.code).toContain('relations(');
     expect(result.code).toContain('default(FlowRunStatus.PENDING)');

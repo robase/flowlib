@@ -34,7 +34,7 @@ import { useFlowActions } from '../../routes/flow-route-layout';
 import { useUIStore } from '~/stores/uiStore';
 import { useTheme } from '~/contexts/ThemeProvider';
 import { AgentToolCallbacksProvider } from '~/contexts/AgentToolCallbacksContext';
-import { InvectLoader } from '../shared/InvectLoader';
+import { FlowlibLoader } from '../shared/FlowlibLoader';
 import { useCopyPaste } from './use-copy-paste';
 import { useKeyboardShortcuts } from './use-keyboard-shortcuts';
 import { FlowCommandPalette } from './FlowCommandPalette';
@@ -103,7 +103,7 @@ export function FlowEditor({ flowId, flowVersion, basePath = '' }: FlowEditorPro
   const [rightPanelElement, setRightPanelElement] = useState<React.ReactNode>(null);
 
   if (loading) {
-    return <InvectLoader className="w-full h-full" iconClassName="h-16" label="Loading flow..." />;
+    return <FlowlibLoader className="w-full h-full" iconClassName="h-16" label="Loading flow..." />;
   }
 
   if (queryError) {

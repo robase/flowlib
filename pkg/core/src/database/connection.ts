@@ -1,4 +1,4 @@
-// Database connection management for Invect core
+// Database connection management for Flowlib core
 //
 // All database driver packages (better-sqlite3, @libsql/client, postgres,
 // pg, mysql2, drizzle-orm/*) are imported dynamically so that bundlers
@@ -13,7 +13,7 @@ import { sqliteSchema, mysqlSchema, postgresqlSchema } from './schema';
 import type { DatabaseDriver } from './drivers/types';
 import { createDatabaseDriver, resolveDatabaseDriverType } from './drivers';
 
-import { Logger, InvectDatabaseConfig } from 'src/schemas';
+import { Logger, FlowlibDatabaseConfig } from 'src/schemas';
 
 /**
  * Drizzle SQLite ORM instance type.
@@ -57,19 +57,19 @@ export type QueryDatabaseConnection =
   | {
       type: 'postgresql';
       db: ReturnType<typeof drizzlePostgresType>;
-      config: InvectDatabaseConfig;
+      config: FlowlibDatabaseConfig;
       driver: DatabaseDriver;
     }
   | {
       type: 'sqlite';
       db: DrizzleSQLiteDb;
-      config: InvectDatabaseConfig;
+      config: FlowlibDatabaseConfig;
       driver: DatabaseDriver;
     }
   | {
       type: 'mysql';
       db: ReturnType<typeof drizzleMySQLType>;
-      config: InvectDatabaseConfig;
+      config: FlowlibDatabaseConfig;
       driver: DatabaseDriver;
     };
 
@@ -81,10 +81,10 @@ export class DatabaseConnectionFactory {
   private static queryConnections = new Map<string, QueryDatabaseConnection>();
 
   /**
-   * Create a database connection for the host database Invect runs on
+   * Create a database connection for the host database Flowlib runs on
    */
   static async createHostDBConnection(
-    dbConfig: InvectDatabaseConfig,
+    dbConfig: FlowlibDatabaseConfig,
     logger: Logger,
   ): Promise<DatabaseConnection> {
     const connectionKey = this.generateConnectionKey(dbConfig);
@@ -143,7 +143,7 @@ export class DatabaseConnectionFactory {
    * Create a database connection for external query databases (without schema)
    */
   static async createQueryDbConnection(
-    dbConfig: InvectDatabaseConfig,
+    dbConfig: FlowlibDatabaseConfig,
     logger: Logger,
   ): Promise<QueryDatabaseConnection> {
     const connectionKey = this.generateQueryConnectionKey(dbConfig);
@@ -208,7 +208,7 @@ export class DatabaseConnectionFactory {
    * `process.cwd()` or `fs.mkdirSync()` to resolve or create the parent
    * directory, because those APIs don't exist on edge runtimes (Cloudflare
    * Workers, Deno Deploy, etc.). If you need the parent directory created,
-   * do it in your bootstrap code before calling `createInvect()`.
+   * do it in your bootstrap code before calling `createFlowlib()`.
    */
   private static prepareSQLiteFilePath(connectionString: string, _logger: Logger): string {
     // Extract file path from SQLite URL
@@ -226,7 +226,7 @@ export class DatabaseConnectionFactory {
         `SQLite connection string must be an absolute path or ':memory:'. ` +
           `Got: "${connectionString}". ` +
           `Resolve relative paths in your bootstrap (e.g. with path.resolve(process.cwd(), '...')) ` +
-          `and pre-create any parent directories before calling createInvect(). ` +
+          `and pre-create any parent directories before calling createFlowlib(). ` +
           `Core does not call process.cwd() or fs.mkdirSync() so it stays portable to edge runtimes.`,
       );
     }
@@ -256,7 +256,7 @@ export class DatabaseConnectionFactory {
    * Drizzle instance share the same underlying connection pool/endpoint.
    */
   private static async createPostgreSQLConnection(
-    config: InvectDatabaseConfig,
+    config: FlowlibDatabaseConfig,
     driver: DatabaseDriver,
     logger: Logger,
   ): Promise<ReturnType<typeof drizzlePostgresType<typeof postgresqlSchema>>> {
@@ -274,7 +274,7 @@ export class DatabaseConnectionFactory {
    * are never loaded.
    */
   private static async createDrizzlePostgresDb(
-    config: InvectDatabaseConfig,
+    config: FlowlibDatabaseConfig,
     driver: DatabaseDriver,
     logger: Logger,
     schema?: Record<string, unknown>,
@@ -328,7 +328,7 @@ export class DatabaseConnectionFactory {
    * Workers.
    */
   private static async createSQLiteConnection(
-    config: InvectDatabaseConfig,
+    config: FlowlibDatabaseConfig,
     logger: Logger,
   ): Promise<{
     db: DrizzleSQLiteDb<typeof sqliteSchema>;
@@ -397,7 +397,7 @@ export class DatabaseConnectionFactory {
    * The `driver` has already been created and tested.
    */
   private static async createMySQLConnection(
-    config: InvectDatabaseConfig,
+    config: FlowlibDatabaseConfig,
     _driver: DatabaseDriver,
     logger: Logger,
   ): Promise<ReturnType<typeof drizzleMySQLType<typeof mysqlSchema>>> {
@@ -416,7 +416,7 @@ export class DatabaseConnectionFactory {
    * Create PostgreSQL query connection (without schema)
    */
   private static async createPostgreSQLQueryConnection(
-    config: InvectDatabaseConfig,
+    config: FlowlibDatabaseConfig,
     driver: DatabaseDriver,
     logger: Logger,
   ): Promise<ReturnType<typeof drizzlePostgresType>> {
@@ -431,7 +431,7 @@ export class DatabaseConnectionFactory {
    * D1 short-circuits: it has no `connectionString` and no file path.
    */
   private static async createSQLiteQueryConnection(
-    config: InvectDatabaseConfig,
+    config: FlowlibDatabaseConfig,
     logger: Logger,
   ): Promise<{
     db: DrizzleSQLiteDb;
@@ -492,7 +492,7 @@ export class DatabaseConnectionFactory {
    * Create MySQL query connection (without schema)
    */
   private static async createMySQLQueryConnection(
-    config: InvectDatabaseConfig,
+    config: FlowlibDatabaseConfig,
     _driver: DatabaseDriver,
     logger: Logger,
   ): Promise<ReturnType<typeof drizzleMySQLType>> {
@@ -514,7 +514,7 @@ export class DatabaseConnectionFactory {
    * — falling back to a stable per-binding tag so multiple D1 instances cache
    * separately within the same worker isolate.
    */
-  private static generateConnectionKey(config: InvectDatabaseConfig): string {
+  private static generateConnectionKey(config: FlowlibDatabaseConfig): string {
     if (config.driver === 'd1') {
       return `${config.type}:d1:${this.bindingTag(config.binding)}`;
     }
@@ -524,7 +524,7 @@ export class DatabaseConnectionFactory {
   /**
    * Generate a unique key for query connection caching
    */
-  private static generateQueryConnectionKey(config: InvectDatabaseConfig): string {
+  private static generateQueryConnectionKey(config: FlowlibDatabaseConfig): string {
     if (config.driver === 'd1') {
       return `query:${config.type}:d1:${this.bindingTag(config.binding)}`;
     }
@@ -586,7 +586,7 @@ export class DatabaseConnectionFactory {
   /**
    * Get schema for database type
    */
-  static getSchema(type: InvectDatabaseConfig['type']) {
+  static getSchema(type: FlowlibDatabaseConfig['type']) {
     switch (type) {
       case 'postgresql':
         return postgresqlSchema;

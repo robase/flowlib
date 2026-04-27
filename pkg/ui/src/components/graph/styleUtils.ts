@@ -1,7 +1,7 @@
 import { cn } from '../../lib/utils';
 import { NodeExecutionStatus } from '@flowlib/core/types';
 
-// Utility functions for styling nodes and edges, inspired by Invect
+// Utility functions for styling nodes and edges, inspired by Flowlib
 
 export type NodeType =
   | 'ChatInput'
@@ -22,8 +22,8 @@ export type NodeType =
   | 'Retriever'
   | 'Embedding'
   | 'VectorStore'
-  | 'DocumentLoader' // Added based on Invect's categories
-  | 'TextSplitter' // Added based on Invect's categories
+  | 'DocumentLoader' // Added based on Flowlib's categories
+  | 'TextSplitter' // Added based on Flowlib's categories
   | 'Note'
   | 'Unknown';
 
@@ -61,7 +61,7 @@ export const mapExecutionStatusToNodeStatus = (
   }
 };
 
-// Invect-inspired color palette (simplified)
+// Flowlib-inspired color palette (simplified)
 // Reference: https://github.com/flowlib-ai/flowlib/blob/main/src/frontend/src/utils/styleUtils.ts
 // and https://github.com/flowlib-ai/flowlib/blob/main/src/frontend/src/style/index.css
 export const langflowColors = {
@@ -96,7 +96,7 @@ export const langflowColors = {
   secondary: 'hsl(var(--secondary))', // from shadcn/ui
 };
 
-// Mapping our NodeType to Invect's color names for consistency
+// Mapping our NodeType to Flowlib's color names for consistency
 export const nodeTypeToColorName: Record<NodeType, keyof typeof langflowColors> = {
   ChatInput: 'emerald',
   TextInput: 'emerald',
@@ -125,12 +125,12 @@ export const nodeTypeToColorName: Record<NodeType, keyof typeof langflowColors> 
 // Get icon name (Lucide icon names) for different node types
 // Reference: https://github.com/flowlib-ai/flowlib/blob/main/src/frontend/src/utils/styleUtils.ts nodeIconToDisplayIconMap
 export const getNodeIconName = (type: NodeType, icon?: string): string => {
-  if (icon && icon !== 'Default' /* Handle Invect's "Default" placeholder */) {
-    // Attempt to map known Invect icon names to Lucide, or use directly if valid
+  if (icon && icon !== 'Default' /* Handle Flowlib's "Default" placeholder */) {
+    // Attempt to map known Flowlib icon names to Lucide, or use directly if valid
     const langflowIconMap: Record<string, string> = {
       OpenAI: 'Bot', // Example, assuming 'Bot' is a Lucide icon
       MessagesSquare: 'MessagesSquare', // Already a Lucide icon
-      // Add more mappings as identified from Invect's usage
+      // Add more mappings as identified from Flowlib's usage
     };
     if (langflowIconMap[icon]) {
       return langflowIconMap[icon];
@@ -145,36 +145,36 @@ export const getNodeIconName = (type: NodeType, icon?: string): string => {
     case 'ChatInput':
     case 'TextInput':
     case 'Input':
-      return 'Download'; // Invect: Download
+      return 'Download'; // Flowlib: Download
     case 'ChatOutput':
     case 'TextOutput':
     case 'Output':
-      return 'Upload'; // Invect: Upload
+      return 'Upload'; // Flowlib: Upload
     case 'OpenAIModel':
     case 'AnthropicModel':
     case 'LLM':
-      return 'BrainCircuit'; // Invect: BrainCircuit
+      return 'BrainCircuit'; // Flowlib: BrainCircuit
     case 'Prompt':
     case 'PromptTemplate':
-      return 'TerminalSquare'; // Invect: TerminalSquare
+      return 'TerminalSquare'; // Flowlib: TerminalSquare
     case 'Agent':
-      return 'Bot'; // Invect: Bot
+      return 'Bot'; // Flowlib: Bot
     case 'Memory':
-      return 'Cpu'; // Invect: Cpu
+      return 'Cpu'; // Flowlib: Cpu
     case 'Tool':
-      return 'Hammer'; // Invect: Hammer
+      return 'Hammer'; // Flowlib: Hammer
     case 'Chain':
-      return 'Link'; // Invect: Link
+      return 'Link'; // Flowlib: Link
     case 'Retriever':
-      return 'FileSearch'; // Invect: FileSearch
+      return 'FileSearch'; // Flowlib: FileSearch
     case 'Embedding':
-      return 'Binary'; // Invect: Binary
+      return 'Binary'; // Flowlib: Binary
     case 'VectorStore':
-      return 'Layers'; // Invect: Layers (for vectorstores)
+      return 'Layers'; // Flowlib: Layers (for vectorstores)
     case 'DocumentLoader':
-      return 'Paperclip'; // Invect: Paperclip
+      return 'Paperclip'; // Flowlib: Paperclip
     case 'TextSplitter':
-      return 'Scissors'; // Invect: Scissors
+      return 'Scissors'; // Flowlib: Scissors
     case 'Note':
       return 'StickyNote';
     default:

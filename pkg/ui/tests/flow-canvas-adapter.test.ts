@@ -1,17 +1,17 @@
 /**
  * Lane L2: FlowCanvas adapter round-trip tests.
  *
- * The canvas' source of truth is an `InvectDefinition` passed in via
+ * The canvas' source of truth is an `FlowlibDefinition` passed in via
  * props. Internally, the flow-editor store operates on React Flow's
  * `Node[]`/`Edge[]`. The adapter must round-trip cleanly for the
  * editor ↔ caller boundary to be stable.
  */
 
 import { describe, it, expect } from 'vitest';
-import type { InvectDefinition } from '@flowlib/core/types';
+import type { FlowlibDefinition } from '@flowlib/core/types';
 import {
-  invectDefinitionToReactFlowData,
-  reactFlowToInvectDefinition,
+  flowlibDefinitionToReactFlowData,
+  reactFlowToFlowlibDefinition,
 } from '~/flow-canvas/flow-adapter';
 import type { ActionMetadata } from '~/flow-canvas/types';
 import { InMemoryApiClient } from '~/flow-canvas/InMemoryApiClient';
@@ -43,7 +43,7 @@ const sampleActions: ActionMetadata[] = [
   },
 ];
 
-const simpleFlow: InvectDefinition = {
+const simpleFlow: FlowlibDefinition = {
   nodes: [
     {
       id: 'n1',
@@ -64,7 +64,7 @@ const simpleFlow: InvectDefinition = {
       position: { x: 400, y: 0 },
       params: {},
     },
-  ] as InvectDefinition['nodes'],
+  ] as FlowlibDefinition['nodes'],
   edges: [
     { id: 'e1', source: 'n1', target: 'n2' },
     { id: 'e2', source: 'n2', target: 'n3' },
@@ -72,8 +72,8 @@ const simpleFlow: InvectDefinition = {
 };
 
 describe('flow-canvas adapter', () => {
-  it('converts InvectDefinition → ReactFlowData with expected node data', () => {
-    const rf = invectDefinitionToReactFlowData({
+  it('converts FlowlibDefinition → ReactFlowData with expected node data', () => {
+    const rf = flowlibDefinitionToReactFlowData({
       flow: simpleFlow,
       actions: sampleActions,
     });
@@ -93,7 +93,7 @@ describe('flow-canvas adapter', () => {
   });
 
   it('maps nodeRunStatus into visual status', () => {
-    const rf = invectDefinitionToReactFlowData({
+    const rf = flowlibDefinitionToReactFlowData({
       flow: simpleFlow,
       actions: sampleActions,
       nodeRunStatus: { n1: 'success', n2: 'running', n3: 'failed' },
@@ -103,14 +103,14 @@ describe('flow-canvas adapter', () => {
     expect(rf.nodes[2].data.status).toBe('error');
   });
 
-  it('round-trips InvectDefinition → ReactFlow → InvectDefinition preserving structure', () => {
-    const rf = invectDefinitionToReactFlowData({
+  it('round-trips FlowlibDefinition → ReactFlow → FlowlibDefinition preserving structure', () => {
+    const rf = flowlibDefinitionToReactFlowData({
       flow: simpleFlow,
       actions: sampleActions,
     });
     // Simulate what the store does — node.data.type must be present for
     // the reverse transform; our adapter already populates it.
-    const round = reactFlowToInvectDefinition(rf.nodes as never[], rf.edges as never[]);
+    const round = reactFlowToFlowlibDefinition(rf.nodes as never[], rf.edges as never[]);
     expect(round.nodes).toHaveLength(3);
     expect(round.edges).toHaveLength(2);
     const byId = Object.fromEntries(round.nodes.map((n) => [n.id, n]));
@@ -122,7 +122,7 @@ describe('flow-canvas adapter', () => {
   });
 
   it('handles a flow with no actions registered (degraded but not broken)', () => {
-    const rf = invectDefinitionToReactFlowData({
+    const rf = flowlibDefinitionToReactFlowData({
       flow: simpleFlow,
       actions: [],
     });
@@ -162,7 +162,7 @@ describe('InMemoryApiClient', () => {
   });
 
   it('createFlowVersion calls onEdit with the new definition', async () => {
-    let emitted: InvectDefinition | null = null;
+    let emitted: FlowlibDefinition | null = null;
     const client = new InMemoryApiClient(
       {
         flowId: '__flow-canvas__',
@@ -174,11 +174,11 @@ describe('InMemoryApiClient', () => {
       },
       { onEdit: (f) => (emitted = f) },
     );
-    const newFlow: InvectDefinition = {
+    const newFlow: FlowlibDefinition = {
       nodes: [simpleFlow.nodes[0]],
       edges: [],
-    } as InvectDefinition;
-    await client.createFlowVersion('__flow-canvas__', { invectDefinition: newFlow });
+    } as FlowlibDefinition;
+    await client.createFlowVersion('__flow-canvas__', { flowlibDefinition: newFlow });
     expect(emitted).not.toBeNull();
     expect(emitted!.nodes).toHaveLength(1);
   });

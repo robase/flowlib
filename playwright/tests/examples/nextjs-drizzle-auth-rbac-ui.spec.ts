@@ -17,8 +17,8 @@ const PG_DB = 'acme_dashboard';
 
 const exampleEnvBase = {
   BETTER_AUTH_SECRET: 'playwright-nextjs-auth-rbac-secret-1234567890',
-  INVECT_ADMIN_EMAIL: ADMIN_EMAIL,
-  INVECT_ADMIN_PASSWORD: ADMIN_PASSWORD,
+  FLOWLIB_ADMIN_EMAIL: ADMIN_EMAIL,
+  FLOWLIB_ADMIN_PASSWORD: ADMIN_PASSWORD,
 };
 
 let appPort = 3003;
@@ -192,7 +192,7 @@ async function gotoSignIn(page: Page) {
   await expect(page.getByRole('button', { name: 'Login' })).toBeVisible();
 }
 
-async function waitForInvectDashboard(page: Page) {
+async function waitForFlowlibDashboard(page: Page) {
   await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible({ timeout: 60_000 });
   await expect(page.getByText('Loading flows'))
     .not.toBeVisible({ timeout: 30_000 })
@@ -204,7 +204,7 @@ async function login(page: Page, email: string, password: string) {
   await page.getByLabel('Email').fill(email);
   await page.getByLabel('Password').fill(password);
   await page.getByRole('button', { name: 'Login' }).click();
-  await waitForInvectDashboard(page);
+  await waitForFlowlibDashboard(page);
 }
 
 async function createBrowserContextAndLogin(
@@ -241,7 +241,7 @@ async function createFlow(page: Page, name: string) {
     .context()
     .request.post(`${apiBase}/flows/${flow.id}/versions`, {
       data: {
-        invectDefinition: {
+        flowlibDefinition: {
           nodes: [
             {
               id: 'input-1',

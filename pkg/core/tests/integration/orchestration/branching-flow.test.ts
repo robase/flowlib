@@ -2,20 +2,20 @@
  * Integration tests: Branching Flows
  *
  * Tests if/else branching, node skipping, and data passthrough
- * in branching scenarios through the real Invect core.
+ * in branching scenarios through the real Flowlib core.
  */
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { FlowRunStatus } from '../../../src';
-import type { InvectInstance } from '../../../src/api/types';
-import type { InvectDefinition } from '../../../src/services/flow-versions/schemas-fresh';
+import type { FlowlibInstance } from '../../../src/api/types';
+import type { FlowlibDefinition } from '../../../src/services/flow-versions/schemas-fresh';
 import type { NodeOutput } from '../../../src/types/node-io-types';
-import { createTestInvect } from '../helpers/test-flowlib';
+import { createTestFlowlib } from '../helpers/test-flowlib';
 
 describe('Branching Flows', () => {
-  let flowlib: InvectInstance;
+  let flowlib: FlowlibInstance;
 
   beforeAll(async () => {
-    flowlib = await createTestInvect();
+    flowlib = await createTestFlowlib();
   });
 
   afterAll(async () => {
@@ -39,14 +39,14 @@ describe('Branching Flows', () => {
     return raw;
   }
 
-  async function runFlow(name: string, definition: InvectDefinition) {
+  async function runFlow(name: string, definition: FlowlibDefinition) {
     const flow = await flowlib.flows.create({ name: `branch-${name}-${Date.now()}` });
-    await flowlib.versions.create(flow.id, { invectDefinition: definition });
+    await flowlib.versions.create(flow.id, { flowlibDefinition: definition });
     return flowlib.runs.start(flow.id, {}, { useBatchProcessing: false });
   }
 
   /** Builds an if/else flow with configurable input data */
-  function buildBranchFlow(value: number): InvectDefinition {
+  function buildBranchFlow(value: number): FlowlibDefinition {
     return {
       nodes: [
         {
@@ -231,7 +231,7 @@ describe('Branching Flows', () => {
 
   // ------- core.switch tests -------
 
-  function buildSwitchFlow(priority: string): InvectDefinition {
+  function buildSwitchFlow(priority: string): FlowlibDefinition {
     return {
       nodes: [
         {

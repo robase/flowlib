@@ -11,7 +11,7 @@ import { useUIStore } from '../../stores/uiStore';
 import { ActionsSidebar } from './ActionsSidebar';
 import { Search, Plus, X, ChevronRight, PanelLeftClose } from 'lucide-react';
 import { cn } from '../../lib/utils';
-import { InvectLoader } from '../shared/InvectLoader';
+import { FlowlibLoader } from '../shared/FlowlibLoader';
 
 // ─── Types ─────────────────────────────────────────────────────────
 
@@ -168,7 +168,7 @@ function NodesSidebar({
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center border-r w-96 border-border bg-imp-background text-card-foreground">
-        <InvectLoader iconClassName="h-14" label="Loading nodes..." />
+        <FlowlibLoader iconClassName="h-14" label="Loading nodes..." />
       </div>
     );
   }

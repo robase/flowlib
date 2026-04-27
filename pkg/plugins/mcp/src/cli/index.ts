@@ -2,15 +2,15 @@
 /**
  * flowlib-mcp CLI — Standalone MCP server over stdio transport.
  *
- * Connects to a running Invect instance via HTTP API.
+ * Connects to a running Flowlib instance via HTTP API.
  * Designed for Claude Desktop, VS Code Copilot, and other MCP clients.
  *
  * Usage:
  *   npx flowlib-mcp --url http://localhost:3000/flowlib --api-key YOUR_KEY
  *
  * Environment variables:
- *   INVECT_URL     — Base URL of the Invect API
- *   INVECT_API_KEY — API key for authentication
+ *   FLOWLIB_URL     — Base URL of the Flowlib API
+ *   FLOWLIB_API_KEY — API key for authentication
  */
 
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
@@ -24,11 +24,11 @@ export { createMcpServer } from '../backend/mcp-server';
 async function main(): Promise<void> {
   const args = parseArgs(process.argv.slice(2));
 
-  const url = args.url || process.env.INVECT_URL;
-  const apiKey = args['api-key'] || process.env.INVECT_API_KEY;
+  const url = args.url || process.env.FLOWLIB_URL;
+  const apiKey = args['api-key'] || process.env.FLOWLIB_API_KEY;
 
   if (!url) {
-    process.stderr.write('Error: --url or INVECT_URL is required.\n');
+    process.stderr.write('Error: --url or FLOWLIB_URL is required.\n');
     process.stderr.write(
       'Usage: flowlib-mcp --url http://localhost:3000/flowlib --api-key YOUR_KEY\n',
     );
@@ -36,14 +36,14 @@ async function main(): Promise<void> {
   }
 
   if (!apiKey) {
-    process.stderr.write('Error: --api-key or INVECT_API_KEY is required.\n');
+    process.stderr.write('Error: --api-key or FLOWLIB_API_KEY is required.\n');
     process.stderr.write(
       'Usage: flowlib-mcp --url http://localhost:3000/flowlib --api-key YOUR_KEY\n',
     );
     process.exit(1);
   }
 
-  // Create HTTP client pointing at the remote Invect API
+  // Create HTTP client pointing at the remote Flowlib API
   const client = new HttpClient(url, apiKey);
 
   // Create MCP server with all tools

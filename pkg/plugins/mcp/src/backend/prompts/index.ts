@@ -1,12 +1,12 @@
 /**
- * MCP Prompts — reusable prompt templates for common Invect tasks.
+ * MCP Prompts — reusable prompt templates for common Flowlib tasks.
  */
 
 import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import type { InvectClient } from '../client/types';
+import type { FlowlibClient } from '../client/types';
 
-export function registerPrompts(server: McpServer, _client: InvectClient): void {
+export function registerPrompts(server: McpServer, _client: FlowlibClient): void {
   server.registerPrompt(
     'debug-flow-run',
     {
@@ -54,7 +54,7 @@ export function registerPrompts(server: McpServer, _client: InvectClient): void 
             content: {
               type: 'text' as const,
               text: [
-                `Create a new Invect flow called "${name}"${description ? `: ${description}` : ''}.`,
+                `Create a new Flowlib flow called "${name}"${description ? `: ${description}` : ''}.`,
                 '',
                 'Follow these steps:',
                 '1. Use node_list_available (or node_list_for_provider if you already know the integration) to pick node types.',

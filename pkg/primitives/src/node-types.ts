@@ -1,5 +1,5 @@
 /**
- * Canonical node-type aliases for the Invect primitives.
+ * Canonical node-type aliases for the Flowlib primitives.
  *
  * Every primitive has **two** string ids that mean the same thing at runtime:
  *   - `core.X`       — DB-origin (ReactFlow state, seed fixtures, legacy flows)

@@ -1,13 +1,13 @@
 ---
 title: Installation
-description: Set up Invect with Express, NestJS, or Next.js.
+description: Set up Flowlib with Express, NestJS, or Next.js.
 ---
 
 import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
 import { Callout } from 'fumadocs-ui/components/callout';
 import { Step, Steps } from 'fumadocs-ui/components/steps';
 
-The fastest way to install Invect is with the CLI:
+The fastest way to install Flowlib is with the CLI:
 
 ```bash
 npx flowlib-cli init
@@ -136,7 +136,7 @@ Next.js is self-contained — the API handler and frontend run in the same app.
 
 ```bash title=".env"
 DATABASE_URL=file:./dev.db
-INVECT_ENCRYPTION_KEY=   # Generate with: npx flowlib-cli secret
+FLOWLIB_ENCRYPTION_KEY=   # Generate with: npx flowlib-cli secret
 ```
 
 </Tab>
@@ -144,7 +144,7 @@ INVECT_ENCRYPTION_KEY=   # Generate with: npx flowlib-cli secret
 
 ```bash title=".env"
 DATABASE_URL=file:./dev.db
-INVECT_ENCRYPTION_KEY=   # Generate with: npx flowlib-cli secret
+FLOWLIB_ENCRYPTION_KEY=   # Generate with: npx flowlib-cli secret
 ```
 
 </Tab>
@@ -152,7 +152,7 @@ INVECT_ENCRYPTION_KEY=   # Generate with: npx flowlib-cli secret
 
 ```bash title=".env.local"
 DATABASE_URL=file:./dev.db
-INVECT_ENCRYPTION_KEY=   # Generate with: npx flowlib-cli secret
+FLOWLIB_ENCRYPTION_KEY=   # Generate with: npx flowlib-cli secret
 ```
 
 </Tab>
@@ -168,24 +168,24 @@ INVECT_ENCRYPTION_KEY=   # Generate with: npx flowlib-cli secret
 ```ts title="index.ts"
 import 'dotenv/config';
 import express from 'express';
-import { createInvectRouter } from '@flowlib/express';
+import { createFlowlibRouter } from '@flowlib/express';
 
 const app = express();
 app.use(express.json());
 
 app.use(
   '/flowlib',
-  await createInvectRouter({
+  await createFlowlibRouter({
     database: {
       type: 'sqlite',
       connectionString: process.env.DATABASE_URL!,
     },
-    encryptionKey: process.env.INVECT_ENCRYPTION_KEY,
+    encryptionKey: process.env.FLOWLIB_ENCRYPTION_KEY,
   }),
 );
 
 app.listen(3000, () => {
-  console.log('Invect API at http://localhost:3000/flowlib');
+  console.log('Flowlib API at http://localhost:3000/flowlib');
 });
 ```
 
@@ -194,23 +194,23 @@ app.listen(3000, () => {
 
 ```ts title="app.module.ts"
 import { Module } from '@nestjs/common';
-import { InvectModule } from '@flowlib/nestjs';
+import { FlowlibModule } from '@flowlib/nestjs';
 
 @Module({
   imports: [
-    InvectModule.forRoot({
+    FlowlibModule.forRoot({
       database: {
         type: 'sqlite',
         connectionString: process.env.DATABASE_URL!,
       },
-      encryptionKey: process.env.INVECT_ENCRYPTION_KEY,
+      encryptionKey: process.env.FLOWLIB_ENCRYPTION_KEY,
     }),
   ],
 })
 export class AppModule {}
 ```
 
-This registers the `INVECT_CORE` provider (singleton), `InvectService` (injectable wrapper), and `InvectController` (REST endpoints under `/flowlib`).
+This registers the `FLOWLIB_CORE` provider (singleton), `FlowlibService` (injectable wrapper), and `FlowlibController` (REST endpoints under `/flowlib`).
 
 </Tab>
 <Tab value="Next.js">
@@ -218,14 +218,14 @@ This registers the `INVECT_CORE` provider (singleton), `InvectService` (injectab
 Create the catch-all API route handler:
 
 ```ts title="app/api/flowlib/[...flowlib]/route.ts"
-import { createInvectHandler } from '@flowlib/nextjs';
+import { createFlowlibHandler } from '@flowlib/nextjs';
 
-const handler = createInvectHandler({
+const handler = createFlowlibHandler({
   database: {
     type: 'sqlite',
     connectionString: process.env.DATABASE_URL!,
   },
-  encryptionKey: process.env.INVECT_ENCRYPTION_KEY,
+  encryptionKey: process.env.FLOWLIB_ENCRYPTION_KEY,
 });
 
 export const GET = handler.GET;
@@ -238,14 +238,14 @@ export const DELETE = handler.DELETE;
 Add a dedicated maintenance route for cron-driven background work on Vercel:
 
 ```ts title="app/api/flowlib/cron/route.ts"
-import { createInvectCronHandler } from '@flowlib/nextjs';
+import { createFlowlibCronHandler } from '@flowlib/nextjs';
 
-const handleCron = createInvectCronHandler({
+const handleCron = createFlowlibCronHandler({
   database: {
     type: 'sqlite',
     connectionString: process.env.DATABASE_URL!,
   },
-  encryptionKey: process.env.INVECT_ENCRYPTION_KEY,
+  encryptionKey: process.env.FLOWLIB_ENCRYPTION_KEY,
   triggers: {
     cronEnabled: true,
     webhookBaseUrl: 'https://your-app.com/api/flowlib',
@@ -264,8 +264,8 @@ Then configure one Vercel cron in `vercel.json`:
 ```
 
 <Callout type="info">
-  On Vercel, use one dedicated Invect cron route. That single route fans out into Invect maintenance
-  tasks for the app: batch polling, paused-flow resumption, stale-run cleanup, and Invect cron
+  On Vercel, use one dedicated Flowlib cron route. That single route fans out into Flowlib maintenance
+  tasks for the app: batch polling, paused-flow resumption, stale-run cleanup, and Flowlib cron
   triggers.
 </Callout>
 
@@ -288,12 +288,12 @@ pnpm add @flowlib/ui
 Then mount the editor:
 
 ```tsx title="App.tsx"
-import { Invect } from '@flowlib/ui';
+import { Flowlib } from '@flowlib/ui';
 import '@flowlib/ui/styles';
-import { invectConfig } from '../flowlib.config';
+import { flowlibConfig } from '../flowlib.config';
 
 function App() {
-  return <Invect config={invectConfig} />;
+  return <Flowlib config={flowlibConfig} />;
 }
 ```
 
@@ -309,12 +309,12 @@ pnpm add @flowlib/ui
 Then mount the editor:
 
 ```tsx title="App.tsx"
-import { Invect } from '@flowlib/ui';
+import { Flowlib } from '@flowlib/ui';
 import '@flowlib/ui/styles';
-import { invectConfig } from '../flowlib.config';
+import { flowlibConfig } from '../flowlib.config';
 
 function App() {
-  return <Invect config={invectConfig} />;
+  return <Flowlib config={flowlibConfig} />;
 }
 ```
 
@@ -330,12 +330,12 @@ import dynamic from 'next/dynamic';
 import '@flowlib/ui/styles';
 import config from '../../flowlib.config';
 
-const Invect = dynamic(() => import('@flowlib/ui').then((mod) => ({ default: mod.Invect })), {
+const Flowlib = dynamic(() => import('@flowlib/ui').then((mod) => ({ default: mod.Flowlib })), {
   ssr: false,
 });
 
-export default function InvectPage() {
-  return <Invect config={config} />;
+export default function FlowlibPage() {
+  return <Flowlib config={config} />;
 }
 ```
 
@@ -396,22 +396,22 @@ Open `http://localhost:3000/flowlib` — the visual flow editor is ready.
 
 ## Configuration
 
-All frameworks accept the full [`InvectConfig`](/docs/reference/configuration) object:
+All frameworks accept the full [`FlowlibConfig`](/docs/reference/configuration) object:
 
 <Tabs groupId="framework" items={['Express', 'NestJS', 'Next.js']} persist>
 <Tab value="Express">
 
 ```ts title="index.ts"
-import { createInvectRouter } from '@flowlib/express';
+import { createFlowlibRouter } from '@flowlib/express';
 
 app.use(
   '/flowlib',
-  await createInvectRouter({
+  await createFlowlibRouter({
     database: {
       type: 'sqlite',
       connectionString: process.env.DATABASE_URL!,
     },
-    encryptionKey: process.env.INVECT_ENCRYPTION_KEY,
+    encryptionKey: process.env.FLOWLIB_ENCRYPTION_KEY,
     execution: {
       defaultTimeout: 60000,
       maxConcurrentExecutions: 10,
@@ -440,16 +440,16 @@ app.use(
 <Tab value="NestJS">
 
 ```ts title="app.module.ts"
-import { InvectModule } from '@flowlib/nestjs';
+import { FlowlibModule } from '@flowlib/nestjs';
 
 @Module({
   imports: [
-    InvectModule.forRoot({
+    FlowlibModule.forRoot({
       database: {
         type: 'sqlite',
         connectionString: process.env.DATABASE_URL!,
       },
-      encryptionKey: process.env.INVECT_ENCRYPTION_KEY,
+      encryptionKey: process.env.FLOWLIB_ENCRYPTION_KEY,
       execution: {
         defaultTimeout: 60000,
         maxConcurrentExecutions: 10,
@@ -480,16 +480,16 @@ export class AppModule {}
 <Tab value="Next.js">
 
 ```ts title="app/api/flowlib/[...flowlib]/route.ts"
-import { createInvectHandler } from '@flowlib/nextjs';
+import { createFlowlibHandler } from '@flowlib/nextjs';
 import { auth } from '@flowlib/user-auth';
 import { rbac } from '@flowlib/rbac';
 
-const handler = createInvectHandler({
+const handler = createFlowlibHandler({
   database: {
     type: 'sqlite',
     connectionString: process.env.DATABASE_URL!,
   },
-  encryptionKey: process.env.INVECT_ENCRYPTION_KEY,
+  encryptionKey: process.env.FLOWLIB_ENCRYPTION_KEY,
   execution: {
     defaultTimeout: 60000,
     maxConcurrentExecutions: 10,
@@ -523,16 +523,16 @@ export const DELETE = handler.DELETE;
 ```
 
 ```ts title="app/api/flowlib/cron/route.ts"
-import { createInvectCronHandler } from '@flowlib/nextjs';
+import { createFlowlibCronHandler } from '@flowlib/nextjs';
 import { auth } from '@flowlib/user-auth';
 import { rbac } from '@flowlib/rbac';
 
-export const GET = createInvectCronHandler({
+export const GET = createFlowlibCronHandler({
   database: {
     type: 'sqlite',
     connectionString: process.env.DATABASE_URL!,
   },
-  encryptionKey: process.env.INVECT_ENCRYPTION_KEY,
+  encryptionKey: process.env.FLOWLIB_ENCRYPTION_KEY,
   execution: {
     defaultTimeout: 60000,
     maxConcurrentExecutions: 10,
@@ -578,10 +578,10 @@ After adding plugins with database tables, run `npx flowlib-cli generate` and `n
 <Tab value="Express">
 
 ```ts title="index.ts"
-import { createInvectRouter } from '@flowlib/express';
-import { invectConfig } from './flowlib.config';
+import { createFlowlibRouter } from '@flowlib/express';
+import { flowlibConfig } from './flowlib.config';
 
-app.use('/flowlib', await createInvectRouter(invectConfig));
+app.use('/flowlib', await createFlowlibRouter(flowlibConfig));
 ```
 
 </Tab>
@@ -589,11 +589,11 @@ app.use('/flowlib', await createInvectRouter(invectConfig));
 
 ```ts title="app.module.ts"
 import { Module } from '@nestjs/common';
-import { InvectModule } from '@flowlib/nestjs';
-import { invectConfig } from './flowlib.config';
+import { FlowlibModule } from '@flowlib/nestjs';
+import { flowlibConfig } from './flowlib.config';
 
 @Module({
-  imports: [InvectModule.forRoot(invectConfig)],
+  imports: [FlowlibModule.forRoot(flowlibConfig)],
 })
 export class AppModule {}
 ```
@@ -602,10 +602,10 @@ export class AppModule {}
 <Tab value="Next.js">
 
 ```ts title="app/api/flowlib/[...flowlib]/route.ts"
-import { createInvectHandler } from '@flowlib/nextjs';
-import { invectConfig } from '@/flowlib.config';
+import { createFlowlibHandler } from '@flowlib/nextjs';
+import { flowlibConfig } from '@/flowlib.config';
 
-const handler = createInvectHandler(invectConfig);
+const handler = createFlowlibHandler(flowlibConfig);
 
 export const GET = handler.GET;
 export const POST = handler.POST;
@@ -623,16 +623,16 @@ import dynamic from 'next/dynamic';
 import '@flowlib/ui/styles';
 import config from '../../flowlib.config';
 
-const Invect = dynamic(() => import('@flowlib/ui').then((m) => ({ default: m.Invect })), {
+const Flowlib = dynamic(() => import('@flowlib/ui').then((m) => ({ default: m.Flowlib })), {
   ssr: false,
 });
 
-export default function InvectPage() {
-  return <Invect config={config} />;
+export default function FlowlibPage() {
+  return <Flowlib config={config} />;
 }
 ```
 
-When the `@flowlib/user-auth` plugin is included in `flowlib.config.ts`, `<Invect>` automatically wraps itself with an auth gate — no extra wrapper component needed. The OAuth callback route is handled internally at `<frontendPath>/oauth/callback`.
+When the `@flowlib/user-auth` plugin is included in `flowlib.config.ts`, `<Flowlib>` automatically wraps itself with an auth gate — no extra wrapper component needed. The OAuth callback route is handled internally at `<frontendPath>/oauth/callback`.
 
 See [Authentication Plugin](/docs/plugins/authentication) and [Access Control Plugin](/docs/plugins/access-control) for details.
 
@@ -650,19 +650,19 @@ Use `forRootAsync` when you need to inject dependencies (e.g., `ConfigService`):
 ```ts title="app.module.ts"
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { InvectModule } from '@flowlib/nestjs';
+import { FlowlibModule } from '@flowlib/nestjs';
 
 @Module({
   imports: [
     ConfigModule.forRoot(),
-    InvectModule.forRootAsync({
+    FlowlibModule.forRootAsync({
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({
         database: {
           type: 'postgresql' as const,
           connectionString: config.get('DATABASE_URL')!,
         },
-        encryptionKey: config.get('INVECT_ENCRYPTION_KEY')!,
+        encryptionKey: config.get('FLOWLIB_ENCRYPTION_KEY')!,
       }),
     }),
   ],
@@ -674,11 +674,11 @@ export class AppModule {}
 
 ```ts title="my.service.ts"
 import { Injectable } from '@nestjs/common';
-import { InvectService } from '@flowlib/nestjs';
+import { FlowlibService } from '@flowlib/nestjs';
 
 @Injectable()
 export class MyService {
-  constructor(private readonly flowlib: InvectService) {}
+  constructor(private readonly flowlib: FlowlibService) {}
 
   async runWorkflow(flowId: string, inputs: Record<string, unknown>) {
     const core = this.flowlib.getCore();

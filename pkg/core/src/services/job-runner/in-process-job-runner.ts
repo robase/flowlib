@@ -10,7 +10,7 @@
  * `processNextBatch` lets a host drain the queue synchronously
  * (e.g. tests). External-queue adapters (Cloudflare Queues, SQS) leave
  * this method `undefined` because their consumer Worker is driven by
- * the platform, not by an Invect API call.
+ * the platform, not by an Flowlib API call.
  *
  * Idempotency: if `enqueue` is called twice with the same
  * `(jobType, options.idempotencyKey)` pair, the handler runs at most

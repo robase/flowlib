@@ -6,7 +6,7 @@ description: Let AI assistants build, run, and debug flows with @flowlib/mcp.
 import { Callout } from 'fumadocs-ui/components/callout';
 import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
 
-The MCP plugin exposes Invect as a [Model Context Protocol](https://modelcontextprotocol.io) server. AI assistants like Claude Desktop, VS Code Copilot, and Cursor can connect and manage flows, execute runs, debug failures, and more — all through natural language.
+The MCP plugin exposes Flowlib as a [Model Context Protocol](https://modelcontextprotocol.io) server. AI assistants like Claude Desktop, VS Code Copilot, and Cursor can connect and manage flows, execute runs, debug failures, and more — all through natural language.
 
 ## Installation
 
@@ -43,12 +43,12 @@ bun add @flowlib/mcp
 
 ## Setup
 
-Register the plugin in your Invect config:
+Register the plugin in your Flowlib config:
 
 ```ts title="flowlib.config.ts"
 import { mcp } from '@flowlib/mcp';
 
-export const invectConfig = defineConfig({
+export const flowlibConfig = defineConfig({
   // ...
   plugins: [mcp()],
 });
@@ -72,7 +72,7 @@ mcp({
 
 ## Connecting an AI assistant
 
-The MCP server runs over **stdio** via the CLI. Start your Invect app, then point your AI assistant at it.
+The MCP server runs over **stdio** via the CLI. Start your Flowlib app, then point your AI assistant at it.
 
 ### Claude Desktop
 
@@ -157,8 +157,8 @@ npx flowlib-cli mcp --url http://localhost:3000/flowlib --api-key YOUR_KEY
 You can also use environment variables instead of flags:
 
 ```bash
-export INVECT_URL=http://localhost:3000/flowlib
-export INVECT_API_KEY=YOUR_KEY
+export FLOWLIB_URL=http://localhost:3000/flowlib
+export FLOWLIB_API_KEY=YOUR_KEY
 npx flowlib-cli mcp
 ```
 
@@ -237,16 +237,16 @@ The MCP server also exposes **resources** and **prompts**:
 
 The plugin supports two connection modes:
 
-1. **Stdio (CLI)** — `npx flowlib-cli mcp` starts a standalone process that connects to Invect over HTTP. This is what MCP clients like Claude Desktop use.
-2. **Direct (in-process)** — When registered as a plugin, the MCP server can call Invect services directly without HTTP overhead. Used by the Streamable HTTP endpoint at `POST /plugins/mcp/mcp`.
+1. **Stdio (CLI)** — `npx flowlib-cli mcp` starts a standalone process that connects to Flowlib over HTTP. This is what MCP clients like Claude Desktop use.
+2. **Direct (in-process)** — When registered as a plugin, the MCP server can call Flowlib services directly without HTTP overhead. Used by the Streamable HTTP endpoint at `POST /plugins/mcp/mcp`.
 
 ```
 ┌──────────────┐  stdio   ┌──────────────┐  HTTP  ┌────────────┐
-│ Claude / VS  │ ───────► │ flowlib-cli   │ ─────► │  Invect    │
+│ Claude / VS  │ ───────► │ flowlib-cli   │ ─────► │  Flowlib    │
 │ Code / Cursor│          │ mcp server   │        │  API       │
 └──────────────┘          └──────────────┘        └────────────┘
 
 ┌──────────────┐  HTTP    ┌────────────────────────────────────┐
-│  MCP Client  │ ───────► │  Invect (w/ mcpPlugin, direct)    │
+│  MCP Client  │ ───────► │  Flowlib (w/ mcpPlugin, direct)    │
 └──────────────┘          └────────────────────────────────────┘
 ```

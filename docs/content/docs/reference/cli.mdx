@@ -1,11 +1,11 @@
 ---
 title: CLI
-description: All commands, flags, and examples for the Invect CLI.
+description: All commands, flags, and examples for the Flowlib CLI.
 ---
 
 import { Callout } from 'fumadocs-ui/components/callout';
 
-The Invect CLI (`flowlib-cli`) manages project initialisation, schema generation, and database migrations. It's the recommended way to set up and manage your Invect project.
+The Flowlib CLI (`flowlib-cli`) manages project initialisation, schema generation, and database migrations. It's the recommended way to set up and manage your Flowlib project.
 
 ```bash
 npx flowlib-cli <command> [options]
@@ -104,7 +104,7 @@ Shows system info, detected framework, database type, config location, installed
 
 ## `secret`
 
-Generate a cryptographically secure 32-byte base64 encryption key for `INVECT_ENCRYPTION_KEY`.
+Generate a cryptographically secure 32-byte base64 encryption key for `FLOWLIB_ENCRYPTION_KEY`.
 
 ```bash
 npx flowlib-cli secret
@@ -116,7 +116,7 @@ Copy the output into your `.env` file or secrets manager.
 
 ## `mcp`
 
-Start a Model Context Protocol (MCP) server over stdio. Connects to a running Invect instance and exposes flow building/execution tools to AI assistants like Claude, Copilot, or Cursor.
+Start a Model Context Protocol (MCP) server over stdio. Connects to a running Flowlib instance and exposes flow building/execution tools to AI assistants like Claude, Copilot, or Cursor.
 
 ```bash
 npx flowlib-cli mcp --url http://localhost:3000/flowlib
@@ -124,7 +124,7 @@ npx flowlib-cli mcp --url http://localhost:3000/flowlib
 
 | Flag              | Description                                                              |
 | ----------------- | ------------------------------------------------------------------------ |
-| `--url <url>`     | URL of the running Invect API (default: `http://localhost:3000/flowlib`). |
+| `--url <url>`     | URL of the running Flowlib API (default: `http://localhost:3000/flowlib`). |
 | `--api-key <key>` | API key for authenticated access.                                        |
 | `--print-config`  | Output ready-to-paste MCP client config (e.g., for Claude Desktop).      |
 

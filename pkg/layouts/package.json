@@ -1,7 +1,7 @@
 {
   "name": "@flowlib/layouts",
   "version": "0.0.12",
-  "description": "Shared layout utilities for Invect graph positioning",
+  "description": "Shared layout utilities for Flowlib graph positioning",
   "keywords": [
     "dagre",
     "graph",

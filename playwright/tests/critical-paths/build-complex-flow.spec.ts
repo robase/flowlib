@@ -419,7 +419,7 @@ test.describe('Build a Complex Flow — End-to-End User Journey', () => {
     // connecting nodes in the UI
     const resp = await request.post(`${apiBase}/flows/${flowId}/versions`, {
       data: {
-        invectDefinition: {
+        flowlibDefinition: {
           nodes: [
             {
               id: 'mega-input',

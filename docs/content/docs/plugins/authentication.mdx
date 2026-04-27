@@ -48,7 +48,7 @@ The simplest setup lets the plugin manage Better Auth internally — no separate
 import { defineConfig } from '@flowlib/core';
 import { auth } from '@flowlib/user-auth';
 
-export const invectConfig = defineConfig({
+export const flowlibConfig = defineConfig({
   database: { type: 'sqlite', connectionString: 'file:./dev.db' },
   plugins: [
     auth({
@@ -71,7 +71,7 @@ const myAuth = betterAuth({
   /* full Better Auth config */
 });
 
-export const invectConfig = defineConfig({
+export const flowlibConfig = defineConfig({
   // ...
   plugins: [auth({ auth: myAuth })],
 });
@@ -93,12 +93,12 @@ npx flowlib-cli migrate --push
 | `auth`              | `BetterAuthInstance`                | No       | —                   | Your own Better Auth instance. If omitted, one is created internally.                                          |
 | `betterAuthOptions` | `BetterAuthPassthroughOptions`      | No       | —                   | Options passed to the internal Better Auth instance (ignored when `auth` is provided).                         |
 | `globalAdmins`      | `BetterAuthGlobalAdmin[]`           | No       | `[]`                | Admin accounts to seed on startup.                                                                             |
-| `database`          | `unknown`                           | No       | —                   | Database for the internal Better Auth instance. Uses Invect's DB when omitted.                                 |
+| `database`          | `unknown`                           | No       | —                   | Database for the internal Better Auth instance. Uses Flowlib's DB when omitted.                                 |
 | `baseURL`           | `string`                            | No       | auto-detected       | Base URL for auth server (cookies, CSRF). Falls back to `BETTER_AUTH_URL` env var.                             |
 | `trustedOrigins`    | `string[] \| (req) => string[]`     | No       | localhost + baseURL | Origins trusted for CORS / cookie sharing.                                                                     |
 | `publicPaths`       | `string[]`                          | No       | `[]`                | Paths accessible without a valid session (auth proxy routes are always public).                                |
-| `mapUser`           | `(user, session) => InvectIdentity` | No       | default mapping     | Custom function to map Better Auth users to Invect identities.                                                 |
-| `mapRole`           | `(role) => InvectRole`              | No       | default mapping     | Custom function to map Better Auth role strings to Invect roles.                                               |
+| `mapUser`           | `(user, session) => FlowlibIdentity` | No       | default mapping     | Custom function to map Better Auth users to Flowlib identities.                                                 |
+| `mapRole`           | `(role) => FlowlibRole`              | No       | default mapping     | Custom function to map Better Auth role strings to Flowlib roles.                                               |
 | `apiKey`            | `boolean \| ApiKeyPluginOptions`    | No       | `false`             | Enable the [Better Auth API Key plugin](https://better-auth.com/docs/plugins/api-key) for programmatic access. |
 | `frontend`          | `unknown`                           | No       | —                   | Deprecated. The auth plugin registers its UI automatically.                                                    |
 
@@ -125,7 +125,7 @@ npx flowlib-cli migrate --push
 
 ## Frontend integration
 
-No extra wrapper component is needed. Pass the `auth()` plugin in `flowlib.config.ts` — `<Invect>` reads the config and automatically wraps itself with an auth gate:
+No extra wrapper component is needed. Pass the `auth()` plugin in `flowlib.config.ts` — `<Flowlib>` reads the config and automatically wraps itself with an auth gate:
 
 ```tsx title="app/flowlib/[[...slug]]/page.tsx"
 'use client';
@@ -134,12 +134,12 @@ import dynamic from 'next/dynamic';
 import '@flowlib/ui/styles';
 import config from '../../flowlib.config'; // contains plugins: [auth(...), rbac()]
 
-const Invect = dynamic(() => import('@flowlib/ui').then((m) => ({ default: m.Invect })), {
+const Flowlib = dynamic(() => import('@flowlib/ui').then((m) => ({ default: m.Flowlib })), {
   ssr: false,
 });
 
-export default function InvectPage() {
-  return <Invect config={config} />;
+export default function FlowlibPage() {
+  return <Flowlib config={config} />;
 }
 ```
 
@@ -148,12 +148,12 @@ The OAuth callback route is handled internally at `<frontendPath>/oauth/callback
 For non-Next.js frontends (e.g. Vite + React), import the shared config and pass it the same way:
 
 ```tsx title="src/App.tsx"
-import { Invect } from '@flowlib/ui';
+import { Flowlib } from '@flowlib/ui';
 import '@flowlib/ui/styles';
-import { invectConfig } from '../flowlib.config';
+import { flowlibConfig } from '../flowlib.config';
 
 export default function App() {
-  return <Invect config={invectConfig} />;
+  return <Flowlib config={flowlibConfig} />;
 }
 ```
 
@@ -162,5 +162,5 @@ export default function App() {
 | Variable                | Required | Description                          |
 | ----------------------- | -------- | ------------------------------------ |
 | `BETTER_AUTH_SECRET`    | Yes      | Session encryption secret            |
-| `INVECT_ADMIN_EMAIL`    | No       | Alternative to `globalAdmins` config |
-| `INVECT_ADMIN_PASSWORD` | No       | Alternative to `globalAdmins` config |
+| `FLOWLIB_ADMIN_EMAIL`    | No       | Alternative to `globalAdmins` config |
+| `FLOWLIB_ADMIN_PASSWORD` | No       | Alternative to `globalAdmins` config |

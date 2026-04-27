@@ -1,4 +1,4 @@
-// Framework-agnostic Database Service for Invect core
+// Framework-agnostic Database Service for Flowlib core
 
 import { DatabaseConnectionFactory, type DatabaseConnection } from '../../database/connection';
 import { verifySchema, type SchemaVerificationOptions } from '../../database/schema-verification';
@@ -12,9 +12,9 @@ import { NodeExecutionsModel } from '../node-executions/node-executions.model';
 import { FlowTriggersModel } from '../triggers/flow-triggers.model';
 import { ChatMessagesModel } from '../chat/chat-messages.model';
 
-import { InvectDatabaseConfig, Logger } from 'src/schemas';
-import type { InvectPlugin } from 'src/types/plugin.types';
-import type { InvectAdapter } from '../../database/adapter';
+import { FlowlibDatabaseConfig, Logger } from 'src/schemas';
+import type { FlowlibPlugin } from 'src/types/plugin.types';
+import type { FlowlibAdapter } from '../../database/adapter';
 import { createAdapterFromConnection } from '../../database/adapters/connection-bridge';
 
 /**
@@ -33,15 +33,15 @@ interface PluginTableRequirement {
 export class DatabaseService {
   private connection: DatabaseConnection | null = null;
   private _database: Database | null = null;
-  private _adapter: InvectAdapter | null = null;
+  private _adapter: FlowlibAdapter | null = null;
   private schemaVerificationOptions?: SchemaVerificationOptions;
   private pluginTableRequirements: PluginTableRequirement[] = [];
 
   constructor(
-    private readonly hostDbConfig: InvectDatabaseConfig,
+    private readonly hostDbConfig: FlowlibDatabaseConfig,
     private readonly logger: Logger = console,
     schemaVerification?: SchemaVerificationOptions,
-    plugins?: InvectPlugin[],
+    plugins?: FlowlibPlugin[],
   ) {
     this.schemaVerificationOptions = schemaVerification;
     this.pluginTableRequirements = DatabaseService.extractPluginTableRequirements(plugins ?? []);
@@ -58,9 +58,9 @@ export class DatabaseService {
   }
 
   /**
-   * Get the InvectAdapter instance for direct adapter access
+   * Get the FlowlibAdapter instance for direct adapter access
    */
-  get adapter(): InvectAdapter {
+  get adapter(): FlowlibAdapter {
     if (!this._adapter) {
       throw new DatabaseError('Database not initialized - call initialize() first');
     }
@@ -164,7 +164,7 @@ export class DatabaseService {
       );
     }
 
-    // --- Step 3: Check that core Invect tables exist ---
+    // --- Step 3: Check that core Flowlib tables exist ---
     this.logger.debug('Step 3: Checking core tables...');
     const tableCheckStart = Date.now();
     await this.runCoreTableCheck(this.connection);
@@ -204,7 +204,7 @@ export class DatabaseService {
    */
   async executeQuery(
     query: string,
-    queryDBConfig: InvectDatabaseConfig,
+    queryDBConfig: FlowlibDatabaseConfig,
   ): Promise<Record<string, unknown>[]> {
     try {
       this.logger.debug('Executing query on external database', {
@@ -295,7 +295,7 @@ export class DatabaseService {
    *
    * If both are present, `requiredTables` takes precedence.
    */
-  static extractPluginTableRequirements(plugins: InvectPlugin[]): PluginTableRequirement[] {
+  static extractPluginTableRequirements(plugins: FlowlibPlugin[]): PluginTableRequirement[] {
     const requirements: PluginTableRequirement[] = [];
 
     for (const plugin of plugins) {
@@ -340,7 +340,7 @@ export class DatabaseService {
   }
 
   /**
-   * Check that the essential Invect tables exist in the database.
+   * Check that the essential Flowlib tables exist in the database.
    * This catches the most common developer mistake: running the app
    * before applying the database schema.
    *
@@ -389,19 +389,19 @@ export class DatabaseService {
     const lines: string[] = [
       '',
       '╔══════════════════════════════════════════════════════════════╗',
-      '║              ⚠  INVECT — DATABASE NOT READY  ⚠            ║',
+      '║              ⚠  FLOWLIB — DATABASE NOT READY  ⚠            ║',
       '╚══════════════════════════════════════════════════════════════╝',
       '',
     ];
 
     if (allMissing) {
       lines.push(
-        'Your database exists but has no Invect tables.',
+        'Your database exists but has no Flowlib tables.',
         "This usually means you haven't pushed the schema yet.",
       );
     } else {
       lines.push(
-        `Your database is missing ${missingTables.length} of ${expectedTables.length} required Invect tables:`,
+        `Your database is missing ${missingTables.length} of ${expectedTables.length} required Flowlib tables:`,
         `  Missing: ${missingTables.join(', ')}`,
         '',
         'This usually means your schema is out of date.',
@@ -410,7 +410,7 @@ export class DatabaseService {
 
     lines.push('');
 
-    // Fix instructions — point users to the Invect CLI
+    // Fix instructions — point users to the Flowlib CLI
     lines.push(
       'To fix this, run:',
       '',
@@ -423,7 +423,7 @@ export class DatabaseService {
       '  npx drizzle-kit generate',
       '  npx flowlib-cli migrate    # apply migrations',
       '',
-      'The Invect CLI reads your flowlib.config.ts to discover installed',
+      'The Flowlib CLI reads your flowlib.config.ts to discover installed',
       'plugins and generates the correct schema for all of them.',
       '',
     );
@@ -432,7 +432,7 @@ export class DatabaseService {
     this.logger.error(message);
 
     throw new DatabaseError(
-      `Database is missing ${allMissing ? 'all' : missingTables.length} required Invect table(s). ` +
+      `Database is missing ${allMissing ? 'all' : missingTables.length} required Flowlib table(s). ` +
         `Run schema migrations before starting the server. See logs above for instructions.`,
       { missingTables },
     );
@@ -495,7 +495,7 @@ export class DatabaseService {
     const lines: string[] = [
       '',
       '╔══════════════════════════════════════════════════════════════╗',
-      '║          ⚠  INVECT — PLUGIN TABLES MISSING  ⚠             ║',
+      '║          ⚠  FLOWLIB — PLUGIN TABLES MISSING  ⚠             ║',
       '╚══════════════════════════════════════════════════════════════╝',
       '',
       `${totalMissing} table(s) required by ${pluginsWithMissing.length} plugin(s) are missing from the database:`,
@@ -526,7 +526,7 @@ export class DatabaseService {
         '  npx flowlib-cli generate   # generate schema files (core + plugins)',
         '  npx drizzle-kit push   # push schema to the database',
         '',
-        'The Invect CLI reads your flowlib.config.ts, discovers all plugins',
+        'The Flowlib CLI reads your flowlib.config.ts, discovers all plugins',
         'and their required tables, and generates the complete schema.',
       );
     }
@@ -606,7 +606,7 @@ export class DatabaseService {
     const lines: string[] = [
       '',
       '╔══════════════════════════════════════════════════════════════╗',
-      '║             ⚠  INVECT — DATABASE CONNECTION FAILED  ⚠     ║',
+      '║             ⚠  FLOWLIB — DATABASE CONNECTION FAILED  ⚠     ║',
       '╚══════════════════════════════════════════════════════════════╝',
       '',
       `Database type:       ${dbType}`,
@@ -681,7 +681,7 @@ export class DatabaseService {
     const lines: string[] = [
       '',
       '╔══════════════════════════════════════════════════════════════╗',
-      '║        ⚠  INVECT — DATABASE CONNECTIVITY CHECK FAILED ⚠   ║',
+      '║        ⚠  FLOWLIB — DATABASE CONNECTIVITY CHECK FAILED ⚠   ║',
       '╚══════════════════════════════════════════════════════════════╝',
       '',
       'A connection was established but a simple SELECT query failed.',
@@ -718,7 +718,7 @@ class Database {
   public readonly flowTriggers: FlowTriggersModel;
   public readonly chatMessages: ChatMessagesModel;
 
-  constructor(_connection: DatabaseConnection, logger: Logger, adapter: InvectAdapter) {
+  constructor(_connection: DatabaseConnection, logger: Logger, adapter: FlowlibAdapter) {
     this.flows = new FlowsModel(adapter, logger);
     this.flowVersions = new FlowVersionsModel(adapter, logger);
     this.flowRuns = new FlowRunsModel(adapter, logger);

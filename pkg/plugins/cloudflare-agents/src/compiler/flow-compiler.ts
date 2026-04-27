@@ -1,7 +1,7 @@
 // ============================================================================
 // Flow → Cloudflare Workflow Compiler
 //
-// Reads an InvectDefinition (nodes + edges) and emits a TypeScript source
+// Reads an FlowlibDefinition (nodes + edges) and emits a TypeScript source
 // file containing a Cloudflare AgentWorkflow (or standalone Workflow) class
 // that executes the same logic.
 // ============================================================================
@@ -9,7 +9,7 @@
 import type {
   FlowNode as FlowNodeDefinitions,
   FlowEdge,
-  InvectDefinition,
+  FlowlibDefinition,
 } from '@flowlib/core/types';
 import {
   isIfElseType,
@@ -435,7 +435,7 @@ function getBranchGuard(
 // ── Main compiler ──────────────────────────────────────────────────────────
 
 export interface CompileInput {
-  definition: InvectDefinition;
+  definition: FlowlibDefinition;
   flowId: string;
   flowName: string;
   version: number;
@@ -615,7 +615,7 @@ export function compileFlow(input: CompileInput): CompileResult {
     `// ── Runtime helpers ────────────────────────────────────────────`,
     '',
     `/**`,
-    ` * Resolve Invect template expressions: \`{{ expr }}\``,
+    ` * Resolve Flowlib template expressions: \`{{ expr }}\``,
     ` * In the Cloudflare runtime we evaluate simple property access.`,
     ` */`,
     `function resolveTemplate(template: string, data: Record<string, unknown>): string {`,

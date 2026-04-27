@@ -16,7 +16,7 @@ import { randomUUID } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import Database from 'better-sqlite3';
 import { hashPassword } from 'better-auth/crypto';
-import { createInvect, type InvectDefinition } from '@flowlib/core';
+import { createFlowlib, type FlowlibDefinition } from '@flowlib/core';
 
 const currentDir = path.dirname(fileURLToPath(import.meta.url));
 const sqlitePath = path.resolve(currentDir, '../dev.db');
@@ -67,7 +67,7 @@ const TEAMS = [
 
 // ─── Flow definitions (simple, UI-testable) ──────────────────
 
-function simpleFlow(name: string, description: string): InvectDefinition {
+function simpleFlow(name: string, description: string): FlowlibDefinition {
   return {
     nodes: [
       {
@@ -178,7 +178,7 @@ async function main() {
 
   const existingScopeRows = db
     .prepare(
-      `SELECT id, name FROM invect_rbac_teams WHERE name IN (${scopeNames.map(() => '?').join(', ')})`,
+      `SELECT id, name FROM flowlib_rbac_teams WHERE name IN (${scopeNames.map(() => '?').join(', ')})`,
     )
     .all(...scopeNames) as Array<{ id: string; name: string }>;
 
@@ -186,19 +186,19 @@ async function main() {
     const existingScopeIds = existingScopeRows.map((row) => row.id);
     const placeholders = existingScopeIds.map(() => '?').join(', ');
 
-    db.prepare(`UPDATE invect_flows SET scope_id = NULL WHERE scope_id IN (${placeholders})`).run(
+    db.prepare(`UPDATE flowlib_flows SET scope_id = NULL WHERE scope_id IN (${placeholders})`).run(
       ...existingScopeIds,
     );
-    db.prepare(`DELETE FROM invect_flow_access WHERE team_id IN (${placeholders})`).run(
+    db.prepare(`DELETE FROM flowlib_flow_access WHERE team_id IN (${placeholders})`).run(
       ...existingScopeIds,
     );
     db.prepare(
-      `DELETE FROM invect_rbac_scope_access WHERE scope_id IN (${placeholders}) OR team_id IN (${placeholders})`,
+      `DELETE FROM flowlib_rbac_scope_access WHERE scope_id IN (${placeholders}) OR team_id IN (${placeholders})`,
     ).run(...existingScopeIds, ...existingScopeIds);
-    db.prepare(`DELETE FROM invect_rbac_team_members WHERE team_id IN (${placeholders})`).run(
+    db.prepare(`DELETE FROM flowlib_rbac_team_members WHERE team_id IN (${placeholders})`).run(
       ...existingScopeIds,
     );
-    db.prepare(`DELETE FROM invect_rbac_teams WHERE id IN (${placeholders})`).run(
+    db.prepare(`DELETE FROM flowlib_rbac_teams WHERE id IN (${placeholders})`).run(
       ...existingScopeIds,
     );
 
@@ -206,11 +206,11 @@ async function main() {
   }
 
   const insertTeam = db.prepare(`
-    INSERT OR REPLACE INTO invect_rbac_teams (id, name, description, parent_id, created_by, created_at, updated_at)
+    INSERT OR REPLACE INTO flowlib_rbac_teams (id, name, description, parent_id, created_by, created_at, updated_at)
     VALUES (?, ?, ?, ?, ?, ?, ?)
   `);
   const insertMember = db.prepare(`
-    INSERT OR IGNORE INTO invect_rbac_team_members (id, team_id, user_id, created_at)
+    INSERT OR IGNORE INTO flowlib_rbac_team_members (id, team_id, user_id, created_at)
     VALUES (?, ?, ?, ?)
   `);
 
@@ -248,8 +248,8 @@ async function main() {
   // ── 3. Seed flows + access ─────────────────────────────────
   console.log('\n📦 Seeding flows…');
 
-  const flowlib = await createInvect({
-    encryptionKey: process.env.INVECT_ENCRYPTION_KEY || 'dGVzdC1lbmNyeXB0aW9uLWtleS0xMjM0NTY3ODkw',
+  const flowlib = await createFlowlib({
+    encryptionKey: process.env.FLOWLIB_ENCRYPTION_KEY || 'dGVzdC1lbmNyeXB0aW9uLWtleS0xMjM0NTY3ODkw',
     database: {
       type: 'sqlite',
       connectionString: `file:${sqlitePath}`,
@@ -268,7 +268,7 @@ async function main() {
 
     const flow = await flowlib.flows.create({ name: f.name, isActive: false });
     await flowlib.versions.create(flow.id, {
-      invectDefinition: simpleFlow(f.name, f.desc),
+      flowlibDefinition: simpleFlow(f.name, f.desc),
     });
     createdFlowIds.push(flow.id);
     console.log(`  ✓ ${f.name} (${flow.id})`);
@@ -280,14 +280,14 @@ async function main() {
   console.log('\n🔒 Seeding flow access…');
 
   const db2 = new Database(sqlitePath);
-  const updateFlowScope = db2.prepare('UPDATE invect_flows SET scope_id = ? WHERE id = ?');
+  const updateFlowScope = db2.prepare('UPDATE flowlib_flows SET scope_id = ? WHERE id = ?');
 
   const insertAccess = db2.prepare(`
-    INSERT OR IGNORE INTO invect_flow_access (id, flow_id, user_id, team_id, permission, granted_by, granted_at)
+    INSERT OR IGNORE INTO flowlib_flow_access (id, flow_id, user_id, team_id, permission, granted_by, granted_at)
     VALUES (?, ?, ?, ?, ?, ?, ?)
   `);
   const insertScopeAccess = db2.prepare(`
-    INSERT OR IGNORE INTO invect_rbac_scope_access (id, scope_id, user_id, team_id, permission, granted_by, granted_at)
+    INSERT OR IGNORE INTO flowlib_rbac_scope_access (id, scope_id, user_id, team_id, permission, granted_by, granted_at)
     VALUES (?, ?, ?, ?, ?, ?, ?)
   `);
 

@@ -2,7 +2,7 @@
   "name": "@flowlib/nestjs",
   "version": "0.0.12",
   "private": false,
-  "description": "A NestJS module for executing Invect workflows with batch processing capabilities",
+  "description": "A NestJS module for executing Flowlib workflows with batch processing capabilities",
   "keywords": [
     "ai",
     "anthropic",

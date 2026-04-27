@@ -41,7 +41,7 @@ async function pull(deps: SyncDeps, presetFlowId?: string): Promise<void> {
   const logger = getExtensionLogger();
   const client = deps.getClient();
   if (!client) {
-    void vscode.window.showWarningMessage('Connect to an Invect backend first.');
+    void vscode.window.showWarningMessage('Connect to an Flowlib backend first.');
     return;
   }
 
@@ -95,7 +95,7 @@ async function push(deps: SyncDeps): Promise<void> {
   const logger = getExtensionLogger();
   const client = deps.getClient();
   if (!client) {
-    void vscode.window.showWarningMessage('Connect to an Invect backend first.');
+    void vscode.window.showWarningMessage('Connect to an Flowlib backend first.');
     return;
   }
   const editor = vscode.window.activeTextEditor;

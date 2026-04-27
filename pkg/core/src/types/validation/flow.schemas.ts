@@ -1,9 +1,9 @@
-// Flow-related Zod validation schemas for Invect API
+// Flow-related Zod validation schemas for Flowlib API
 // Shared across all framework adapters (Express, NestJS, etc.)
 
 import { z } from 'zod/v4';
 import { successResponseSchema, tagsSchema } from './common.schemas';
-import { invectDefinitionSchema } from 'src/services/flow-versions/schemas-fresh';
+import { flowlibDefinitionSchema } from 'src/services/flow-versions/schemas-fresh';
 import { PaginatedResponseSchema } from 'src/schemas/pagination-sort-filter';
 
 /**
@@ -52,7 +52,7 @@ export const flowSchema = z.object({
 export const flowVersionSchema = z.object({
   id: z.string(),
   flowId: z.string(),
-  invectDefinition: invectDefinitionSchema,
+  flowlibDefinition: flowlibDefinitionSchema,
   isDraft: z.boolean().default(true),
   createdBy: z.string().nullable(),
   createdAt: z.string().datetime(),
@@ -69,7 +69,7 @@ export const flowVersionsResponseSchema = PaginatedResponseSchema(flowVersionSch
 /**
  * Type inference helpers
  */
-export type InvectDefinitionSchema = z.infer<typeof invectDefinitionSchema>;
+export type FlowlibDefinitionSchema = z.infer<typeof flowlibDefinitionSchema>;
 export type CreateFlowSchema = z.infer<typeof createFlowSchema>;
 export type UpdateFlowSchema = z.infer<typeof updateFlowSchema>;
 export type FlowSchema = z.infer<typeof flowSchema>;
@@ -80,6 +80,6 @@ export type FlowVersionResponseSchema = z.infer<typeof flowVersionResponseSchema
 export type FlowVersionsResponseSchema = z.infer<typeof flowVersionsResponseSchema>;
 
 // Schema-derived node and edge types (recommended for new code)
-export type SchemaFlowNode = z.infer<typeof invectDefinitionSchema>['nodes'][0];
-export type SchemaFlowEdge = z.infer<typeof invectDefinitionSchema>['edges'][0];
-export type SchemaInvectDefinition = z.infer<typeof invectDefinitionSchema>;
+export type SchemaFlowNode = z.infer<typeof flowlibDefinitionSchema>['nodes'][0];
+export type SchemaFlowEdge = z.infer<typeof flowlibDefinitionSchema>['edges'][0];
+export type SchemaFlowlibDefinition = z.infer<typeof flowlibDefinitionSchema>;

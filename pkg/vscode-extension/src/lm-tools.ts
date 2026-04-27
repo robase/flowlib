@@ -11,13 +11,13 @@
  * Tools currently exposed (all read-only-ish or sandboxed by the
  * embedded backend):
  *
- *   - `invect_list_flows`     — workspace `.flow.ts` files + their DB ids
- *   - `invect_get_flow`       — parse a file, return its definition
- *   - `invect_validate_flow`  — parse + report errors
- *   - `invect_run_flow`       — execute a flow, return run id + status
- *   - `invect_list_runs`      — recent runs for a flow
- *   - `invect_get_run`        — node executions for a single run
- *   - `invect_list_actions`   — every action available in the embedded backend
+ *   - `flowlib_list_flows`     — workspace `.flow.ts` files + their DB ids
+ *   - `flowlib_get_flow`       — parse a file, return its definition
+ *   - `flowlib_validate_flow`  — parse + report errors
+ *   - `flowlib_run_flow`       — execute a flow, return run id + status
+ *   - `flowlib_list_runs`      — recent runs for a flow
+ *   - `flowlib_get_run`        — node executions for a single run
+ *   - `flowlib_list_actions`   — every action available in the embedded backend
  */
 
 import * as vscode from 'vscode';
@@ -39,13 +39,13 @@ export function registerLanguageModelTools(deps: LmToolDeps): vscode.Disposable[
   }
   const reg = lm.registerTool.bind(lm);
   return [
-    reg('invect_list_flows', new ListFlowsTool(deps)),
-    reg('invect_get_flow', new GetFlowTool(deps)),
-    reg('invect_validate_flow', new ValidateFlowTool()),
-    reg('invect_run_flow', new RunFlowTool(deps)),
-    reg('invect_list_runs', new ListRunsTool(deps)),
-    reg('invect_get_run', new GetRunTool(deps)),
-    reg('invect_list_actions', new ListActionsTool(deps)),
+    reg('flowlib_list_flows', new ListFlowsTool(deps)),
+    reg('flowlib_get_flow', new GetFlowTool(deps)),
+    reg('flowlib_validate_flow', new ValidateFlowTool()),
+    reg('flowlib_run_flow', new RunFlowTool(deps)),
+    reg('flowlib_list_runs', new ListRunsTool(deps)),
+    reg('flowlib_get_run', new GetRunTool(deps)),
+    reg('flowlib_list_actions', new ListActionsTool(deps)),
   ];
 }
 
@@ -83,7 +83,7 @@ async function readFlow(
 class ListFlowsTool implements vscode.LanguageModelTool<Record<string, never>> {
   constructor(private readonly deps: LmToolDeps) {}
   prepareInvocation(): vscode.PreparedToolInvocation {
-    return { invocationMessage: 'Listing Invect flows in workspace…' };
+    return { invocationMessage: 'Listing Flowlib flows in workspace…' };
   }
   async invoke(): Promise<vscode.LanguageModelToolResult> {
     const flows = await this.deps.getBackend().listFlows();
@@ -152,7 +152,7 @@ class RunFlowTool implements vscode.LanguageModelTool<RunFlowInput> {
       // Running a flow can have side effects (HTTP requests, LLM calls,
       // emails, etc.) so we ask for explicit confirmation.
       confirmationMessages: {
-        title: 'Run Invect flow?',
+        title: 'Run Flowlib flow?',
         message: new vscode.MarkdownString(
           `The assistant wants to execute \`${opts.input.fileUri}\` against the embedded backend. The flow may make external API calls.`,
         ),
@@ -213,7 +213,7 @@ class GetRunTool implements vscode.LanguageModelTool<RunIdInput> {
 class ListActionsTool implements vscode.LanguageModelTool<Record<string, never>> {
   constructor(private readonly deps: LmToolDeps) {}
   prepareInvocation(): vscode.PreparedToolInvocation {
-    return { invocationMessage: 'Listing available Invect actions…' };
+    return { invocationMessage: 'Listing available Flowlib actions…' };
   }
   async invoke(): Promise<vscode.LanguageModelToolResult> {
     const actions = await this.deps.getBackend().listActions();

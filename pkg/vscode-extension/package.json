@@ -1,9 +1,9 @@
 {
   "name": "@flowlib/vscode",
-  "displayName": "Invect",
+  "displayName": "Flowlib",
   "version": "0.0.1",
   "private": true,
-  "description": "Edit Invect flows visually inside VSCode. .flow.ts files are the source of truth.",
+  "description": "Edit Flowlib flows visually inside VSCode. .flow.ts files are the source of truth.",
   "categories": [
     "Other",
     "Visualization"
@@ -84,81 +84,81 @@
     "commands": [
       {
         "command": "flowlib.hello",
-        "title": "Invect: Hello",
-        "category": "Invect"
+        "title": "Flowlib: Hello",
+        "category": "Flowlib"
       },
       {
         "command": "flowlib.showLogs",
-        "title": "Invect: Show Logs",
-        "category": "Invect"
+        "title": "Flowlib: Show Logs",
+        "category": "Flowlib"
       },
       {
         "command": "flowlib.trustWorkspace",
-        "title": "Invect: Trust Workspace",
-        "category": "Invect"
+        "title": "Flowlib: Trust Workspace",
+        "category": "Flowlib"
       },
       {
         "command": "flowlib.connect",
-        "title": "Invect: Connect to Backend",
-        "category": "Invect"
+        "title": "Flowlib: Connect to Backend",
+        "category": "Flowlib"
       },
       {
         "command": "flowlib.disconnect",
-        "title": "Invect: Disconnect",
-        "category": "Invect"
+        "title": "Flowlib: Disconnect",
+        "category": "Flowlib"
       },
       {
         "command": "flowlib.refreshFlows",
-        "title": "Invect: Refresh Flows",
-        "category": "Invect",
+        "title": "Flowlib: Refresh Flows",
+        "category": "Flowlib",
         "icon": "$(refresh)"
       },
       {
         "command": "flowlib.pullFromBackend",
-        "title": "Invect: Pull Flow from Backend",
-        "category": "Invect"
+        "title": "Flowlib: Pull Flow from Backend",
+        "category": "Flowlib"
       },
       {
         "command": "flowlib.pushToBackend",
-        "title": "Invect: Push Flow to Backend",
-        "category": "Invect"
+        "title": "Flowlib: Push Flow to Backend",
+        "category": "Flowlib"
       },
       {
         "command": "flowlib.newFlow",
-        "title": "Invect: New Flow",
-        "category": "Invect"
+        "title": "Flowlib: New Flow",
+        "category": "Flowlib"
       },
       {
         "command": "flowlib.openCredentials",
-        "title": "Invect: Open Credentials",
-        "category": "Invect"
+        "title": "Flowlib: Open Credentials",
+        "category": "Flowlib"
       },
       {
         "command": "flowlib.openWebhooks",
-        "title": "Invect: Open Webhooks",
-        "category": "Invect"
+        "title": "Flowlib: Open Webhooks",
+        "category": "Flowlib"
       },
       {
         "command": "flowlib.viewRun",
-        "title": "Invect: View Run",
-        "category": "Invect"
+        "title": "Flowlib: View Run",
+        "category": "Flowlib"
       },
       {
         "command": "flowlib.editAsCode",
-        "title": "Invect: Edit as Code",
-        "category": "Invect",
+        "title": "Flowlib: Edit as Code",
+        "category": "Flowlib",
         "icon": "$(code)"
       },
       {
         "command": "flowlib.editVisually",
-        "title": "Invect: Edit Visually",
-        "category": "Invect",
+        "title": "Flowlib: Edit Visually",
+        "category": "Flowlib",
         "icon": "$(symbol-event)"
       },
       {
         "command": "flowlib.showMcpConfig",
-        "title": "Invect: Show MCP Config (Claude Code, Cursor, Claude Desktop)",
-        "category": "Invect",
+        "title": "Flowlib: Show MCP Config (Claude Code, Cursor, Claude Desktop)",
+        "category": "Flowlib",
         "icon": "$(plug)"
       }
     ],
@@ -166,7 +166,7 @@
       "activitybar": [
         {
           "id": "flowlib",
-          "title": "Invect",
+          "title": "Flowlib",
           "icon": "resources/flowlib.svg"
         }
       ]
@@ -215,7 +215,7 @@
     "customEditors": [
       {
         "viewType": "flowlib.flowEditor",
-        "displayName": "Invect Flow Editor",
+        "displayName": "Flowlib Flow Editor",
         "selector": [
           {
             "filenamePattern": "*.flow.ts"
@@ -226,11 +226,11 @@
     ],
     "languageModelTools": [
       {
-        "name": "invect_list_flows",
-        "displayName": "List Invect flows",
+        "name": "flowlib_list_flows",
+        "displayName": "List Flowlib flows",
         "modelDescription": "Returns the list of .flow.ts files in the workspace plus their backing DB flow ids. Useful as a first step before reading or running a specific flow.",
         "canBeReferencedInPrompt": true,
-        "toolReferenceName": "invectListFlows",
+        "toolReferenceName": "flowlibListFlows",
         "icon": "$(list-tree)",
         "tags": [
           "flowlib"
@@ -242,11 +242,11 @@
         }
       },
       {
-        "name": "invect_get_flow",
-        "displayName": "Read Invect flow",
-        "modelDescription": "Parses an Invect .flow.ts file (using the SDK evaluator) and returns its full definition: nodes (with type, params, referenceId, etc.) and edges. Use this when the user asks about the structure of a flow.",
+        "name": "flowlib_get_flow",
+        "displayName": "Read Flowlib flow",
+        "modelDescription": "Parses an Flowlib .flow.ts file (using the SDK evaluator) and returns its full definition: nodes (with type, params, referenceId, etc.) and edges. Use this when the user asks about the structure of a flow.",
         "canBeReferencedInPrompt": true,
-        "toolReferenceName": "invectGetFlow",
+        "toolReferenceName": "flowlibGetFlow",
         "icon": "$(symbol-event)",
         "tags": [
           "flowlib"
@@ -266,11 +266,11 @@
         }
       },
       {
-        "name": "invect_validate_flow",
-        "displayName": "Validate Invect flow",
+        "name": "flowlib_validate_flow",
+        "displayName": "Validate Flowlib flow",
         "modelDescription": "Parses a .flow.ts file and reports whether it's structurally valid. Returns either { valid: true, nodeCount, edgeCount } or { valid: false, error }.",
         "canBeReferencedInPrompt": true,
-        "toolReferenceName": "invectValidateFlow",
+        "toolReferenceName": "flowlibValidateFlow",
         "icon": "$(check)",
         "tags": [
           "flowlib"
@@ -290,11 +290,11 @@
         }
       },
       {
-        "name": "invect_run_flow",
-        "displayName": "Run Invect flow",
-        "modelDescription": "Executes an Invect flow against the embedded backend with the supplied inputs. Returns the flow run id and initial status. The flow may make external API calls (HTTP, LLM, etc.); the user is asked to confirm before execution.",
+        "name": "flowlib_run_flow",
+        "displayName": "Run Flowlib flow",
+        "modelDescription": "Executes an Flowlib flow against the embedded backend with the supplied inputs. Returns the flow run id and initial status. The flow may make external API calls (HTTP, LLM, etc.); the user is asked to confirm before execution.",
         "canBeReferencedInPrompt": true,
-        "toolReferenceName": "invectRunFlow",
+        "toolReferenceName": "flowlibRunFlow",
         "icon": "$(play)",
         "tags": [
           "flowlib"
@@ -319,11 +319,11 @@
         }
       },
       {
-        "name": "invect_list_runs",
-        "displayName": "List Invect runs",
+        "name": "flowlib_list_runs",
+        "displayName": "List Flowlib runs",
         "modelDescription": "Returns recent flow runs for a flow, newest first. Includes status, started/completed times, duration, and any error.",
         "canBeReferencedInPrompt": true,
-        "toolReferenceName": "invectListRuns",
+        "toolReferenceName": "flowlibListRuns",
         "icon": "$(history)",
         "tags": [
           "flowlib"
@@ -343,11 +343,11 @@
         }
       },
       {
-        "name": "invect_get_run",
-        "displayName": "Get Invect run details",
+        "name": "flowlib_get_run",
+        "displayName": "Get Flowlib run details",
         "modelDescription": "Returns per-node executions for a single flow run — status, timing, error per node. Use this to debug a failed run.",
         "canBeReferencedInPrompt": true,
-        "toolReferenceName": "invectGetRun",
+        "toolReferenceName": "flowlibGetRun",
         "icon": "$(debug)",
         "tags": [
           "flowlib"
@@ -357,7 +357,7 @@
           "properties": {
             "runId": {
               "type": "string",
-              "description": "Flow run id (UUID) — get one from invect_list_runs"
+              "description": "Flow run id (UUID) — get one from flowlib_list_runs"
             }
           },
           "required": [
@@ -367,11 +367,11 @@
         }
       },
       {
-        "name": "invect_list_actions",
-        "displayName": "List Invect actions",
+        "name": "flowlib_list_actions",
+        "displayName": "List Flowlib actions",
         "modelDescription": "Returns every action (node type) available in the embedded backend — id, name, description. Use this to discover what nodes can be added to a flow.",
         "canBeReferencedInPrompt": true,
-        "toolReferenceName": "invectListActions",
+        "toolReferenceName": "flowlibListActions",
         "icon": "$(extensions)",
         "tags": [
           "flowlib"
@@ -384,7 +384,7 @@
       }
     ],
     "configuration": {
-      "title": "Invect",
+      "title": "Flowlib",
       "properties": {
         "flowlib.backendUrl": {
           "type": "string",
@@ -392,7 +392,7 @@
           "scope": "resource",
           "pattern": "^(https?://.*)?$",
           "patternErrorMessage": "Backend URL must start with http:// or https://",
-          "description": "URL of the Invect backend (e.g. http://localhost:3000/flowlib). Leave empty to work offline."
+          "description": "URL of the Flowlib backend (e.g. http://localhost:3000/flowlib). Leave empty to work offline."
         },
         "flowlib.autoSaveDebounceMs": {
           "type": "number",

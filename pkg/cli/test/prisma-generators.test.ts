@@ -200,7 +200,7 @@ describe('generatePrismaSchema — new file (no existing schema)', () => {
 // =============================================================================
 
 describe('generatePrismaSchema — merge into existing schema', () => {
-  it('should preserve existing User model when adding Invect models (PostgreSQL)', async () => {
+  it('should preserve existing User model when adding Flowlib models (PostgreSQL)', async () => {
     const filePath = path.join(tmpDir, 'schema.prisma');
     fs.writeFileSync(filePath, EXISTING_PG_SCHEMA, 'utf-8');
 
@@ -215,7 +215,7 @@ describe('generatePrismaSchema — merge into existing schema', () => {
     expect(result.code).toContain('model User');
     expect(result.code).toContain('model Post');
     expect(result.code).toContain('authorId');
-    // Invect models added
+    // Flowlib models added
     expect(result.code).toContain('model Flows');
     expect(result.code).toContain('model FlowVersions');
     expect(result.code).toContain('model FlowRuns');
@@ -224,7 +224,7 @@ describe('generatePrismaSchema — merge into existing schema', () => {
     expect(result.code).toContain('provider = "postgresql"');
   });
 
-  it('should preserve existing MySQL model when adding Invect models', async () => {
+  it('should preserve existing MySQL model when adding Flowlib models', async () => {
     const filePath = path.join(tmpDir, 'schema.prisma');
     fs.writeFileSync(filePath, EXISTING_MYSQL_SCHEMA, 'utf-8');
 
@@ -238,11 +238,11 @@ describe('generatePrismaSchema — merge into existing schema', () => {
     // Existing model preserved
     expect(result.code).toContain('model Account');
     expect(result.code).toContain('password');
-    // Invect models added
+    // Flowlib models added
     expect(result.code).toContain('model Flows');
   });
 
-  it('should preserve existing SQLite model when adding Invect models', async () => {
+  it('should preserve existing SQLite model when adding Flowlib models', async () => {
     const filePath = path.join(tmpDir, 'schema.prisma');
     fs.writeFileSync(filePath, EXISTING_SQLITE_SCHEMA, 'utf-8');
 
@@ -256,7 +256,7 @@ describe('generatePrismaSchema — merge into existing schema', () => {
     // Existing model preserved
     expect(result.code).toContain('model Setting');
     expect(result.code).toContain('@unique');
-    // Invect models added
+    // Flowlib models added
     expect(result.code).toContain('model Flows');
   });
 
@@ -281,7 +281,7 @@ describe('generatePrismaSchema — merge into existing schema', () => {
     const filePath = path.join(tmpDir, 'schema.prisma');
     fs.writeFileSync(filePath, EXISTING_PG_SCHEMA, 'utf-8');
 
-    // First run — adds Invect models
+    // First run — adds Flowlib models
     const first = await generatePrismaSchema({
       plugins: [],
       provider: 'postgresql',
@@ -543,7 +543,7 @@ model User {
       expect(result.code).not.toContain('env("DATABASE_URL")');
       // User model should be preserved
       expect(result.code).toContain('model User');
-      // Invect models should be added
+      // Flowlib models should be added
       expect(result.code).toContain('model Flows');
     } finally {
       process.chdir(originalCwd);

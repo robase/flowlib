@@ -1,6 +1,6 @@
 import { FlowRunStatus, NodeExecutionStatus } from 'src/types/base';
 import {
-  InvectDefinition,
+  FlowlibDefinition,
   FlowNodeDefinitions,
   type FlowEdge,
 } from '../flow-versions/schemas-fresh';
@@ -35,14 +35,14 @@ type FlowRunCoordinatorDeps = {
   /**
    * When `false`, falls back to the legacy sequential topological loop instead
    * of the ready-set scheduler. Defaults to `true` (parallel scheduler on).
-   * Self-hosted users who previously set `INVECT_PARALLEL_SCHEDULER=0` should
+   * Self-hosted users who previously set `FLOWLIB_PARALLEL_SCHEDULER=0` should
    * pass `parallelSchedulerEnabled: false` instead — core no longer reads env.
    */
   parallelSchedulerEnabled?: boolean;
   /**
    * Maximum number of nodes to run concurrently inside the ready-set
    * scheduler. Defaults to 8. Self-hosted users who previously set
-   * `INVECT_SCHEDULER_CONCURRENCY=N` should pass `schedulerConcurrency: N`
+   * `FLOWLIB_SCHEDULER_CONCURRENCY=N` should pass `schedulerConcurrency: N`
    * instead — core no longer reads env.
    */
   schedulerConcurrency?: number;
@@ -119,7 +119,7 @@ export class FlowRunCoordinator {
    * already get equivalent liveness from the workflow engine's own retry
    * + step-resumption guarantees, so heartbeats are redundant there. To
    * disable in-process heartbeats on those runtimes, set
-   * `executionConfig.heartbeatIntervalMs = 0` in `InvectConfig`.
+   * `executionConfig.heartbeatIntervalMs = 0` in `FlowlibConfig`.
    */
   private startHeartbeat(flowRunId: string): void {
     const { heartbeatIntervalMs, flowRunsService, logger } = this.deps;
@@ -218,7 +218,7 @@ export class FlowRunCoordinator {
    */
   private async runSchedulerLoop(args: {
     flowRunId: string;
-    definition: InvectDefinition;
+    definition: FlowlibDefinition;
     schedulableNodes: readonly FlowNodeDefinitions[];
     flowInputs: Record<string, unknown>;
     useBatchProcessing: boolean | undefined;
@@ -300,7 +300,7 @@ export class FlowRunCoordinator {
 
   async executeFlowDefinition(
     execution: FlowRun,
-    definition: InvectDefinition,
+    definition: FlowlibDefinition,
     flowInputs: Record<string, unknown>,
     useBatchProcessing?: boolean,
   ): Promise<FlowRunResult> {
@@ -371,7 +371,7 @@ export class FlowRunCoordinator {
     let failedNodeError: string | undefined;
     let failedNodeId: string | undefined;
 
-    // ── Ready-set scheduler path (INVECT_PARALLEL_SCHEDULER=1) ────────────
+    // ── Ready-set scheduler path (FLOWLIB_PARALLEL_SCHEDULER=1) ────────────
     if (this.isParallelEnabled()) {
       this.applyTriggerSkip(nodes, edges, skippedNodeIds, mutableFlowInputs);
       const result = await this.runSchedulerLoop({
@@ -622,11 +622,11 @@ export class FlowRunCoordinator {
     const flowRun = await flowRunsService.getRunById(flowRunId);
     const flow = await flowsService.getFlowById(flowRun.flowId);
 
-    if (!flow?.flowVersion?.invectDefinition) {
+    if (!flow?.flowVersion?.flowlibDefinition) {
       throw new ValidationError('Flow definition not found for batch resume');
     }
 
-    const definition = flow.flowVersion.invectDefinition as InvectDefinition;
+    const definition = flow.flowVersion.flowlibDefinition as FlowlibDefinition;
 
     await flowRunsService.updateRunStatus(flowRunId, FlowRunStatus.RUNNING);
 
@@ -635,7 +635,7 @@ export class FlowRunCoordinator {
 
   async continueFlowRunFromBatch(
     flowRunId: string,
-    definition: InvectDefinition,
+    definition: FlowlibDefinition,
     flowInputs: Record<string, unknown>,
   ): Promise<FlowRunResult> {
     const {
@@ -962,7 +962,7 @@ export class FlowRunCoordinator {
   }
 
   private collectFlowOutputs(
-    _definition: InvectDefinition,
+    _definition: FlowlibDefinition,
     nodeOutputs: Map<string, NodeOutput | undefined>,
   ): Record<string, unknown> {
     const outputs: Record<string, unknown> = {};
@@ -1087,7 +1087,7 @@ export class FlowRunCoordinator {
    */
   async executeFlowToNode(
     execution: FlowRun,
-    definition: InvectDefinition,
+    definition: FlowlibDefinition,
     targetNodeId: string,
     flowInputs: Record<string, unknown>,
     useBatchProcessing?: boolean,

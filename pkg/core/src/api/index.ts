@@ -2,13 +2,13 @@
  * @flowlib/core public API — namespaced sub-APIs
  */
 
-export { createInvect } from './create-flowlib';
+export { createFlowlib } from './create-flowlib';
 
 // Sub-API types
 export type {
-  InvectInstance,
-  InvectMaintenanceOptions,
-  InvectMaintenanceResult,
+  FlowlibInstance,
+  FlowlibMaintenanceOptions,
+  FlowlibMaintenanceResult,
   FlowsAPI,
   FlowVersionsAPI,
   FlowRunsAPI,

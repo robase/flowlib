@@ -16,7 +16,7 @@
  * Self-hosted long-lived Node processes don't need to call any of these —
  * the existing `start*Polling` lifecycle methods continue to drive them
  * via timers. When a host wires a `BatchPollerAdapter` override into
- * `InvectConfig.services` (PR 2/14), the in-process timers in
+ * `FlowlibConfig.services` (PR 2/14), the in-process timers in
  * `FlowOrchestrationService` are skipped automatically and these methods
  * become the only way maintenance work runs.
  */

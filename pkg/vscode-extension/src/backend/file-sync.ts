@@ -1,6 +1,6 @@
 /**
  * Bidirectional sync between `.flow.ts` files on disk and the embedded
- * Invect server's flow_versions DB rows.
+ * Flowlib server's flow_versions DB rows.
  *
  * Two write paths share this module so the loop-prevention hashes
  * actually compose:
@@ -8,12 +8,12 @@
  *   1. **Canvas → File** (express middleware):
  *      Intercept `POST /flows/:id/versions` for file-tagged flows. Emit
  *      canonical SDK source via `@flowlib/sdk` and write to disk before
- *      forwarding to the Invect router (so the DB version is still
+ *      forwarding to the Flowlib router (so the DB version is still
  *      created — our policy is "DB caches the file").
  *
  *   2. **File → DB** (extension file watcher):
  *      On `onDidChange` for any `.flow.ts`, parse the file, post a new
- *      flow_version. The Invect SSE stream propagates to the canvas.
+ *      flow_version. The Flowlib SSE stream propagates to the canvas.
  *
  * Loop prevention: each direction records the hash of what it just
  * wrote. The other direction checks the hash before propagating; if
@@ -119,7 +119,7 @@ export class FileSync {
   // ── Canvas → File (HTTP middleware) ────────────────────────────────
 
   /**
-   * Express middleware. Mount BEFORE the Invect router and AFTER the
+   * Express middleware. Mount BEFORE the Flowlib router and AFTER the
    * JSON body parser. Intercepts file-tagged flow mutations and writes
    * the new definition to disk before forwarding.
    */
@@ -147,7 +147,7 @@ export class FileSync {
     if (!fileUri) {
       return;
     } // DB-only flow; nothing to write.
-    const def = (req.body as { invectDefinition?: unknown })?.invectDefinition;
+    const def = (req.body as { flowlibDefinition?: unknown })?.flowlibDefinition;
     if (!def) {
       return;
     }

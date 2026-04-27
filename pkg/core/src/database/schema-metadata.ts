@@ -11,20 +11,20 @@
 
 import type { SchemaMetadata } from './adapter-factory';
 
-export const INVECT_SCHEMA_META: SchemaMetadata = {
-  invect_flows: {
+export const FLOWLIB_SCHEMA_META: SchemaMetadata = {
+  flowlib_flows: {
     tags: { type: 'string[]' },
     is_active: { type: 'boolean' },
     created_at: { type: 'date' },
     updated_at: { type: 'date' },
   },
 
-  invect_flow_versions: {
-    invect_definition: { type: 'json' },
+  flowlib_flow_versions: {
+    flowlib_definition: { type: 'json' },
     created_at: { type: 'date' },
   },
 
-  invect_flow_executions: {
+  flowlib_flow_executions: {
     id: { type: 'uuid', defaultValue: 'uuid' },
     inputs: { type: 'json' },
     outputs: { type: 'json' },
@@ -37,7 +37,7 @@ export const INVECT_SCHEMA_META: SchemaMetadata = {
     node_outputs: { type: 'json' },
   },
 
-  invect_action_traces: {
+  flowlib_action_traces: {
     id: { type: 'uuid', defaultValue: 'uuid' },
     inputs: { type: 'json' },
     outputs: { type: 'json' },
@@ -48,7 +48,7 @@ export const INVECT_SCHEMA_META: SchemaMetadata = {
     completed_at: { type: 'date' },
   },
 
-  invect_batch_jobs: {
+  flowlib_batch_jobs: {
     id: { type: 'uuid', defaultValue: 'uuid' },
     request_data: { type: 'json' },
     response_data: { type: 'json' },
@@ -58,7 +58,7 @@ export const INVECT_SCHEMA_META: SchemaMetadata = {
     updated_at: { type: 'date' },
   },
 
-  invect_credentials: {
+  flowlib_credentials: {
     id: { type: 'uuid', defaultValue: 'uuid' },
     config: { type: 'json' },
     is_active: { type: 'boolean' },
@@ -68,14 +68,14 @@ export const INVECT_SCHEMA_META: SchemaMetadata = {
     updated_at: { type: 'date' },
   },
 
-  invect_flow_triggers: {
+  flowlib_flow_triggers: {
     id: { type: 'uuid', defaultValue: 'uuid' },
     is_enabled: { type: 'boolean' },
     created_at: { type: 'date' },
     updated_at: { type: 'date' },
   },
 
-  invect_chat_messages: {
+  flowlib_chat_messages: {
     id: { type: 'uuid', defaultValue: 'uuid' },
     tool_meta: { type: 'json' },
     created_at: { type: 'date' },

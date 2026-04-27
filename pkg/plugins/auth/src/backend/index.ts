@@ -1,7 +1,7 @@
 /**
  * @flowlib/user-auth — Backend Entry Point
  *
- * Wraps a [better-auth](https://better-auth.com) instance as an Invect plugin,
+ * Wraps a [better-auth](https://better-auth.com) instance as an Flowlib plugin,
  * providing:
  * - Session-based identity resolution
  * - Proxied auth routes (sign-in, sign-up, OAuth, etc.)
@@ -43,12 +43,12 @@ export type {
   BetterAuthSessionResult,
 } from './types';
 
-import type { InvectPluginDefinition } from '@flowlib/core';
+import type { FlowlibPluginDefinition } from '@flowlib/core';
 import type { AuthenticationPluginOptions } from './types';
 import { authentication } from './plugin';
 
 /**
- * Create the auth plugin definition for Invect config.
+ * Create the auth plugin definition for Flowlib config.
  *
  * @example
  * ```ts
@@ -60,7 +60,7 @@ import { authentication } from './plugin';
  * auth({ adminEmail: '...', frontend: authFrontend })
  * ```
  */
-export function auth(options: AuthenticationPluginOptions = {}): InvectPluginDefinition {
+export function auth(options: AuthenticationPluginOptions = {}): FlowlibPluginDefinition {
   return {
     id: 'user-auth',
     name: 'User Authentication',

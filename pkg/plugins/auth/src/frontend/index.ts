@@ -39,9 +39,9 @@ export type { TwoFactorVerifyFormProps } from './components/TwoFactorVerifyForm'
 export { TwoFactorSetup } from './components/TwoFactorSetup';
 export type { TwoFactorSetupProps } from './components/TwoFactorSetup';
 
-// Authenticated Invect wrapper
-export { AuthenticatedInvect } from './components/AuthenticatedInvect';
-export type { AuthenticatedInvectProps } from './components/AuthenticatedInvect';
+// Authenticated Flowlib wrapper
+export { AuthenticatedFlowlib } from './components/AuthenticatedFlowlib';
+export type { AuthenticatedFlowlibProps } from './components/AuthenticatedFlowlib';
 
 // User management page (standalone route)
 export { UserManagementPage } from './components/UserManagementPage';

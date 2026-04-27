@@ -1,7 +1,7 @@
 /**
  * RBAC Context Provider
  *
- * Wraps the Invect app tree with RBAC state — current user identity,
+ * Wraps the Flowlib app tree with RBAC state — current user identity,
  * permissions cache, and permission-checking utilities.
  *
  * Fetches GET /plugins/auth/me on mount and caches the result.

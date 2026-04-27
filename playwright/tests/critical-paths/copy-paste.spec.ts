@@ -40,7 +40,7 @@ async function createFlowWithDefinition(
   const flow = await createResp.json();
 
   const versionResp = await request.post(`${apiBase}/flows/${flow.id}/versions`, {
-    data: { invectDefinition: definition },
+    data: { flowlibDefinition: definition },
   });
   expect(versionResp.ok(), `Failed to create version for "${name}"`).toBeTruthy();
 

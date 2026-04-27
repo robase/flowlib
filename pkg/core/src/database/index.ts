@@ -1,4 +1,4 @@
-// Database layer exports for Invect core
+// Database layer exports for Flowlib core
 export * from './connection';
 export type { DatabaseDriver, DatabaseDriverType } from './drivers/types';
 export { resolveDatabaseDriverType, createDatabaseDriver } from './drivers';

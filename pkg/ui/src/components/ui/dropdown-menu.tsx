@@ -5,7 +5,7 @@ import * as DropdownMenuPrimitive from '@radix-ui/react-dropdown-menu';
 import { CheckIcon, ChevronRightIcon, CircleIcon } from 'lucide-react';
 
 import { cn } from '~/lib/utils';
-import { useInvectPortalClass } from '~/hooks/use-flowlib-portal-class';
+import { useFlowlibPortalClass } from '~/hooks/use-flowlib-portal-class';
 
 function DropdownMenu({ ...props }: React.ComponentProps<typeof DropdownMenuPrimitive.Root>) {
   return <DropdownMenuPrimitive.Root data-slot="dropdown-menu" {...props} />;
@@ -30,7 +30,7 @@ function DropdownMenuContent({
   sideOffset = 4,
   ...props
 }: React.ComponentProps<typeof DropdownMenuPrimitive.Content>) {
-  const portalClass = useInvectPortalClass();
+  const portalClass = useFlowlibPortalClass();
   return (
     <DropdownMenuPrimitive.Portal>
       <div className={portalClass}>

@@ -17,10 +17,10 @@ export function createFlowVersionsAPI(sf: ServiceFactory, logger: Logger): FlowV
 
       // Sync trigger registrations from the new version's definition
       try {
-        if (parsed.invectDefinition?.nodes) {
+        if (parsed.flowlibDefinition?.nodes) {
           await triggersService.syncTriggersForFlow(
             id,
-            parsed.invectDefinition as {
+            parsed.flowlibDefinition as {
               nodes: Array<{ id: string; type: string; params?: Record<string, unknown> }>;
             },
           );

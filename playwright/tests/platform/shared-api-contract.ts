@@ -2,13 +2,13 @@
  * Shared API contract test helpers for cross-platform parity.
  *
  * All three framework adapters (Express, NestJS, Next.js) wrap the same
- * Invect core, so their REST API surface must be identical. These helpers
+ * Flowlib core, so their REST API surface must be identical. These helpers
  * define the contract that each adapter is validated against.
  */
 import { expect, type APIRequestContext } from '@playwright/test';
 
 /**
- * Run the full Invect API contract against the given base URL.
+ * Run the full Flowlib API contract against the given base URL.
  * The caller is responsible for providing a `request` fixture and the
  * correct `apiBase` (e.g. "http://localhost:3000/flowlib").
  */
@@ -161,12 +161,12 @@ export async function runApiContract(request: APIRequestContext, apiBase: string
 }
 
 /**
- * Build the smallest valid InvectDefinition we can run end-to-end:
+ * Build the smallest valid FlowlibDefinition we can run end-to-end:
  * one input → one output. Uses the canonical action IDs ("core.input",
  * "core.output") so it works against any backend that ships the default
  * action catalogue.
  */
-function buildTrivialInvectDefinition(): {
+function buildTrivialFlowlibDefinition(): {
   nodes: Array<Record<string, unknown>>;
   edges: Array<Record<string, unknown>>;
   metadata?: Record<string, unknown>;
@@ -286,7 +286,7 @@ async function runEphemeralAndStreamContract(
   // 6a. Happy path — ephemeral run + SSE stream
   const ephemeralRes = await request.post(`${apiBase}/flow-runs/ephemeral`, {
     data: {
-      definition: buildTrivialInvectDefinition(),
+      definition: buildTrivialFlowlibDefinition(),
       inputs: { hello: 'world' },
     },
   });
@@ -330,7 +330,7 @@ async function runEphemeralAndStreamContract(
   // 6d. Ephemeral alias path /runs/ephemeral
   const aliasRes = await request.post(`${apiBase}/runs/ephemeral`, {
     data: {
-      definition: buildTrivialInvectDefinition(),
+      definition: buildTrivialFlowlibDefinition(),
       inputs: { hello: 'alias' },
     },
   });

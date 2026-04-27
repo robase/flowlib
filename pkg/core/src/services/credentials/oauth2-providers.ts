@@ -403,7 +403,7 @@ export const OAUTH2_PROVIDERS: Record<string, OAuth2ProviderDefinition> = {
     defaultScopes: ['read', 'write'],
     additionalAuthParams: {
       expiration: 'never',
-      name: 'Invect',
+      name: 'Flowlib',
     },
     supportsRefresh: false, // Trello uses OAuth 1.0a style with non-expiring tokens
     docsUrl: 'https://developer.atlassian.com/cloud/trello/guides/rest-api/authorization/',

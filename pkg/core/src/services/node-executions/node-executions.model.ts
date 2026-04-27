@@ -1,6 +1,6 @@
-// Action Traces Model for Invect core — adapter-based implementation
+// Action Traces Model for Flowlib core — adapter-based implementation
 // Unified model for node executions + agent tool executions (action_traces table)
-import type { InvectAdapter, WhereClause } from '../../database/adapter';
+import type { FlowlibAdapter, WhereClause } from '../../database/adapter';
 import { NodeExecutionStatus } from 'src/types/base';
 import { DatabaseError } from 'src/types/common/errors.types';
 import { Logger, PaginatedResponse, QueryOptions } from 'src/schemas';
@@ -104,7 +104,7 @@ interface _NodeExecutionQuery {
   offset?: number;
 }
 
-const TABLE = 'invect_action_traces';
+const TABLE = 'flowlib_action_traces';
 
 /** Filter clause to select only node-level traces (not tool traces) */
 const NODE_TRACE_FILTER: WhereClause = {
@@ -121,11 +121,11 @@ const toolTraceFilter = (parentId: string): WhereClause => ({
 });
 
 /**
- * Node Executions CRUD operations class — uses InvectAdapter.
+ * Node Executions CRUD operations class — uses FlowlibAdapter.
  */
 export class NodeExecutionsModel {
   constructor(
-    private readonly adapter: InvectAdapter,
+    private readonly adapter: FlowlibAdapter,
     private readonly logger: Logger,
   ) {}
 

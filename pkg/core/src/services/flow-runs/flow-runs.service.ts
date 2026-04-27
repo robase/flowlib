@@ -280,7 +280,7 @@ export class FlowRunsService {
         // Get flow definition for resumption
         const flow = await this.flowService.getFlowById(execution.flowId);
 
-        if (!flow?.flowVersion?.invectDefinition) {
+        if (!flow?.flowVersion?.flowlibDefinition) {
           throw new DatabaseError('Flow definition not found for resume');
         }
 

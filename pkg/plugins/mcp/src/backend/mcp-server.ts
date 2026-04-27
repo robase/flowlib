@@ -4,7 +4,7 @@
  */
 
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import type { InvectClient } from './client/types';
+import type { FlowlibClient } from './client/types';
 import { registerFlowTools } from './tools/flow-tools';
 import { registerVersionTools } from './tools/version-tools';
 import { registerRunTools } from './tools/run-tools';
@@ -33,7 +33,7 @@ export interface McpServerOptions {
   getSessionContext?: () => { sessionId?: string; userId?: string; userRole?: string } | undefined;
 }
 
-export function createMcpServer(client: InvectClient, options: McpServerOptions = {}): McpServer {
+export function createMcpServer(client: FlowlibClient, options: McpServerOptions = {}): McpServer {
   const server = new McpServer(
     {
       name: MCP_SERVER_NAME,

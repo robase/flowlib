@@ -29,7 +29,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/
 import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
 import { Card, CardContent } from '../ui/card';
-import { InvectLoader } from '../shared/InvectLoader';
+import { FlowlibLoader } from '../shared/FlowlibLoader';
 
 // Execution status constants with proper typing
 const EXECUTION_STATUSES = [
@@ -357,7 +357,7 @@ export const FlowRunsTable: React.FC<FlowRunsTableProps> = ({ basePath = '' }) =
   if (executionsLoading || flowsLoading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <InvectLoader iconClassName="h-14" label="Loading flow runs..." />
+        <FlowlibLoader iconClassName="h-14" label="Loading flow runs..." />
       </div>
     );
   }

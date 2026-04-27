@@ -24,7 +24,7 @@ export interface McpPluginOptions {
  * Scope: flow building, editing, inspection, and debugging. Intentionally
  * excludes any tool whose purpose is to invoke an LLM (chat, agent prompt
  * submission, model-prompt dry-run) — MCP clients already have an LLM and
- * should not be paying for a second one round-tripped through Invect.
+ * should not be paying for a second one round-tripped through Flowlib.
  */
 export const TOOL_IDS = {
   // Flow management

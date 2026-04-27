@@ -4,8 +4,8 @@
   "id": "82a71c48-cb19-4d91-b24a-087418a7ccd1",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
-    "invect_account": {
-      "name": "invect_account",
+    "flowlib_account": {
+      "name": "flowlib_account",
       "columns": {
         "id": {
           "name": "id",
@@ -103,10 +103,10 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "invect_account_user_id_invect_user_id_fk": {
-          "name": "invect_account_user_id_invect_user_id_fk",
-          "tableFrom": "invect_account",
-          "tableTo": "invect_user",
+        "flowlib_account_user_id_flowlib_user_id_fk": {
+          "name": "flowlib_account_user_id_flowlib_user_id_fk",
+          "tableFrom": "flowlib_account",
+          "tableTo": "flowlib_user",
           "columnsFrom": [
             "user_id"
           ],
@@ -121,8 +121,8 @@
       "uniqueConstraints": {},
       "checkConstraints": {}
     },
-    "invect_action_traces": {
-      "name": "invect_action_traces",
+    "flowlib_action_traces": {
+      "name": "flowlib_action_traces",
       "columns": {
         "id": {
           "name": "id",
@@ -242,10 +242,10 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "invect_action_traces_flow_run_id_invect_flow_executions_id_fk": {
-          "name": "invect_action_traces_flow_run_id_invect_flow_executions_id_fk",
-          "tableFrom": "invect_action_traces",
-          "tableTo": "invect_flow_executions",
+        "flowlib_action_traces_flow_run_id_flowlib_flow_executions_id_fk": {
+          "name": "flowlib_action_traces_flow_run_id_flowlib_flow_executions_id_fk",
+          "tableFrom": "flowlib_action_traces",
+          "tableTo": "flowlib_flow_executions",
           "columnsFrom": [
             "flow_run_id"
           ],
@@ -255,10 +255,10 @@
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
-        "invect_action_traces_parent_node_execution_id_invect_action_traces_id_fk": {
-          "name": "invect_action_traces_parent_node_execution_id_invect_action_traces_id_fk",
-          "tableFrom": "invect_action_traces",
-          "tableTo": "invect_action_traces",
+        "flowlib_action_traces_parent_node_execution_id_flowlib_action_traces_id_fk": {
+          "name": "flowlib_action_traces_parent_node_execution_id_flowlib_action_traces_id_fk",
+          "tableFrom": "flowlib_action_traces",
+          "tableTo": "flowlib_action_traces",
           "columnsFrom": [
             "parent_node_execution_id"
           ],
@@ -273,8 +273,8 @@
       "uniqueConstraints": {},
       "checkConstraints": {}
     },
-    "invect_apikey": {
-      "name": "invect_apikey",
+    "flowlib_apikey": {
+      "name": "flowlib_apikey",
       "columns": {
         "id": {
           "name": "id",
@@ -441,8 +441,8 @@
       "uniqueConstraints": {},
       "checkConstraints": {}
     },
-    "invect_batch_jobs": {
-      "name": "invect_batch_jobs",
+    "flowlib_batch_jobs": {
+      "name": "flowlib_batch_jobs",
       "columns": {
         "id": {
           "name": "id",
@@ -542,10 +542,10 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "invect_batch_jobs_flow_run_id_invect_flow_executions_id_fk": {
-          "name": "invect_batch_jobs_flow_run_id_invect_flow_executions_id_fk",
-          "tableFrom": "invect_batch_jobs",
-          "tableTo": "invect_flow_executions",
+        "flowlib_batch_jobs_flow_run_id_flowlib_flow_executions_id_fk": {
+          "name": "flowlib_batch_jobs_flow_run_id_flowlib_flow_executions_id_fk",
+          "tableFrom": "flowlib_batch_jobs",
+          "tableTo": "flowlib_flow_executions",
           "columnsFrom": [
             "flow_run_id"
           ],
@@ -560,8 +560,8 @@
       "uniqueConstraints": {},
       "checkConstraints": {}
     },
-    "invect_chat_messages": {
-      "name": "invect_chat_messages",
+    "flowlib_chat_messages": {
+      "name": "flowlib_chat_messages",
       "columns": {
         "id": {
           "name": "id",
@@ -610,10 +610,10 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "invect_chat_messages_flow_id_invect_flows_id_fk": {
-          "name": "invect_chat_messages_flow_id_invect_flows_id_fk",
-          "tableFrom": "invect_chat_messages",
-          "tableTo": "invect_flows",
+        "flowlib_chat_messages_flow_id_flowlib_flows_id_fk": {
+          "name": "flowlib_chat_messages_flow_id_flowlib_flows_id_fk",
+          "tableFrom": "flowlib_chat_messages",
+          "tableTo": "flowlib_flows",
           "columnsFrom": [
             "flow_id"
           ],
@@ -628,8 +628,8 @@
       "uniqueConstraints": {},
       "checkConstraints": {}
     },
-    "invect_credentials": {
-      "name": "invect_credentials",
+    "flowlib_credentials": {
+      "name": "flowlib_credentials",
       "columns": {
         "id": {
           "name": "id",
@@ -740,8 +740,8 @@
       "uniqueConstraints": {},
       "checkConstraints": {}
     },
-    "invect_flow_access": {
-      "name": "invect_flow_access",
+    "flowlib_flow_access": {
+      "name": "flowlib_flow_access",
       "columns": {
         "id": {
           "name": "id",
@@ -804,10 +804,10 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "invect_flow_access_flow_id_invect_flows_id_fk": {
-          "name": "invect_flow_access_flow_id_invect_flows_id_fk",
-          "tableFrom": "invect_flow_access",
-          "tableTo": "invect_flows",
+        "flowlib_flow_access_flow_id_flowlib_flows_id_fk": {
+          "name": "flowlib_flow_access_flow_id_flowlib_flows_id_fk",
+          "tableFrom": "flowlib_flow_access",
+          "tableTo": "flowlib_flows",
           "columnsFrom": [
             "flow_id"
           ],
@@ -822,8 +822,8 @@
       "uniqueConstraints": {},
       "checkConstraints": {}
     },
-    "invect_flow_executions": {
-      "name": "invect_flow_executions",
+    "flowlib_flow_executions": {
+      "name": "flowlib_flow_executions",
       "columns": {
         "id": {
           "name": "id",
@@ -949,10 +949,10 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "invect_flow_executions_flow_id_invect_flows_id_fk": {
-          "name": "invect_flow_executions_flow_id_invect_flows_id_fk",
-          "tableFrom": "invect_flow_executions",
-          "tableTo": "invect_flows",
+        "flowlib_flow_executions_flow_id_flowlib_flows_id_fk": {
+          "name": "flowlib_flow_executions_flow_id_flowlib_flows_id_fk",
+          "tableFrom": "flowlib_flow_executions",
+          "tableTo": "flowlib_flows",
           "columnsFrom": [
             "flow_id"
           ],
@@ -967,8 +967,8 @@
       "uniqueConstraints": {},
       "checkConstraints": {}
     },
-    "invect_flow_triggers": {
-      "name": "invect_flow_triggers",
+    "flowlib_flow_triggers": {
+      "name": "flowlib_flow_triggers",
       "columns": {
         "id": {
           "name": "id",
@@ -1059,8 +1059,8 @@
         }
       },
       "indexes": {
-        "invect_flow_triggers_webhook_path_unique": {
-          "name": "invect_flow_triggers_webhook_path_unique",
+        "flowlib_flow_triggers_webhook_path_unique": {
+          "name": "flowlib_flow_triggers_webhook_path_unique",
           "columns": [
             "webhook_path"
           ],
@@ -1068,10 +1068,10 @@
         }
       },
       "foreignKeys": {
-        "invect_flow_triggers_flow_id_invect_flows_id_fk": {
-          "name": "invect_flow_triggers_flow_id_invect_flows_id_fk",
-          "tableFrom": "invect_flow_triggers",
-          "tableTo": "invect_flows",
+        "flowlib_flow_triggers_flow_id_flowlib_flows_id_fk": {
+          "name": "flowlib_flow_triggers_flow_id_flowlib_flows_id_fk",
+          "tableFrom": "flowlib_flow_triggers",
+          "tableTo": "flowlib_flows",
           "columnsFrom": [
             "flow_id"
           ],
@@ -1086,8 +1086,8 @@
       "uniqueConstraints": {},
       "checkConstraints": {}
     },
-    "invect_flow_versions": {
-      "name": "invect_flow_versions",
+    "flowlib_flow_versions": {
+      "name": "flowlib_flow_versions",
       "columns": {
         "flow_id": {
           "name": "flow_id",
@@ -1103,8 +1103,8 @@
           "notNull": true,
           "autoincrement": false
         },
-        "invect_definition": {
-          "name": "invect_definition",
+        "flowlib_definition": {
+          "name": "flowlib_definition",
           "type": "text",
           "primaryKey": false,
           "notNull": true,
@@ -1128,10 +1128,10 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "invect_flow_versions_flow_id_invect_flows_id_fk": {
-          "name": "invect_flow_versions_flow_id_invect_flows_id_fk",
-          "tableFrom": "invect_flow_versions",
-          "tableTo": "invect_flows",
+        "flowlib_flow_versions_flow_id_flowlib_flows_id_fk": {
+          "name": "flowlib_flow_versions_flow_id_flowlib_flows_id_fk",
+          "tableFrom": "flowlib_flow_versions",
+          "tableTo": "flowlib_flows",
           "columnsFrom": [
             "flow_id"
           ],
@@ -1143,19 +1143,19 @@
         }
       },
       "compositePrimaryKeys": {
-        "invect_flow_versions_version_flow_id_pk": {
+        "flowlib_flow_versions_version_flow_id_pk": {
           "columns": [
             "version",
             "flow_id"
           ],
-          "name": "invect_flow_versions_version_flow_id_pk"
+          "name": "flowlib_flow_versions_version_flow_id_pk"
         }
       },
       "uniqueConstraints": {},
       "checkConstraints": {}
     },
-    "invect_flows": {
-      "name": "invect_flows",
+    "flowlib_flows": {
+      "name": "flowlib_flows",
       "columns": {
         "id": {
           "name": "id",
@@ -1226,10 +1226,10 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "invect_flows_scope_id_invect_rbac_teams_id_fk": {
-          "name": "invect_flows_scope_id_invect_rbac_teams_id_fk",
-          "tableFrom": "invect_flows",
-          "tableTo": "invect_rbac_teams",
+        "flowlib_flows_scope_id_flowlib_rbac_teams_id_fk": {
+          "name": "flowlib_flows_scope_id_flowlib_rbac_teams_id_fk",
+          "tableFrom": "flowlib_flows",
+          "tableTo": "flowlib_rbac_teams",
           "columnsFrom": [
             "scope_id"
           ],
@@ -1244,8 +1244,8 @@
       "uniqueConstraints": {},
       "checkConstraints": {}
     },
-    "invect_rbac_scope_access": {
-      "name": "invect_rbac_scope_access",
+    "flowlib_rbac_scope_access": {
+      "name": "flowlib_rbac_scope_access",
       "columns": {
         "id": {
           "name": "id",
@@ -1301,10 +1301,10 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "invect_rbac_scope_access_scope_id_invect_rbac_teams_id_fk": {
-          "name": "invect_rbac_scope_access_scope_id_invect_rbac_teams_id_fk",
-          "tableFrom": "invect_rbac_scope_access",
-          "tableTo": "invect_rbac_teams",
+        "flowlib_rbac_scope_access_scope_id_flowlib_rbac_teams_id_fk": {
+          "name": "flowlib_rbac_scope_access_scope_id_flowlib_rbac_teams_id_fk",
+          "tableFrom": "flowlib_rbac_scope_access",
+          "tableTo": "flowlib_rbac_teams",
           "columnsFrom": [
             "scope_id"
           ],
@@ -1319,8 +1319,8 @@
       "uniqueConstraints": {},
       "checkConstraints": {}
     },
-    "invect_rbac_team_members": {
-      "name": "invect_rbac_team_members",
+    "flowlib_rbac_team_members": {
+      "name": "flowlib_rbac_team_members",
       "columns": {
         "id": {
           "name": "id",
@@ -1354,10 +1354,10 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "invect_rbac_team_members_team_id_invect_rbac_teams_id_fk": {
-          "name": "invect_rbac_team_members_team_id_invect_rbac_teams_id_fk",
-          "tableFrom": "invect_rbac_team_members",
-          "tableTo": "invect_rbac_teams",
+        "flowlib_rbac_team_members_team_id_flowlib_rbac_teams_id_fk": {
+          "name": "flowlib_rbac_team_members_team_id_flowlib_rbac_teams_id_fk",
+          "tableFrom": "flowlib_rbac_team_members",
+          "tableTo": "flowlib_rbac_teams",
           "columnsFrom": [
             "team_id"
           ],
@@ -1367,10 +1367,10 @@
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
-        "invect_rbac_team_members_user_id_invect_user_id_fk": {
-          "name": "invect_rbac_team_members_user_id_invect_user_id_fk",
-          "tableFrom": "invect_rbac_team_members",
-          "tableTo": "invect_user",
+        "flowlib_rbac_team_members_user_id_flowlib_user_id_fk": {
+          "name": "flowlib_rbac_team_members_user_id_flowlib_user_id_fk",
+          "tableFrom": "flowlib_rbac_team_members",
+          "tableTo": "flowlib_user",
           "columnsFrom": [
             "user_id"
           ],
@@ -1385,8 +1385,8 @@
       "uniqueConstraints": {},
       "checkConstraints": {}
     },
-    "invect_rbac_teams": {
-      "name": "invect_rbac_teams",
+    "flowlib_rbac_teams": {
+      "name": "flowlib_rbac_teams",
       "columns": {
         "id": {
           "name": "id",
@@ -1441,10 +1441,10 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "invect_rbac_teams_parent_id_invect_rbac_teams_id_fk": {
-          "name": "invect_rbac_teams_parent_id_invect_rbac_teams_id_fk",
-          "tableFrom": "invect_rbac_teams",
-          "tableTo": "invect_rbac_teams",
+        "flowlib_rbac_teams_parent_id_flowlib_rbac_teams_id_fk": {
+          "name": "flowlib_rbac_teams_parent_id_flowlib_rbac_teams_id_fk",
+          "tableFrom": "flowlib_rbac_teams",
+          "tableTo": "flowlib_rbac_teams",
           "columnsFrom": [
             "parent_id"
           ],
@@ -1454,10 +1454,10 @@
           "onDelete": "set null",
           "onUpdate": "no action"
         },
-        "invect_rbac_teams_created_by_invect_user_id_fk": {
-          "name": "invect_rbac_teams_created_by_invect_user_id_fk",
-          "tableFrom": "invect_rbac_teams",
-          "tableTo": "invect_user",
+        "flowlib_rbac_teams_created_by_flowlib_user_id_fk": {
+          "name": "flowlib_rbac_teams_created_by_flowlib_user_id_fk",
+          "tableFrom": "flowlib_rbac_teams",
+          "tableTo": "flowlib_user",
           "columnsFrom": [
             "created_by"
           ],
@@ -1472,8 +1472,8 @@
       "uniqueConstraints": {},
       "checkConstraints": {}
     },
-    "invect_session": {
-      "name": "invect_session",
+    "flowlib_session": {
+      "name": "flowlib_session",
       "columns": {
         "id": {
           "name": "id",
@@ -1542,8 +1542,8 @@
         }
       },
       "indexes": {
-        "invect_session_token_unique": {
-          "name": "invect_session_token_unique",
+        "flowlib_session_token_unique": {
+          "name": "flowlib_session_token_unique",
           "columns": [
             "token"
           ],
@@ -1551,10 +1551,10 @@
         }
       },
       "foreignKeys": {
-        "invect_session_user_id_invect_user_id_fk": {
-          "name": "invect_session_user_id_invect_user_id_fk",
-          "tableFrom": "invect_session",
-          "tableTo": "invect_user",
+        "flowlib_session_user_id_flowlib_user_id_fk": {
+          "name": "flowlib_session_user_id_flowlib_user_id_fk",
+          "tableFrom": "flowlib_session",
+          "tableTo": "flowlib_user",
           "columnsFrom": [
             "user_id"
           ],
@@ -1569,8 +1569,8 @@
       "uniqueConstraints": {},
       "checkConstraints": {}
     },
-    "invect_two_factor": {
-      "name": "invect_two_factor",
+    "flowlib_two_factor": {
+      "name": "flowlib_two_factor",
       "columns": {
         "id": {
           "name": "id",
@@ -1611,10 +1611,10 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "invect_two_factor_user_id_invect_user_id_fk": {
-          "name": "invect_two_factor_user_id_invect_user_id_fk",
-          "tableFrom": "invect_two_factor",
-          "tableTo": "invect_user",
+        "flowlib_two_factor_user_id_flowlib_user_id_fk": {
+          "name": "flowlib_two_factor_user_id_flowlib_user_id_fk",
+          "tableFrom": "flowlib_two_factor",
+          "tableTo": "flowlib_user",
           "columnsFrom": [
             "user_id"
           ],
@@ -1629,8 +1629,8 @@
       "uniqueConstraints": {},
       "checkConstraints": {}
     },
-    "invect_user": {
-      "name": "invect_user",
+    "flowlib_user": {
+      "name": "flowlib_user",
       "columns": {
         "id": {
           "name": "id",
@@ -1724,8 +1724,8 @@
         }
       },
       "indexes": {
-        "invect_user_email_unique": {
-          "name": "invect_user_email_unique",
+        "flowlib_user_email_unique": {
+          "name": "flowlib_user_email_unique",
           "columns": [
             "email"
           ],
@@ -1737,8 +1737,8 @@
       "uniqueConstraints": {},
       "checkConstraints": {}
     },
-    "invect_vc_sync_config": {
-      "name": "invect_vc_sync_config",
+    "flowlib_vc_sync_config": {
+      "name": "flowlib_vc_sync_config",
       "columns": {
         "id": {
           "name": "id",
@@ -1865,8 +1865,8 @@
         }
       },
       "indexes": {
-        "invect_vc_sync_config_flow_id_unique": {
-          "name": "invect_vc_sync_config_flow_id_unique",
+        "flowlib_vc_sync_config_flow_id_unique": {
+          "name": "flowlib_vc_sync_config_flow_id_unique",
           "columns": [
             "flow_id"
           ],
@@ -1874,10 +1874,10 @@
         }
       },
       "foreignKeys": {
-        "invect_vc_sync_config_flow_id_invect_flows_id_fk": {
-          "name": "invect_vc_sync_config_flow_id_invect_flows_id_fk",
-          "tableFrom": "invect_vc_sync_config",
-          "tableTo": "invect_flows",
+        "flowlib_vc_sync_config_flow_id_flowlib_flows_id_fk": {
+          "name": "flowlib_vc_sync_config_flow_id_flowlib_flows_id_fk",
+          "tableFrom": "flowlib_vc_sync_config",
+          "tableTo": "flowlib_flows",
           "columnsFrom": [
             "flow_id"
           ],
@@ -1892,8 +1892,8 @@
       "uniqueConstraints": {},
       "checkConstraints": {}
     },
-    "invect_vc_sync_history": {
-      "name": "invect_vc_sync_history",
+    "flowlib_vc_sync_history": {
+      "name": "flowlib_vc_sync_history",
       "columns": {
         "id": {
           "name": "id",
@@ -1962,10 +1962,10 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "invect_vc_sync_history_flow_id_invect_flows_id_fk": {
-          "name": "invect_vc_sync_history_flow_id_invect_flows_id_fk",
-          "tableFrom": "invect_vc_sync_history",
-          "tableTo": "invect_flows",
+        "flowlib_vc_sync_history_flow_id_flowlib_flows_id_fk": {
+          "name": "flowlib_vc_sync_history_flow_id_flowlib_flows_id_fk",
+          "tableFrom": "flowlib_vc_sync_history",
+          "tableTo": "flowlib_flows",
           "columnsFrom": [
             "flow_id"
           ],
@@ -1980,8 +1980,8 @@
       "uniqueConstraints": {},
       "checkConstraints": {}
     },
-    "invect_verification": {
-      "name": "invect_verification",
+    "flowlib_verification": {
+      "name": "flowlib_verification",
       "columns": {
         "id": {
           "name": "id",
@@ -2032,8 +2032,8 @@
       "uniqueConstraints": {},
       "checkConstraints": {}
     },
-    "invect_webhook_triggers": {
-      "name": "invect_webhook_triggers",
+    "flowlib_webhook_triggers": {
+      "name": "flowlib_webhook_triggers",
       "columns": {
         "id": {
           "name": "id",
@@ -2170,8 +2170,8 @@
         }
       },
       "indexes": {
-        "invect_webhook_triggers_webhook_path_unique": {
-          "name": "invect_webhook_triggers_webhook_path_unique",
+        "flowlib_webhook_triggers_webhook_path_unique": {
+          "name": "flowlib_webhook_triggers_webhook_path_unique",
           "columns": [
             "webhook_path"
           ],
@@ -2179,10 +2179,10 @@
         }
       },
       "foreignKeys": {
-        "invect_webhook_triggers_flow_id_invect_flows_id_fk": {
-          "name": "invect_webhook_triggers_flow_id_invect_flows_id_fk",
-          "tableFrom": "invect_webhook_triggers",
-          "tableTo": "invect_flows",
+        "flowlib_webhook_triggers_flow_id_flowlib_flows_id_fk": {
+          "name": "flowlib_webhook_triggers_flow_id_flowlib_flows_id_fk",
+          "tableFrom": "flowlib_webhook_triggers",
+          "tableTo": "flowlib_flows",
           "columnsFrom": [
             "flow_id"
           ],

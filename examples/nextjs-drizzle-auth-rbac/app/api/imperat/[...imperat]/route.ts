@@ -1,7 +1,7 @@
-import { createInvectHandler } from '@flowlib/nextjs';
-import { invectConfig } from '@/flowlib.config';
+import { createFlowlibHandler } from '@flowlib/nextjs';
+import { flowlibConfig } from '@/flowlib.config';
 
-const handler = createInvectHandler(invectConfig);
+const handler = createFlowlibHandler(flowlibConfig);
 
 export const GET = handler.GET;
 export const POST = handler.POST;

@@ -1,5 +1,5 @@
 /**
- * Standalone NestJS + Invect server for E2E test isolation.
+ * Standalone NestJS + Flowlib server for E2E test isolation.
  *
  * Usage:  tsx tests/platform/test-server-nestjs.ts
  *
@@ -17,7 +17,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { NestFactory } from '@nestjs/core';
 import { Module } from '@nestjs/common';
-import { InvectModule } from '../../../pkg/nestjs/dist/index.js';
+import { FlowlibModule } from '../../../pkg/nestjs/dist/index.js';
 import {
   startExternalApiMocks,
   stopExternalApiMocks,
@@ -40,10 +40,10 @@ const migrationsFolder = path.resolve(__dirname, '../../../pkg/core/drizzle/sqli
 await migrate(db, { migrationsFolder });
 sqlite.close();
 
-// ── 2. Build a minimal NestJS app with InvectModule ──────────────────
+// ── 2. Build a minimal NestJS app with FlowlibModule ──────────────────
 @Module({
   imports: [
-    InvectModule.forRoot({
+    FlowlibModule.forRoot({
       encryptionKey: 'dGVzdC1lbmNyeXB0aW9uLWtleS0xMjM0NTY3ODkw',
       database: {
         type: 'sqlite',

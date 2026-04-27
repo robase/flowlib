@@ -20,21 +20,21 @@ import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from
 import { setupServer } from 'msw/node';
 import { http, HttpResponse, delay } from 'msw';
 import { FlowRunStatus } from '../../../src';
-import type { InvectInstance } from '../../../src/api/types';
-import type { InvectDefinition } from '../../../src/services/flow-versions/schemas-fresh';
-import { createTestInvect } from '../helpers/test-flowlib';
+import type { FlowlibInstance } from '../../../src/api/types';
+import type { FlowlibDefinition } from '../../../src/services/flow-versions/schemas-fresh';
+import { createTestFlowlib } from '../helpers/test-flowlib';
 
 // ---------------------------------------------------------------------------
 // Fixtures
 // ---------------------------------------------------------------------------
 
-let flowlib: InvectInstance;
+let flowlib: FlowlibInstance;
 
 const mswServer = setupServer();
 
 beforeAll(async () => {
   mswServer.listen({ onUnhandledRequest: 'bypass' });
-  flowlib = await createTestInvect();
+  flowlib = await createTestFlowlib();
 });
 
 afterAll(async () => {
@@ -54,9 +54,9 @@ afterEach(() => {
 // Helpers
 // ---------------------------------------------------------------------------
 
-async function runFlow(definition: InvectDefinition, inputs: Record<string, unknown> = {}) {
+async function runFlow(definition: FlowlibDefinition, inputs: Record<string, unknown> = {}) {
   const flow = await flowlib.flows.create({ name: `node-fail-${Date.now()}-${Math.random()}` });
-  await flowlib.versions.create(flow.id, { invectDefinition: definition });
+  await flowlib.versions.create(flow.id, { flowlibDefinition: definition });
   return flowlib.runs.start(flow.id, inputs, { useBatchProcessing: false });
 }
 

@@ -79,7 +79,7 @@ test.describe('Navigation & App Shell', () => {
       jqFlowId = flow.id;
       await request.post(`${apiBase}/flows/${jqFlowId}/versions`, {
         data: {
-          invectDefinition: {
+          flowlibDefinition: {
             nodes: [
               {
                 id: 'node-1',
@@ -123,7 +123,7 @@ test.describe('Navigation & App Shell', () => {
       templateFlowId = flow.id;
       await request.post(`${apiBase}/flows/${templateFlowId}/versions`, {
         data: {
-          invectDefinition: {
+          flowlibDefinition: {
             nodes: [
               {
                 id: 'node-1',
@@ -264,8 +264,8 @@ test.describe('Navigation & App Shell', () => {
     //    ThemeProvider applies "light" or "dark" as a class on the .flowlib
     //    element (NOT on <html>) via document.querySelector(".flowlib").classList.
     //    The provider is initialised with defaultTheme="light".
-    const invectEl = page.locator('.flowlib').first();
-    const initialIsDark = await invectEl.evaluate((el) => el.classList.contains('dark'));
+    const flowlibEl = page.locator('.flowlib').first();
+    const initialIsDark = await flowlibEl.evaluate((el) => el.classList.contains('dark'));
 
     // 3. Expand the sidebar so the theme toggle shows its visible text label
     await ensureSidebarExpanded(page);
@@ -284,9 +284,9 @@ test.describe('Navigation & App Shell', () => {
 
     // 6. Assert the .flowlib element has changed its theme class
     if (initialIsDark) {
-      await expect(invectEl).not.toHaveClass(/\bdark\b/, { timeout: 3_000 });
+      await expect(flowlibEl).not.toHaveClass(/\bdark\b/, { timeout: 3_000 });
     } else {
-      await expect(invectEl).toHaveClass(/\bdark\b/, { timeout: 3_000 });
+      await expect(flowlibEl).toHaveClass(/\bdark\b/, { timeout: 3_000 });
     }
 
     // 7. Navigate to /flowlib/flow-runs via the sidebar link
@@ -297,9 +297,9 @@ test.describe('Navigation & App Shell', () => {
 
     // 8. Assert the theme class persists after SPA navigation
     if (initialIsDark) {
-      await expect(invectEl).not.toHaveClass(/\bdark\b/);
+      await expect(flowlibEl).not.toHaveClass(/\bdark\b/);
     } else {
-      await expect(invectEl).toHaveClass(/\bdark\b/);
+      await expect(flowlibEl).toHaveClass(/\bdark\b/);
     }
 
     // 9. Ensure the sidebar is still expanded before locating the toggle again
@@ -313,9 +313,9 @@ test.describe('Navigation & App Shell', () => {
 
     // Assert the original theme is restored
     if (initialIsDark) {
-      await expect(invectEl).toHaveClass(/\bdark\b/, { timeout: 3_000 });
+      await expect(flowlibEl).toHaveClass(/\bdark\b/, { timeout: 3_000 });
     } else {
-      await expect(invectEl).not.toHaveClass(/\bdark\b/, { timeout: 3_000 });
+      await expect(flowlibEl).not.toHaveClass(/\bdark\b/, { timeout: 3_000 });
     }
   });
 

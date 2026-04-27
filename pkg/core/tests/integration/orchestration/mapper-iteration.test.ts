@@ -12,23 +12,23 @@
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { FlowRunStatus } from '../../../src';
-import type { InvectInstance } from '../../../src/api/types';
-import type { InvectDefinition } from '../../../src/services/flow-versions/schemas-fresh';
-import { createTestInvect } from '../helpers/test-flowlib';
+import type { FlowlibInstance } from '../../../src/api/types';
+import type { FlowlibDefinition } from '../../../src/services/flow-versions/schemas-fresh';
+import { createTestFlowlib } from '../helpers/test-flowlib';
 
-let flowlib: InvectInstance;
+let flowlib: FlowlibInstance;
 
 beforeAll(async () => {
-  flowlib = await createTestInvect();
+  flowlib = await createTestFlowlib();
 });
 
 afterAll(async () => {
   await flowlib.shutdown();
 });
 
-async function runFlow(definition: InvectDefinition, inputs: Record<string, unknown> = {}) {
+async function runFlow(definition: FlowlibDefinition, inputs: Record<string, unknown> = {}) {
   const flow = await flowlib.flows.create({ name: `mapper-${Date.now()}-${Math.random()}` });
-  await flowlib.versions.create(flow.id, { invectDefinition: definition });
+  await flowlib.versions.create(flow.id, { flowlibDefinition: definition });
   return flowlib.runs.start(flow.id, inputs, { useBatchProcessing: false });
 }
 
@@ -77,7 +77,7 @@ function mapperFlow(args: {
   childType: 'core.javascript' | 'core.template_string';
   childParams: Record<string, unknown>;
   mapper: Record<string, unknown>;
-}): InvectDefinition {
+}): FlowlibDefinition {
   return {
     nodes: [
       {
@@ -94,7 +94,7 @@ function mapperFlow(args: {
         params: args.childParams,
         mapper: args.mapper,
         position: { x: 200, y: 0 },
-      } as InvectDefinition['nodes'][number],
+      } as FlowlibDefinition['nodes'][number],
     ],
     edges: [{ id: 'e1', source: 'src', target: 'child' }],
   };
@@ -450,7 +450,7 @@ describe('Node mapper / iteration', () => {
   // -------------------------------------------------------------------------
   describe('downstream nodes', () => {
     it('downstream node can reduce over the iteration result array', async () => {
-      const definition: InvectDefinition = {
+      const definition: FlowlibDefinition = {
         nodes: [
           {
             id: 'src',
@@ -468,7 +468,7 @@ describe('Node mapper / iteration', () => {
             params: { code: 'return n * 2' },
             mapper: { enabled: true, expression: 'src' },
             position: { x: 200, y: 0 },
-          } as unknown as InvectDefinition['nodes'][number],
+          } as unknown as FlowlibDefinition['nodes'][number],
           {
             id: 'sum',
             type: 'core.javascript',

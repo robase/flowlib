@@ -154,9 +154,9 @@ describe('resolveConfigExport()', () => {
     expect(resolveConfigExport(module)).toBe(config);
   });
 
-  it('should handle named export: invectConfig', () => {
+  it('should handle named export: flowlibConfig', () => {
     const config = { database: { type: 'sqlite' }, plugins: [] };
-    const module = { invectConfig: config };
+    const module = { flowlibConfig: config };
     expect(resolveConfigExport(module)).toBe(config);
   });
 
@@ -193,10 +193,10 @@ describe('resolveConfigExport()', () => {
     expect(resolveConfigExport(module)).toBe(defaultConfig);
   });
 
-  it('should prefer "config" over "invectConfig" when both exist', () => {
+  it('should prefer "config" over "flowlibConfig" when both exist', () => {
     const config1 = { database: { type: 'sqlite' } };
     const config2 = { database: { type: 'postgresql' } };
-    const module = { config: config1, invectConfig: config2 };
+    const module = { config: config1, flowlibConfig: config2 };
     expect(resolveConfigExport(module)).toBe(config1);
   });
 });

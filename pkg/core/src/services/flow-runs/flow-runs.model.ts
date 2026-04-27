@@ -1,5 +1,5 @@
-// Flow Runs Model for Invect core — adapter-based implementation
-import type { InvectAdapter, WhereClause } from '../../database/adapter';
+// Flow Runs Model for Flowlib core — adapter-based implementation
+import type { FlowlibAdapter, WhereClause } from '../../database/adapter';
 import { DatabaseError } from 'src/types/common/errors.types';
 import {
   Logger,
@@ -83,14 +83,14 @@ interface _FlowRunQuery {
   sort?: SortingQuery<FlowRun>;
 }
 
-const TABLE = 'invect_flow_executions';
+const TABLE = 'flowlib_flow_executions';
 
 /**
- * Flow Runs CRUD operations class — uses InvectAdapter.
+ * Flow Runs CRUD operations class — uses FlowlibAdapter.
  */
 export class FlowRunsModel {
   constructor(
-    private readonly adapter: InvectAdapter,
+    private readonly adapter: FlowlibAdapter,
     private readonly logger: Logger,
   ) {}
 

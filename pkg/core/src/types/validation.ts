@@ -1,7 +1,7 @@
 // Flow validation types shared between frontend and backend
 import type {
   FlowNodeDefinitions,
-  InvectDefinition,
+  FlowlibDefinition,
   FlowEdge,
 } from '../services/flow-versions/schemas-fresh';
 
@@ -76,11 +76,11 @@ export const FLOW_VALIDATION_ERROR_TYPES = {
 // ─── Validation context ──────────────────────────────────────────────────────
 
 export class ValidationContext {
-  public readonly definition: InvectDefinition;
+  public readonly definition: FlowlibDefinition;
   public readonly analysis: GraphAnalysis;
   public readonly issues: ValidationIssue[] = [];
 
-  constructor(definition: InvectDefinition, analysis: GraphAnalysis) {
+  constructor(definition: FlowlibDefinition, analysis: GraphAnalysis) {
     this.definition = definition;
     this.analysis = analysis;
   }

@@ -18,7 +18,7 @@ There are no service-layer callers of `.transaction(...)` in the current
 core. Transactions are defined at the adapter abstraction layer only:
 
 - `pkg/core/src/database/adapter.ts:89,138` — `transaction()` declared on the
-  `InvectAdapter` / `RawInvectAdapter` interfaces. **Risk:** any future
+  `FlowlibAdapter` / `RawFlowlibAdapter` interfaces. **Risk:** any future
   adapter consumer that calls `.transaction()` will fail at runtime on D1.
 - `pkg/core/src/database/adapters/kysely-adapter.ts:323-329` — Kysely-backed
   implementation calls `dbInstance.transaction().execute(...)`. **Risk:** if

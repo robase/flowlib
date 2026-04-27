@@ -5,7 +5,7 @@ import * as DialogPrimitive from '@radix-ui/react-dialog';
 import { XIcon } from 'lucide-react';
 
 import { cn } from '~/lib/utils';
-import { useInvectPortalClass } from '~/hooks/use-flowlib-portal-class';
+import { useFlowlibPortalClass } from '~/hooks/use-flowlib-portal-class';
 
 function Dialog({ ...props }: React.ComponentProps<typeof DialogPrimitive.Root>) {
   return <DialogPrimitive.Root data-slot="dialog" {...props} />;
@@ -22,7 +22,7 @@ function DialogPortal({
 }: React.ComponentProps<typeof DialogPrimitive.Portal> & {
   container?: HTMLElement | null;
 }) {
-  const portalClass = useInvectPortalClass();
+  const portalClass = useFlowlibPortalClass();
   return (
     <DialogPrimitive.Portal data-slot="dialog-portal" container={container ?? undefined} {...props}>
       <div className={portalClass}>{children}</div>

@@ -1,8 +1,8 @@
-# Invect — AI Coding Agent Instructions
+# Flowlib — AI Coding Agent Instructions
 
 ## Project Overview
 
-Invect is a workflow orchestration system with visual flow editor, AI agents, and batch processing via OpenAI/Anthropic APIs. **pnpm monorepo** with a framework-agnostic core (`pkg/core`) plus framework adapters (`pkg/nestjs`, `pkg/express`, `pkg/nextjs`, `pkg/ui`) and a lightweight executor (`pkg/primitives`) for running flows in any JS runtime without a database.
+Flowlib is a workflow orchestration system with visual flow editor, AI agents, and batch processing via OpenAI/Anthropic APIs. **pnpm monorepo** with a framework-agnostic core (`pkg/core`) plus framework adapters (`pkg/nestjs`, `pkg/express`, `pkg/nextjs`, `pkg/ui`) and a lightweight executor (`pkg/primitives`) for running flows in any JS runtime without a database.
 
 The git repo is named `flow-backend` but all packages publish under `@flowlib/*`. Database: Drizzle ORM (SQLite, PostgreSQL, MySQL).
 
@@ -22,14 +22,14 @@ packages:
 
 ```
 pkg/
-├── core/           # Framework-agnostic logic (services, schemas, createInvect factory)
+├── core/           # Framework-agnostic logic (services, schemas, createFlowlib factory)
 ├── action-kit/     # Types-only package — action/tool/node type contracts
 ├── actions/        # Built-in provider actions (Gmail, Slack, GitHub, 40+ providers)
 ├── primitives/     # Lightweight DB-less flow executor (runs flows in any JS runtime)
 ├── nestjs/         # NestJS adapter (controllers, modules)
 ├── express/        # Express adapter (routes)
 ├── nextjs/         # Next.js adapter (catch-all API route handlers)
-├── ui/             # React components (React Router v7, flow editor, InvectShell, Invect)
+├── ui/             # React components (React Router v7, flow editor, FlowlibShell, Flowlib)
 ├── layouts/        # Layout components
 ├── cli/            # CLI (npx flowlib-cli) — init, generate, migrate, info, secret, mcp
 ├── flowlib/         # Published CLI wrapper (thin shim: `flowlib-cli` bin → @flowlib/cli)
@@ -70,7 +70,7 @@ examples/
 | `express-drizzle`          | Express      | SQLite (`./dev.db`)         | `@flowlib/express`               | Primary backend dev server. Paired with `vite-react-frontend` for fullstack dev. Uses `nodemon` for hot-reload. Depends on most plugins (auth, rbac, webhooks, mcp, vercel-workflows, version-control) for breadth testing. |
 | `vite-react-frontend`      | Vite + React | N/A (frontend only)         | `@flowlib/ui`                    | Standalone React frontend. Connects to Express backend on port 3000. Dev server on port 5173.                                                                                                                               |
 | `nest-prisma`              | NestJS       | SQLite (`./prisma/dev.db`)  | `@flowlib/nestjs`                | NestJS adapter example. Uses Prisma ORM (not Drizzle). Jest test framework.                                                                                                                                                 |
-| `nextjs-app-router`        | Next.js 15   | SQLite (internal)           | `@flowlib/nextjs` + `@flowlib/ui` | Mounts Invect UI at `/flowlib` route.                                                                                                                                                                                        |
+| `nextjs-app-router`        | Next.js 15   | SQLite (internal)           | `@flowlib/nextjs` + `@flowlib/ui` | Mounts Flowlib UI at `/flowlib` route.                                                                                                                                                                                        |
 | `nextjs-drizzle-auth-rbac` | Next.js 15   | PostgreSQL (Docker Compose) | `@flowlib/nextjs` + `@flowlib/ui` | Full-featured with `@flowlib/user-auth` + `@flowlib/rbac`. Uses `pg` + Drizzle.                                                                                                                                               |
 
 The **primary development workflow** is `express-drizzle` + `vite-react-frontend` together (`pnpm dev:fullstack`). The Next.js examples are self-contained alternatives.
@@ -132,18 +132,18 @@ When you edit pkg/core/src/services/flows.service.ts:
 - `pnpm setup:credentials` — `scripts/setup-credentials.sh` bootstrap
 - `cd pkg/cli && pnpm test` — CLI schema-generation + migration tests
 
-## Invect Core Integration Pattern
+## Flowlib Core Integration Pattern
 
-The entry point is the `createInvect()` async factory in `pkg/core/src/api/create-flowlib.ts`. It returns an `InvectInstance` with **11 namespaced sub-APIs**. Framework packages (`pkg/express`, `pkg/nestjs`, `pkg/nextjs`) are thin adapters that wrap this instance.
+The entry point is the `createFlowlib()` async factory in `pkg/core/src/api/create-flowlib.ts`. It returns an `FlowlibInstance` with **11 namespaced sub-APIs**. Framework packages (`pkg/express`, `pkg/nestjs`, `pkg/nextjs`) are thin adapters that wrap this instance.
 
-> **Legacy**: The `Invect` class in `pkg/core/src/flowlib-core.ts` still exists (flat methods like `flowlib.createFlow()`) but all framework adapters now use the modern factory. New code must always use `createInvect()`.
+> **Legacy**: The `Flowlib` class in `pkg/core/src/flowlib-core.ts` still exists (flat methods like `flowlib.createFlow()`) but all framework adapters now use the modern factory. New code must always use `createFlowlib()`.
 
 ### Architecture: core → framework adapters
 
 ```
 ┌─────────────────────────────────────────────┐
 │           @flowlib/core                      │
-│  createInvect(config) → InvectInstance      │
+│  createFlowlib(config) → FlowlibInstance      │
 │    .flows     (CRUD + rendering)            │
 │    .versions  (version management)          │
 │    .runs      (execution + streaming)       │
@@ -161,10 +161,10 @@ The entry point is the `createInvect()` async factory in `pkg/core/src/api/creat
       Router     Module      Handler
 ```
 
-### `InvectInstance` sub-APIs
+### `FlowlibInstance` sub-APIs
 
 ```typescript
-interface InvectInstance {
+interface FlowlibInstance {
   readonly flows: FlowsAPI;
   readonly versions: FlowVersionsAPI;
   readonly runs: FlowRunsAPI;
@@ -191,18 +191,18 @@ interface InvectInstance {
   startCronScheduler(): Promise<void>;
   stopCronScheduler(): void;
   refreshCronScheduler(): Promise<void>;
-  runMaintenance(options?: InvectMaintenanceOptions): Promise<InvectMaintenanceResult>;
+  runMaintenance(options?: FlowlibMaintenanceOptions): Promise<FlowlibMaintenanceResult>;
   healthCheck(): Promise<Record<string, boolean>>;
 }
 ```
 
 ### Framework integration (summary)
 
-- **Express** (`pkg/express`): `createInvectRouter(config)` async factory — calls `createInvect()`, starts batch polling + cron scheduler, returns Express Router. Routes are thin wrappers around `flowlib.<namespace>.<method>()`.
-- **NestJS** (`pkg/nestjs`): `InvectModule.forRoot(config)` / `.forRootAsync({ useFactory, inject })` — injects a single `InvectInstance` via DI token `'INVECT_CORE'`. Controller delegates to service → namespaced API.
-- **Next.js** (`pkg/nextjs`): `createInvectHandler(config)` factory returns `{ GET, POST, PATCH, PUT, DELETE }` for catch-all routes (`app/api/flowlib/[...flowlib]/route.ts`). Core instance is internal singleton.
+- **Express** (`pkg/express`): `createFlowlibRouter(config)` async factory — calls `createFlowlib()`, starts batch polling + cron scheduler, returns Express Router. Routes are thin wrappers around `flowlib.<namespace>.<method>()`.
+- **NestJS** (`pkg/nestjs`): `FlowlibModule.forRoot(config)` / `.forRootAsync({ useFactory, inject })` — injects a single `FlowlibInstance` via DI token `'FLOWLIB_CORE'`. Controller delegates to service → namespaced API.
+- **Next.js** (`pkg/nextjs`): `createFlowlibHandler(config)` factory returns `{ GET, POST, PATCH, PUT, DELETE }` for catch-all routes (`app/api/flowlib/[...flowlib]/route.ts`). Core instance is internal singleton.
 
-**New framework adapter**: create `pkg/<framework>/`, import `createInvect`, wrap routes → `flowlib.<namespace>.<method>()`.
+**New framework adapter**: create `pkg/<framework>/`, import `createFlowlib`, wrap routes → `flowlib.<namespace>.<method>()`.
 
 ## Core Architecture Concepts
 
@@ -385,7 +385,7 @@ class FlowsService {
 // CORRECT — path aliases from tsconfig (core development)
 import { FlowsService } from 'src/services/flows/flows.service';
 import { Logger } from 'src/schemas';
-import type { InvectDefinition } from 'src/services/flow-versions/schemas-fresh';
+import type { FlowlibDefinition } from 'src/services/flow-versions/schemas-fresh';
 
 // CORRECT — cross-package
 import type { ActionDefinition } from '@flowlib/action-kit';
@@ -489,9 +489,9 @@ this.logger.error('Node execution failed', { nodeId, error: error.message });
 
 ## Integration & security
 
-- **NestJS**: `InvectModule.forRoot(config)` — `config` is an `InvectConfig` (`{ database, encryptionKey, plugins?, ... }`)
-- **Frontend**: `<Invect config={...} />` — same config shape; only `apiPath`, `frontendPath`, `theme`, `plugins` are read client-side (the rest passes through harmlessly)
-- **Credentials**: AES-256-GCM encrypted. Set `INVECT_ENCRYPTION_KEY` (base64, 32 bytes — use `npx flowlib-cli secret`). Access in actions: `context.credential` (auto-refreshed for OAuth2) or `context.functions.getCredential(id)`
+- **NestJS**: `FlowlibModule.forRoot(config)` — `config` is an `FlowlibConfig` (`{ database, encryptionKey, plugins?, ... }`)
+- **Frontend**: `<Flowlib config={...} />` — same config shape; only `apiPath`, `frontendPath`, `theme`, `plugins` are read client-side (the rest passes through harmlessly)
+- **Credentials**: AES-256-GCM encrypted. Set `FLOWLIB_ENCRYPTION_KEY` (base64, 32 bytes — use `npx flowlib-cli secret`). Access in actions: `context.credential` (auto-refreshed for OAuth2) or `context.functions.getCredential(id)`
 
 ## Authoring SDK (`@flowlib/sdk`)
 
@@ -575,7 +575,7 @@ The DB → source emitter ([pkg/sdk/src/emitter/index.ts](pkg/sdk/src/emitter/in
 
 ## AI Agent & Tool Calling Architecture
 
-Invect supports AI agent workflows with tool calling via the `core.agent` action. Agents run a prompt→tool→iterate loop using OpenAI, Anthropic, or OpenRouter.
+Flowlib supports AI agent workflows with tool calling via the `core.agent` action. Agents run a prompt→tool→iterate loop using OpenAI, Anthropic, or OpenRouter.
 
 ### Agent node overview
 
@@ -603,7 +603,7 @@ The agent action lives at `pkg/actions/src/core/agent.ts`. Its `execute()` runs 
 
 Tools live in `AgentToolRegistry` (`pkg/core/src/services/agent-tools/agent-tool-registry.ts`). Three sources:
 
-1. **Action-based tools (primary)** — every `defineAction()` registration is automatically converted to an `AgentToolDefinition` during `createInvect()` init. `registerActionsAsTools()` iterates `ActionRegistry`, uses `toAgentToolDefinition()`, and registers with `createToolExecutorForAction()`. All Gmail/Slack/GitHub/Drive/etc. actions become agent tools for free.
+1. **Action-based tools (primary)** — every `defineAction()` registration is automatically converted to an `AgentToolDefinition` during `createFlowlib()` init. `registerActionsAsTools()` iterates `ActionRegistry`, uses `toAgentToolDefinition()`, and registers with `createToolExecutorForAction()`. All Gmail/Slack/GitHub/Drive/etc. actions become agent tools for free.
 2. **Standalone tools** — in `pkg/core/src/services/agent-tools/builtin/` (currently only `math_eval`; `json_logic` file exists but is not registered).
 3. **Legacy node-based tools (deprecated)** — `AgentToolCapable` interface on old executor classes (JqNodeExecutor, HttpRequestNodeExecutor) still exists, but those executors are **no longer registered**. Effectively dead.
 
@@ -650,7 +650,7 @@ Tool instances support per-instance customization (custom name, description, par
 1. Create `pkg/actions/src/<provider>/<action-name>.ts` using `defineAction()` from `@flowlib/action-kit`
 2. Export from the provider's `index.ts` barrel
 3. Add to the provider's bundle (`<providerName>Actions`) — already included in `allProviderActions`
-4. Auto-registers as flow node AND agent tool during `createInvect()` init
+4. Auto-registers as flow node AND agent tool during `createFlowlib()` init
 
 **Option B: standalone tool** (utility only, no flow node)
 
@@ -671,7 +671,7 @@ Tool instances support per-instance customization (custom name, description, par
 
 ## OAuth2 Credential System
 
-Invect supports OAuth2 for connecting to third-party services (Google, GitHub, Slack, etc.). Handles authorization, token exchange, and automatic refresh.
+Flowlib supports OAuth2 for connecting to third-party services (Google, GitHub, Slack, etc.). Handles authorization, token exchange, and automatic refresh.
 
 ### Architecture
 
@@ -885,21 +885,21 @@ For a **core runtime primitive** (rare — needs core-only dependencies), still 
 ## When Adding New Features (Non-Node)
 
 1. **New service** — add to `pkg/core/src/services/`, wire in `service-factory.ts`, export from `pkg/core/src/index.ts`
-2. **New API endpoint** — add service method, expose via `createInvect()` sub-API (edit `pkg/core/src/api/<domain>.ts` + `pkg/core/src/api/types.ts`), add routes in framework packages, update frontend API client (`pkg/ui/src/api/`)
+2. **New API endpoint** — add service method, expose via `createFlowlib()` sub-API (edit `pkg/core/src/api/<domain>.ts` + `pkg/core/src/api/types.ts`), add routes in framework packages, update frontend API client (`pkg/ui/src/api/`)
 3. **Database schema change** — update all three schema files, run `npx flowlib-cli generate`, test migration
 
 ## Plugin System
 
-Invect has a **composable plugin system** where plugins declare actions, lifecycle hooks, API endpoints, database schema, and middleware. Plugins span backend AND frontend.
+Flowlib has a **composable plugin system** where plugins declare actions, lifecycle hooks, API endpoints, database schema, and middleware. Plugins span backend AND frontend.
 
 ### Plugin architecture
 
 ```
 ┌─────────────────────────────────────────────────────┐
-│         InvectPluginDefinition (unified)            │
+│         FlowlibPluginDefinition (unified)            │
 │  ┌──────────────┐  ┌─────────────────────────────┐  │
 │  │  backend:    │  │  frontend:                  │  │
-│  │  InvectPlugin│  │  InvectFrontendPlugin       │  │
+│  │  FlowlibPlugin│  │  FlowlibFrontendPlugin       │  │
 │  │  (hooks,     │  │  (sidebar, routes, panels,  │  │
 │  │   endpoints, │  │   components, providers)    │  │
 │  │   schema,    │  └─────────────────────────────┘  │
@@ -908,50 +908,50 @@ Invect has a **composable plugin system** where plugins declare actions, lifecyc
 └─────────────────────────────────────────────────────┘
          │                  │
          ▼                  ▼
-   Backend framework   <Invect /> component
+   Backend framework   <Flowlib /> component
    extracts .backend   extracts .frontend
 ```
 
-### `InvectPluginDefinition` (the unified top-level factory return)
+### `FlowlibPluginDefinition` (the unified top-level factory return)
 
-Plugin factory functions (like `auth()`, `rbac()`, `webhooks()`, `vercelWorkflowsPlugin()`) return `InvectPluginDefinition`, not `InvectPlugin` directly:
+Plugin factory functions (like `auth()`, `rbac()`, `webhooks()`, `vercelWorkflowsPlugin()`) return `FlowlibPluginDefinition`, not `FlowlibPlugin` directly:
 
 ```typescript
-interface InvectPluginDefinition {
+interface FlowlibPluginDefinition {
   id: string;
   name?: string;
-  backend?: InvectPlugin; // The backend surface (hooks, endpoints, schema, actions)
-  frontend?: unknown; // `InvectFrontendPlugin` — typed `unknown` in core to avoid React dep
+  backend?: FlowlibPlugin; // The backend surface (hooks, endpoints, schema, actions)
+  frontend?: unknown; // `FlowlibFrontendPlugin` — typed `unknown` in core to avoid React dep
 }
 ```
 
 Example (simplified from `pkg/plugins/auth/src/backend/index.ts`):
 
 ```typescript
-export function auth(options: AuthenticationPluginOptions = {}): InvectPluginDefinition {
+export function auth(options: AuthenticationPluginOptions = {}): FlowlibPluginDefinition {
   return {
     id: 'user-auth',
     name: 'User Authentication',
-    backend: authentication(options), // returns InvectPlugin
+    backend: authentication(options), // returns FlowlibPlugin
     frontend: options.frontend, // authFrontend from @flowlib/user-auth/ui
   };
 }
 ```
 
-Users pass these into `createInvect({ plugins: [auth({ … }), rbac(), …] })`.
+Users pass these into `createFlowlib({ plugins: [auth({ … }), rbac(), …] })`.
 
-### `InvectPlugin` (backend surface)
+### `FlowlibPlugin` (backend surface)
 
 ```typescript
-interface InvectPlugin {
+interface FlowlibPlugin {
   id: string;
   name?: string;
-  init?: (ctx: InvectPluginContext) => Promise<InvectPluginInitResult | void>;
-  schema?: InvectPluginSchema;             // Abstract DB tables (dialect-agnostic)
+  init?: (ctx: FlowlibPluginContext) => Promise<FlowlibPluginInitResult | void>;
+  schema?: FlowlibPluginSchema;             // Abstract DB tables (dialect-agnostic)
   requiredTables?: string[];                // Startup existence check (inferred from schema if omitted)
   actions?: ActionDefinition[];             // Flow nodes + agent tools
-  endpoints?: InvectPluginEndpoint[];       // Custom API routes
-  hooks?: InvectPluginHooks;                // Lifecycle hooks (7 points)
+  endpoints?: FlowlibPluginEndpoint[];       // Custom API routes
+  hooks?: FlowlibPluginHooks;                // Lifecycle hooks (7 points)
   setupInstructions?: string;               // Shown when required tables are missing
   $ERROR_CODES?: Record<string, {...}>;     // Custom error codes
   shutdown?: () => Promise<void> | void;    // Cleanup on shutdown
@@ -972,10 +972,10 @@ interface InvectPlugin {
 
 ### Frontend plugin interface
 
-`InvectFrontendPlugin` is defined in `pkg/plugins/rbac/src/frontend/types.ts` (not yet promoted to core). Contributes UI:
+`FlowlibFrontendPlugin` is defined in `pkg/plugins/rbac/src/frontend/types.ts` (not yet promoted to core). Contributes UI:
 
 ```typescript
-interface InvectFrontendPlugin {
+interface FlowlibFrontendPlugin {
   id: string;
   name?: string;
   sidebar?: PluginSidebarContribution[];
@@ -992,9 +992,9 @@ interface InvectFrontendPlugin {
 ### Registration & lifecycle
 
 ```typescript
-const flowlib = await createInvect({
+const flowlib = await createFlowlib({
   database: { type: 'sqlite', connectionString: 'file:./dev.db' },
-  encryptionKey: process.env.INVECT_ENCRYPTION_KEY!,
+  encryptionKey: process.env.FLOWLIB_ENCRYPTION_KEY!,
   plugins: [
     auth({ globalAdmins: [{ email: 'admin@example.com', pw: '…', name: 'Admin' }] }),
     rbac(),
@@ -1002,7 +1002,7 @@ const flowlib = await createInvect({
 });
 ```
 
-**Init sequence** (in `createInvect()`):
+**Init sequence** (in `createFlowlib()`):
 
 1. Action registry created; all built-in actions registered (`allProviderActions`)
 2. `pluginManager.initializePlugins()` — for each plugin: register `backend.actions`, then `backend.init(context)`
@@ -1016,26 +1016,26 @@ const flowlib = await createInvect({
 
 ### Official plugins
 
-- **`@flowlib/user-auth`** (`pkg/plugins/auth`) — Light wrapper around [Better Auth](https://better-auth.com). Backend wraps a Better Auth instance, proxies auth routes as plugin endpoints. `onRequest` hook resolves sessions; `onAuthorize` enforces session-based access. **Admin-only user management**: sign-up is disabled; initial admin seeded from `INVECT_ADMIN_EMAIL` / `INVECT_ADMIN_PASSWORD` or `adminEmail`/`adminPassword` options. Frontend contributes an `appShell` (`AuthAppShell`) that wraps the Invect layout with `AuthProvider` + `AuthGate`, plus a `/users` route, a `/profile` route, a `Users` sidebar item, and a `SidebarUserMenu` footer. Also exports: `AuthProvider`, `useAuth`, `SignInForm`, `SignInPage`, `TwoFactorSetup`, `TwoFactorVerifyForm`, `UserButton`, `AuthGate`, `UserManagement`, `authFrontend`. The legacy `AuthenticatedInvect` wrapper is still exported for back-compat but no longer recommended — pass `auth()` through `<Invect config={{ plugins }} />` instead.
+- **`@flowlib/user-auth`** (`pkg/plugins/auth`) — Light wrapper around [Better Auth](https://better-auth.com). Backend wraps a Better Auth instance, proxies auth routes as plugin endpoints. `onRequest` hook resolves sessions; `onAuthorize` enforces session-based access. **Admin-only user management**: sign-up is disabled; initial admin seeded from `FLOWLIB_ADMIN_EMAIL` / `FLOWLIB_ADMIN_PASSWORD` or `adminEmail`/`adminPassword` options. Frontend contributes an `appShell` (`AuthAppShell`) that wraps the Flowlib layout with `AuthProvider` + `AuthGate`, plus a `/users` route, a `/profile` route, a `Users` sidebar item, and a `SidebarUserMenu` footer. Also exports: `AuthProvider`, `useAuth`, `SignInForm`, `SignInPage`, `TwoFactorSetup`, `TwoFactorVerifyForm`, `UserButton`, `AuthGate`, `UserManagement`, `authFrontend`. The legacy `AuthenticatedFlowlib` wrapper is still exported for back-compat but no longer recommended — pass `auth()` through `<Flowlib config={{ plugins }} />` instead.
 - **`@flowlib/rbac`** (`pkg/plugins/rbac`) — Role-Based Access Control. Depends on auth. Backend provides flow-access endpoints; `onAuthorize` enforces flow-level ACLs. Frontend contributes sidebar items, `/access` routes, `FlowAccessPanel`, `ShareButton`, `RbacProvider`, teams management.
 - **`@flowlib/webhooks`** (`pkg/plugins/webhooks`) — Webhook management, ingestion, signature verification, dedicated UI page.
 - **`@flowlib/version-control`** (`pkg/plugins/version-control`) — Sync flows to GitHub/GitLab/Bitbucket as `.flow.ts` files. Enables Git-stored flows deployed via CI/CD.
-- **`@flowlib/cloudflare-agents`** (`pkg/plugins/cloudflare-agents`) — Compile Invect flows to Cloudflare Agents & Workflows; deploy visual flows as durable globally-distributed Workers. Has `backend/`, `compiler/`, `adapter/`, `shared/`.
-- **`@flowlib/vercel-workflows`** (`pkg/plugins/vercel-workflows`) — Compile Invect flows to **Vercel Workflows** (`'use workflow'` directive). Has `backend/endpoints.ts`, `compiler/` (flow-compiler, control-flow, step-emitter), `runtime/execute-step.ts`, `frontend/DeployButton.tsx`, plus `runner.ts` (`createVercelFlowRunner`). **Deploy UX**: the Deploy button shows the generated source for copy-paste into the user's Next.js app — it is NOT a CLI deploy. The plugin's `/deploy/preview` endpoint returns both the compiled `'use workflow'` source and the SDK-source file it imports.
+- **`@flowlib/cloudflare-agents`** (`pkg/plugins/cloudflare-agents`) — Compile Flowlib flows to Cloudflare Agents & Workflows; deploy visual flows as durable globally-distributed Workers. Has `backend/`, `compiler/`, `adapter/`, `shared/`.
+- **`@flowlib/vercel-workflows`** (`pkg/plugins/vercel-workflows`) — Compile Flowlib flows to **Vercel Workflows** (`'use workflow'` directive). Has `backend/endpoints.ts`, `compiler/` (flow-compiler, control-flow, step-emitter), `runtime/execute-step.ts`, `frontend/DeployButton.tsx`, plus `runner.ts` (`createVercelFlowRunner`). **Deploy UX**: the Deploy button shows the generated source for copy-paste into the user's Next.js app — it is NOT a CLI deploy. The plugin's `/deploy/preview` endpoint returns both the compiled `'use workflow'` source and the SDK-source file it imports.
 - **`@flowlib/mcp`** (`pkg/plugins/mcp`) — Exposes flow building/editing/execution/debugging as MCP tools for Claude Desktop, VS Code Copilot, other MCP clients. Includes server (`backend/`), stdio launcher (`cli/`), and resources/prompts.
 
-### Frontend composition: `<Invect config>` + plugins
+### Frontend composition: `<Flowlib config>` + plugins
 
-`<Invect>` (from [pkg/ui/src/Invect.tsx](pkg/ui/src/Invect.tsx)) is always the main component. Hosts pass a single `config` object (the same shape as `defineConfig({...})` on the backend) containing `apiPath`, `frontendPath`, `theme`, and a unified `plugins` array. The component reads only the frontend-relevant fields and ignores the rest, so the same `flowlib.config.ts` can be imported by both backend and frontend.
+`<Flowlib>` (from [pkg/ui/src/Flowlib.tsx](pkg/ui/src/Flowlib.tsx)) is always the main component. Hosts pass a single `config` object (the same shape as `defineConfig({...})` on the backend) containing `apiPath`, `frontendPath`, `theme`, and a unified `plugins` array. The component reads only the frontend-relevant fields and ignores the rest, so the same `flowlib.config.ts` can be imported by both backend and frontend.
 
 ```tsx
-import { Invect } from '@flowlib/ui';
+import { Flowlib } from '@flowlib/ui';
 import '@flowlib/ui/styles';
 import { auth } from '@flowlib/user-auth';
 import { rbac } from '@flowlib/rbac';
 import { webhooks } from '@flowlib/webhooks';
 
-<Invect
+<Flowlib
   config={{
     apiPath: 'http://localhost:3000/flowlib',
     frontendPath: '/flowlib',
@@ -1047,23 +1047,23 @@ import { webhooks } from '@flowlib/webhooks';
 
 #### How plugin auth gating works
 
-Each plugin factory returns an `InvectPluginDefinition` with optional `.backend` and `.frontend` surfaces. On the frontend, `resolvePlugins()` extracts `.frontend` from each; the backend extracts `.backend`. Plugin packages ship a `browser` export condition (see [pkg/plugins/auth/src/browser.ts](pkg/plugins/auth/src/browser.ts)) that Vite/webpack resolves to a frontend-only entry returning `{ id, name, frontend: authFrontend }` — no better-auth runtime is bundled client-side.
+Each plugin factory returns an `FlowlibPluginDefinition` with optional `.backend` and `.frontend` surfaces. On the frontend, `resolvePlugins()` extracts `.frontend` from each; the backend extracts `.backend`. Plugin packages ship a `browser` export condition (see [pkg/plugins/auth/src/browser.ts](pkg/plugins/auth/src/browser.ts)) that Vite/webpack resolves to a frontend-only entry returning `{ id, name, frontend: authFrontend }` — no better-auth runtime is bundled client-side.
 
-A frontend plugin can contribute an **`appShell`** ([pkg/ui/src/types/plugin.types.ts:111](pkg/ui/src/types/plugin.types.ts#L111)) — a component that wraps the entire Invect layout and can conditionally render `children`. The auth plugin uses this to gate access: when unauthenticated, the shell renders a sign-in page; once authenticated, it renders the children (the full Invect app). Only the **first** plugin with an `appShell` wins.
+A frontend plugin can contribute an **`appShell`** ([pkg/ui/src/types/plugin.types.ts:111](pkg/ui/src/types/plugin.types.ts#L111)) — a component that wraps the entire Flowlib layout and can conditionally render `children`. The auth plugin uses this to gate access: when unauthenticated, the shell renders a sign-in page; once authenticated, it renders the children (the full Flowlib app). Only the **first** plugin with an `appShell` wins.
 
 ```
-<Invect config>
+<Flowlib config>
   ThemeProvider
     QueryClientProvider
       ApiProvider
         FrontendPathProvider
           PluginRegistryProvider
-            InvectShelled ─ resolves AppShell from plugin registry
+            FlowlibShelled ─ resolves AppShell from plugin registry
               ↳ AuthAppShell (from @flowlib/user-auth)
                   AuthProvider → AuthGate
                     ├─ fallback: SignInPage / TwoFactorVerifyForm
                     └─ children:
-                        InvectAppContent (.imp-shell — CSS scope)
+                        FlowlibAppContent (.imp-shell — CSS scope)
                           Sidebar + <Outlet />
 ```
 
@@ -1071,18 +1071,18 @@ The auth plugin's shell is [pkg/plugins/auth/src/frontend/components/AuthAppShel
 
 #### CSS scope
 
-`@flowlib/ui/styles` defines theme tokens (`--imp-background`, `--imp-foreground`, …) and Tailwind utilities. The `.imp-shell` class sits on the top-level div inside `InvectAppContent`. Sign-in / 2FA pages render outside that div (the shell is a sibling of `InvectAppContent`, not a parent), so theme tokens must be available at `:root` or inherited from `ThemeProvider`'s class toggle — plugin UI components just use `imp-*` utility classes directly and they work.
+`@flowlib/ui/styles` defines theme tokens (`--imp-background`, `--imp-foreground`, …) and Tailwind utilities. The `.imp-shell` class sits on the top-level div inside `FlowlibAppContent`. Sign-in / 2FA pages render outside that div (the shell is a sibling of `FlowlibAppContent`, not a parent), so theme tokens must be available at `:root` or inherited from `ThemeProvider`'s class toggle — plugin UI components just use `imp-*` utility classes directly and they work.
 
 #### Rules for plugin frontend components
 
 1. **Always use `imp-*` theme tokens** (`bg-imp-background`, `text-imp-foreground`, `border-imp-border`, …). Never raw colors.
-2. **Don't import `@flowlib/ui` from a plugin frontend** unless you're only importing _types_ (`InvectFrontendPlugin`, `PluginSidebarContribution`, …). Plugin UI lives above `@flowlib/ui` in the dependency graph — importing runtime from it creates a cycle.
-3. **Plugin routes / panel tabs / sidebar items / appShell** are wired through the `InvectFrontendPlugin` shape. See [pkg/ui/src/types/plugin.types.ts](pkg/ui/src/types/plugin.types.ts) for all extension points.
-4. **Dark mode** — `ThemeProvider` (applied inside `<Invect>`) toggles the class; `system` resolves via OS preference listener.
+2. **Don't import `@flowlib/ui` from a plugin frontend** unless you're only importing _types_ (`FlowlibFrontendPlugin`, `PluginSidebarContribution`, …). Plugin UI lives above `@flowlib/ui` in the dependency graph — importing runtime from it creates a cycle.
+3. **Plugin routes / panel tabs / sidebar items / appShell** are wired through the `FlowlibFrontendPlugin` shape. See [pkg/ui/src/types/plugin.types.ts](pkg/ui/src/types/plugin.types.ts) for all extension points.
+4. **Dark mode** — `ThemeProvider` (applied inside `<Flowlib>`) toggles the class; `system` resolves via OS preference listener.
 
-#### Legacy: `AuthenticatedInvect` and `InvectShell`
+#### Legacy: `AuthenticatedFlowlib` and `FlowlibShell`
 
-`AuthenticatedInvect` ([pkg/plugins/auth/src/frontend/components/AuthenticatedInvect.tsx](pkg/plugins/auth/src/frontend/components/AuthenticatedInvect.tsx)) and `InvectShell` (CSS-scope-only wrapper, still exported from `@flowlib/ui`) are retained for back-compat but are **no longer the recommended pattern**. New hosts should render `<Invect config>` directly and let the auth plugin's `appShell` handle gating.
+`AuthenticatedFlowlib` ([pkg/plugins/auth/src/frontend/components/AuthenticatedFlowlib.tsx](pkg/plugins/auth/src/frontend/components/AuthenticatedFlowlib.tsx)) and `FlowlibShell` (CSS-scope-only wrapper, still exported from `@flowlib/ui`) are retained for back-compat but are **no longer the recommended pattern**. New hosts should render `<Flowlib config>` directly and let the auth plugin's `appShell` handle gating.
 
 ### Plugin schema system
 
@@ -1096,7 +1096,7 @@ Two distinct mechanisms:
 The auth plugin uses **both**: `schema` (so generator includes auth tables) AND `requiredTables` (so startup verifies them).
 
 ```typescript
-const myPlugin: InvectPlugin = {
+const myPlugin: FlowlibPlugin = {
   id: 'my-plugin',
   schema: {
     my_table: {
@@ -1130,10 +1130,10 @@ npx drizzle-kit push      # push schema to the database
 ### Adding a new plugin
 
 1. Create `pkg/plugins/<name>/` with `src/backend/`, `src/frontend/`, `src/shared/` (and optional `browser.ts`)
-2. Backend: export a factory returning `InvectPlugin` (or `InvectPluginDefinition` directly)
-3. Frontend: export an `InvectFrontendPlugin` object
+2. Backend: export a factory returning `FlowlibPlugin` (or `FlowlibPluginDefinition` directly)
+3. Frontend: export an `FlowlibFrontendPlugin` object
 4. Shared: export browser-safe types only
-5. Top-level factory: return `{ id, name, backend, frontend }` (i.e., `InvectPluginDefinition`)
+5. Top-level factory: return `{ id, name, backend, frontend }` (i.e., `FlowlibPluginDefinition`)
 6. If plugin has DB tables: declare `schema`, run `npx flowlib-cli generate`
 7. Register in consumer app: `plugins: [myPlugin()]`
 
@@ -1142,7 +1142,7 @@ npx drizzle-kit push      # push schema to the database
 - `pkg/core/src/types/plugin.types.ts` — All plugin type definitions
 - `pkg/core/src/services/plugin-manager.ts` — Lifecycle + hook execution
 - `pkg/core/src/api/create-flowlib.ts` — Modern factory entry point
-- `pkg/core/src/flowlib-core.ts` — Legacy `Invect` class (internal)
+- `pkg/core/src/flowlib-core.ts` — Legacy `Flowlib` class (internal)
 - `pkg/core/src/database/core-schema.ts` — Core DB tables (abstract)
 - `pkg/core/src/database/schema-merger.ts` — Merges core + plugin schemas
 - `pkg/core/src/database/schema-generator.ts` — Generates dialect-specific Drizzle files
@@ -1162,12 +1162,12 @@ npx drizzle-kit push      # push schema to the database
 | `npx flowlib-cli generate` | Generates Drizzle schema files (all 3 dialects) from core + plugin schemas; optionally chains to migration                         |
 | `npx flowlib-cli migrate`  | Applies pending migrations via `drizzle-kit migrate` or pushes directly with `drizzle-kit push` (dev mode)                         |
 | `npx flowlib-cli info`     | Diagnostic info — system, frameworks, databases, config, plugins                                                                   |
-| `npx flowlib-cli secret`   | Cryptographically secure 32-byte base64 key for `INVECT_ENCRYPTION_KEY`                                                            |
+| `npx flowlib-cli secret`   | Cryptographically secure 32-byte base64 key for `FLOWLIB_ENCRYPTION_KEY`                                                            |
 | `npx flowlib-cli mcp`      | Launches stdio MCP server for IDE/Claude integration (`--url`, `--api-key`, `--print-config`)                                      |
 
 ### Config shape
 
-The `InvectConfig` schema is defined in [pkg/core/src/schemas/flowlib-config.ts](pkg/core/src/schemas/flowlib-config.ts). `defineConfig()` is available from two entry points:
+The `FlowlibConfig` schema is defined in [pkg/core/src/schemas/flowlib-config.ts](pkg/core/src/schemas/flowlib-config.ts). `defineConfig()` is available from two entry points:
 
 - **`@flowlib/core`** — full entry; the identity function is co-located with the Zod schema (Node-only).
 - **`@flowlib/core/config`** — browser-safe entry ([pkg/core/src/config.ts](pkg/core/src/config.ts)): identity function + type re-exports only, no Zod, no Node APIs. Use this if the config file is imported into a browser bundle.
@@ -1176,7 +1176,7 @@ Required fields: `database` and `encryptionKey`. Optional top-level fields: `api
 
 `database` shape: `{ type: 'postgresql' | 'sqlite' | 'mysql', connectionString: string, name?: string, driver?: ... }`. The optional `driver` picks the underlying client (`postgres` / `pg` / `neon-serverless` for PG, `better-sqlite3` / `libsql` for SQLite, `mysql2` for MySQL).
 
-The same config object is shared between backend and frontend. `<Invect config>` reads only `apiPath`, `frontendPath`, `theme`, and `plugins` — other fields pass through the typed `[key: string]: unknown` escape hatch without error.
+The same config object is shared between backend and frontend. `<Flowlib config>` reads only `apiPath`, `frontendPath`, `theme`, and `plugins` — other fields pass through the typed `[key: string]: unknown` escape hatch without error.
 
 ```typescript
 // flowlib.config.ts
@@ -1186,7 +1186,7 @@ import { rbac } from '@flowlib/rbac';
 
 export default defineConfig({
   database: { type: 'sqlite', connectionString: 'file:./dev.db' },
-  encryptionKey: process.env.INVECT_ENCRYPTION_KEY!,
+  encryptionKey: process.env.FLOWLIB_ENCRYPTION_KEY!,
   apiPath: '/api/flowlib',
   frontendPath: '/flowlib',
   theme: 'dark',
@@ -1201,10 +1201,10 @@ The CLI loader lives at [pkg/cli/src/utils/config-loader.ts](pkg/cli/src/utils/c
 1. **Discovery** — explicit `--config` first; otherwise search `flowlib.config.{ts,js,mjs}` in `.`, `src`, `lib`, `config`, `utils` (in that order).
 2. **TSConfig alias resolution** — reads `tsconfig.json` (falling back to `jsconfig.json`) and follows `references` for monorepo project-reference setups (with cycle protection). Collected `paths` aliases are passed to jiti as `alias:`.
 3. **Loading** — jiti with `interopDefault: true` and the resolved aliases. Supports TypeScript source and both CJS / ESM output.
-4. **Export resolution** — accepts any of: `export default`, `export const config`, `export const invectConfig`, or a module whose root has `database`/`plugins`. Double-wrapped defaults (`{ default: { default: … } }`) are unwrapped.
+4. **Export resolution** — accepts any of: `export default`, `export const config`, `export const flowlibConfig`, or a module whose root has `database`/`plugins`. Double-wrapped defaults (`{ default: { default: … } }`) are unwrapped.
 5. **Plugin extraction** — iterates `config.plugins`; each entry must be an object with an `id` property. The loader then pulls `.backend` out of each (frontend-only plugins are skipped for schema generation).
 
-Note: the CLI loader does **not** invoke `InvectConfigSchema.parse()`. Full Zod validation happens later inside `createInvect()` at runtime.
+Note: the CLI loader does **not** invoke `FlowlibConfigSchema.parse()`. Full Zod validation happens later inside `createFlowlib()` at runtime.
 
 ### Schema generation pipeline
 
@@ -1233,7 +1233,7 @@ flowlib-cli generate
 
 ## Primitives (`@flowlib/primitives`)
 
-`@flowlib/primitives` is a **lightweight, DB-less, framework-less flow runner**. It runs Invect flow definitions in any JS runtime (Node, Cloudflare Workers, Vercel Edge, Vercel Workflows, Deno, Bun).
+`@flowlib/primitives` is a **lightweight, DB-less, framework-less flow runner**. It runs Flowlib flow definitions in any JS runtime (Node, Cloudflare Workers, Vercel Edge, Vercel Workflows, Deno, Bun).
 
 ### What it provides
 
@@ -1241,7 +1241,7 @@ flowlib-cli generate
 - `InMemoryAdapter` — no-op adapter for simple in-process runs
 - `defineFlow`, node helpers (`input`, `output`, `model`, `ifElse`, `switchNode`, `agent`, `tool`, `code`, `javascript`, `node`, `edge`) — the same TypeScript flow builder API surface as `@flowlib/core/sdk`
 - `validateFlow` / `topologicalSort` / `buildNodeContext` / `resolveCallableParams` / `executeNodeAction`
-- `emitSdkSource()` — converts a DB-form `InvectDefinition` back to a TypeScript source string (used by the Vercel Workflows plugin to generate the deployable flow file)
+- `emitSdkSource()` — converts a DB-form `FlowlibDefinition` back to a TypeScript source string (used by the Vercel Workflows plugin to generate the deployable flow file)
 - `createFetchPromptClient()` — HTTP-based prompt client for environments without direct AI SDK access
 - Primitive-specific action forks (`ifElseAction`, `switchAction`, `javascriptAction`, `outputAction`) that avoid QuickJS so flows can run on edge runtimes
 
@@ -1357,7 +1357,7 @@ Extended Playwright `test` with helpers:
 
 ## Core E2E Tests (`pkg/core/tests/e2e/`)
 
-**Programmatic** E2E tests that exercise `Invect` core directly (no HTTP, no browser).
+**Programmatic** E2E tests that exercise `Flowlib` core directly (no HTTP, no browser).
 
 - **Run**: `pnpm test:e2e` — initializes with a local SQLite file, runs each example's `setup()` + `run()` + `assert()`
 - **Requires**: `OPENAI_API_KEY` or `ANTHROPIC_API_KEY` for AI-powered tests

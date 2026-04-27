@@ -3,14 +3,14 @@
  *
  * These types define the headless-editor contract used by the VSCode
  * extension, embedded hosts, and any future non-router, non-REST consumer
- * of the Invect flow editor.
+ * of the Flowlib flow editor.
  *
  * Everything here MUST be browser-safe. No runtime code, no zod schemas,
  * no `@flowlib/core` runtime imports — see CLAUDE.md "Frontend/backend
  * type separation".
  */
 
-import type { FlowRun, InvectDefinition, NodeExecution } from '@flowlib/core/types';
+import type { FlowRun, FlowlibDefinition, NodeExecution } from '@flowlib/core/types';
 import type { NodeDefinition } from '../types/node-definition.types';
 
 /**
@@ -30,7 +30,7 @@ export type ActionMetadata = NodeDefinition;
 export type NodeRunStatus = 'pending' | 'running' | 'success' | 'failed' | 'skipped';
 
 /**
- * Known Invect theme tokens. Override any subset through
+ * Known Flowlib theme tokens. Override any subset through
  * `FlowCanvasProps.themeTokens` to retheme the canvas without
  * modifying `<ThemeProvider>`.
  *
@@ -62,7 +62,7 @@ export type ThemeTokenName =
  */
 export interface FlowCanvasProps {
   /** Flow definition rendered by the canvas. */
-  flow: InvectDefinition;
+  flow: FlowlibDefinition;
 
   /**
    * Action/node metadata the canvas uses to render the node palette,
@@ -79,7 +79,7 @@ export interface FlowCanvasProps {
    * definition (drag a node, connect an edge, change a param). The
    * caller is responsible for persisting the new definition.
    */
-  onEdit?: (flow: InvectDefinition) => void;
+  onEdit?: (flow: FlowlibDefinition) => void;
 
   /**
    * Called when the user requests a run from inside the canvas (the Run

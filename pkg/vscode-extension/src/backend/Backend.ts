@@ -1,6 +1,6 @@
 /**
  * `Backend` — single interface for everything the extension needs from an
- * Invect backend, regardless of where the backend lives.
+ * Flowlib backend, regardless of where the backend lives.
  *
  * Three implementations satisfy this interface:
  *   - `InProcessBackend`  — embedded `@flowlib/core` against a local SQLite
@@ -127,7 +127,7 @@ export class DisconnectedBackend implements Backend {
   }
   async healthCheck(): Promise<{ ok: boolean }> {
     throw new Error(
-      'No backend configured. Run "Invect: Connect to Backend…" or use the embedded backend.',
+      'No backend configured. Run "Flowlib: Connect to Backend…" or use the embedded backend.',
     );
   }
   async listActions(): Promise<unknown[]> {
@@ -165,7 +165,7 @@ export class DisconnectedBackend implements Backend {
   }
   private unavailable(): Error {
     return new Error(
-      'No backend connected. The default embedded backend should have started — check the Invect output channel.',
+      'No backend connected. The default embedded backend should have started — check the Flowlib output channel.',
     );
   }
 }

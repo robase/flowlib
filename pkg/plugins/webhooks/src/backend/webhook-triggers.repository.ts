@@ -108,7 +108,7 @@ export class WebhookTriggersRepository {
          trigger_count,
          created_at,
          updated_at
-       FROM invect_webhook_triggers
+       FROM flowlib_webhook_triggers
        ORDER BY created_at DESC`,
     );
 
@@ -136,7 +136,7 @@ export class WebhookTriggersRepository {
          trigger_count,
          created_at,
          updated_at
-       FROM invect_webhook_triggers
+       FROM flowlib_webhook_triggers
        WHERE id = ?
        LIMIT 1`,
       [id],
@@ -166,7 +166,7 @@ export class WebhookTriggersRepository {
          trigger_count,
          created_at,
          updated_at
-       FROM invect_webhook_triggers
+       FROM flowlib_webhook_triggers
        WHERE webhook_path = ?
        LIMIT 1`,
       [webhookPath],
@@ -178,7 +178,7 @@ export class WebhookTriggersRepository {
   async create(input: CreateWebhookTriggerRecord): Promise<WebhookTrigger> {
     const now = new Date().toISOString();
     await this.database.execute(
-      `INSERT INTO invect_webhook_triggers (
+      `INSERT INTO flowlib_webhook_triggers (
          id,
          name,
          description,
@@ -280,7 +280,7 @@ export class WebhookTriggersRepository {
     params.push(new Date().toISOString(), id);
 
     await this.database.execute(
-      `UPDATE invect_webhook_triggers SET ${updates.join(', ')} WHERE id = ?`,
+      `UPDATE flowlib_webhook_triggers SET ${updates.join(', ')} WHERE id = ?`,
       params,
     );
 
@@ -288,13 +288,13 @@ export class WebhookTriggersRepository {
   }
 
   async delete(id: string): Promise<void> {
-    await this.database.execute('DELETE FROM invect_webhook_triggers WHERE id = ?', [id]);
+    await this.database.execute('DELETE FROM flowlib_webhook_triggers WHERE id = ?', [id]);
   }
 
   async recordDelivery(id: string, payload: unknown): Promise<void> {
     const timestamp = new Date().toISOString();
     await this.database.execute(
-      `UPDATE invect_webhook_triggers
+      `UPDATE flowlib_webhook_triggers
        SET last_triggered_at = ?,
            last_payload = ?,
            trigger_count = trigger_count + 1,

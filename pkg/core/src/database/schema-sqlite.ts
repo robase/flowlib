@@ -1,10 +1,10 @@
-// SQLite schema for Invect core
+// SQLite schema for Flowlib core
 import { sqliteTable, text, integer, primaryKey } from 'drizzle-orm/sqlite-core';
 import { relations, sql } from 'drizzle-orm';
 import { JSONValue } from '.';
 import { FlowRunStatus, NodeExecutionStatus } from 'src/types/base';
 import { BatchStatus, BatchProvider } from 'src/services/ai/base-client';
-import { InvectDefinitionRuntime } from 'src/services/flow-versions/schemas-fresh';
+import { FlowlibDefinitionRuntime } from 'src/services/flow-versions/schemas-fresh';
 import { randomUUID } from 'crypto';
 import type { NodeErrorDetails } from '@flowlib/action-kit';
 
@@ -13,7 +13,7 @@ import type { NodeErrorDetails } from '@flowlib/action-kit';
 // =============================================================================
 
 // Flow definition table
-export const flows = sqliteTable('invect_flows', {
+export const flows = sqliteTable('flowlib_flows', {
   id: text('id').primaryKey(), // Will be generated using IdGenerator.generateFlowId()
   name: text('name').notNull(),
   description: text('description'),
@@ -30,14 +30,14 @@ export const flows = sqliteTable('invect_flows', {
 
 // Flow version table to support version history
 export const flowVersions = sqliteTable(
-  'invect_flow_versions',
+  'flowlib_flow_versions',
   {
     flowId: text('flow_id')
       .notNull()
       .references(() => flows.id, { onDelete: 'cascade' }),
     version: integer('version').notNull(),
-    invectDefinition: text('invect_definition', { mode: 'json' })
-      .$type<InvectDefinitionRuntime>()
+    flowlibDefinition: text('flowlib_definition', { mode: 'json' })
+      .$type<FlowlibDefinitionRuntime>()
       .notNull(),
     createdAt: text('created_at')
       .notNull()
@@ -48,7 +48,7 @@ export const flowVersions = sqliteTable(
 );
 
 // Flow execution table to track execution instances
-export const flowRuns = sqliteTable('invect_flow_executions', {
+export const flowRuns = sqliteTable('flowlib_flow_executions', {
   id: text('id')
     .primaryKey()
     .$defaultFn(() => randomUUID()),
@@ -80,7 +80,7 @@ export const flowRuns = sqliteTable('invect_flow_executions', {
 // Action traces table — unified node executions + agent tool executions
 import type { AnySQLiteColumn } from 'drizzle-orm/sqlite-core';
 
-export const actionTraces = sqliteTable('invect_action_traces', {
+export const actionTraces = sqliteTable('flowlib_action_traces', {
   id: text('id')
     .primaryKey()
     .$defaultFn(() => randomUUID()),
@@ -119,7 +119,7 @@ export const actionTraces = sqliteTable('invect_action_traces', {
 });
 
 // Batch job table to track batch processing jobs
-export const batchJobs = sqliteTable('invect_batch_jobs', {
+export const batchJobs = sqliteTable('flowlib_batch_jobs', {
   id: text('id')
     .primaryKey()
     .$defaultFn(() => randomUUID()),
@@ -216,7 +216,7 @@ export interface CredentialConfig {
 }
 
 // Credentials table for storing API authentication credentials
-export const credentials = sqliteTable('invect_credentials', {
+export const credentials = sqliteTable('flowlib_credentials', {
   id: text('id')
     .primaryKey()
     .$defaultFn(() => randomUUID()),
@@ -271,7 +271,7 @@ export const credentials = sqliteTable('invect_credentials', {
 /** Trigger type discriminant */
 export type TriggerType = 'manual' | 'webhook' | 'cron';
 
-export const flowTriggers = sqliteTable('invect_flow_triggers', {
+export const flowTriggers = sqliteTable('flowlib_flow_triggers', {
   id: text('id')
     .primaryKey()
     .$defaultFn(() => randomUUID()),
@@ -304,7 +304,7 @@ export const flowTriggers = sqliteTable('invect_flow_triggers', {
 // Chat Messages — persisted chat history scoped to flows
 // =============================================================================
 
-export const chatMessages = sqliteTable('invect_chat_messages', {
+export const chatMessages = sqliteTable('flowlib_chat_messages', {
   id: text('id')
     .primaryKey()
     .$defaultFn(() => randomUUID()),

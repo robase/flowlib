@@ -1,7 +1,7 @@
 // spec: Cross-platform API parity — Next.js adapter
 //
 // Validates that the Next.js adapter (@flowlib/nextjs) exposes the full
-// Invect API contract via the catch-all API route handler.
+// Flowlib API contract via the catch-all API route handler.
 // Each worker gets its own isolated Next.js handler server with a
 // disposable SQLite database, so these tests run fully in parallel.
 

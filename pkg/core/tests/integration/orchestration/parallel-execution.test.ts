@@ -2,24 +2,24 @@
  * Integration tests: Parallel flow execution (ready-set scheduler)
  *
  * The ready-set scheduler is the default execution path. These tests skip
- * only if it's been explicitly disabled (`INVECT_PARALLEL_SCHEDULER=0`),
+ * only if it's been explicitly disabled (`FLOWLIB_PARALLEL_SCHEDULER=0`),
  * since the timing assertions assume concurrent execution.
  *
- * Implementation note: all tests share a single Invect instance. There is a
- * pre-existing test-isolation issue with `createTestInvect` where successive
+ * Implementation note: all tests share a single Flowlib instance. There is a
+ * pre-existing test-isolation issue with `createTestFlowlib` where successive
  * instances within the same vitest worker can produce inconsistent template
  * resolution. Sharing one instance dodges that and isn't load-bearing for
  * what we're testing here.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { FlowRunStatus } from '../../../src';
-import type { InvectInstance } from '../../../src/api/types';
-import type { InvectDefinition } from '../../../src/services/flow-versions/schemas-fresh';
+import type { FlowlibInstance } from '../../../src/api/types';
+import type { FlowlibDefinition } from '../../../src/services/flow-versions/schemas-fresh';
 import type { NodeOutput } from '../../../src/types/node-io-types';
-import type { InvectPlugin, NodeExecutionHookContext } from '../../../src/types/plugin.types';
-import { createTestInvect } from '../helpers/test-flowlib';
+import type { FlowlibPlugin, NodeExecutionHookContext } from '../../../src/types/plugin.types';
+import { createTestFlowlib } from '../helpers/test-flowlib';
 
-const PARALLEL_ENABLED = process.env.INVECT_PARALLEL_SCHEDULER !== '0';
+const PARALLEL_ENABLED = process.env.FLOWLIB_PARALLEL_SCHEDULER !== '0';
 const skipOrDescribe = PARALLEL_ENABLED ? describe : describe.skip;
 
 /**
@@ -28,7 +28,7 @@ const skipOrDescribe = PARALLEL_ENABLED ? describe : describe.skip;
  */
 const delays: Record<string, number> = {};
 
-const delayPlugin: InvectPlugin = {
+const delayPlugin: FlowlibPlugin = {
   id: 'test-delay',
   name: 'Test Delay',
   hooks: {
@@ -81,19 +81,19 @@ function getOutputString(result: { outputs?: Record<string, unknown> }, nodeId: 
 }
 
 skipOrDescribe('Parallel flow execution (ready-set scheduler)', () => {
-  let flowlib: InvectInstance;
+  let flowlib: FlowlibInstance;
 
   beforeAll(async () => {
-    flowlib = await createTestInvect({ plugins: [delayPlugin] });
+    flowlib = await createTestFlowlib({ plugins: [delayPlugin] });
   });
 
   afterAll(async () => {
     await flowlib.shutdown();
   });
 
-  async function runDef(name: string, definition: InvectDefinition) {
+  async function runDef(name: string, definition: FlowlibDefinition) {
     const flow = await flowlib.flows.create({ name: `${name}-${Date.now()}` });
-    await flowlib.versions.create(flow.id, { invectDefinition: definition });
+    await flowlib.versions.create(flow.id, { flowlibDefinition: definition });
     return flowlib.runs.start(flow.id, {}, { useBatchProcessing: false });
   }
 
@@ -280,8 +280,8 @@ skipOrDescribe('Parallel flow execution (ready-set scheduler)', () => {
     // scheduler reads the env var on every getConcurrency() call, so a
     // single-test override is safe.
     setDelays({});
-    const original = process.env.INVECT_SCHEDULER_CONCURRENCY;
-    process.env.INVECT_SCHEDULER_CONCURRENCY = '1';
+    const original = process.env.FLOWLIB_SCHEDULER_CONCURRENCY;
+    process.env.FLOWLIB_SCHEDULER_CONCURRENCY = '1';
     try {
       const result = await runDef('concurrency-1', {
         nodes: [
@@ -303,9 +303,9 @@ skipOrDescribe('Parallel flow execution (ready-set scheduler)', () => {
       expect(out).toContain('R=R');
     } finally {
       if (original === undefined) {
-        delete process.env.INVECT_SCHEDULER_CONCURRENCY;
+        delete process.env.FLOWLIB_SCHEDULER_CONCURRENCY;
       } else {
-        process.env.INVECT_SCHEDULER_CONCURRENCY = original;
+        process.env.FLOWLIB_SCHEDULER_CONCURRENCY = original;
       }
     }
   });

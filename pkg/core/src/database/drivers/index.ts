@@ -7,7 +7,7 @@
 
 export type { DatabaseDriver, DatabaseDriverType } from './types';
 import type { DatabaseDriver, DatabaseDriverType } from './types';
-import type { InvectDatabaseConfig, Logger } from 'src/schemas';
+import type { FlowlibDatabaseConfig, Logger } from 'src/schemas';
 
 // ---------------------------------------------------------------------------
 // Driver resolution
@@ -21,7 +21,7 @@ import type { InvectDatabaseConfig, Logger } from 'src/schemas';
  * 2. Heuristic from connection string
  * 3. Dialect default
  */
-export function resolveDatabaseDriverType(config: InvectDatabaseConfig): DatabaseDriverType {
+export function resolveDatabaseDriverType(config: FlowlibDatabaseConfig): DatabaseDriverType {
   if (config.driver) {
     return config.driver;
   }
@@ -52,7 +52,7 @@ export function resolveDatabaseDriverType(config: InvectDatabaseConfig): Databas
  * (already prepared by `DatabaseConnectionFactory.prepareSQLiteFilePath`).
  */
 export async function createDatabaseDriver(
-  config: InvectDatabaseConfig,
+  config: FlowlibDatabaseConfig,
   logger: Logger,
   /** Resolved file path — only needed for SQLite. */
   sqliteFilePath?: string,
@@ -105,7 +105,7 @@ export async function createDatabaseDriver(
   }
 }
 
-function requireConnectionString(config: InvectDatabaseConfig, driver: string): string {
+function requireConnectionString(config: FlowlibDatabaseConfig, driver: string): string {
   if (!config.connectionString) {
     throw new Error(`${driver} driver requires a connectionString in database config.`);
   }

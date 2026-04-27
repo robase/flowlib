@@ -17,7 +17,7 @@ import {
 } from './oauth2-providers';
 
 /**
- * OAuth2 configuration for the Invect application
+ * OAuth2 configuration for the Flowlib application
  */
 export interface OAuth2AppConfig {
   /** Client ID from the OAuth provider */

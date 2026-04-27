@@ -108,7 +108,7 @@ function isLenient(): boolean {
   return (
     typeof process !== 'undefined' &&
     typeof process.env !== 'undefined' &&
-    process.env.INVECT_SDK_LENIENT === '1'
+    process.env.FLOWLIB_SDK_LENIENT === '1'
   );
 }
 

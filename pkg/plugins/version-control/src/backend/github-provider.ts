@@ -107,7 +107,7 @@ function asBufferSource(bytes: Uint8Array): ArrayBuffer {
  * Create a GitHub provider instance.
  *
  * Uses the GitHub REST API directly (no Octokit dependency).
- * Supports PAT, GitHub App, and Invect credential-based auth.
+ * Supports PAT, GitHub App, and Flowlib credential-based auth.
  */
 export function githubProvider(options: GitHubProviderOptions): GitProvider {
   let resolvedToken: string | null = null;

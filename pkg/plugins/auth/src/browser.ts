@@ -21,7 +21,7 @@
  */
 import { authFrontend } from './frontend/index';
 
-interface InvectPluginDefinition {
+interface FlowlibPluginDefinition {
   id: string;
   name?: string;
   backend?: unknown;
@@ -34,7 +34,7 @@ interface InvectPluginDefinition {
  * Accepts any options for type compatibility with the Node.js entry
  * but ignores them in the browser. Returns only the frontend plugin.
  */
-export function auth(_options?: Record<string, unknown>): InvectPluginDefinition {
+export function auth(_options?: Record<string, unknown>): FlowlibPluginDefinition {
   return {
     id: 'user-auth',
     name: 'User Authentication',

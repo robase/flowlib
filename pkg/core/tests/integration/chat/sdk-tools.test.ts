@@ -3,7 +3,7 @@
  *
  * Exercises the full pipeline — `get_flow_source` emits, `edit_flow_source` /
  * `write_flow_source` evaluate + transform + merge + save — against a real
- * in-memory Invect instance. Verifies the contract that matters for the chat
+ * in-memory Flowlib instance. Verifies the contract that matters for the chat
  * assistant: emitted source round-trips via the SDK, node ids / positions /
  * metadata are preserved across edits, and error paths return actionable
  * diagnostics to the LLM.
@@ -13,7 +13,7 @@ import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
 import { execSync } from 'node:child_process';
 import fsSync from 'node:fs';
 import { join } from 'node:path';
-import type { InvectInstance } from '../../../src/api/types';
+import type { FlowlibInstance } from '../../../src/api/types';
 import type { ChatToolContext } from '../../../src/services/chat/chat-types';
 import {
   getFlowSourceTool,
@@ -21,7 +21,7 @@ import {
   writeFlowSourceTool,
 } from '../../../src/services/chat/tools/sdk-tools';
 import { updateSwitchCaseTool } from '../../../src/services/chat/tools/node-tools';
-import { createTestInvect } from '../helpers/test-flowlib';
+import { createTestFlowlib } from '../helpers/test-flowlib';
 
 /**
  * The evaluator (used by edit/write tools) imports flows via jiti, which
@@ -37,12 +37,12 @@ function ensureSdkBuilt(): void {
 }
 
 describe('Chat SDK tools — source-level flow editing', () => {
-  let flowlib: InvectInstance;
+  let flowlib: FlowlibInstance;
   let baseCtx: Omit<ChatToolContext, 'chatContext'>;
 
   beforeAll(async () => {
     ensureSdkBuilt();
-    flowlib = await createTestInvect();
+    flowlib = await createTestFlowlib();
     baseCtx = { flowlib };
   });
 
@@ -61,7 +61,7 @@ describe('Chat SDK tools — source-level flow editing', () => {
   describe('get_flow_source', () => {
     it('returns a valid SDK source string for a flow', async () => {
       await flowlib.versions.create(flowId, {
-        invectDefinition: {
+        flowlibDefinition: {
           nodes: [
             {
               id: 'node-query',
@@ -135,16 +135,16 @@ export default defineFlow({
 
       expect(result.success).toBe(true);
       const version = await flowlib.versions.get(flowId, 'latest');
-      expect(version!.invectDefinition.nodes).toHaveLength(2);
-      expect(version!.invectDefinition.nodes[0].referenceId).toBe('query');
-      expect(version!.invectDefinition.nodes[1].referenceId).toBe('greeting');
-      expect(version!.invectDefinition.edges).toHaveLength(1);
+      expect(version!.flowlibDefinition.nodes).toHaveLength(2);
+      expect(version!.flowlibDefinition.nodes[0].referenceId).toBe('query');
+      expect(version!.flowlibDefinition.nodes[1].referenceId).toBe('greeting');
+      expect(version!.flowlibDefinition.edges).toHaveLength(1);
     });
 
     it('preserves node ids + positions from the prior version', async () => {
       // Seed an initial version with specific ids and positions.
       await flowlib.versions.create(flowId, {
-        invectDefinition: {
+        flowlibDefinition: {
           nodes: [
             {
               id: 'node_opaque_abc',
@@ -184,7 +184,7 @@ export default defineFlow({
       expect(result.success).toBe(true);
 
       const version = await flowlib.versions.get(flowId, 'latest');
-      const nodes = version!.invectDefinition.nodes;
+      const nodes = version!.flowlibDefinition.nodes;
       expect(nodes.find((n) => n.referenceId === 'query')?.id).toBe('node_opaque_abc');
       expect(nodes.find((n) => n.referenceId === 'query')?.position).toEqual({ x: 100, y: 50 });
       expect(nodes.find((n) => n.referenceId === 'out')?.id).toBe('node_opaque_def');
@@ -341,7 +341,7 @@ export default defineFlow({
     beforeEach(async () => {
       // Seed a flow whose source we can edit.
       await flowlib.versions.create(flowId, {
-        invectDefinition: {
+        flowlibDefinition: {
           nodes: [
             {
               id: 'node_a',
@@ -382,7 +382,7 @@ export default defineFlow({
 
       expect(result.success).toBe(true);
       const latest = await flowlib.versions.get(flowId, 'latest');
-      const outputNode = latest!.invectDefinition.nodes.find((n) => n.referenceId === 'result');
+      const outputNode = latest!.flowlibDefinition.nodes.find((n) => n.referenceId === 'result');
       // The arrow-to-string transform serialises the edited arrow body back
       // into a QuickJS expression string.
       expect(String(outputNode?.params.outputValue)).toContain('Hello');
@@ -412,7 +412,7 @@ export default defineFlow({
       // Add positions to the seeded flow (overwrites the version seeded in
       // the outer beforeEach).
       await flowlib.versions.create(flowId, {
-        invectDefinition: {
+        flowlibDefinition: {
           nodes: [
             {
               id: 'node_a',
@@ -444,7 +444,7 @@ export default defineFlow({
       expect(result.success).toBe(true);
 
       const latest = await flowlib.versions.get(flowId, 'latest');
-      const nodes = latest!.invectDefinition.nodes;
+      const nodes = latest!.flowlibDefinition.nodes;
       expect(nodes.find((n) => n.referenceId === 'query')?.id).toBe('node_a');
       expect(nodes.find((n) => n.referenceId === 'query')?.position).toEqual({ x: 100, y: 200 });
       expect(nodes.find((n) => n.referenceId === 'result')?.id).toBe('node_b');
@@ -459,7 +459,7 @@ export default defineFlow({
   describe('read-before-edit invariant', () => {
     beforeEach(async () => {
       await flowlib.versions.create(flowId, {
-        invectDefinition: {
+        flowlibDefinition: {
           nodes: [
             {
               id: 'node_a',
@@ -524,7 +524,7 @@ export default defineFlow({
 
       // Simulate an out-of-band change (e.g. another tool saved a new version).
       await flowlib.versions.create(flowId, {
-        invectDefinition: {
+        flowlibDefinition: {
           nodes: [
             {
               id: 'node_a',
@@ -590,7 +590,7 @@ export default defineFlow({
   describe('failure payload', () => {
     beforeEach(async () => {
       await flowlib.versions.create(flowId, {
-        invectDefinition: {
+        flowlibDefinition: {
           nodes: [
             {
               id: 'node_a',
@@ -663,7 +663,7 @@ export default defineFlow({
         referenceId: `query_${i}`,
         params: { variableName: `query_${i}`, defaultValue: `${pad}_${i}` },
       }));
-      await flowlib.versions.create(flowId, { invectDefinition: { nodes, edges: [] } });
+      await flowlib.versions.create(flowId, { flowlibDefinition: { nodes, edges: [] } });
 
       const result = await editFlowSourceTool.execute(
         { oldString: 'absolutely_not_in_source_zz', newString: '' },
@@ -681,7 +681,7 @@ export default defineFlow({
   describe('update_switch_case', () => {
     beforeEach(async () => {
       await flowlib.versions.create(flowId, {
-        invectDefinition: {
+        flowlibDefinition: {
           nodes: [
             {
               id: 'node_in',
@@ -714,7 +714,7 @@ export default defineFlow({
       );
       expect(result.success).toBe(true);
       const latest = await flowlib.versions.get(flowId, 'latest');
-      const sw = latest!.invectDefinition.nodes.find((n) => n.referenceId === 'router');
+      const sw = latest!.flowlibDefinition.nodes.find((n) => n.referenceId === 'router');
       const cases = sw!.params.cases as Array<{ slug: string; expression: string }>;
       expect(cases.find((c) => c.slug === 'high')?.expression).toBe('x > 999');
       expect(cases.find((c) => c.slug === 'low')?.expression).toBe('x <= 100');
@@ -724,7 +724,7 @@ export default defineFlow({
       // Add an outgoing edge from the switch using the old slug.
       const v = await flowlib.versions.get(flowId, 'latest');
       const nodes = [
-        ...v!.invectDefinition.nodes,
+        ...v!.flowlibDefinition.nodes,
         {
           id: 'node_out',
           type: 'core.output',
@@ -733,10 +733,10 @@ export default defineFlow({
         },
       ];
       const edges = [
-        ...v!.invectDefinition.edges,
+        ...v!.flowlibDefinition.edges,
         { id: 'e2', source: 'node_sw', target: 'node_out', sourceHandle: 'high' },
       ];
-      await flowlib.versions.create(flowId, { invectDefinition: { nodes, edges } });
+      await flowlib.versions.create(flowId, { flowlibDefinition: { nodes, edges } });
 
       const result = await updateSwitchCaseTool.execute(
         { nodeId: 'router', slug: 'high', newSlug: 'critical' },
@@ -745,10 +745,10 @@ export default defineFlow({
       expect(result.success).toBe(true);
 
       const latest = await flowlib.versions.get(flowId, 'latest');
-      const sw = latest!.invectDefinition.nodes.find((n) => n.referenceId === 'router');
+      const sw = latest!.flowlibDefinition.nodes.find((n) => n.referenceId === 'router');
       const cases = sw!.params.cases as Array<{ slug: string }>;
       expect(cases.map((c) => c.slug)).toEqual(['critical', 'low']);
-      const edge = latest!.invectDefinition.edges.find((e) => e.id === 'e2');
+      const edge = latest!.flowlibDefinition.edges.find((e) => e.id === 'e2');
       expect(edge?.sourceHandle).toBe('critical');
     });
 
@@ -780,7 +780,7 @@ export default defineFlow({
       // predictable anchor to str_replace against. Pure `{{ expr }}` forms
       // collapse to bare expressions (covered by the edit tests above).
       await flowlib.versions.create(flowId, {
-        invectDefinition: {
+        flowlibDefinition: {
           nodes: [
             { id: 'n1', type: 'core.input', referenceId: 'name', params: { variableName: 'name' } },
             {

@@ -6,8 +6,8 @@ import { FlowRunStatus } from '../types/base';
 import type { ExecutionStreamEvent } from '../services/execution-event-bus';
 import { FlowValidator } from '../services/flow-validator';
 import {
-  invectDefinitionSchema,
-  type InvectDefinition,
+  flowlibDefinitionSchema,
+  type FlowlibDefinition,
 } from '../services/flow-versions/schemas-fresh';
 import { ValidationError } from '../types/common/errors.types';
 
@@ -168,7 +168,7 @@ export function createFlowRunsAPI(sf: ServiceFactory, logger: Logger): FlowRunsA
       });
 
       // 1) Validate the inline definition shape via Zod
-      const parsed = invectDefinitionSchema.safeParse(definition);
+      const parsed = flowlibDefinitionSchema.safeParse(definition);
       if (!parsed.success) {
         throw new ValidationError('Invalid ephemeral flow definition', 'definition', undefined, {
           issues: parsed.error.issues.map((i) => ({
@@ -177,7 +177,7 @@ export function createFlowRunsAPI(sf: ServiceFactory, logger: Logger): FlowRunsA
           })),
         });
       }
-      const typedDef = parsed.data as InvectDefinition;
+      const typedDef = parsed.data as FlowlibDefinition;
 
       // 2) Static validation (graph integrity, cycles, etc.)
       const validation = FlowValidator.validateFlowDefinition(typedDef);
@@ -214,7 +214,7 @@ export function createFlowRunsAPI(sf: ServiceFactory, logger: Logger): FlowRunsA
 
       try {
         await flowVersionsService.createFlowVersion(flow.id, {
-          invectDefinition: typedDef,
+          flowlibDefinition: typedDef,
         });
       } catch (error) {
         // Best-effort cleanup if version creation fails so we don't leave

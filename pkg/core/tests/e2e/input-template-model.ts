@@ -9,7 +9,7 @@
 import { strict as assert } from 'node:assert';
 import { FlowRunStatus, type NodeOutput } from '../../src';
 import { defineFlow, input, template, model } from '@flowlib/sdk';
-import type { InvectInstance } from '../../src/api/types';
+import type { FlowlibInstance } from '../../src/api/types';
 import type { FlowExample } from './example-types';
 
 /**
@@ -17,7 +17,7 @@ import type { FlowExample } from './example-types';
  * Creates a credential with proper provider metadata for detection.
  */
 async function ensureAICredential(
-  flowlib: InvectInstance,
+  flowlib: FlowlibInstance,
 ): Promise<{ id: string; name: string; isOpenAI: boolean }> {
   const openaiKey = process.env.OPENAI_API_KEY;
   const anthropicKey = process.env.ANTHROPIC_API_KEY;
@@ -96,7 +96,7 @@ export const inputTemplateModelExample: FlowExample = {
 
     const flowDefinition = buildFlowDefinition(credential.id, credential.isOpenAI);
     await flowlib.versions.create(flow.id, {
-      invectDefinition: flowDefinition,
+      flowlibDefinition: flowDefinition,
     });
     console.log(`  💾 Saved flow version with ${flowDefinition.nodes.length} nodes`);
 

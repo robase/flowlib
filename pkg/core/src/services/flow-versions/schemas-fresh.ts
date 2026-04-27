@@ -160,19 +160,19 @@ export const flowEdgeSchema = z.object({
 
 export type FlowEdge = z.infer<typeof flowEdgeSchema>;
 
-export const invectDefinitionSchema = z.object({
+export const flowlibDefinitionSchema = z.object({
   nodes: z.array(flowNodeDefinitionsSchema),
   edges: z.array(flowEdgeSchema),
   metadata: metadataSchema.optional(),
 });
 
-export type InvectDefinition = z.infer<typeof invectDefinitionSchema>;
+export type FlowlibDefinition = z.infer<typeof flowlibDefinitionSchema>;
 
 // Runtime type alias for flow definitions stored in database
-export type InvectDefinitionRuntime = InvectDefinition;
+export type FlowlibDefinitionRuntime = FlowlibDefinition;
 
 export const createFlowVersionRequestSchema = z.object({
-  invectDefinition: invectDefinitionSchema,
+  flowlibDefinition: flowlibDefinitionSchema,
 });
 
 export type CreateFlowVersionRequest = z.infer<typeof createFlowVersionRequestSchema>;

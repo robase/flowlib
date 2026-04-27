@@ -6,14 +6,14 @@
  */
 import { vcFrontendPlugin } from './frontend/index';
 
-interface InvectPluginDefinition {
+interface FlowlibPluginDefinition {
   id: string;
   name?: string;
   backend?: unknown;
   frontend?: unknown;
 }
 
-export function versionControl(_options?: Record<string, unknown>): InvectPluginDefinition {
+export function versionControl(_options?: Record<string, unknown>): FlowlibPluginDefinition {
   return {
     id: 'version-control',
     name: 'Version Control',

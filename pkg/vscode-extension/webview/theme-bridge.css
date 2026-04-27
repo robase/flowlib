@@ -1,5 +1,5 @@
 /**
- * VSCode theme → Invect canvas token bridge.
+ * VSCode theme → Flowlib canvas token bridge.
  *
  * The `<FlowCanvas>` reads `--imp-*` tokens for every colored surface. Inside
  * a VSCode webview those tokens are unset by default, so the canvas would
@@ -43,7 +43,7 @@
 }
 
 /*
- * Hide Invect's own sidebar (`AppSideMenu`). Inside the VSCode extension
+ * Hide Flowlib's own sidebar (`AppSideMenu`). Inside the VSCode extension
  * we route navigation through the native side panel (Backends, Flows,
  * Credentials, Webhooks tree views), so the in-app left rail is dead
  * weight and steals horizontal space.

@@ -59,6 +59,6 @@ body {
   --color-sidebar-ring: var(--sidebar-ring);
 }
 
-/* Invect provides its own complete theme via @flowlib/ui/styles.
+/* Flowlib provides its own complete theme via @flowlib/ui/styles.
    No need to declare --card, --border, etc. here — they would override
    the purple-tinted dark palette with neutral grays. */

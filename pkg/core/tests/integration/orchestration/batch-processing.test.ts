@@ -17,9 +17,9 @@ import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from
 import { setupServer } from 'msw/node';
 import { http, HttpResponse } from 'msw';
 import { FlowRunStatus } from '../../../src';
-import type { InvectInstance } from '../../../src/api/types';
-import type { InvectDefinition } from '../../../src/services/flow-versions/schemas-fresh';
-import { createTestInvect } from '../helpers/test-flowlib';
+import type { FlowlibInstance } from '../../../src/api/types';
+import type { FlowlibDefinition } from '../../../src/services/flow-versions/schemas-fresh';
+import { createTestFlowlib } from '../helpers/test-flowlib';
 
 // ---------------------------------------------------------------------------
 // OpenAI batch-API fixtures
@@ -99,12 +99,12 @@ const mswServer = setupServer(
 // Shared fixtures
 // ---------------------------------------------------------------------------
 
-let flowlib: InvectInstance;
+let flowlib: FlowlibInstance;
 let credentialId: string;
 
 beforeAll(async () => {
   mswServer.listen({ onUnhandledRequest: 'bypass' });
-  flowlib = await createTestInvect();
+  flowlib = await createTestFlowlib();
   const cred = await flowlib.credentials.create({
     name: 'Test OpenAI Batch',
     type: 'llm',
@@ -135,13 +135,13 @@ afterEach(() => {
 // Helpers
 // ---------------------------------------------------------------------------
 
-async function createFlow(definition: InvectDefinition) {
+async function createFlow(definition: FlowlibDefinition) {
   const flow = await flowlib.flows.create({ name: `batch-${Date.now()}-${Math.random()}` });
-  await flowlib.versions.create(flow.id, { invectDefinition: definition });
+  await flowlib.versions.create(flow.id, { flowlibDefinition: definition });
   return flow;
 }
 
-function batchModelNode(id: string): InvectDefinition['nodes'][number] {
+function batchModelNode(id: string): FlowlibDefinition['nodes'][number] {
   return {
     id,
     type: 'core.model',

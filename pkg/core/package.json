@@ -1,7 +1,7 @@
 {
   "name": "@flowlib/core",
   "version": "0.0.12",
-  "description": "Framework-agnostic core package for Invect workflow execution engine",
+  "description": "Framework-agnostic core package for Flowlib workflow execution engine",
   "keywords": [
     "automation",
     "core",
