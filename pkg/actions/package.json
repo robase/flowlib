@@ -1,21 +1,21 @@
 {
-  "name": "@invect/actions",
+  "name": "@flowlib/actions",
   "version": "0.0.2",
   "description": "Built-in provider actions for Invect flows (Gmail, Slack, GitHub, etc.)",
   "keywords": [
     "actions",
     "integrations",
-    "invect"
+    "flowlib"
   ],
-  "homepage": "https://invect.dev",
+  "homepage": "https://flowlib.dev",
   "bugs": {
-    "url": "https://github.com/robase/invect/issues"
+    "url": "https://github.com/robase/flowlib/issues"
   },
   "license": "MIT",
-  "author": "robase <team@invect.dev>",
+  "author": "robase <team@flowlib.dev>",
   "repository": {
     "type": "git",
-    "url": "https://github.com/robase/invect.git",
+    "url": "https://github.com/robase/flowlib.git",
     "directory": "pkg/actions"
   },
   "files": [
@@ -284,7 +284,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@invect/action-kit": "workspace:*",
+    "@flowlib/action-kit": "workspace:*",
     "zod": "^3.25.1"
   },
   "devDependencies": {

@@ -414,16 +414,16 @@ export class DatabaseService {
     lines.push(
       'To fix this, run:',
       '',
-      '  npx invect-cli generate   # generate schema files (core + plugins)',
+      '  npx flowlib-cli generate   # generate schema files (core + plugins)',
       '  npx drizzle-kit push   # push schema to the database',
       '',
       'Or if you use migrations:',
       '',
-      '  npx invect-cli generate   # generate schema files',
+      '  npx flowlib-cli generate   # generate schema files',
       '  npx drizzle-kit generate',
-      '  npx invect-cli migrate    # apply migrations',
+      '  npx flowlib-cli migrate    # apply migrations',
       '',
-      'The Invect CLI reads your invect.config.ts to discover installed',
+      'The Invect CLI reads your flowlib.config.ts to discover installed',
       'plugins and generates the correct schema for all of them.',
       '',
     );
@@ -523,17 +523,17 @@ export class DatabaseService {
       lines.push(
         'To fix this, run:',
         '',
-        '  npx invect-cli generate   # generate schema files (core + plugins)',
+        '  npx flowlib-cli generate   # generate schema files (core + plugins)',
         '  npx drizzle-kit push   # push schema to the database',
         '',
-        'The Invect CLI reads your invect.config.ts, discovers all plugins',
+        'The Invect CLI reads your flowlib.config.ts, discovers all plugins',
         'and their required tables, and generates the complete schema.',
       );
     }
 
     lines.push(
       '',
-      'If a plugin defines a schema, `npx invect-cli generate` will include it',
+      'If a plugin defines a schema, `npx flowlib-cli generate` will include it',
       'automatically. For plugins with externally-managed tables, see the',
       "plugin's README for additional schema setup instructions.",
       '',

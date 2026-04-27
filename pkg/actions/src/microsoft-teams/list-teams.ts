@@ -6,7 +6,7 @@
  * Requires a Microsoft Teams OAuth2 credential with Team.ReadBasic.All scope.
  */
 
-import { defineAction } from '@invect/action-kit';
+import { defineAction } from '@flowlib/action-kit';
 import { MICROSOFT_TEAMS_PROVIDER } from '../providers';
 import { z } from 'zod/v4';
 

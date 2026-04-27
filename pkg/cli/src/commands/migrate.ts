@@ -1,5 +1,5 @@
 /**
- * `npx invect-cli migrate` — Apply pending database migrations
+ * `npx flowlib-cli migrate` — Apply pending database migrations
  *
  * Applies the Invect schema directly to your database. This wraps
  * Drizzle Kit's migration commands with Invect-aware configuration.
@@ -8,10 +8,10 @@
  * without generating migration files (uses `drizzle-kit push`).
  *
  * Usage:
- *   npx invect-cli migrate                    # Apply pending SQL migrations
- *   npx invect-cli migrate --push             # Push schema directly (dev mode)
- *   npx invect-cli migrate --config ./my.ts   # Explicit config path
- *   npx invect-cli migrate --yes              # Skip confirmation
+ *   npx flowlib-cli migrate                    # Apply pending SQL migrations
+ *   npx flowlib-cli migrate --push             # Push schema directly (dev mode)
+ *   npx flowlib-cli migrate --config ./my.ts   # Explicit config path
+ *   npx flowlib-cli migrate --yes              # Skip confirmation
  */
 
 import { Command } from 'commander';
@@ -47,7 +47,7 @@ async function migrateAction(options: { config?: string; yes?: boolean; push?: b
         '\n' +
         pc.dim('  Use --config <path> to specify the config file explicitly.') +
         '\n\n' +
-        pc.dim('  You can create one with: ' + pc.cyan('npx invect-cli init')) +
+        pc.dim('  You can create one with: ' + pc.cyan('npx flowlib-cli init')) +
         '\n',
     );
     process.exit(1);
@@ -142,7 +142,7 @@ async function migrateAction(options: { config?: string; yes?: boolean; push?: b
     if (mode === 'migrate') {
       console.error(
         pc.dim('  Have you generated migrations? Run: ') +
-          pc.cyan('npx invect-cli generate') +
+          pc.cyan('npx flowlib-cli generate') +
           '\n',
       );
     } else {

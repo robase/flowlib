@@ -7,7 +7,7 @@
  * Requires a Stripe credential with a secret key or access token.
  */
 
-import { defineAction } from '@invect/action-kit';
+import { defineAction } from '@flowlib/action-kit';
 import { STRIPE_PROVIDER } from '../providers';
 import { z } from 'zod/v4';
 

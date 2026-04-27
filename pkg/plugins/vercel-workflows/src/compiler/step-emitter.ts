@@ -1,6 +1,6 @@
 import type { ControlFlow } from './control-flow';
-import type { PrimitiveFlowDefinition } from '@invect/primitives';
-import { ifElseAction } from '@invect/primitives';
+import type { PrimitiveFlowDefinition } from '@flowlib/primitives';
+import { ifElseAction } from '@flowlib/primitives';
 
 // Derive if_else handle IDs from the action definition (see control-flow.ts).
 const IF_ELSE_TRUE_HANDLE = ifElseAction.outputs?.[0]?.id ?? 'true_output';

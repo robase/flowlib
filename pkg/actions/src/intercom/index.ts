@@ -8,7 +8,7 @@ export { intercomCreateContactAction } from './create-contact';
 export { intercomListConversationsAction } from './list-conversations';
 export { intercomReplyToConversationAction } from './reply-to-conversation';
 
-import type { ActionDefinition } from '@invect/action-kit';
+import type { ActionDefinition } from '@flowlib/action-kit';
 import { intercomListContactsAction } from './list-contacts';
 import { intercomGetContactAction } from './get-contact';
 import { intercomCreateContactAction } from './create-contact';

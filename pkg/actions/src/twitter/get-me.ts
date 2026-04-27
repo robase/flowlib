@@ -7,7 +7,7 @@
  * Requires a Twitter OAuth2 credential with users.read scope.
  */
 
-import { defineAction } from '@invect/action-kit';
+import { defineAction } from '@flowlib/action-kit';
 import { TWITTER_PROVIDER } from '../providers';
 import { z } from 'zod/v4';
 

@@ -5,7 +5,7 @@
  * The button calls `GET /plugins/vercel-workflows/preview/:flowId`
  * which returns:
  *   - workflowSource: `'use workflow'` file the user drops into their Next.js app
- *   - sdkSource:      `@invect/sdk` flow definition the workflow imports
+ *   - sdkSource:      `@flowlib/sdk` flow definition the workflow imports
  */
 
 import { useCallback, useEffect, useState } from 'react';
@@ -19,7 +19,7 @@ import {
   DialogTrigger,
   useApiBaseURL,
   type HeaderActionProps,
-} from '@invect/ui';
+} from '@flowlib/ui';
 
 interface PreviewSuccess {
   success: true;
@@ -229,7 +229,7 @@ function DeployButtonInner({ flowId }: { flowId: string }) {
               <CodeBlock
                 title="flow.ts"
                 filename="flow.ts"
-                description="@invect/sdk flow definition imported by workflow.ts."
+                description="@flowlib/sdk flow definition imported by workflow.ts."
                 code={data.sdkSource}
               />
             </>

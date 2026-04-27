@@ -9,8 +9,8 @@
  *
  * @example
  * ```tsx
- * import { FlowViewer } from '@invect/ui/demo';
- * import '@invect/ui/styles';
+ * import { FlowViewer } from '@flowlib/ui/demo';
+ * import '@flowlib/ui/styles';
  *
  * <FlowViewer
  *   nodes={[
@@ -54,7 +54,7 @@ import {
 import { NodeConfigPanel } from '../components/flow-editor/node-config-panel/NodeConfigPanel';
 import { useFlowEditorStore } from '../components/flow-editor/flow-editor.store';
 import type { NodeDefinition } from '../types/node-definition.types';
-import type { ReactFlowNodeData, AgentToolDefinition } from '@invect/core/types';
+import type { ReactFlowNodeData, AgentToolDefinition } from '@flowlib/core/types';
 import { createDemoApiClient } from './demo-api-client';
 import type { ApiClient } from '../api/client';
 import '../app.css';
@@ -269,7 +269,7 @@ export function FlowViewer({
       className={containerClassName}
       style={{ position: 'relative', overflow: 'hidden', ...style }}
     >
-      <ThemeProvider defaultTheme={theme} storageKey="invect-viewer-theme" className={className}>
+      <ThemeProvider defaultTheme={theme} storageKey="flowlib-viewer-theme" className={className}>
         <QueryClientProvider client={queryClient}>
           <ApiProvider apiClient={mockClient}>
             <PluginRegistryProvider plugins={[]}>

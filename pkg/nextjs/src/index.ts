@@ -4,16 +4,16 @@ import type {
   InvectConfig,
   InvectIdentity,
   InvectInstance,
-} from '@invect/core';
+} from '@flowlib/core';
 import { ZodError } from 'zod';
 
-type CoreModule = typeof import('@invect/core');
+type CoreModule = typeof import('@flowlib/core');
 
 let coreModule: CoreModule | null = null;
 
 const loadCoreModule = async (): Promise<CoreModule> => {
   if (!coreModule) {
-    coreModule = await import('@invect/core');
+    coreModule = await import('@flowlib/core');
   }
 
   return coreModule;
@@ -24,8 +24,8 @@ const loadCoreModule = async (): Promise<CoreModule> => {
  *
  * Usage in your Next.js app:
  *
- * // app/api/invect/[...invect]/route.ts
- * import { createInvectHandler } from "@invect/nextjs";
+ * // app/api/flowlib/[...flowlib]/route.ts
+ * import { createInvectHandler } from "@flowlib/nextjs";
  *
  * const config = { ... }; // Your Invect config
  * const handler = createInvectHandler(config);
@@ -38,16 +38,16 @@ const loadCoreModule = async (): Promise<CoreModule> => {
  */
 
 interface InvectHandler {
-  GET: (request: Request, context: { params: Promise<{ invect: string[] }> }) => Promise<Response>;
-  POST: (request: Request, context: { params: Promise<{ invect: string[] }> }) => Promise<Response>;
+  GET: (request: Request, context: { params: Promise<{ flowlib: string[] }> }) => Promise<Response>;
+  POST: (request: Request, context: { params: Promise<{ flowlib: string[] }> }) => Promise<Response>;
   PATCH: (
     request: Request,
-    context: { params: Promise<{ invect: string[] }> },
+    context: { params: Promise<{ flowlib: string[] }> },
   ) => Promise<Response>;
-  PUT: (request: Request, context: { params: Promise<{ invect: string[] }> }) => Promise<Response>;
+  PUT: (request: Request, context: { params: Promise<{ flowlib: string[] }> }) => Promise<Response>;
   DELETE: (
     request: Request,
-    context: { params: Promise<{ invect: string[] }> },
+    context: { params: Promise<{ flowlib: string[] }> },
   ) => Promise<Response>;
 }
 
@@ -91,7 +91,7 @@ export function createInvectHandler(config: InvectConfig): InvectHandler {
   let initError: Error | null = null;
 
   // eslint-disable-next-line no-console
-  console.log('[invect-nextjs] createInvectHandler called', {
+  console.log('[flowlib-nextjs] createInvectHandler called', {
     NODE_ENV: process.env.NODE_ENV,
     NEXT_PHASE: process.env.NEXT_PHASE,
     VERCEL_ENV: process.env.VERCEL_ENV,
@@ -109,7 +109,7 @@ export function createInvectHandler(config: InvectConfig): InvectHandler {
     if (initError) {
       // eslint-disable-next-line no-console
       console.error(
-        '[invect-nextjs] Previous initialization failed, retrying...',
+        '[flowlib-nextjs] Previous initialization failed, retrying...',
         initError.message,
       );
       initializationPromise = null;
@@ -133,28 +133,28 @@ export function createInvectHandler(config: InvectConfig): InvectHandler {
           }
 
           // eslint-disable-next-line no-console
-          console.log('[invect-nextjs] Loading @invect/core module...');
+          console.log('[flowlib-nextjs] Loading @flowlib/core module...');
           const { createInvect } = await loadCoreModule();
           // eslint-disable-next-line no-console
-          console.log(`[invect-nextjs] Core module loaded in ${Date.now() - startTime}ms`);
+          console.log(`[flowlib-nextjs] Core module loaded in ${Date.now() - startTime}ms`);
 
           // eslint-disable-next-line no-console
-          console.log('[invect-nextjs] Calling createInvect()...');
+          console.log('[flowlib-nextjs] Calling createInvect()...');
           core = await createInvect(config);
           // eslint-disable-next-line no-console
-          console.log(`[invect-nextjs] createInvect() completed in ${Date.now() - startTime}ms`);
+          console.log(`[flowlib-nextjs] createInvect() completed in ${Date.now() - startTime}ms`);
 
           await disableBackgroundWorkers(core);
           // eslint-disable-next-line no-console
           console.log(
-            `[invect-nextjs] ✅ Invect fully initialized for serverless routing in ${Date.now() - startTime}ms`,
+            `[flowlib-nextjs] ✅ Invect fully initialized for serverless routing in ${Date.now() - startTime}ms`,
           );
         } catch (error) {
           const elapsed = Date.now() - startTime;
           // eslint-disable-next-line no-console
-          console.error(`[invect-nextjs] ❌ Initialization failed after ${elapsed}ms:`, error);
+          console.error(`[flowlib-nextjs] ❌ Initialization failed after ${elapsed}ms:`, error);
           // eslint-disable-next-line no-console
-          console.error('[invect-nextjs] Error details:', {
+          console.error('[flowlib-nextjs] Error details:', {
             name: error instanceof Error ? error.name : 'unknown',
             message: error instanceof Error ? error.message : String(error),
             stack: error instanceof Error ? error.stack : undefined,
@@ -289,29 +289,29 @@ export function createInvectHandler(config: InvectConfig): InvectHandler {
   // Route handler function
   const handleRequest = async (
     request: Request,
-    context: { params: Promise<{ invect: string[] }> },
+    context: { params: Promise<{ flowlib: string[] }> },
   ): Promise<Response> => {
     const requestStart = Date.now();
     try {
       const params = await context.params;
-      const path = params.invect.join('/');
+      const path = params.flowlib.join('/');
       const method = request.method;
       // eslint-disable-next-line no-console
-      console.log(`[invect-nextjs] ${method} /${path} (core initialized: ${!!core})`);
+      console.log(`[flowlib-nextjs] ${method} /${path} (core initialized: ${!!core})`);
 
       // Get initialized core
       const coreOrResponse = await getInitializedCore();
       if (coreOrResponse instanceof Response) {
         // eslint-disable-next-line no-console
         console.error(
-          `[invect-nextjs] ${method} /${path} → 503 (init failed, ${Date.now() - requestStart}ms)`,
+          `[flowlib-nextjs] ${method} /${path} → 503 (init failed, ${Date.now() - requestStart}ms)`,
         );
         return coreOrResponse;
       }
       const initializedCore = coreOrResponse;
       // eslint-disable-next-line no-console
       console.log(
-        `[invect-nextjs] ${method} /${path} core ready in ${Date.now() - requestStart}ms`,
+        `[flowlib-nextjs] ${method} /${path} core ready in ${Date.now() - requestStart}ms`,
       );
 
       // Clone the request before consuming the body so plugin handlers
@@ -1237,7 +1237,7 @@ export function createInvectHandler(config: InvectConfig): InvectHandler {
       // Route not found
       // eslint-disable-next-line no-console
       console.warn(
-        `[invect-nextjs] ${method} /${path} → 404 (no matching route, ${Date.now() - requestStart}ms)`,
+        `[flowlib-nextjs] ${method} /${path} → 404 (no matching route, ${Date.now() - requestStart}ms)`,
       );
       return Response.json(
         {
@@ -1248,7 +1248,7 @@ export function createInvectHandler(config: InvectConfig): InvectHandler {
       );
     } catch (error) {
       // eslint-disable-next-line no-console
-      console.error(`[invect-nextjs] Request error (${Date.now() - requestStart}ms):`, error);
+      console.error(`[flowlib-nextjs] Request error (${Date.now() - requestStart}ms):`, error);
       return handleError(error);
     }
   };
@@ -1345,7 +1345,7 @@ export function createInvectEndpoint(config: InvectConfig) {
 /**
  * Create a dedicated maintenance handler for serverless cron invocations.
  *
- * Intended for routes like /api/invect/cron that are triggered by Vercel Cron.
+ * Intended for routes like /api/flowlib/cron that are triggered by Vercel Cron.
  * The handler performs one maintenance pass that:
  * - polls pending batch jobs
  * - resumes flows paused for batch completion
@@ -1434,7 +1434,7 @@ export function createInvectCronHandler(config: InvectConfig) {
 }
 
 // Re-export types from core for convenience
-export type { InvectConfig, InvectInstance } from '@invect/core';
+export type { InvectConfig, InvectInstance } from '@flowlib/core';
 
 export async function createInvect(config: InvectConfig): Promise<InvectInstance> {
   const { createInvect: createCoreInvect } = await loadCoreModule();

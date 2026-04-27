@@ -7,7 +7,7 @@
  * Requires a Jira OAuth2 credential and the Atlassian Cloud ID.
  */
 
-import { defineAction } from '@invect/action-kit';
+import { defineAction } from '@flowlib/action-kit';
 import { JIRA_PROVIDER } from '../providers';
 import { z } from 'zod/v4';
 

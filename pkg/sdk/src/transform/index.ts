@@ -5,12 +5,12 @@
  * Intended callers:
  *   - Chat-save endpoint: LLM emits arrows, DB stores strings.
  *   - Sync plugin pull path: hand-authored `.flow.ts` files get converted
- *     when the embedded JSON footer (`\/* @invect-definition *\/`) is stale
+ *     when the embedded JSON footer (`\/* @flowlib-definition *\/`) is stale
  *     or absent.
  *
  * Not for: browser bundles, runtime executor, or anywhere typescript-the-dep
- * isn't welcome. Subpath-exported (`@invect/sdk/transform`) so the main
- * `@invect/sdk` entry stays lean.
+ * isn't welcome. Subpath-exported (`@flowlib/sdk/transform`) so the main
+ * `@flowlib/sdk` entry stays lean.
  */
 
 import type { SdkFlowNode } from '../types';

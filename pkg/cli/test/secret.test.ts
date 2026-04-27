@@ -1,7 +1,7 @@
 /**
  * Secret Command Tests
  *
- * Tests the `npx invect-cli secret` command that generates
+ * Tests the `npx flowlib-cli secret` command that generates
  * cryptographically secure 32-byte base64-encoded encryption keys.
  */
 

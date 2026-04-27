@@ -8,9 +8,9 @@
 
 import React, { useCallback, useState } from 'react';
 import { createRoot } from 'react-dom/client';
-import { FlowCanvas } from '@invect/ui/flow-canvas';
-import '@invect/ui/styles';
-import type { InvectDefinition } from '@invect/core/types';
+import { FlowCanvas } from '@flowlib/ui/flow-canvas';
+import '@flowlib/ui/styles';
+import type { InvectDefinition } from '@flowlib/core/types';
 import { fixtureFlow, fixtureActions } from './fixture';
 
 function App() {

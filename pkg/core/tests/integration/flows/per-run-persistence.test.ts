@@ -25,7 +25,7 @@ import { drizzle } from 'drizzle-orm/better-sqlite3';
 import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { FlowRunStatus, NodeExecutionStatus } from '../../../src';
-import { createInvect } from '../../../src/api/create-invect';
+import { createInvect } from '../../../src/api/create-flowlib';
 import type { InvectInstance } from '../../../src/api/types';
 import type { InvectDefinition } from '../../../src/services/flow-versions/schemas-fresh';
 
@@ -39,9 +39,9 @@ const MIGRATIONS_FOLDER = resolve(__dirname, '../../../drizzle/sqlite');
  */
 async function createInvectWithPersistence(
   persistence: 'per-node' | 'per-run',
-): Promise<{ invect: InvectInstance; dbPath: string; tmpDir: string }> {
+): Promise<{ flowlib: InvectInstance; dbPath: string; tmpDir: string }> {
   process.env.INVECT_ENCRYPTION_KEY = randomBytes(32).toString('base64');
-  const tmpDir = mkdtempSync(join(tmpdir(), 'invect-per-run-test-'));
+  const tmpDir = mkdtempSync(join(tmpdir(), 'flowlib-per-run-test-'));
   const dbPath = join(tmpDir, 'test.db');
 
   const sqlite = new Database(dbPath);
@@ -50,7 +50,7 @@ async function createInvectWithPersistence(
   migrate(db, { migrationsFolder: MIGRATIONS_FOLDER });
   sqlite.close();
 
-  const invect = await createInvect({
+  const flowlib = await createInvect({
     encryptionKey: 'dGVzdC1lbmNyeXB0aW9uLWtleS0xMjM0NTY3ODkw',
     database: { type: 'sqlite', connectionString: `file:${dbPath}` },
     logging: { level: 'warn' },
@@ -68,7 +68,7 @@ async function createInvectWithPersistence(
     plugins: [],
   });
 
-  return { invect, dbPath, tmpDir };
+  return { flowlib, dbPath, tmpDir };
 }
 
 /**
@@ -159,19 +159,19 @@ const FAILING_FLOW: InvectDefinition = {
 // per-run mode
 // ===========================================================================
 describe('execution.persistence: per-run', () => {
-  let invect: InvectInstance;
+  let flowlib: InvectInstance;
   let dbPath: string;
   let tmpDir: string;
 
   beforeAll(async () => {
     const ctx = await createInvectWithPersistence('per-run');
-    invect = ctx.invect;
+    flowlib = ctx.flowlib;
     dbPath = ctx.dbPath;
     tmpDir = ctx.tmpDir;
   });
 
   afterAll(async () => {
-    await invect.shutdown();
+    await flowlib.shutdown();
     try {
       rmSync(tmpDir, { recursive: true, force: true });
     } catch {
@@ -180,9 +180,9 @@ describe('execution.persistence: per-run', () => {
   });
 
   it('successful run: zero action_traces rows; node_outputs blob populated', async () => {
-    const flow = await invect.flows.create({ name: `per-run-success-${Date.now()}` });
-    await invect.versions.create(flow.id, { invectDefinition: TWO_NODE_FLOW });
-    const result = await invect.runs.start(flow.id, {}, { useBatchProcessing: false });
+    const flow = await flowlib.flows.create({ name: `per-run-success-${Date.now()}` });
+    await flowlib.versions.create(flow.id, { invectDefinition: TWO_NODE_FLOW });
+    const result = await flowlib.runs.start(flow.id, {}, { useBatchProcessing: false });
 
     expect(result.status).toBe(FlowRunStatus.SUCCESS);
 
@@ -201,15 +201,15 @@ describe('execution.persistence: per-run', () => {
   });
 
   it('read path: listNodeExecutionsByFlowRunId returns the same shape as per-node mode', async () => {
-    const flow = await invect.flows.create({ name: `per-run-read-${Date.now()}` });
-    await invect.versions.create(flow.id, { invectDefinition: TWO_NODE_FLOW });
-    const result = await invect.runs.start(flow.id, {}, { useBatchProcessing: false });
+    const flow = await flowlib.flows.create({ name: `per-run-read-${Date.now()}` });
+    await flowlib.versions.create(flow.id, { invectDefinition: TWO_NODE_FLOW });
+    const result = await flowlib.runs.start(flow.id, {}, { useBatchProcessing: false });
 
     expect(result.status).toBe(FlowRunStatus.SUCCESS);
 
     // The public API used by ReactFlowRendererService and frontend
     // consumers must transparently parse the JSON blob.
-    const page = await invect.runs.getNodeExecutions(result.flowRunId);
+    const page = await flowlib.runs.getNodeExecutions(result.flowRunId);
     const traces = page.data;
     expect(traces).toHaveLength(2);
     // Each row has the canonical NodeExecution shape.
@@ -236,9 +236,9 @@ describe('execution.persistence: per-run', () => {
   });
 
   it('failed run: still flushes the partial buffer (FAILED node + upstream)', async () => {
-    const flow = await invect.flows.create({ name: `per-run-failed-${Date.now()}` });
-    await invect.versions.create(flow.id, { invectDefinition: FAILING_FLOW });
-    const result = await invect.runs.start(flow.id, {}, { useBatchProcessing: false });
+    const flow = await flowlib.flows.create({ name: `per-run-failed-${Date.now()}` });
+    await flowlib.versions.create(flow.id, { invectDefinition: FAILING_FLOW });
+    const result = await flowlib.runs.start(flow.id, {}, { useBatchProcessing: false });
 
     expect(result.status).toBe(FlowRunStatus.FAILED);
 
@@ -257,7 +257,7 @@ describe('execution.persistence: per-run', () => {
     expect(byNode.get('js-bomb')?.status).toBe(NodeExecutionStatus.FAILED);
 
     // And the read path surfaces both.
-    const page = await invect.runs.getNodeExecutions(result.flowRunId);
+    const page = await flowlib.runs.getNodeExecutions(result.flowRunId);
     expect(page.data).toHaveLength(2);
   });
 });
@@ -266,19 +266,19 @@ describe('execution.persistence: per-run', () => {
 // per-node (default) mode — sanity check
 // ===========================================================================
 describe('execution.persistence: per-node (default)', () => {
-  let invect: InvectInstance;
+  let flowlib: InvectInstance;
   let dbPath: string;
   let tmpDir: string;
 
   beforeAll(async () => {
     const ctx = await createInvectWithPersistence('per-node');
-    invect = ctx.invect;
+    flowlib = ctx.flowlib;
     dbPath = ctx.dbPath;
     tmpDir = ctx.tmpDir;
   });
 
   afterAll(async () => {
-    await invect.shutdown();
+    await flowlib.shutdown();
     try {
       rmSync(tmpDir, { recursive: true, force: true });
     } catch {
@@ -287,9 +287,9 @@ describe('execution.persistence: per-node (default)', () => {
   });
 
   it('writes one row per node to action_traces and leaves node_outputs null', async () => {
-    const flow = await invect.flows.create({ name: `per-node-baseline-${Date.now()}` });
-    await invect.versions.create(flow.id, { invectDefinition: TWO_NODE_FLOW });
-    const result = await invect.runs.start(flow.id, {}, { useBatchProcessing: false });
+    const flow = await flowlib.flows.create({ name: `per-node-baseline-${Date.now()}` });
+    await flowlib.versions.create(flow.id, { invectDefinition: TWO_NODE_FLOW });
+    const result = await flowlib.runs.start(flow.id, {}, { useBatchProcessing: false });
 
     expect(result.status).toBe(FlowRunStatus.SUCCESS);
 

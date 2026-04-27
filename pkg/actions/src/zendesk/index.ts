@@ -8,7 +8,7 @@ export { zendeskCreateTicketAction } from './create-ticket';
 export { zendeskUpdateTicketAction } from './update-ticket';
 export { zendeskSearchAction } from './search';
 
-import type { ActionDefinition } from '@invect/action-kit';
+import type { ActionDefinition } from '@flowlib/action-kit';
 import { zendeskListTicketsAction } from './list-tickets';
 import { zendeskGetTicketAction } from './get-ticket';
 import { zendeskCreateTicketAction } from './create-ticket';

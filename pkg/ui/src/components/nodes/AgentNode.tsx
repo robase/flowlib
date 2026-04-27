@@ -4,7 +4,7 @@ import { memo, useCallback, useState } from 'react';
 import { Handle, Position, type NodeProps } from '@xyflow/react';
 import { Card } from '../ui/card';
 import { useNodeRegistry } from '../../contexts/NodeRegistryContext';
-import { NodeExecutionStatus } from '@invect/core/types';
+import { NodeExecutionStatus } from '@flowlib/core/types';
 import { cn } from '../../lib/utils';
 import { Loader2, Bot } from 'lucide-react';
 import { NodeAppendix, type AppendixPosition } from './NodeAppendix';

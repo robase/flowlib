@@ -2,7 +2,7 @@ import { create, type StoreApi, type UseBoundStore } from 'zustand';
 import { devtools, subscribeWithSelector } from 'zustand/middleware';
 import { immer } from 'zustand/middleware/immer';
 import { useShallow } from 'zustand/shallow';
-import type { FlowRunStatus } from '@invect/core/types';
+import type { FlowRunStatus } from '@flowlib/core/types';
 
 interface ExecutionViewState {
   // Currently viewed execution

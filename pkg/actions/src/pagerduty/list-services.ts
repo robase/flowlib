@@ -8,7 +8,7 @@
  * @see https://developer.pagerduty.com/api-reference/e960cca205c0f-list-services
  */
 
-import { defineAction } from '@invect/action-kit';
+import { defineAction } from '@flowlib/action-kit';
 import { PAGERDUTY_PROVIDER } from '../providers';
 import { z } from 'zod/v4';
 

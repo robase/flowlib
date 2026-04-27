@@ -4,7 +4,7 @@ import { Logger, InvectConfig } from 'src/schemas';
 import { DatabaseError, ValidationError } from 'src/types/common/errors.types';
 import { Model, BaseAIClient, BatchProvider } from './ai/base-client';
 
-export type { PromptRequest, BatchRequest, SubmitPromptRequest } from '@invect/action-kit';
+export type { PromptRequest, BatchRequest, SubmitPromptRequest } from '@flowlib/action-kit';
 
 /**
  * Node Data Service implementation

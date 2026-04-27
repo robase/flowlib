@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router';
 import { useFlows } from '../../api/flows.api';
 import { useListFlowRuns } from '../../api/executions.api';
-import { Flow, FlowRun } from '@invect/core/types';
+import { Flow, FlowRun } from '@flowlib/core/types';
 import {
   CheckCircle,
   XCircle,

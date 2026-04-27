@@ -42,10 +42,10 @@ const rootDir = path.resolve(__dirname, '../../..');
 const serverCwd = path.join(rootDir, 'playwright');
 const serverScript = path.join(serverCwd, 'test-support/express-test-server.ts');
 const isolatedBrowserBase = createSqliteBrowserIsolationTest({
-  apiPrefix: '/invect',
-  apiRoutePrefix: '/api/invect',
-  dbFilePrefix: 'invect-cp',
-  readyPath: '/invect/credentials',
+  apiPrefix: '/flowlib',
+  apiRoutePrefix: '/api/flowlib',
+  dbFilePrefix: 'flowlib-cp',
+  readyPath: '/flowlib/credentials',
   serverCwd,
   serverScript,
   sharedOrigin: VITE_BASE,
@@ -69,7 +69,7 @@ type TestFixtures = {
 };
 
 type WorkerFixtures = {
-  /** Short-hand: e.g. "http://127.0.0.1:54321/invect" — usable in beforeAll */
+  /** Short-hand: e.g. "http://127.0.0.1:54321/flowlib" — usable in beforeAll */
   apiBase: string;
 } & BrowserIsolationWorkerFixtures;
 
@@ -99,7 +99,7 @@ export const test = isolatedBrowserBase.extend<TestFixtures, WorkerFixtures>({
 
   navigateToFlow: async ({ page }, use) => {
     await use(async (flowName: string) => {
-      await page.goto(`${VITE_BASE}/invect`);
+      await page.goto(`${VITE_BASE}/flowlib`);
       await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible({
         timeout: 15_000,
       });

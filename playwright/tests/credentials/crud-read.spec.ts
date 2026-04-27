@@ -3,9 +3,9 @@
 
 import { test, expect } from '../fixtures';
 
-/** Helper: navigate to /invect/credentials and wait for the page to load */
+/** Helper: navigate to /flowlib/credentials and wait for the page to load */
 async function goToCredentials(page: import('@playwright/test').Page) {
-  await page.goto('/invect/credentials');
+  await page.goto('/flowlib/credentials');
   await expect(page.getByRole('heading', { level: 1, name: 'Credentials' })).toBeVisible({
     timeout: 15_000,
   });
@@ -13,7 +13,7 @@ async function goToCredentials(page: import('@playwright/test').Page) {
 
 test.describe('Credential CRUD — Read & Detail View', () => {
   test('view credential detail panel shows overview metadata', async ({ page }) => {
-    // 1. Navigate to /invect/credentials
+    // 1. Navigate to /flowlib/credentials
     await goToCredentials(page);
 
     // Verify 'Anthropic API Key' is listed with a 'Bearer' badge
@@ -47,7 +47,7 @@ test.describe('Credential CRUD — Read & Detail View', () => {
   });
 
   test('search filters credentials by name', async ({ page }) => {
-    // 1. Navigate to /invect/credentials
+    // 1. Navigate to /flowlib/credentials
     await goToCredentials(page);
 
     // All credentials are visible
@@ -77,7 +77,7 @@ test.describe('Credential CRUD — Read & Detail View', () => {
   });
 
   test('auth type filter pills narrow the list', async ({ page }) => {
-    // 1. Navigate to /invect/credentials
+    // 1. Navigate to /flowlib/credentials
     await goToCredentials(page);
 
     // Filter pills visible — "All" plus per-auth-type pills

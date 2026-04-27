@@ -8,7 +8,7 @@ export { woocommerceListOrdersAction } from './list-orders';
 export { woocommerceListCustomersAction } from './list-customers';
 export { woocommerceCreateProductAction } from './create-product';
 
-import type { ActionDefinition } from '@invect/action-kit';
+import type { ActionDefinition } from '@flowlib/action-kit';
 import { woocommerceListProductsAction } from './list-products';
 import { woocommerceGetProductAction } from './get-product';
 import { woocommerceListOrdersAction } from './list-orders';

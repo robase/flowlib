@@ -16,7 +16,7 @@ import {
   HttpCode,
   Header,
 } from '@nestjs/common';
-import { BatchProvider, FlowValidationResult, createPluginDatabaseApi } from '@invect/core';
+import { BatchProvider, FlowValidationResult, createPluginDatabaseApi } from '@flowlib/core';
 import type {
   InvectInstance,
   NodeConfigUpdateEvent,
@@ -41,7 +41,7 @@ import type {
   ChatStreamEvent,
   InvectIdentity,
   ChatMessage,
-} from '@invect/core';
+} from '@flowlib/core';
 import type { Request, Response } from 'express';
 
 declare global {
@@ -100,7 +100,7 @@ function coerceQueryValue(value: unknown): unknown {
 
 @Controller()
 export class InvectController {
-  constructor(@Inject('INVECT_CORE') private readonly invect: InvectInstance) {}
+  constructor(@Inject('INVECT_CORE') private readonly flowlib: InvectInstance) {}
 
   // =====================================
   // FLOW MANAGEMENT ROUTES
@@ -112,7 +112,7 @@ export class InvectController {
    */
   @Get('flows')
   async listFlows(@Query() query: Record<string, unknown>) {
-    return await this.invect.flows.list(query as QueryOptions<Flow>);
+    return await this.flowlib.flows.list(query as QueryOptions<Flow>);
   }
 
   /**
@@ -121,12 +121,12 @@ export class InvectController {
    */
   @Get('flows/list')
   async listFlowsGetAlias(@Query() query: Record<string, unknown>) {
-    return await this.invect.flows.list(query as QueryOptions<Flow>);
+    return await this.flowlib.flows.list(query as QueryOptions<Flow>);
   }
 
   @Post('flows/list')
   async listFlowsPostAlias(@Body() body: Record<string, unknown>) {
-    return await this.invect.flows.list(body as QueryOptions<Flow>);
+    return await this.flowlib.flows.list(body as QueryOptions<Flow>);
   }
 
   /**
@@ -135,7 +135,7 @@ export class InvectController {
    */
   @Post('flows')
   async createFlow(@Body() body: CreateFlowRequest) {
-    return await this.invect.flows.create(body);
+    return await this.flowlib.flows.create(body);
   }
 
   /**
@@ -144,7 +144,7 @@ export class InvectController {
    */
   @Get('flows/:id')
   async getFlow(@Param('id') id: string) {
-    return await this.invect.flows.get(id);
+    return await this.flowlib.flows.get(id);
   }
 
   /**
@@ -153,7 +153,7 @@ export class InvectController {
    */
   @Put('flows/:id')
   async updateFlow(@Param('id') id: string, @Body() body: UpdateFlowInput) {
-    return await this.invect.flows.update(id, body);
+    return await this.flowlib.flows.update(id, body);
   }
 
   /**
@@ -162,7 +162,7 @@ export class InvectController {
    */
   @Delete('flows/:id')
   async deleteFlow(@Param('id') id: string) {
-    await this.invect.flows.delete(id);
+    await this.flowlib.flows.delete(id);
     // NestJS automatically returns 200 OK for successful DELETE operations
     // If you prefer 204 No Content, you can add @HttpCode(204) decorator
   }
@@ -176,7 +176,7 @@ export class InvectController {
     @Body() body: { flowId: string; flowDefinition: InvectDefinition },
   ): Promise<FlowValidationResult> {
     const { flowId, flowDefinition } = body;
-    return await this.invect.flows.validate(flowId, flowDefinition);
+    return await this.flowlib.flows.validate(flowId, flowDefinition);
   }
 
   /**
@@ -196,7 +196,7 @@ export class InvectController {
     if (flowRunId) {
       options.flowRunId = flowRunId;
     }
-    return await this.invect.flows.renderToReactFlow(flowId, options);
+    return await this.flowlib.flows.renderToReactFlow(flowId, options);
   }
 
   // =====================================
@@ -209,7 +209,7 @@ export class InvectController {
    */
   @Post('flows/:id/versions/list')
   async listFlowVersionsPost(@Param('id') id: string, @Body() body: Record<string, unknown>) {
-    return await this.invect.versions.list(id, body as QueryOptions<FlowVersion>);
+    return await this.flowlib.versions.list(id, body as QueryOptions<FlowVersion>);
   }
 
   /**
@@ -218,7 +218,7 @@ export class InvectController {
    */
   @Get('flows/:id/versions')
   async getFlowVersions(@Param('id') id: string, @Query() query: Record<string, unknown>) {
-    return await this.invect.versions.list(id, query as QueryOptions<FlowVersion>);
+    return await this.flowlib.versions.list(id, query as QueryOptions<FlowVersion>);
   }
 
   /**
@@ -227,7 +227,7 @@ export class InvectController {
    */
   @Post('flows/:id/versions')
   async createFlowVersion(@Param('id') id: string, @Body() body: CreateFlowVersionRequest) {
-    return await this.invect.versions.create(id, body);
+    return await this.flowlib.versions.create(id, body);
   }
 
   /**
@@ -236,7 +236,7 @@ export class InvectController {
    */
   @Get('flows/:id/versions/:version')
   async getFlowVersion(@Param('id') id: string, @Param('version') version: string) {
-    const result = await this.invect.versions.get(id, version);
+    const result = await this.flowlib.versions.get(id, version);
     if (!result) {
       throw new NotFoundException(`Version ${version} not found for flow ${id}`);
     }
@@ -257,7 +257,7 @@ export class InvectController {
     @Body() body: { inputs?: Record<string, unknown>; options?: ExecuteFlowOptions },
   ) {
     const { inputs = {}, options } = body;
-    return await this.invect.runs.startAsync(flowId, inputs as FlowInputs, options);
+    return await this.flowlib.runs.startAsync(flowId, inputs as FlowInputs, options);
   }
 
   /**
@@ -271,7 +271,7 @@ export class InvectController {
     @Body() body: { inputs?: Record<string, unknown>; options?: ExecuteFlowOptions },
   ) {
     const { inputs = {}, options } = body;
-    return await this.invect.runs.executeToNode(flowId, nodeId, inputs as FlowInputs, options);
+    return await this.flowlib.runs.executeToNode(flowId, nodeId, inputs as FlowInputs, options);
   }
 
   /**
@@ -280,7 +280,7 @@ export class InvectController {
    */
   @Post('flow-runs/list')
   async listFlowRunsPost(@Body() body: Record<string, unknown>) {
-    return await this.invect.runs.list(body as QueryOptions<FlowRun>);
+    return await this.flowlib.runs.list(body as QueryOptions<FlowRun>);
   }
 
   /**
@@ -289,7 +289,7 @@ export class InvectController {
    */
   @Get('flow-runs')
   async listFlowRuns(@Query() query: Record<string, unknown>) {
-    return await this.invect.runs.list(query as QueryOptions<FlowRun>);
+    return await this.flowlib.runs.list(query as QueryOptions<FlowRun>);
   }
 
   /**
@@ -298,7 +298,7 @@ export class InvectController {
    */
   @Get('flow-runs/:flowRunId')
   async getFlowRun(@Param('flowRunId') flowRunId: string) {
-    return await this.invect.runs.get(flowRunId);
+    return await this.flowlib.runs.get(flowRunId);
   }
 
   /**
@@ -326,7 +326,7 @@ export class InvectController {
     if (sortBy) {
       options.sort = { sortBy, sortOrder: sortOrder ?? 'desc' };
     }
-    return await this.invect.runs.listByFlowId(flowId, options as QueryOptions<FlowRun>);
+    return await this.flowlib.runs.listByFlowId(flowId, options as QueryOptions<FlowRun>);
   }
 
   /**
@@ -335,7 +335,7 @@ export class InvectController {
    */
   @Post('flow-runs/:flowRunId/resume')
   async resumeFlowRun(@Param('flowRunId') flowRunId: string) {
-    return await this.invect.runs.resume(flowRunId);
+    return await this.flowlib.runs.resume(flowRunId);
   }
 
   /**
@@ -344,7 +344,7 @@ export class InvectController {
    */
   @Post('flow-runs/:flowRunId/cancel')
   async cancelFlowRun(@Param('flowRunId') flowRunId: string) {
-    return await this.invect.runs.cancel(flowRunId);
+    return await this.flowlib.runs.cancel(flowRunId);
   }
 
   /**
@@ -354,7 +354,7 @@ export class InvectController {
   @Post('flow-runs/:flowRunId/pause')
   async pauseFlowRun(@Param('flowRunId') flowRunId: string, @Body() body?: { reason?: string }) {
     const reason = body?.reason;
-    return await this.invect.runs.pause(flowRunId, reason);
+    return await this.flowlib.runs.pause(flowRunId, reason);
   }
 
   // =====================================
@@ -386,7 +386,7 @@ export class InvectController {
     if (sortBy) {
       options.sort = { sortBy, sortOrder: sortOrder ?? 'desc' };
     }
-    return await this.invect.runs.getNodeExecutions(
+    return await this.flowlib.runs.getNodeExecutions(
       flowRunId,
       options as QueryOptions<NodeExecution>,
     );
@@ -415,7 +415,7 @@ export class InvectController {
     });
 
     try {
-      const stream = this.invect.runs.createEventStream(flowRunId);
+      const stream = this.flowlib.runs.createEventStream(flowRunId);
       for await (const event of stream) {
         if (clientGone || res.destroyed) {
           break;
@@ -518,7 +518,7 @@ export class InvectController {
       throw new BadRequestException('Body.definition (InvectDefinition) is required');
     }
     try {
-      return await this.invect.runs.runEphemeral(
+      return await this.flowlib.runs.runEphemeral(
         body.definition as InvectDefinition,
         body.inputs ?? {},
         { name: body.name, initiatedBy: req.invectIdentity?.id },
@@ -552,7 +552,7 @@ export class InvectController {
    */
   @Get('node-executions')
   async listNodeExecutions(@Query() query: Record<string, unknown>) {
-    return await this.invect.runs.listNodeExecutions(query as QueryOptions<NodeExecution>);
+    return await this.flowlib.runs.listNodeExecutions(query as QueryOptions<NodeExecution>);
   }
 
   /**
@@ -561,7 +561,7 @@ export class InvectController {
    */
   @Post('node-executions/list')
   async listNodeExecutionsPost(@Body() body: Record<string, unknown>) {
-    return await this.invect.runs.listNodeExecutions(body as QueryOptions<NodeExecution>);
+    return await this.flowlib.runs.listNodeExecutions(body as QueryOptions<NodeExecution>);
   }
 
   // =====================================
@@ -574,7 +574,7 @@ export class InvectController {
    */
   @Post('node-data/test-expression')
   async testJsExpression(@Body() body: { expression: string; context: Record<string, unknown> }) {
-    return await this.invect.testing.testJsExpression(body);
+    return await this.flowlib.testing.testJsExpression(body);
   }
 
   /**
@@ -590,7 +590,7 @@ export class InvectController {
       mode?: 'auto' | 'iterate' | 'reshape';
     },
   ) {
-    return await this.invect.testing.testMapper(body);
+    return await this.flowlib.testing.testMapper(body);
   }
 
   /**
@@ -599,7 +599,7 @@ export class InvectController {
    */
   @Post('node-data/model-query')
   async testModelPrompt(@Body() body: SubmitPromptRequest) {
-    return await this.invect.testing.testModelPrompt(body);
+    return await this.flowlib.testing.testModelPrompt(body);
   }
 
   /**
@@ -612,7 +612,7 @@ export class InvectController {
     @Query('provider') provider?: string,
   ) {
     if (credentialId) {
-      return await this.invect.testing.getModelsForCredential(credentialId);
+      return await this.flowlib.testing.getModelsForCredential(credentialId);
     }
 
     if (provider) {
@@ -622,10 +622,10 @@ export class InvectController {
           `Unsupported provider '${provider}'. Expected one of: ${Object.values(BatchProvider).join(', ')}`,
         );
       }
-      return await this.invect.testing.getModelsForProvider(normalized as BatchProvider);
+      return await this.flowlib.testing.getModelsForProvider(normalized as BatchProvider);
     }
 
-    return await this.invect.testing.getAvailableModels();
+    return await this.flowlib.testing.getAvailableModels();
   }
 
   /**
@@ -637,7 +637,7 @@ export class InvectController {
     @Body() body: NodeConfigUpdateEvent,
   ): Promise<NodeConfigUpdateResponse> {
     try {
-      return await this.invect.actions.handleConfigUpdate(body);
+      return await this.flowlib.actions.handleConfigUpdate(body);
     } catch (error: unknown) {
       if (
         error &&
@@ -667,7 +667,7 @@ export class InvectController {
       typeof query.nodeId === 'string' ? query.nodeId : `definition-${nodeTypeParam.toLowerCase()}`;
     const flowId = typeof query.flowId === 'string' ? query.flowId : undefined;
 
-    return await this.invect.actions.handleConfigUpdate({
+    return await this.flowlib.actions.handleConfigUpdate({
       nodeType: nodeTypeParam,
       nodeId,
       flowId,
@@ -683,7 +683,7 @@ export class InvectController {
   @Get('nodes')
   @Header('Cache-Control', 'public, max-age=3600')
   getAvailableNodes() {
-    return this.invect.actions.getAvailableNodes();
+    return this.flowlib.actions.getAvailableNodes();
   }
 
   /**
@@ -704,7 +704,7 @@ export class InvectController {
         throw new BadRequestException('Invalid deps JSON');
       }
     }
-    return await this.invect.actions.resolveFieldOptions(actionId, fieldName, dependencyValues);
+    return await this.flowlib.actions.resolveFieldOptions(actionId, fieldName, dependencyValues);
   }
 
   /**
@@ -727,7 +727,7 @@ export class InvectController {
     if (!params || typeof params !== 'object') {
       throw new BadRequestException('params is required and must be an object');
     }
-    return await this.invect.testing.testNode(nodeType, params, inputData || {});
+    return await this.flowlib.testing.testNode(nodeType, params, inputData || {});
   }
 
   // =====================================
@@ -752,7 +752,7 @@ export class InvectController {
       expiresAt?: string;
     },
   ): Promise<unknown> {
-    return await this.invect.credentials.create(body as CreateCredentialInput);
+    return await this.flowlib.credentials.create(body as CreateCredentialInput);
   }
 
   /**
@@ -774,7 +774,7 @@ export class InvectController {
     if (isActive !== undefined) {
       filters.isActive = isActive === 'true';
     }
-    return await this.invect.credentials.list(filters as CredentialFilters);
+    return await this.flowlib.credentials.list(filters as CredentialFilters);
   }
 
   /**
@@ -782,7 +782,7 @@ export class InvectController {
    */
   @Get('credentials/:id')
   async getCredential(@Param('id') id: string): Promise<unknown> {
-    return await this.invect.credentials.getSanitized(id);
+    return await this.flowlib.credentials.getSanitized(id);
   }
 
   /**
@@ -793,7 +793,7 @@ export class InvectController {
     @Param('id') id: string,
     @Body() body: Record<string, unknown>,
   ): Promise<unknown> {
-    return await this.invect.credentials.update(id, body as UpdateCredentialInput);
+    return await this.flowlib.credentials.update(id, body as UpdateCredentialInput);
   }
 
   /**
@@ -802,7 +802,7 @@ export class InvectController {
   @Delete('credentials/:id')
   @HttpCode(204)
   async deleteCredential(@Param('id') id: string) {
-    await this.invect.credentials.delete(id);
+    await this.flowlib.credentials.delete(id);
   }
 
   /**
@@ -810,7 +810,7 @@ export class InvectController {
    */
   @Post('credentials/:id/test')
   async testCredential(@Param('id') id: string) {
-    return await this.invect.credentials.test(id);
+    return await this.flowlib.credentials.test(id);
   }
 
   /**
@@ -820,7 +820,7 @@ export class InvectController {
   @Post('credentials/:id/track-usage')
   @HttpCode(204)
   async trackCredentialUsage(@Param('id') id: string) {
-    await this.invect.credentials.updateLastUsed(id);
+    await this.flowlib.credentials.updateLastUsed(id);
   }
 
   /**
@@ -832,7 +832,7 @@ export class InvectController {
     @Query('daysUntilExpiry') daysUntilExpiry?: string,
   ): Promise<unknown> {
     const days = daysUntilExpiry ? parseInt(daysUntilExpiry) : 7;
-    return await this.invect.credentials.getExpiring(days);
+    return await this.flowlib.credentials.getExpiring(days);
   }
 
   /**
@@ -935,12 +935,12 @@ export class InvectController {
 
   @Get('credentials/oauth2/providers')
   getOAuth2Providers() {
-    return this.invect.credentials.getOAuth2Providers();
+    return this.flowlib.credentials.getOAuth2Providers();
   }
 
   @Get('credentials/oauth2/providers/:providerId')
   getOAuth2Provider(@Param('providerId') providerId: string) {
-    const provider = this.invect.credentials.getOAuth2Provider(providerId);
+    const provider = this.flowlib.credentials.getOAuth2Provider(providerId);
     if (!provider) {
       throw new NotFoundException('OAuth2 provider not found');
     }
@@ -967,7 +967,7 @@ export class InvectController {
         'Missing required fields: providerId, clientId, clientSecret, redirectUri',
       );
     }
-    return this.invect.credentials.startOAuth2Flow(
+    return this.flowlib.credentials.startOAuth2Flow(
       providerId,
       { clientId, clientSecret, redirectUri },
       { scopes, returnUrl, credentialName },
@@ -991,7 +991,7 @@ export class InvectController {
         'Missing required fields: code, state, clientId, clientSecret, redirectUri',
       );
     }
-    return await this.invect.credentials.handleOAuth2Callback(code, state, {
+    return await this.flowlib.credentials.handleOAuth2Callback(code, state, {
       clientId,
       clientSecret,
       redirectUri,
@@ -1000,7 +1000,7 @@ export class InvectController {
 
   @Post('credentials/:id/refresh')
   async refreshOAuth2Credential(@Param('id') id: string): Promise<unknown> {
-    return await this.invect.credentials.refreshOAuth2Credential(id);
+    return await this.flowlib.credentials.refreshOAuth2Credential(id);
   }
 
   // =====================================
@@ -1009,7 +1009,7 @@ export class InvectController {
 
   @Get('dashboard/stats')
   async getDashboardStats() {
-    return await this.invect.flows.getDashboardStats();
+    return await this.flowlib.flows.getDashboardStats();
   }
 
   // =====================================
@@ -1021,7 +1021,7 @@ export class InvectController {
    */
   @Get('flows/:flowId/triggers')
   async listTriggersForFlow(@Param('flowId') flowId: string) {
-    return await this.invect.triggers.list(flowId);
+    return await this.flowlib.triggers.list(flowId);
   }
 
   /**
@@ -1029,7 +1029,7 @@ export class InvectController {
    */
   @Post('flows/:flowId/triggers')
   async createTrigger(@Param('flowId') flowId: string, @Body() body: Record<string, unknown>) {
-    return await this.invect.triggers.create({ ...body, flowId } as CreateTriggerInput);
+    return await this.flowlib.triggers.create({ ...body, flowId } as CreateTriggerInput);
   }
 
   /**
@@ -1043,7 +1043,7 @@ export class InvectController {
       definition: { nodes: Array<{ id: string; type: string; params?: Record<string, unknown> }> };
     },
   ) {
-    return await this.invect.triggers.sync(flowId, body.definition);
+    return await this.flowlib.triggers.sync(flowId, body.definition);
   }
 
   /**
@@ -1051,7 +1051,7 @@ export class InvectController {
    */
   @Get('triggers/:triggerId')
   async getTrigger(@Param('triggerId') triggerId: string) {
-    const trigger = await this.invect.triggers.get(triggerId);
+    const trigger = await this.flowlib.triggers.get(triggerId);
     if (!trigger) {
       throw new NotFoundException(`Trigger ${triggerId} not found`);
     }
@@ -1066,7 +1066,7 @@ export class InvectController {
     @Param('triggerId') triggerId: string,
     @Body() body: Record<string, unknown>,
   ) {
-    const trigger = await this.invect.triggers.update(triggerId, body as UpdateTriggerInput);
+    const trigger = await this.flowlib.triggers.update(triggerId, body as UpdateTriggerInput);
     if (!trigger) {
       throw new NotFoundException(`Trigger ${triggerId} not found`);
     }
@@ -1079,7 +1079,7 @@ export class InvectController {
   @Delete('triggers/:triggerId')
   @HttpCode(204)
   async deleteTrigger(@Param('triggerId') triggerId: string) {
-    await this.invect.triggers.delete(triggerId);
+    await this.flowlib.triggers.delete(triggerId);
   }
 
   // =====================================
@@ -1092,7 +1092,7 @@ export class InvectController {
   @Get('agent/tools')
   @Header('Cache-Control', 'public, max-age=3600')
   getAgentTools() {
-    return this.invect.agent.getTools();
+    return this.flowlib.agent.getTools();
   }
 
   // =====================================
@@ -1101,12 +1101,12 @@ export class InvectController {
 
   @Get('chat/status')
   getChatStatus() {
-    return { enabled: this.invect.chat.isEnabled() };
+    return { enabled: this.flowlib.chat.isEnabled() };
   }
 
   @Get('chat/models/:credentialId')
   async getChatModels(@Param('credentialId') credentialId: string, @Query('q') q?: string) {
-    return this.invect.chat.listModels(credentialId, q);
+    return this.flowlib.chat.listModels(credentialId, q);
   }
 
   @Post('chat')
@@ -1130,7 +1130,7 @@ export class InvectController {
     res.flushHeaders();
 
     try {
-      const stream = await this.invect.chat.createStream({
+      const stream = await this.flowlib.chat.createStream({
         messages: messages as ChatMessage[],
         context: context || {},
       });
@@ -1175,7 +1175,7 @@ export class InvectController {
     req.on('close', () => abortController.abort());
 
     try {
-      const stream = this.invect.chat.subscribeToSession(sessionId, abortController.signal);
+      const stream = this.flowlib.chat.subscribeToSession(sessionId, abortController.signal);
       for await (const event of stream) {
         if (res.destroyed) {
           break;
@@ -1204,7 +1204,7 @@ export class InvectController {
   ): Promise<unknown> {
     const p = page ? parseInt(page, 10) : undefined;
     const l = limit ? parseInt(limit, 10) : undefined;
-    return await this.invect.chat.getMessages(flowId, {
+    return await this.flowlib.chat.getMessages(flowId, {
       ...(p ? { page: p } : {}),
       ...(l ? { limit: l } : {}),
     });
@@ -1218,7 +1218,7 @@ export class InvectController {
     if (!body.messages || !Array.isArray(body.messages)) {
       throw new BadRequestException('"messages" must be an array');
     }
-    return await this.invect.chat.saveMessages(
+    return await this.flowlib.chat.saveMessages(
       flowId,
       body.messages as Array<{
         role: 'user' | 'assistant' | 'system' | 'tool';
@@ -1230,7 +1230,7 @@ export class InvectController {
 
   @Delete('chat/messages/:flowId')
   async deleteChatMessages(@Param('flowId') flowId: string) {
-    await this.invect.chat.deleteMessages(flowId);
+    await this.flowlib.chat.deleteMessages(flowId);
     return { success: true };
   }
 
@@ -1241,7 +1241,7 @@ export class InvectController {
 
   @All('plugins/*')
   async handlePluginEndpoint(@Req() req: Request, @Res() res: Response) {
-    const endpoints = this.invect.plugins.getEndpoints();
+    const endpoints = this.flowlib.plugins.getEndpoints();
     const pluginPath = (req.path as string).replace(/^.*\/plugins/, '') || '/';
     const method = req.method.toUpperCase();
 
@@ -1279,7 +1279,7 @@ export class InvectController {
     // Check endpoint-level auth
     if (!matchedEndpoint.isPublic && matchedEndpoint.permission) {
       const identity = req.invectIdentity ?? null;
-      if (!this.invect.auth.hasPermission(identity, matchedEndpoint.permission)) {
+      if (!this.flowlib.auth.hasPermission(identity, matchedEndpoint.permission)) {
         return res.status(403).json({
           error: 'Forbidden',
           message: `Missing permission: ${matchedEndpoint.permission}`,
@@ -1293,15 +1293,15 @@ export class InvectController {
       query: (req.query || {}) as Record<string, string | undefined>,
       headers: req.headers as Record<string, string | undefined>,
       identity: req.invectIdentity ?? null,
-      database: createPluginDatabaseApi(this.invect.plugins.getDatabaseConnection()),
+      database: createPluginDatabaseApi(this.flowlib.plugins.getDatabaseConnection()),
       request: req as unknown as globalThis.Request,
       core: {
-        getPermissions: (identity) => this.invect.auth.getPermissions(identity),
-        getAvailableRoles: () => this.invect.auth.getAvailableRoles(),
-        getResolvedRole: (identity) => this.invect.auth.getResolvedRole(identity),
-        authorize: (context) => this.invect.auth.authorize(context),
+        getPermissions: (identity) => this.flowlib.auth.getPermissions(identity),
+        getAvailableRoles: () => this.flowlib.auth.getAvailableRoles(),
+        getResolvedRole: (identity) => this.flowlib.auth.getResolvedRole(identity),
+        authorize: (context) => this.flowlib.auth.authorize(context),
       },
-      getInvect: () => this.invect,
+      getInvect: () => this.flowlib,
     });
 
     // Handle raw Response objects

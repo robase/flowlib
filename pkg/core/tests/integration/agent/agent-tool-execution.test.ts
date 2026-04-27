@@ -23,7 +23,7 @@ import { FlowRunStatus } from '../../../src';
 import type { InvectInstance } from '../../../src/api/types';
 import type { InvectDefinition } from '../../../src/services/flow-versions/schemas-fresh';
 import type { AgentExecutionOutput } from '../../../src/types/agent-tool.types';
-import { createTestInvect } from '../helpers/test-invect';
+import { createTestInvect } from '../helpers/test-flowlib';
 
 // ---------------------------------------------------------------------------
 // MSW helpers — build OpenAI-shaped responses
@@ -80,7 +80,7 @@ function toolCallResponse(
 // Shared state
 // ---------------------------------------------------------------------------
 
-let invect: InvectInstance;
+let flowlib: InvectInstance;
 let credentialId: string;
 /** Ordered list of responses the mock server should return */
 let responseQueue: Array<Record<string, unknown>> = [];
@@ -111,10 +111,10 @@ const mswServer = setupServer(
 
 beforeAll(async () => {
   mswServer.listen({ onUnhandledRequest: 'bypass' });
-  invect = await createTestInvect();
+  flowlib = await createTestInvect();
 
   // Create an OpenAI credential for agent tests
-  const cred = await invect.credentials.create({
+  const cred = await flowlib.credentials.create({
     name: 'Test OpenAI',
     type: 'llm',
     authType: 'apiKey',
@@ -126,7 +126,7 @@ beforeAll(async () => {
 
 afterAll(async () => {
   mswServer.close();
-  await invect.shutdown();
+  await flowlib.shutdown();
 });
 
 beforeEach(() => {
@@ -176,9 +176,9 @@ function agentNode(
 }
 
 async function runAgentFlow(definition: InvectDefinition, inputs: Record<string, unknown> = {}) {
-  const flow = await invect.flows.create({ name: `agent-test-${Date.now()}` });
-  await invect.versions.create(flow.id, { invectDefinition: definition });
-  return invect.runs.start(flow.id, inputs, { useBatchProcessing: false });
+  const flow = await flowlib.flows.create({ name: `agent-test-${Date.now()}` });
+  await flowlib.versions.create(flow.id, { invectDefinition: definition });
+  return flowlib.runs.start(flow.id, inputs, { useBatchProcessing: false });
 }
 
 function getAgentOutput(

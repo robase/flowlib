@@ -4,13 +4,13 @@
  * The single source of truth for Invect's database tables.
  * Defined using the abstract `InvectPluginSchema` format.
  *
- * The CLI schema generator (`npx invect-cli generate`) uses this + plugin schemas
+ * The CLI schema generator (`npx flowlib-cli generate`) uses this + plugin schemas
  * to produce the three dialect-specific Drizzle schema files:
  *   - schema-sqlite.ts
  *   - schema-postgres.ts
  *   - schema-mysql.ts
  *
- * When modifying the database schema, edit THIS file, then run `npx invect-cli generate`.
+ * When modifying the database schema, edit THIS file, then run `npx flowlib-cli generate`.
  */
 
 import type { InvectPluginSchema } from 'src/types/plugin.types';

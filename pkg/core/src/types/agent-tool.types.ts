@@ -1,5 +1,5 @@
 /**
- * Agent Tool Types — thin wrapper that re-exports from `@invect/action-kit`
+ * Agent Tool Types — thin wrapper that re-exports from `@flowlib/action-kit`
  * and specialises `AgentToolExecutionContext` / `AgentToolExecutor` /
  * `RegisteredAgentTool` with core's concrete `NodeExecutionContext`.
  */
@@ -9,7 +9,7 @@ import type {
   AgentToolExecutionContext as AgentToolExecutionContextGeneric,
   AgentToolExecutor as AgentToolExecutorGeneric,
   RegisteredAgentTool as RegisteredAgentToolGeneric,
-} from '@invect/action-kit';
+} from '@flowlib/action-kit';
 
 export type {
   AgentToolCategory,
@@ -25,7 +25,7 @@ export type {
   AgentPromptRequestBasic as AgentPromptRequest,
   AgentExecutionOutput,
   ToolExecutionRecord,
-} from '@invect/action-kit';
+} from '@flowlib/action-kit';
 
 export {
   DEFAULT_TOOL_TIMEOUT_MS,
@@ -34,7 +34,7 @@ export {
   DEFAULT_TOKENS_PER_CHAR,
   APPROX_TOKENS_PER_CHAR,
   newToolInstanceId,
-} from '@invect/action-kit';
+} from '@flowlib/action-kit';
 
 /**
  * Concrete tool-execution context — narrows action-kit's generic

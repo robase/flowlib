@@ -1,5 +1,5 @@
 /**
- * @invect/webhooks — Backend Entry Point
+ * @flowlib/webhooks — Backend Entry Point
  */
 export { webhooks } from './plugin';
 export type { WebhooksPluginOptions } from './plugin';

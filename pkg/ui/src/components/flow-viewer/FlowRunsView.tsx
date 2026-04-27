@@ -12,7 +12,7 @@ import { FlowCodePanel } from '../flow-editor/FlowCodePanel';
 import { useFlowRuns, useFlowRun, useNodeExecutions } from '../../api/executions.api';
 import { useFlowRunStream } from '../../api/use-flow-run-stream';
 import { useFlowReactFlowData } from '../../api/flows.api';
-import { FlowRun } from '@invect/core/types';
+import { FlowRun } from '@flowlib/core/types';
 import { useExecutionLogData, SelectedExecutionAttempt } from './use-execution-log-data';
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '../ui/resizable';
 import { useFlowActions } from '../../routes/flow-route-layout';

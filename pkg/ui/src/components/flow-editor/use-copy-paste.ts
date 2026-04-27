@@ -5,8 +5,8 @@ import { useFlowEditorStore } from './flow-editor.store';
 import { useNodeRegistry } from '~/contexts/NodeRegistryContext';
 import { generateUniqueDisplayName, generateUniqueReferenceId } from '~/utils/nodeReferenceUtils';
 import type { ClipboardData, ClipboardNode, ClipboardEdge } from './use-copy-paste.types';
-import { emitSdkSource, parseSDKText, type ParsedFragment } from '@invect/sdk';
-import type { DbFlowNode, DbFlowEdge } from '@invect/sdk';
+import { emitSdkSource, parseSDKText, type ParsedFragment } from '@flowlib/sdk';
+import type { DbFlowNode, DbFlowEdge } from '@flowlib/sdk';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -91,7 +91,7 @@ function regenToolInstanceIds(params: Record<string, unknown>): Record<string, u
  * Render a clipboard selection as SDK source text.
  *
  * Bridges the copy path (React-Flow node/edge state) to the unified emitter
- * in `@invect/sdk`. For full-graph selections the result is the emitter's
+ * in `@flowlib/sdk`. For full-graph selections the result is the emitter's
  * complete output (imports + `export const ... = defineFlow({...})`);
  * for partial selections we strip the imports + defineFlow wrapper so the
  * pasted text plugs into an existing flow file.

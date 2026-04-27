@@ -1,7 +1,7 @@
 {
   "name": "flow-canvas-playground",
   "private": true,
-  "description": "Playground for @invect/ui/flow-canvas (Lane L2 spike). Proves the canvas renders without a router or REST backend.",
+  "description": "Playground for @flowlib/ui/flow-canvas (Lane L2 spike). Proves the canvas renders without a router or REST backend.",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -10,8 +10,8 @@
     "analyze": "vite build --mode production"
   },
   "dependencies": {
-    "@invect/core": "workspace:*",
-    "@invect/ui": "workspace:*",
+    "@flowlib/core": "workspace:*",
+    "@flowlib/ui": "workspace:*",
     "@tanstack/react-query": "^5.83.0",
     "@xyflow/react": "^12.9.2",
     "react": "^18.3.1",

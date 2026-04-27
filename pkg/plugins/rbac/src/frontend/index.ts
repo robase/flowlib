@@ -1,10 +1,10 @@
 /**
- * @invect/rbac/ui — Frontend Plugin Entry Point
+ * @flowlib/rbac/ui — Frontend Plugin Entry Point
  *
  * This is the browser-safe entry point that exports the RBAC frontend plugin.
- * Import via: `import { rbacFrontend } from '@invect/rbac/ui'`
+ * Import via: `import { rbacFrontend } from '@flowlib/rbac/ui'`
  *
- * No Node.js dependencies. No @invect/core runtime imports.
+ * No Node.js dependencies. No @flowlib/core runtime imports.
  */
 
 import { Shield } from 'lucide-react';

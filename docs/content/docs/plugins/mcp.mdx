@@ -1,6 +1,6 @@
 ---
 title: MCP (Model Context Protocol)
-description: Let AI assistants build, run, and debug flows with @invect/mcp.
+description: Let AI assistants build, run, and debug flows with @flowlib/mcp.
 ---
 
 import { Callout } from 'fumadocs-ui/components/callout';
@@ -14,28 +14,28 @@ The MCP plugin exposes Invect as a [Model Context Protocol](https://modelcontext
 <Tab value="pnpm">
 
 ```bash
-pnpm add @invect/mcp
+pnpm add @flowlib/mcp
 ```
 
 </Tab>
 <Tab value="npm">
 
 ```bash
-npm install @invect/mcp
+npm install @flowlib/mcp
 ```
 
 </Tab>
 <Tab value="yarn">
 
 ```bash
-yarn add @invect/mcp
+yarn add @flowlib/mcp
 ```
 
 </Tab>
 <Tab value="bun">
 
 ```bash
-bun add @invect/mcp
+bun add @flowlib/mcp
 ```
 
 </Tab>
@@ -45,8 +45,8 @@ bun add @invect/mcp
 
 Register the plugin in your Invect config:
 
-```ts title="invect.config.ts"
-import { mcp } from '@invect/mcp';
+```ts title="flowlib.config.ts"
+import { mcp } from '@flowlib/mcp';
 
 export const invectConfig = defineConfig({
   // ...
@@ -63,7 +63,7 @@ export const invectConfig = defineConfig({
 | `audit.persist`  | `boolean`                     | `false`            | Persist audit logs to the database.    |
 | `audit.logLevel` | `'debug' \| 'info' \| 'warn'` | `'info'`           | Minimum level for audit entries.       |
 
-```ts title="invect.config.ts"
+```ts title="flowlib.config.ts"
 mcp({
   sessionTtlMs: 60 * 60 * 1000, // 1 hour sessions
   audit: { enabled: true, persist: true, logLevel: 'debug' },
@@ -79,7 +79,7 @@ The MCP server runs over **stdio** via the CLI. Start your Invect app, then poin
 Generate the config snippet and paste it into Claude Desktop's MCP settings:
 
 ```bash
-npx invect-cli mcp --print-config
+npx flowlib-cli mcp --print-config
 ```
 
 Output:
@@ -87,13 +87,13 @@ Output:
 ```json
 {
   "mcpServers": {
-    "invect": {
+    "flowlib": {
       "command": "npx",
       "args": [
-        "invect-cli",
+        "flowlib-cli",
         "mcp",
         "--url",
-        "http://localhost:3000/invect",
+        "http://localhost:3000/flowlib",
         "--api-key",
         "YOUR_KEY"
       ]
@@ -109,13 +109,13 @@ Add to your `.vscode/mcp.json`:
 ```json
 {
   "servers": {
-    "invect": {
+    "flowlib": {
       "command": "npx",
       "args": [
-        "invect-cli",
+        "flowlib-cli",
         "mcp",
         "--url",
-        "http://localhost:3000/invect",
+        "http://localhost:3000/flowlib",
         "--api-key",
         "YOUR_KEY"
       ]
@@ -131,13 +131,13 @@ Add to your Cursor MCP settings (`~/.cursor/mcp.json`):
 ```json
 {
   "mcpServers": {
-    "invect": {
+    "flowlib": {
       "command": "npx",
       "args": [
-        "invect-cli",
+        "flowlib-cli",
         "mcp",
         "--url",
-        "http://localhost:3000/invect",
+        "http://localhost:3000/flowlib",
         "--api-key",
         "YOUR_KEY"
       ]
@@ -151,15 +151,15 @@ Add to your Cursor MCP settings (`~/.cursor/mcp.json`):
 Run the server directly:
 
 ```bash
-npx invect-cli mcp --url http://localhost:3000/invect --api-key YOUR_KEY
+npx flowlib-cli mcp --url http://localhost:3000/flowlib --api-key YOUR_KEY
 ```
 
 You can also use environment variables instead of flags:
 
 ```bash
-export INVECT_URL=http://localhost:3000/invect
+export INVECT_URL=http://localhost:3000/flowlib
 export INVECT_API_KEY=YOUR_KEY
-npx invect-cli mcp
+npx flowlib-cli mcp
 ```
 
 ## Available tools
@@ -230,19 +230,19 @@ Once connected, the AI assistant has access to the following tools:
 
 The MCP server also exposes **resources** and **prompts**:
 
-- **`invect://flows/{flowId}/definition`** — Read a flow definition as a resource, useful for context injection.
+- **`flowlib://flows/{flowId}/definition`** — Read a flow definition as a resource, useful for context injection.
 - **`debug-flow-run`** prompt — A guided prompt template that walks the AI through debugging a failed flow run step by step.
 
 ## Architecture
 
 The plugin supports two connection modes:
 
-1. **Stdio (CLI)** — `npx invect-cli mcp` starts a standalone process that connects to Invect over HTTP. This is what MCP clients like Claude Desktop use.
+1. **Stdio (CLI)** — `npx flowlib-cli mcp` starts a standalone process that connects to Invect over HTTP. This is what MCP clients like Claude Desktop use.
 2. **Direct (in-process)** — When registered as a plugin, the MCP server can call Invect services directly without HTTP overhead. Used by the Streamable HTTP endpoint at `POST /plugins/mcp/mcp`.
 
 ```
 ┌──────────────┐  stdio   ┌──────────────┐  HTTP  ┌────────────┐
-│ Claude / VS  │ ───────► │ invect-cli   │ ─────► │  Invect    │
+│ Claude / VS  │ ───────► │ flowlib-cli   │ ─────► │  Invect    │
 │ Code / Cursor│          │ mcp server   │        │  API       │
 └──────────────┘          └──────────────┘        └────────────┘
 

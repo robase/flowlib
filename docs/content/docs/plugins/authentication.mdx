@@ -1,6 +1,6 @@
 ---
 title: Authentication
-description: Add user authentication with @invect/user-auth.
+description: Add user authentication with @flowlib/user-auth.
 ---
 
 import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
@@ -13,28 +13,28 @@ The auth plugin wraps [Better Auth](https://better-auth.com) to provide user log
 <Tab value="pnpm">
 
 ```bash
-pnpm add @invect/user-auth
+pnpm add @flowlib/user-auth
 ```
 
 </Tab>
 <Tab value="npm">
 
 ```bash
-npm install @invect/user-auth
+npm install @flowlib/user-auth
 ```
 
 </Tab>
 <Tab value="yarn">
 
 ```bash
-yarn add @invect/user-auth
+yarn add @flowlib/user-auth
 ```
 
 </Tab>
 <Tab value="bun">
 
 ```bash
-bun add @invect/user-auth
+bun add @flowlib/user-auth
 ```
 
 </Tab>
@@ -44,9 +44,9 @@ bun add @invect/user-auth
 
 The simplest setup lets the plugin manage Better Auth internally — no separate `auth.ts` file needed:
 
-```ts title="invect.config.ts"
-import { defineConfig } from '@invect/core';
-import { auth } from '@invect/user-auth';
+```ts title="flowlib.config.ts"
+import { defineConfig } from '@flowlib/core';
+import { auth } from '@flowlib/user-auth';
 
 export const invectConfig = defineConfig({
   database: { type: 'sqlite', connectionString: 'file:./dev.db' },
@@ -63,9 +63,9 @@ export const invectConfig = defineConfig({
 
 For full control, create your own Better Auth instance and pass it in:
 
-```ts title="invect.config.ts"
+```ts title="flowlib.config.ts"
 import { betterAuth } from 'better-auth';
-import { auth } from '@invect/user-auth';
+import { auth } from '@flowlib/user-auth';
 
 const myAuth = betterAuth({
   /* full Better Auth config */
@@ -82,8 +82,8 @@ The `globalAdmins` array seeds admin users on startup. These are the only users 
 After adding the plugin, regenerate and apply the schema:
 
 ```bash
-npx invect-cli generate
-npx invect-cli migrate --push
+npx flowlib-cli generate
+npx flowlib-cli migrate --push
 ```
 
 ### Options
@@ -125,16 +125,16 @@ npx invect-cli migrate --push
 
 ## Frontend integration
 
-No extra wrapper component is needed. Pass the `auth()` plugin in `invect.config.ts` — `<Invect>` reads the config and automatically wraps itself with an auth gate:
+No extra wrapper component is needed. Pass the `auth()` plugin in `flowlib.config.ts` — `<Invect>` reads the config and automatically wraps itself with an auth gate:
 
-```tsx title="app/invect/[[...slug]]/page.tsx"
+```tsx title="app/flowlib/[[...slug]]/page.tsx"
 'use client';
 
 import dynamic from 'next/dynamic';
-import '@invect/ui/styles';
-import config from '../../invect.config'; // contains plugins: [auth(...), rbac()]
+import '@flowlib/ui/styles';
+import config from '../../flowlib.config'; // contains plugins: [auth(...), rbac()]
 
-const Invect = dynamic(() => import('@invect/ui').then((m) => ({ default: m.Invect })), {
+const Invect = dynamic(() => import('@flowlib/ui').then((m) => ({ default: m.Invect })), {
   ssr: false,
 });
 
@@ -148,9 +148,9 @@ The OAuth callback route is handled internally at `<frontendPath>/oauth/callback
 For non-Next.js frontends (e.g. Vite + React), import the shared config and pass it the same way:
 
 ```tsx title="src/App.tsx"
-import { Invect } from '@invect/ui';
-import '@invect/ui/styles';
-import { invectConfig } from '../invect.config';
+import { Invect } from '@flowlib/ui';
+import '@flowlib/ui/styles';
+import { invectConfig } from '../flowlib.config';
 
 export default function App() {
   return <Invect config={invectConfig} />;

@@ -9,7 +9,7 @@ export { jiraCreateIssueAction } from './create-issue';
 export { jiraUpdateIssueAction } from './update-issue';
 export { jiraAddCommentAction } from './add-comment';
 
-import type { ActionDefinition } from '@invect/action-kit';
+import type { ActionDefinition } from '@flowlib/action-kit';
 import { jiraListProjectsAction } from './list-projects';
 import { jiraSearchIssuesAction } from './search-issues';
 import { jiraGetIssueAction } from './get-issue';

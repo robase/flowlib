@@ -15,7 +15,7 @@ export { sentryUpdateIssueAction } from './update-issue';
 
 // ── Bulk array ──────────────────────────────────────────────────────────
 
-import type { ActionDefinition } from '@invect/action-kit';
+import type { ActionDefinition } from '@flowlib/action-kit';
 
 import { sentryListProjectsAction } from './list-projects';
 import { sentryListIssuesAction } from './list-issues';

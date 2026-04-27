@@ -1,7 +1,7 @@
 /**
  * Migrate Command Tests
  *
- * Tests the utility functions used by `npx invect-cli migrate`:
+ * Tests the utility functions used by `npx flowlib-cli migrate`:
  * - wasAbortedByUser()    — detects user cancellation vs real errors
  * - drizzleKitEnv()       — env setup for subprocess
  * - detectDrizzleConfig() — finds correct drizzle config by dialect

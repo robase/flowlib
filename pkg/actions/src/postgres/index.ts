@@ -7,7 +7,7 @@ export { postgresListTablesAction } from './list-tables';
 export { postgresDescribeTableAction } from './describe-table';
 export { postgresInsertRowsAction } from './insert-rows';
 
-import type { ActionDefinition } from '@invect/action-kit';
+import type { ActionDefinition } from '@flowlib/action-kit';
 import { postgresExecuteQueryAction } from './execute-query';
 import { postgresListTablesAction } from './list-tables';
 import { postgresDescribeTableAction } from './describe-table';

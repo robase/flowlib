@@ -25,7 +25,7 @@ import {
   SelectedExecutionAttempt,
 } from './use-execution-log-data';
 import { NodeErrorBadge } from '../flow-editor/NodeErrorBadge';
-import { NodeExecutionStatus } from '@invect/core/types';
+import { NodeExecutionStatus } from '@flowlib/core/types';
 import {
   CodeMirrorJsonEditor,
   type CodeMirrorJsonEditorHandle,

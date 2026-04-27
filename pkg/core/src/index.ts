@@ -2,7 +2,7 @@
 // Framework-agnostic core package for Invect execution engine
 
 // Legacy class (deprecated — use createInvect instead)
-export * from './invect-core';
+export * from './flowlib-core';
 export * from './database';
 export * from './types.internal';
 
@@ -191,8 +191,8 @@ export type { PaginatedResponse, QueryOptions } from './schemas/pagination-sort-
 // Re-export commonly needed base types
 export { FlowRunStatus, NodeExecutionStatus } from './types/base';
 
-export type { InvectConfig } from './schemas/invect-config';
-export { defineConfig, definePlugin } from './schemas/invect-config';
+export type { InvectConfig } from './schemas/flowlib-config';
+export { defineConfig, definePlugin } from './schemas/flowlib-config';
 
 // Plugin system
 export type {
@@ -415,16 +415,16 @@ export type {
 
 export * from './types/node-definition.types';
 
-// Re-export layout utilities from @invect/layouts
+// Re-export layout utilities from @flowlib/layouts
 export {
   applyDagreLayout,
   detectSkipEdges,
   applyVerticalOffsetForSkipEdges,
   applyMultiOutputBranchOffsets,
   applyIfElseBranchOffsets, // Deprecated alias for applyMultiOutputBranchOffsets
-} from '@invect/layouts';
+} from '@flowlib/layouts';
 
-export type { LayoutNode, LayoutEdge, DagreLayoutOptions } from '@invect/layouts';
+export type { LayoutNode, LayoutEdge, DagreLayoutOptions } from '@flowlib/layouts';
 
 // =====================================
 // New API (namespaced sub-APIs)

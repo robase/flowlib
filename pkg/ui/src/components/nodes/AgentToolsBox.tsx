@@ -8,7 +8,7 @@ import type { AddedToolInstance, ToolDefinition } from './ToolSelectorModal';
 
 /**
  * Tool category for organization in UI
- * Matches AgentToolCategory from @invect/core
+ * Matches AgentToolCategory from @flowlib/core
  */
 export type ToolCategory = 'data' | 'web' | 'code' | 'utility' | 'custom';
 

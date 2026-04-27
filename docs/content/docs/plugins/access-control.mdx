@@ -1,6 +1,6 @@
 ---
 title: Access Control
-description: Add flow-level access control with @invect/rbac.
+description: Add flow-level access control with @flowlib/rbac.
 ---
 
 import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
@@ -13,28 +13,28 @@ The RBAC plugin adds flow-level access control. It depends on the auth plugin â€
 <Tab value="pnpm">
 
 ```bash
-pnpm add @invect/rbac
+pnpm add @flowlib/rbac
 ```
 
 </Tab>
 <Tab value="npm">
 
 ```bash
-npm install @invect/rbac
+npm install @flowlib/rbac
 ```
 
 </Tab>
 <Tab value="yarn">
 
 ```bash
-yarn add @invect/rbac
+yarn add @flowlib/rbac
 ```
 
 </Tab>
 <Tab value="bun">
 
 ```bash
-bun add @invect/rbac
+bun add @flowlib/rbac
 ```
 
 </Tab>
@@ -44,9 +44,9 @@ bun add @invect/rbac
 
 Add it after the auth plugin in your config:
 
-```ts title="invect.config.ts"
-import { auth } from '@invect/user-auth';
-import { rbac } from '@invect/rbac';
+```ts title="flowlib.config.ts"
+import { auth } from '@flowlib/user-auth';
+import { rbac } from '@flowlib/rbac';
 
 export const invectConfig = defineConfig({
   // ...
@@ -64,8 +64,8 @@ Plugin order matters: auth resolves the session first, then RBAC checks permissi
 Regenerate the schema to create the `flow_access` table:
 
 ```bash
-npx invect-cli generate
-npx invect-cli migrate --push
+npx flowlib-cli generate
+npx flowlib-cli migrate --push
 ```
 
 ## How it works

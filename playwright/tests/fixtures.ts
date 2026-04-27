@@ -24,16 +24,16 @@ const serverCwd = path.join(rootDir, 'playwright');
 const serverScript = path.join(serverCwd, 'test-support/express-test-server.ts');
 const sharedOrigin = process.env.PLAYWRIGHT_VITE_URL ?? 'http://localhost:41731';
 const isolatedBrowserBase = createSqliteBrowserIsolationTest({
-  apiPrefix: '/invect',
-  apiRoutePrefix: '/api/invect',
-  dbFilePrefix: 'invect-e2e',
-  readyPath: '/invect/credentials',
+  apiPrefix: '/flowlib',
+  apiRoutePrefix: '/api/flowlib',
+  dbFilePrefix: 'flowlib-e2e',
+  readyPath: '/flowlib/credentials',
   serverCwd,
   serverScript,
   sharedOrigin,
 });
 
-let activeApiBase = 'http://localhost:3000/invect';
+let activeApiBase = 'http://localhost:3000/flowlib';
 
 type TestFlowDefinition = {
   nodes: Array<Record<string, unknown>>;
@@ -694,7 +694,7 @@ async function resetTestFlow(flowName: string) {
 async function navigateToFlow(page: Page, flowName: string) {
   await resetTestFlow(flowName);
 
-  await page.goto('/invect');
+  await page.goto('/flowlib');
 
   // Wait for the dashboard to fully load
   await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible({

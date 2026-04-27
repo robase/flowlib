@@ -115,7 +115,7 @@ Concrete guidance:
 1. Copy the CSP string above into `pkg/vscode-extension/src/editor/webview-host.ts` (Lane L5). The nonce+`asWebviewUri` pattern in this probe's `src/extension.ts` is the template.
 2. Bundle `@jitl/quickjs-wasmfile-release-sync` into the webview bundle, inlining `./wasm` (its export alias for `emscripten-module.wasm`) via esbuild `--loader:.wasm=base64` or Vite's `?inline` query / asset inlining.
 3. Construct the variant with `newVariant(releaseSyncVariant, { wasmBinary: decodedBytes })` and memoize the resulting `QuickJSWASMModule` — see `quickjs-emscripten-core`'s `memoizePromiseFactory`. One VM per editor tab is fine; ~1MB RSS.
-4. Reuse the VM across template evals (`ctx.evalCode(expr)`), only tearing it down on webview dispose. A typed wrapper around this should live in `@invect/ui` or a new `pkg/webview-template-eval` package, not in the extension itself, so the browser frontend can reuse it too.
+4. Reuse the VM across template evals (`ctx.evalCode(expr)`), only tearing it down on webview dispose. A typed wrapper around this should live in `@flowlib/ui` or a new `pkg/webview-template-eval` package, not in the extension itself, so the browser frontend can reuse it too.
 5. Keep `connect-src 'none'`. No reason to loosen it.
 
 ### What does NOT change in the plan

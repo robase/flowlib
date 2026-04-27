@@ -1,6 +1,6 @@
 /**
  * Vite config for Docker production builds.
- * Removes the @invect/core external (needed for dev server, breaks static serving)
+ * Removes the @flowlib/core external (needed for dev server, breaks static serving)
  * and the dev server proxy (not needed in production).
  */
 import { defineConfig } from 'vite';

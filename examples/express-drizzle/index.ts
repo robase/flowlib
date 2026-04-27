@@ -1,8 +1,8 @@
 import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
-import { createInvectRouter } from '@invect/express';
-import { invectConfig } from './invect.config';
+import { createInvectRouter } from '@flowlib/express';
+import { invectConfig } from './flowlib.config';
 
 // Create Express app
 const app = express();
@@ -17,8 +17,8 @@ app.use(
   }),
 );
 
-// Mount Invect routes under /invect (or a path of your choice)
-app.use('/invect', await createInvectRouter(invectConfig));
+// Mount Invect routes under /flowlib (or a path of your choice)
+app.use('/flowlib', await createInvectRouter(invectConfig));
 
 // Root endpoint
 app.get('/', (req, res) => {

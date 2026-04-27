@@ -14,7 +14,7 @@ export { modelAction } from './model';
 export { agentAction, agentNodeParamsSchema, type AgentNodeParams } from './agent';
 export { mathEvalAction } from './math-eval';
 
-import type { ActionDefinition } from '@invect/action-kit';
+import type { ActionDefinition } from '@flowlib/action-kit';
 import { javascriptAction } from './javascript';
 import { inputAction } from './input';
 import { templateStringAction } from './template-string';

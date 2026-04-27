@@ -8,7 +8,7 @@
  * @see https://docs.aws.amazon.com/AmazonCloudWatchLogs/latest/APIReference/API_StartQuery.html
  */
 
-import { defineAction } from '@invect/action-kit';
+import { defineAction } from '@flowlib/action-kit';
 import { CLOUDWATCH_PROVIDER } from '../providers';
 import { z } from 'zod/v4';
 

@@ -8,7 +8,7 @@
  *  - syncTriggersForFlow(): upserts trigger registrations whenever a flow version is published
  *  - CRUD helpers for API routes
  *
- * Webhook dispatch has been moved to the @invect/webhooks plugin.
+ * Webhook dispatch has been moved to the @flowlib/webhooks plugin.
  */
 
 import { Cron } from 'croner';

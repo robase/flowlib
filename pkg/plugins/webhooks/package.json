@@ -1,19 +1,19 @@
 {
-  "name": "@invect/webhooks",
+  "name": "@flowlib/webhooks",
   "version": "0.0.12",
   "description": "Webhook trigger plugin for Invect — adds webhook management, ingestion, signature verification, and a dedicated webhooks UI page",
   "keywords": [
-    "invect",
+    "flowlib",
     "plugin",
     "triggers",
     "webhooks",
     "workflow"
   ],
   "license": "MIT",
-  "author": "robase <team@invect.dev>",
+  "author": "robase <team@flowlib.dev>",
   "repository": {
     "type": "git",
-    "url": "https://github.com/robase/invect.git",
+    "url": "https://github.com/robase/flowlib.git",
     "directory": "pkg/plugins/webhooks"
   },
   "files": [
@@ -53,10 +53,10 @@
     "lint": "oxlint --fix"
   },
   "dependencies": {
-    "@invect/core": "workspace:*"
+    "@flowlib/core": "workspace:*"
   },
   "devDependencies": {
-    "@invect/ui": "workspace:*",
+    "@flowlib/ui": "workspace:*",
     "@tanstack/react-query": "^5.0.0",
     "@types/node": "^20.11.20",
     "@types/react": "18.3.7",
@@ -66,7 +66,7 @@
     "typescript": "^5.3.3"
   },
   "peerDependencies": {
-    "@invect/ui": ">=0.0.12",
+    "@flowlib/ui": ">=0.0.12",
     "@tanstack/react-query": ">=5.0.0",
     "react": ">=18.0.0",
     "react-dom": ">=18.0.0",
@@ -85,7 +85,7 @@
     "@tanstack/react-query": {
       "optional": true
     },
-    "@invect/ui": {
+    "@flowlib/ui": {
       "optional": true
     }
   }

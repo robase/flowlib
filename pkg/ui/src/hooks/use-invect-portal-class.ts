@@ -2,10 +2,10 @@ import { useTheme } from '../contexts/ThemeProvider';
 
 /**
  * Returns the class name string for portal wrappers that need to be inside the
- * `.invect` CSS scope.
+ * `.flowlib` CSS scope.
  *
- * Radix portals render to `document.body`, which sits outside the main `.invect`
- * container. Without a wrapper, portal content loses access to invect's CSS
+ * Radix portals render to `document.body`, which sits outside the main `.flowlib`
+ * container. Without a wrapper, portal content loses access to flowlib's CSS
  * variables and the Tailwind `dark:` variant.
  *
  * Usage:
@@ -23,5 +23,5 @@ import { useTheme } from '../contexts/ThemeProvider';
 export function useInvectPortalClass(): string {
   const { resolvedTheme } = useTheme();
 
-  return `invect ${resolvedTheme}`;
+  return `flowlib ${resolvedTheme}`;
 }

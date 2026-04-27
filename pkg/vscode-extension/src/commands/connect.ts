@@ -1,5 +1,5 @@
 /**
- * `invect.connect` / `invect.disconnect` commands.
+ * `flowlib.connect` / `flowlib.disconnect` commands.
  *
  * Connect flow:
  *   1. Prompt for backend URL (pre-filled with current setting).
@@ -33,8 +33,8 @@ export interface ConnectDeps {
 
 export function registerConnectCommands(deps: ConnectDeps): vscode.Disposable[] {
   return [
-    vscode.commands.registerCommand('invect.connect', () => connect(deps)),
-    vscode.commands.registerCommand('invect.disconnect', () => disconnect(deps)),
+    vscode.commands.registerCommand('flowlib.connect', () => connect(deps)),
+    vscode.commands.registerCommand('flowlib.disconnect', () => disconnect(deps)),
   ];
 }
 
@@ -45,7 +45,7 @@ async function connect(deps: ConnectDeps): Promise<void> {
 
   const url = await vscode.window.showInputBox({
     prompt: 'Invect backend URL',
-    placeHolder: 'http://localhost:3000/invect',
+    placeHolder: 'http://localhost:3000/flowlib',
     value: current.url,
     validateInput: (value) => {
       if (!value.trim()) {

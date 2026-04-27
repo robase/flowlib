@@ -38,7 +38,7 @@ export interface FlowExample {
   /**
    * Create the flow, execute it, and return the resulting FlowRun payload.
    */
-  execute(invect: InvectInstance): Promise<FlowRunResult>;
+  execute(flowlib: InvectInstance): Promise<FlowRunResult>;
   /**
    * Perform assertions against the execution result. Throw to signal failure.
    */

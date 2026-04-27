@@ -25,7 +25,7 @@
  *     instanceId preservation. Pass `null` for a brand-new flow.
  *
  * Output: a canonical `DbFlowDefinition` ready to hand to
- * `invect.versions.create()`.
+ * `flowlib.versions.create()`.
  */
 
 import type { SdkFlowNode, ResolvedEdge } from '../types';
@@ -50,7 +50,7 @@ export interface MergeOptions {
   /**
    * Instance-id generator for newly added agent tools. Defaults to
    * `tool_<random-8-chars>` — matching the canonical `newToolInstanceId`
-   * format from `@invect/action-kit` but without the dep.
+   * format from `@flowlib/action-kit` but without the dep.
    */
   newToolInstanceId?: () => string;
 }

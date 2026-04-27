@@ -40,7 +40,7 @@ export interface CredentialsProps {
   basePath?: string;
 }
 
-export const Credentials: React.FC<CredentialsProps> = ({ basePath: _basePath = '/invect' }) => {
+export const Credentials: React.FC<CredentialsProps> = ({ basePath: _basePath = '/flowlib' }) => {
   useDocumentTitle('credentials');
   const containerRef = useRef<HTMLDivElement>(null);
 

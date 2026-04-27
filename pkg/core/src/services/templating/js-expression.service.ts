@@ -14,7 +14,7 @@ import { getQuickJS, shouldInterruptAfterDeadline } from 'quickjs-emscripten';
 import type { QuickJSWASMModule } from 'quickjs-emscripten';
 import type { Logger } from 'src/schemas';
 import { needsAutoReturn, type JsExpressionEvaluator } from './evaluator';
-import { JsExpressionError } from '@invect/action-kit';
+import { JsExpressionError } from '@flowlib/action-kit';
 
 export { JsExpressionError };
 

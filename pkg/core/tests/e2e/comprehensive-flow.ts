@@ -44,7 +44,7 @@ import {
   ifElse,
   template,
   httpRequest,
-} from '@invect/sdk';
+} from '@flowlib/sdk';
 import type { InvectInstance } from '../../src/api/types';
 import type { FlowExample } from './example-types';
 
@@ -52,7 +52,7 @@ import type { FlowExample } from './example-types';
  * Ensure we have an AI credential for Model nodes.
  */
 async function ensureAICredential(
-  invect: InvectInstance,
+  flowlib: InvectInstance,
 ): Promise<{ id: string; name: string; isOpenAI: boolean }> {
   const openaiKey = process.env.OPENAI_API_KEY;
   const anthropicKey = process.env.ANTHROPIC_API_KEY;
@@ -67,7 +67,7 @@ async function ensureAICredential(
   const apiKey = openaiKey || anthropicKey!;
   const providerName = isOpenAI ? 'openai' : 'anthropic';
 
-  const created = await invect.credentials.create({
+  const created = await flowlib.credentials.create({
     name: `E2E Comprehensive ${providerName.charAt(0).toUpperCase() + providerName.slice(1)} Credential`,
     type: 'http-api',
     authType: 'bearer',
@@ -303,12 +303,12 @@ export const comprehensiveFlowPremiumExample: FlowExample = {
   name: 'Comprehensive Flow (Premium User)',
   description: 'Full flow with HTTP→JS→If-Else→Model(x2)→Output, testing premium user branch.',
 
-  async execute(invect) {
-    const credential = await ensureAICredential(invect);
+  async execute(flowlib) {
+    const credential = await ensureAICredential(flowlib);
     console.log(`  📝 Using credential: ${credential.name}`);
     console.log(`  🤖 Provider: ${credential.isOpenAI ? 'OpenAI' : 'Anthropic'}`);
 
-    const flow = await invect.flows.create({
+    const flow = await flowlib.flows.create({
       name: `e2e-comprehensive-premium-${Date.now()}`,
     });
     console.log(`  📁 Created flow: ${flow.name} (${flow.id})`);
@@ -318,7 +318,7 @@ export const comprehensiveFlowPremiumExample: FlowExample = {
       credential.isOpenAI,
       true,
     );
-    await invect.versions.create(flow.id, {
+    await flowlib.versions.create(flow.id, {
       invectDefinition: flowDefinition,
     });
     console.log(
@@ -328,7 +328,7 @@ export const comprehensiveFlowPremiumExample: FlowExample = {
     console.log(`  🚀 Executing comprehensive flow (premium path)...`);
     console.log(`  ⏳ This involves HTTP request + 2 LLM calls, may take 30-60 seconds...`);
 
-    const result = await invect.runs.start(flow.id, {}, { useBatchProcessing: false });
+    const result = await flowlib.runs.start(flow.id, {}, { useBatchProcessing: false });
     console.log(`  ✅ Flow completed with status: ${result.status}`);
 
     return result;
@@ -429,12 +429,12 @@ export const comprehensiveFlowBasicExample: FlowExample = {
   name: 'Comprehensive Flow (Basic User)',
   description: 'Full flow with HTTP→JS→If-Else→Model(x2)→Output, testing basic user branch.',
 
-  async execute(invect) {
-    const credential = await ensureAICredential(invect);
+  async execute(flowlib) {
+    const credential = await ensureAICredential(flowlib);
     console.log(`  📝 Using credential: ${credential.name}`);
     console.log(`  🤖 Provider: ${credential.isOpenAI ? 'OpenAI' : 'Anthropic'}`);
 
-    const flow = await invect.flows.create({
+    const flow = await flowlib.flows.create({
       name: `e2e-comprehensive-basic-${Date.now()}`,
     });
     console.log(`  📁 Created flow: ${flow.name} (${flow.id})`);
@@ -444,7 +444,7 @@ export const comprehensiveFlowBasicExample: FlowExample = {
       credential.isOpenAI,
       false,
     );
-    await invect.versions.create(flow.id, {
+    await flowlib.versions.create(flow.id, {
       invectDefinition: flowDefinition,
     });
     console.log(
@@ -454,7 +454,7 @@ export const comprehensiveFlowBasicExample: FlowExample = {
     console.log(`  🚀 Executing comprehensive flow (basic path)...`);
     console.log(`  ⏳ This involves HTTP request + 2 LLM calls, may take 20-40 seconds...`);
 
-    const result = await invect.runs.start(flow.id, {}, { useBatchProcessing: false });
+    const result = await flowlib.runs.start(flow.id, {}, { useBatchProcessing: false });
     console.log(`  ✅ Flow completed with status: ${result.status}`);
 
     return result;

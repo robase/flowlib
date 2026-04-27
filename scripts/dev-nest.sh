@@ -6,7 +6,7 @@ cd "$ROOT_DIR"
 
 # "...pkg" = package + all its transitive workspace dependencies (upstream).
 # This auto-discovers the full dependency graph for the NestJS example app:
-#   nest-prisma → @invect/core, @invect/nestjs
+#   nest-prisma → @flowlib/core, @flowlib/nestjs
 DEV_FILTERS=(
   --filter "...nest-prisma"
 )

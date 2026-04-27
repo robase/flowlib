@@ -114,10 +114,10 @@ async function waitForRunCompletion(
 }
 
 /**
- * Navigates to /invect/executions and waits for the page heading.
+ * Navigates to /flowlib/executions and waits for the page heading.
  */
 async function goToExecutions(page: Page) {
-  await page.goto('/invect/flow-runs');
+  await page.goto('/flowlib/flow-runs');
   await expect(
     page
       .getByRole('heading', { level: 1, name: 'Flow Runs' })
@@ -327,7 +327,7 @@ test.describe('Execution Monitoring', () => {
     }
 
     // Navigate to the flow runs view (FlowRunsView with LogsPanel + RunSelector)
-    await page.goto(`/invect/flow/${jqFlowId}/runs`);
+    await page.goto(`/flowlib/flow/${jqFlowId}/runs`);
 
     // The most recent run is auto-selected; wait for LogsPanel to render
     await expect(page.getByText('Execution Logs').first()).toBeVisible({ timeout: 15_000 });
@@ -480,7 +480,7 @@ test.describe('Execution Monitoring', () => {
     }
 
     // Step 5: Navigate to the flow runs page for the bad flow
-    await page.goto(`/invect/flow/${badFlowId}/runs`);
+    await page.goto(`/flowlib/flow/${badFlowId}/runs`);
 
     // Wait for the LogsPanel to render
     await expect(page.getByText('Execution Logs').first()).toBeVisible({ timeout: 15_000 });
@@ -553,7 +553,7 @@ test.describe('Execution Monitoring', () => {
       options: { useBatchProcessing: false },
     });
 
-    await page.goto(`/invect/flow/${flowId}/runs?runId=${run.id}`);
+    await page.goto(`/flowlib/flow/${flowId}/runs?runId=${run.id}`);
     await expect(page.getByText('Execution Logs').first()).toBeVisible({ timeout: 15000 });
 
     // The RUNNING badge may flash quickly and be replaced by SUCCESS before
@@ -660,7 +660,7 @@ test.describe('Execution Monitoring', () => {
     });
 
     // Revisit path from a different route
-    await page.goto('/invect');
+    await page.goto('/flowlib');
     await expect(page.getByRole('heading', { level: 1, name: 'Dashboard' })).toBeVisible({
       timeout: 15000,
     });
@@ -711,7 +711,7 @@ test.describe('Execution Monitoring', () => {
     });
     await waitForRunCompletion(apiBase, request, flowId, run.id, 20000);
 
-    await page.goto(`/invect/flow/${flowId}/runs?runId=${run.id}`);
+    await page.goto(`/flowlib/flow/${flowId}/runs?runId=${run.id}`);
     await expect(page.getByText('Execution Logs').first()).toBeVisible({ timeout: 15000 });
     await expect(page.getByText(/\d+ nodes?/).first()).toBeVisible({ timeout: 10000 });
 
@@ -782,7 +782,7 @@ test.describe('Execution Monitoring', () => {
     });
     await waitForRunCompletion(apiBase, request, flowId, run.id, 30000);
 
-    await page.goto(`/invect/flow/${flowId}/runs?runId=${run.id}`);
+    await page.goto(`/flowlib/flow/${flowId}/runs?runId=${run.id}`);
     await expect(page.getByText('Execution Logs').first()).toBeVisible({ timeout: 15000 });
 
     const agentNodeButton = page
@@ -833,7 +833,7 @@ test.describe('Execution Monitoring', () => {
     const run = await triggerFlowRun(apiBase, request, flowId);
     await waitForRunCompletion(apiBase, request, flowId, run.id, 20000).catch(() => undefined);
 
-    await page.goto(`/invect/flow/${flowId}/runs?runId=${run.id}`);
+    await page.goto(`/flowlib/flow/${flowId}/runs?runId=${run.id}`);
     await expect(page.getByText('Execution Logs').first()).toBeVisible({ timeout: 15000 });
 
     const failedRunButton = page

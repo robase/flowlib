@@ -5,7 +5,7 @@
  * Requires a WooCommerce API key credential (consumer key + consumer secret + site URL).
  */
 
-import { defineAction } from '@invect/action-kit';
+import { defineAction } from '@flowlib/action-kit';
 import { WOOCOMMERCE_PROVIDER } from '../providers';
 import { z } from 'zod/v4';
 

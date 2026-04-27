@@ -17,7 +17,7 @@ import {
   type LoadOptionsContext,
   type LoadOptionsResult,
   type NodeDefinition,
-} from '@invect/action-kit';
+} from '@flowlib/action-kit';
 import { actionToNodeDefinition } from '../registry';
 import { CORE_PROVIDER } from '../providers';
 import { z } from 'zod/v4';

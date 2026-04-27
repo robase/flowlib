@@ -18,7 +18,7 @@ import { SimpleSectionViewProvider } from './views/SimpleSectionView';
 /**
  * Activation entry. Layout:
  *
- *   - Embedded backend boots a real `@invect/express` server in-process.
+ *   - Embedded backend boots a real `@flowlib/express` server in-process.
  *   - Custom editor for `.flow.ts` opens the full Invect UI in a webview
  *     deep-linked to the flow row backing the file.
  *   - VSCode side panel hosts navigation:
@@ -56,7 +56,7 @@ export function activate(ctx: vscode.ExtensionContext): void {
       label: 'Open credentials manager…',
       description: 'in editor',
       iconId: 'key',
-      command: 'invect.openCredentials',
+      command: 'flowlib.openCredentials',
     },
   ]);
   const webhooksView = new SimpleSectionViewProvider([
@@ -64,7 +64,7 @@ export function activate(ctx: vscode.ExtensionContext): void {
       label: 'Open webhooks…',
       description: 'in editor',
       iconId: 'plug',
-      command: 'invect.openWebhooks',
+      command: 'flowlib.openWebhooks',
     },
   ]);
 
@@ -87,13 +87,13 @@ export function activate(ctx: vscode.ExtensionContext): void {
     { dispose: () => void embeddedBackend.shutdown().catch(() => undefined) },
 
     // ── Commands ──────────────────────────────────────────────────────────
-    vscode.commands.registerCommand('invect.hello', () => {
+    vscode.commands.registerCommand('flowlib.hello', () => {
       vscode.window.showInformationMessage('Hello from Invect');
     }),
-    vscode.commands.registerCommand('invect.showLogs', () => {
+    vscode.commands.registerCommand('flowlib.showLogs', () => {
       logger.show(true);
     }),
-    vscode.commands.registerCommand('invect.trustWorkspace', () => {
+    vscode.commands.registerCommand('flowlib.trustWorkspace', () => {
       void vscode.commands.executeCommand('workbench.trust.manage');
     }),
     vscode.workspace.onDidGrantWorkspaceTrust(() => {
@@ -105,7 +105,7 @@ export function activate(ctx: vscode.ExtensionContext): void {
     // version that ran (so a historical run renders against the
     // definition that was actually executed, not the current latest).
     vscode.commands.registerCommand(
-      'invect.viewRun',
+      'flowlib.viewRun',
       async (runId: string, flowIdOrFileUri: string, flowVersion?: number) => {
         if (typeof runId !== 'string' || typeof flowIdOrFileUri !== 'string') {
           return;
@@ -134,7 +134,7 @@ export function activate(ctx: vscode.ExtensionContext): void {
           typeof flowVersion === 'number'
             ? `/version/${encodeURIComponent(String(flowVersion))}`
             : '';
-        const path = `/invect/flow/${encodeURIComponent(dbFlowId)}/runs${versionSegment}?runId=${encodeURIComponent(runId)}`;
+        const path = `/flowlib/flow/${encodeURIComponent(dbFlowId)}/runs${versionSegment}?runId=${encodeURIComponent(runId)}`;
         // Wait briefly for the panel to register before posting.
         for (let i = 0; i < 20; i++) {
           if (FlowEditorProvider.postTo(fileUri, { type: 'navigate', path })) {
@@ -148,11 +148,11 @@ export function activate(ctx: vscode.ExtensionContext): void {
       },
     ),
 
-    vscode.commands.registerCommand('invect.openCredentials', () =>
-      invectPanel.open('credentials', 'Invect: Credentials', '/invect/credentials'),
+    vscode.commands.registerCommand('flowlib.openCredentials', () =>
+      invectPanel.open('credentials', 'Invect: Credentials', '/flowlib/credentials'),
     ),
-    vscode.commands.registerCommand('invect.openWebhooks', () =>
-      invectPanel.open('webhooks', 'Invect: Webhooks', '/invect/webhooks'),
+    vscode.commands.registerCommand('flowlib.openWebhooks', () =>
+      invectPanel.open('webhooks', 'Invect: Webhooks', '/flowlib/webhooks'),
     ),
 
     // ── Visual ↔ Code toggle ─────────────────────────────────────────────
@@ -160,7 +160,7 @@ export function activate(ctx: vscode.ExtensionContext): void {
     // when the visual canvas is currently active and the user wants to
     // edit the source directly. Wired to an editor-title button and the
     // command palette via package.json `menus`.
-    vscode.commands.registerCommand('invect.editAsCode', async () => {
+    vscode.commands.registerCommand('flowlib.editAsCode', async () => {
       const uri = activeFlowFileUri();
       if (!uri) {
         void vscode.window.showWarningMessage('Open a .flow.ts file first.');
@@ -171,7 +171,7 @@ export function activate(ctx: vscode.ExtensionContext): void {
       // bypasses it.
       await vscode.commands.executeCommand('vscode.openWith', uri, 'default');
     }),
-    vscode.commands.registerCommand('invect.editVisually', async () => {
+    vscode.commands.registerCommand('flowlib.editVisually', async () => {
       const uri = activeFlowFileUri();
       if (!uri) {
         void vscode.window.showWarningMessage('Open a .flow.ts file first.');
@@ -185,9 +185,9 @@ export function activate(ctx: vscode.ExtensionContext): void {
       webviewOptions: { retainContextWhenHidden: true },
     }),
 
-    vscode.window.registerTreeDataProvider('invect.backends', backendsExplorer),
+    vscode.window.registerTreeDataProvider('flowlib.backends', backendsExplorer),
     vscode.workspace.onDidChangeConfiguration((e) => {
-      if (e.affectsConfiguration('invect.backendUrl')) {
+      if (e.affectsConfiguration('flowlib.backendUrl')) {
         backendsExplorer.refresh();
       }
     }),
@@ -198,7 +198,7 @@ export function activate(ctx: vscode.ExtensionContext): void {
     // to the embedded server's ExecutionEventBus per-flow so live runs
     // push updates without the user having to collapse/expand.
     (() => {
-      const treeView = vscode.window.createTreeView('invect.flows', {
+      const treeView = vscode.window.createTreeView('flowlib.flows', {
         treeDataProvider: flowsExplorer,
         showCollapseAll: true,
       });
@@ -228,12 +228,12 @@ export function activate(ctx: vscode.ExtensionContext): void {
         }
       });
 
-      // `invect.openFlow` — single-click on a flow row both opens the
+      // `flowlib.openFlow` — single-click on a flow row both opens the
       // file and expands the row to reveal its runs. VSCode's default
       // tree behaviour fires the row command on click but doesn't
       // expand; we use treeView.reveal({ expand: true }) to do both.
       const openFlowCmd = vscode.commands.registerCommand(
-        'invect.openFlow',
+        'flowlib.openFlow',
         async (item: import('./views/FlowsExplorer').FlowsExplorerItem) => {
           if (!item || item.kind !== 'flow') {
             return;
@@ -262,9 +262,9 @@ export function activate(ctx: vscode.ExtensionContext): void {
         },
       };
     })(),
-    vscode.window.registerTreeDataProvider('invect.credentials', credentialsView),
-    vscode.window.registerTreeDataProvider('invect.webhooks', webhooksView),
-    vscode.commands.registerCommand('invect.refreshFlows', () => flowsExplorer.refresh()),
+    vscode.window.registerTreeDataProvider('flowlib.credentials', credentialsView),
+    vscode.window.registerTreeDataProvider('flowlib.webhooks', webhooksView),
+    vscode.commands.registerCommand('flowlib.refreshFlows', () => flowsExplorer.refresh()),
 
     // Workspace file watcher:
     //   - Refresh the flows view when .flow.ts files come and go.

@@ -30,9 +30,9 @@ This example now includes the version control plugin. It uses a placeholder GitH
 ## Test the API
 
 ```bash
-curl http://localhost:3000/invect/flows
+curl http://localhost:3000/flowlib/flows
 
-curl -X POST http://localhost:3000/invect/flows \
+curl -X POST http://localhost:3000/flowlib/flows \
   -H "Content-Type: application/json" \
   -d '{"name": "My Flow", "description": "A test flow"}'
 ```

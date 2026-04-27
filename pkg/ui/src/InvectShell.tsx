@@ -1,7 +1,7 @@
 /**
  * InvectShell — Lightweight CSS scope + theme wrapper.
  *
- * Establishes the `.invect` CSS scope so that all `imp-*` theme
+ * Establishes the `.flowlib` CSS scope so that all `imp-*` theme
  * tokens and Tailwind utilities work inside it. Use this when you
  * need Invect theming around content that renders OUTSIDE the
  * full `<Invect />` component — for example, auth gates, plugin
@@ -12,8 +12,8 @@
  *
  * @example
  * ```tsx
- * import { InvectShell } from '@invect/ui';
- * import '@invect/ui/styles';
+ * import { InvectShell } from '@flowlib/ui';
+ * import '@flowlib/ui/styles';
  *
  * function AuthPage() {
  *   return (
@@ -45,7 +45,7 @@ export interface InvectShellProps {
 export const InvectShell = React.memo(
   ({ children, theme = 'dark', className }: InvectShellProps) => {
     return (
-      <ThemeProvider defaultTheme={theme} storageKey="invect-ui-theme" className={className}>
+      <ThemeProvider defaultTheme={theme} storageKey="flowlib-ui-theme" className={className}>
         {children}
       </ThemeProvider>
     );

@@ -1,4 +1,4 @@
-import type { ActionExecutionContext, SubmitPromptRequest } from '@invect/action-kit';
+import type { ActionExecutionContext, SubmitPromptRequest } from '@flowlib/action-kit';
 
 type SubmitPromptFn = NonNullable<ActionExecutionContext['functions']>['submitPrompt'];
 

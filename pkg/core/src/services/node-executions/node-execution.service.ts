@@ -10,7 +10,7 @@ import {
 } from './node-executions.model';
 import type { NodeOutput } from 'src/types/node-io-types';
 import type { ExecutionEventBus } from '../execution-event-bus';
-import type { NodeErrorDetails } from '@invect/action-kit';
+import type { NodeErrorDetails } from '@flowlib/action-kit';
 
 /**
  * Persistence strategy for node executions during a flow run.

@@ -7,7 +7,7 @@ export { segmentIdentifyAction } from './identify';
 export { segmentGroupAction } from './group';
 export { segmentPageAction } from './page';
 
-import type { ActionDefinition } from '@invect/action-kit';
+import type { ActionDefinition } from '@flowlib/action-kit';
 import { segmentTrackAction } from './track';
 import { segmentIdentifyAction } from './identify';
 import { segmentGroupAction } from './group';

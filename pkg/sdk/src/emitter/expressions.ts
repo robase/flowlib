@@ -16,7 +16,7 @@ import { isValidJsIdent } from './literals';
 /**
  * Determine whether an expression needs an auto-`return`.
  *
- * Matches `needsAutoReturn` in `@invect/core`'s templating evaluator: strips
+ * Matches `needsAutoReturn` in `@flowlib/core`'s templating evaluator: strips
  * comments + string contents, then tests for a `return` keyword.
  */
 export function needsAutoReturn(code: string): boolean {

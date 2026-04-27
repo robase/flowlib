@@ -72,7 +72,7 @@ process.on('unhandledRejection', (err) => {
 });
 
 // Mock auth session so the frontend bypasses the sign-in gate in tests
-app.get('/invect/plugins/auth/api/auth/get-session', (_req, res) => {
+app.get('/flowlib/plugins/auth/api/auth/get-session', (_req, res) => {
   res.json({
     user: { id: 'test-user', email: 'admin@test.com', name: 'Test User', role: 'admin' },
     session: { id: 'test-session' },
@@ -80,7 +80,7 @@ app.get('/invect/plugins/auth/api/auth/get-session', (_req, res) => {
 });
 
 app.use(
-  '/invect',
+  '/flowlib',
   await createInvectRouter({
     encryptionKey: 'dGVzdC1lbmNyeXB0aW9uLWtleS0xMjM0NTY3ODkw',
     database: {

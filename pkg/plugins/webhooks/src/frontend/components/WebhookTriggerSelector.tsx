@@ -128,7 +128,7 @@ export const WebhookTriggerSelector: FC<WebhookTriggerSelectorProps> = ({
           </div>
           <CopyableField value={`/plugins/webhooks/receive/${selected.webhookPath}`} />
           <a
-            href="/invect/webhooks"
+            href="/flowlib/webhooks"
             className="text-xs text-primary hover:underline inline-flex items-center gap-1"
           >
             Manage webhooks <ExternalLink className="h-3 w-3" />

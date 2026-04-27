@@ -1,4 +1,4 @@
-# @invect/actions
+# @flowlib/actions
 
 ## 0.0.2
 
@@ -7,4 +7,4 @@
 - Pre release
 
 - Updated dependencies []:
-  - @invect/action-kit@0.0.2
+  - @flowlib/action-kit@0.0.2

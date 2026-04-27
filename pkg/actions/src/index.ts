@@ -1,15 +1,15 @@
 /**
- * `@invect/actions` — built-in integration provider actions for Invect.
+ * `@flowlib/actions` — built-in integration provider actions for Invect.
  *
  * Exports per-provider action bundles plus a convenience `allProviderActions`
  * array for bulk registration. Includes integration providers (Gmail, Slack,
  * GitHub, …) plus the runtime primitive bundles (`http`, `triggers`).
  * Core primitive actions (`core/`) live alongside in this package; they
- * stay decoupled from `@invect/core` via the structural seams in
- * `@invect/action-kit`.
+ * stay decoupled from `@flowlib/core` via the structural seams in
+ * `@flowlib/action-kit`.
  */
 
-import type { ActionDefinition, LazyActionDefinition } from '@invect/action-kit';
+import type { ActionDefinition, LazyActionDefinition } from '@flowlib/action-kit';
 
 // ── Shared ──────────────────────────────────────────────────────────────
 
@@ -172,7 +172,7 @@ export const allProviderActionsLazy: LazyActionDefinition[] = [
   ...lazySlackActions,
 ];
 
-/** Every provider action bundled in `@invect/actions`. */
+/** Every provider action bundled in `@flowlib/actions`. */
 export const allProviderActions: ActionDefinition[] = [
   ...coreActions,
   ...asanaActions,

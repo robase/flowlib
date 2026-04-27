@@ -9,11 +9,11 @@
  *
  * @example
  * ```typescript
- * import { Invect } from '@invect/core';
- * import { rbac } from '@invect/plugin-rbac';
- * import { auditLog } from '@invect/plugin-audit-log';
+ * import { Invect } from '@flowlib/core';
+ * import { rbac } from '@flowlib/plugin-rbac';
+ * import { auditLog } from '@flowlib/plugin-audit-log';
  *
- * const invect = new Invect({
+ * const flowlib = new Invect({
  *   plugins: [
  *     rbac({ resolveUser: (req) => req.user }),
  *     auditLog({ destination: 'database' }),
@@ -305,8 +305,8 @@ export interface PluginEndpointContext {
    *
    * @example
    * ```typescript
-   * const invect = ctx.getInvect();
-   * const flows = await invect.flows.list();
+   * const flowlib = ctx.getInvect();
+   * const flows = await flowlib.flows.list();
    * ```
    */
   getInvect: () => InvectInstance;
@@ -412,7 +412,7 @@ export interface InvectPluginHooks {
       status: 'SUCCESS' | 'FAILED' | 'SKIPPED';
       output?: unknown;
       error?: string;
-      errorDetails?: import('@invect/action-kit').NodeErrorDetails;
+      errorDetails?: import('@flowlib/action-kit').NodeErrorDetails;
       duration?: number;
     },
   ) => Promise<void | NodeExecutionHookResult>;
@@ -493,7 +493,7 @@ export interface InvectPluginContext {
 
   /**
    * Register additional actions at init time.
-   * Equivalent to calling `invect.registerAction()` for each action.
+   * Equivalent to calling `flowlib.registerAction()` for each action.
    */
   registerAction: (action: ActionDefinition) => void;
 
@@ -552,7 +552,7 @@ export interface InvectPluginInitResult {
  *
  * @example
  * ```typescript
- * import type { InvectPlugin } from '@invect/core';
+ * import type { InvectPlugin } from '@flowlib/core';
  *
  * export function myPlugin(options?: MyPluginOptions): InvectPlugin {
  *   return {
@@ -626,7 +626,7 @@ export interface InvectPlugin {
    * The Invect CLI generates the concrete Drizzle schema files
    * from core + plugin schemas combined.
    *
-   * Run `npx invect-cli generate` after adding/changing plugin schemas.
+   * Run `npx flowlib-cli generate` after adding/changing plugin schemas.
    */
   schema?: InvectPluginSchema;
 
@@ -714,8 +714,8 @@ export interface InvectPlugin {
  *
  * @example
  * ```typescript
- * import { auth } from '@invect/user-auth';
- * import { authFrontend } from '@invect/user-auth/ui';
+ * import { auth } from '@flowlib/user-auth';
+ * import { authFrontend } from '@flowlib/user-auth/ui';
  *
  * export const config = defineConfig({
  *   plugins: [
@@ -770,7 +770,7 @@ export interface PluginHookRunner {
       status: 'SUCCESS' | 'FAILED' | 'SKIPPED';
       output?: unknown;
       error?: string;
-      errorDetails?: import('@invect/action-kit').NodeErrorDetails;
+      errorDetails?: import('@flowlib/action-kit').NodeErrorDetails;
       duration?: number;
     },
   ) => Promise<{ output?: unknown }>;

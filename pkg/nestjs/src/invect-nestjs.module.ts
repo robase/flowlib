@@ -4,9 +4,9 @@ import {
   type InjectionToken,
   type OptionalFactoryDependency,
 } from '@nestjs/common';
-import { createInvect, InvectConfig } from '@invect/core';
-import { InvectController } from './invect-nestjs.controller';
-import { InvectService } from './invect-nestjs.service';
+import { createInvect, InvectConfig } from '@flowlib/core';
+import { InvectController } from './flowlib-nestjs.controller';
+import { InvectService } from './flowlib-nestjs.service';
 
 @Module({})
 export class InvectModule {

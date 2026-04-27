@@ -1,23 +1,23 @@
 {
-  "name": "@invect/express",
+  "name": "@flowlib/express",
   "version": "0.0.12",
   "description": "Express.js integration package for Invect Core",
   "keywords": [
     "api",
     "automation",
     "express",
-    "invect",
+    "flowlib",
     "workflow"
   ],
-  "homepage": "https://invect.dev",
+  "homepage": "https://flowlib.dev",
   "bugs": {
-    "url": "https://github.com/robase/invect/issues"
+    "url": "https://github.com/robase/flowlib/issues"
   },
   "license": "MIT",
-  "author": "robase <team@invect.dev>",
+  "author": "robase <team@flowlib.dev>",
   "repository": {
     "type": "git",
-    "url": "https://github.com/robase/invect.git",
+    "url": "https://github.com/robase/flowlib.git",
     "directory": "pkg/express"
   },
   "files": [
@@ -55,7 +55,7 @@
     "test:coverage": "echo \"No tests configured\""
   },
   "dependencies": {
-    "@invect/core": "workspace:*",
+    "@flowlib/core": "workspace:*",
     "cors": "^2.8.5",
     "express": "^5.2.1"
   },

@@ -7,10 +7,10 @@ import type { APIRequestContext, Page } from '@playwright/test';
 // ─── Shared helpers ──────────────────────────────────────────────────────────
 
 /**
- * Navigate to /invect and wait for the Dashboard heading to confirm load.
+ * Navigate to /flowlib and wait for the Dashboard heading to confirm load.
  */
 async function goToDashboard(page: Page) {
-  await page.goto('/invect');
+  await page.goto('/flowlib');
   await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible({ timeout: 15_000 });
 }
 
@@ -215,8 +215,8 @@ test.describe('Flow Management', () => {
       timeout: 15_000,
     });
 
-    // URL must contain the flow editor path: /invect/flow/:id
-    await expect(page).toHaveURL(/\/invect\/flow\//, { timeout: 10_000 });
+    // URL must contain the flow editor path: /flowlib/flow/:id
+    await expect(page).toHaveURL(/\/flowlib\/flow\//, { timeout: 10_000 });
 
     // Extract the flow ID from the current URL for cleanup and verification
     const editorUrl = page.url();
@@ -256,7 +256,7 @@ test.describe('Flow Management', () => {
       timeout: 10_000,
     });
 
-    // URL must contain the /flow/ path segment (singular; route: /invect/flow/:id)
+    // URL must contain the /flow/ path segment (singular; route: /flowlib/flow/:id)
     await expect(page).toHaveURL(/\/flow\//, { timeout: 10_000 });
   });
 
@@ -283,7 +283,7 @@ test.describe('Flow Management', () => {
     await expect(runsLink).toBeVisible({ timeout: 5_000 });
     await runsLink.click();
 
-    // URL must contain /runs — route: /invect/flow/:id/runs
+    // URL must contain /runs — route: /flowlib/flow/:id/runs
     await expect(page).toHaveURL(/\/runs/, { timeout: 10_000 });
 
     // Confirm the runs view rendered (React Flow canvas or runs section)

@@ -7,7 +7,7 @@
 
 import { useState, useRef, type FC } from 'react';
 import { Globe, Plus, Search, Clock, Hash, ChevronRight, Loader2, Workflow } from 'lucide-react';
-import { PageLayout, Dialog, DialogContent, useFlows } from '@invect/ui';
+import { PageLayout, Dialog, DialogContent, useFlows } from '@flowlib/ui';
 import { useWebhookTriggers } from '../hooks/useWebhookQueries';
 import { CreateWebhookModal } from './CreateWebhookModal';
 import { WebhookDetailPanel } from './WebhookDetailPanel';

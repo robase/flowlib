@@ -6,7 +6,7 @@
  * on edge bundles.
  */
 
-import type { LazyActionDefinition } from '@invect/action-kit';
+import type { LazyActionDefinition } from '@flowlib/action-kit';
 
 const githubProvider = { id: 'github' };
 

@@ -9,8 +9,8 @@ import { test, expect } from './fixtures';
  *   2. An example of test style and fixture usage
  */
 test('seed', async ({ page }) => {
-  // 1. Navigate to the Invect app (basePath = /invect)
-  await page.goto('/invect');
+  // 1. Navigate to the Invect app (basePath = /flowlib)
+  await page.goto('/flowlib');
 
   // 2. The app shell should render
   await expect(page.locator('.imp-sidebar-shell')).toBeVisible();

@@ -1,4 +1,4 @@
-import type { PluginDatabaseApi } from '@invect/core';
+import type { PluginDatabaseApi } from '@flowlib/core';
 import type {
   WebhookTrigger,
   WebhookProvider,

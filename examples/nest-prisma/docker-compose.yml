@@ -8,13 +8,13 @@ services:
     ports:
       - '5433:5432'
     environment:
-      POSTGRES_USER: invect
-      POSTGRES_PASSWORD: invect
+      POSTGRES_USER: flowlib
+      POSTGRES_PASSWORD: flowlib
       POSTGRES_DB: acme_saas
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U invect -d acme_saas']
+      test: ['CMD-SHELL', 'pg_isready -U flowlib -d acme_saas']
       interval: 5s
       timeout: 3s
       retries: 10

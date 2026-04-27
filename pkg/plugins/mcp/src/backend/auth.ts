@@ -4,7 +4,7 @@
  * Handles identity extraction from MCP request context and RBAC enforcement.
  */
 
-import type { InvectIdentity, InvectInstance } from '@invect/core';
+import type { InvectIdentity, InvectInstance } from '@flowlib/core';
 
 /**
  * Maps the MCP SDK's `authInfo` (from `ctx.http.authInfo`) to an InvectIdentity.
@@ -50,12 +50,12 @@ export function resolveIdentity(authInfo: unknown): InvectIdentity | null {
  * Returns true if authorized, throws if denied.
  */
 export async function authorizeAction(
-  invect: InvectInstance,
+  flowlib: InvectInstance,
   identity: InvectIdentity,
   action: string,
   resource?: { type: string; id?: string },
 ): Promise<void> {
-  const result = await invect.auth.authorize({
+  const result = await flowlib.auth.authorize({
     identity,
     action: action as Parameters<InvectInstance['auth']['authorize']>[0]['action'],
     ...(resource

@@ -1,5 +1,5 @@
 /**
- * @invect/rbac — Shared Types
+ * @flowlib/rbac — Shared Types
  *
  * Serializable types shared between backend and frontend.
  * No runtime code, no React, no Node.js dependencies.

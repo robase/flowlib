@@ -2,15 +2,15 @@
  * Tests for the sync-plugin flow serialisation path.
  *
  * The plugin no longer owns a bespoke serializer — it uses `emitSdkSource`
- * from `@invect/sdk` with `includeJsonFooter: true`. These tests exercise
+ * from `@flowlib/sdk` with `includeJsonFooter: true`. These tests exercise
  * the emitter output shape as the sync plugin invokes it, plus the
  * round-trip through the plugin's JSON-footer parser.
  */
 
 import { describe, it, expect } from 'vitest';
-import { emitSdkSource } from '@invect/sdk';
+import { emitSdkSource } from '@flowlib/sdk';
 
-describe('sync plugin flow serialisation (via @invect/sdk emitter)', () => {
+describe('sync plugin flow serialisation (via @flowlib/sdk emitter)', () => {
   it('emits a simple input → model → output flow with the JSON footer', () => {
     const definition = {
       nodes: [
@@ -57,7 +57,7 @@ describe('sync plugin flow serialisation (via @invect/sdk emitter)', () => {
 
     // Top-level structure.
     expect(code).toContain(`import {`);
-    expect(code).toContain(`from "@invect/sdk"`);
+    expect(code).toContain(`from "@flowlib/sdk"`);
     expect(code).toContain(`export const questionAnsweringFlow = defineFlow({`);
     expect(code).toContain(`name: "Question Answering"`);
     expect(code).toContain(`description: "A simple Q&A flow"`);
@@ -69,7 +69,7 @@ describe('sync plugin flow serialisation (via @invect/sdk emitter)', () => {
     expect(code).toContain(`{ from: "query", to: "answer" }`);
     expect(code).toContain(`{ from: "answer", to: "result" }`);
     // Footer carries the authoritative JSON for reliable round-trip.
-    expect(code).toContain('/* @invect-definition');
+    expect(code).toContain('/* @flowlib-definition');
     expect(code).toContain('*/');
   });
 
@@ -101,7 +101,7 @@ describe('sync plugin flow serialisation (via @invect/sdk emitter)', () => {
 
     // Unified emitter pulls in the action callable directly from the
     // provider package, no namespace aliasing.
-    expect(code).toContain(`import { gmailSendMessageAction } from "@invect/actions/gmail"`);
+    expect(code).toContain(`import { gmailSendMessageAction } from "@flowlib/actions/gmail"`);
     expect(code).toContain(`send: gmailSendMessageAction(`);
   });
 
@@ -186,7 +186,7 @@ describe('sync plugin flow serialisation (via @invect/sdk emitter)', () => {
     });
 
     // Extract footer the same way the plugin's parseFlowTsContent does.
-    const match = code.match(/\/\*\s*@invect-definition\s+([\s\S]*?)\s*\*\//);
+    const match = code.match(/\/\*\s*@flowlib-definition\s+([\s\S]*?)\s*\*\//);
     expect(match).not.toBeNull();
     const parsed = JSON.parse(match![1]);
 

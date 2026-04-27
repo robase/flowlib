@@ -1,5 +1,5 @@
 /**
- * @invect/core/config — Browser-safe configuration entry point.
+ * @flowlib/core/config — Browser-safe configuration entry point.
  *
  * This module is safe to import in browser bundles (Vite, webpack, Next.js client).
  * It contains only the `defineConfig` identity function and type re-exports.
@@ -7,11 +7,11 @@
  *
  * @example
  * ```ts
- * import { defineConfig } from '@invect/core/config';
+ * import { defineConfig } from '@flowlib/core/config';
  *
  * export default defineConfig({
- *   apiPath: '/api/invect',
- *   frontendPath: '/invect',
+ *   apiPath: '/api/flowlib',
+ *   frontendPath: '/flowlib',
  *   theme: 'dark',
  *   plugins: [auth(), rbac()],
  *   database: { type: 'sqlite', connectionString: 'file:./dev.db' },
@@ -26,7 +26,7 @@ export type {
   InvectDatabaseConfig,
   ExecutionConfig,
   LoggingConfig,
-} from './schemas/invect-config';
+} from './schemas/flowlib-config';
 export type { InvectPluginDefinition } from './types/plugin.types';
 
 /**

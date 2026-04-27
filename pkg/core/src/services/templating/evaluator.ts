@@ -14,7 +14,7 @@
  * Consumers select an evaluator via FlowRunnerConfig (primitives) or
  * InvectConfig (server). Actions read it from `ctx.functions.evaluator`.
  */
-import { JsExpressionEvaluationError, type JsExpressionEvaluator } from '@invect/action-kit';
+import { JsExpressionEvaluationError, type JsExpressionEvaluator } from '@flowlib/action-kit';
 export type { JsExpressionEvaluator };
 export { JsExpressionEvaluationError };
 

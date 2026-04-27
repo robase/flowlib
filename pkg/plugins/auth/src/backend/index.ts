@@ -1,5 +1,5 @@
 /**
- * @invect/user-auth — Backend Entry Point
+ * @flowlib/user-auth — Backend Entry Point
  *
  * Wraps a [better-auth](https://better-auth.com) instance as an Invect plugin,
  * providing:
@@ -11,7 +11,7 @@
  * @example
  * ```ts
  * // Simple — no separate auth setup needed:
- * import { auth } from '@invect/user-auth';
+ * import { auth } from '@flowlib/user-auth';
  *
  * defineConfig({
  *   plugins: [auth()],
@@ -21,8 +21,8 @@
  * @example
  * ```ts
  * // With frontend UI:
- * import { auth } from '@invect/user-auth';
- * import { authFrontend } from '@invect/user-auth/ui';
+ * import { auth } from '@flowlib/user-auth';
+ * import { authFrontend } from '@flowlib/user-auth/ui';
  *
  * defineConfig({
  *   plugins: [auth({ frontend: authFrontend })],
@@ -43,7 +43,7 @@ export type {
   BetterAuthSessionResult,
 } from './types';
 
-import type { InvectPluginDefinition } from '@invect/core';
+import type { InvectPluginDefinition } from '@flowlib/core';
 import type { AuthenticationPluginOptions } from './types';
 import { authentication } from './plugin';
 
@@ -56,7 +56,7 @@ import { authentication } from './plugin';
  * auth({ adminEmail: '...' })
  *
  * // Next.js (with frontend):
- * import { authFrontend } from '@invect/user-auth/ui';
+ * import { authFrontend } from '@flowlib/user-auth/ui';
  * auth({ adminEmail: '...', frontend: authFrontend })
  * ```
  */

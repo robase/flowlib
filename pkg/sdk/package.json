@@ -1,21 +1,21 @@
 {
-  "name": "@invect/sdk",
+  "name": "@flowlib/sdk",
   "version": "0.0.2",
   "description": "Unified authoring SDK for Invect flows — defineFlow, core node helpers, and the canonical serializer",
   "keywords": [
     "flows",
-    "invect",
+    "flowlib",
     "sdk"
   ],
-  "homepage": "https://invect.dev",
+  "homepage": "https://flowlib.dev",
   "bugs": {
-    "url": "https://github.com/robase/invect/issues"
+    "url": "https://github.com/robase/flowlib/issues"
   },
   "license": "MIT",
-  "author": "robase <team@invect.dev>",
+  "author": "robase <team@flowlib.dev>",
   "repository": {
     "type": "git",
-    "url": "https://github.com/robase/invect.git",
+    "url": "https://github.com/robase/flowlib.git",
     "directory": "pkg/sdk"
   },
   "files": [
@@ -63,8 +63,8 @@
     "gen-actions:check": "node scripts/gen-actions.mjs && git diff --exit-code src/generated"
   },
   "dependencies": {
-    "@invect/action-kit": "workspace:*",
-    "@invect/actions": "workspace:*",
+    "@flowlib/action-kit": "workspace:*",
+    "@flowlib/actions": "workspace:*",
     "jiti": "^2.4.2",
     "typescript": "^5.8.3",
     "zod": "^3.25.1"

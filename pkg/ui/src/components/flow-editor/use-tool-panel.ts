@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useRef } from 'react';
-import { newToolInstanceId } from '@invect/core/types';
+import { newToolInstanceId } from '@flowlib/core/types';
 import { useFlowEditorStore } from './flow-editor.store';
 import { useAgentTools } from '~/api/agent-tools.api';
 import type { ToolDefinition, AddedToolInstance } from '../nodes/ToolSelectorModal';

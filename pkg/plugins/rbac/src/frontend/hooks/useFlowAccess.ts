@@ -3,7 +3,7 @@
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useApiClient } from '@invect/ui';
+import { useApiClient } from '@flowlib/ui';
 import type {
   AccessibleFlowsResponse,
   FlowAccessRecord,

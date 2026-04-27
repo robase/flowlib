@@ -7,7 +7,7 @@
  */
 
 import { Users } from 'lucide-react';
-import { useApiClient, PageLayout } from '@invect/ui';
+import { useApiClient, PageLayout } from '@flowlib/ui';
 import { UserManagement } from './UserManagement';
 import { useAuth } from '../providers/AuthProvider';
 

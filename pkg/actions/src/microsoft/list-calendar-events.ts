@@ -5,7 +5,7 @@
  * Requires a Microsoft 365 OAuth2 credential with Calendars.Read scope.
  */
 
-import { defineAction } from '@invect/action-kit';
+import { defineAction } from '@flowlib/action-kit';
 import { MICROSOFT_PROVIDER } from '../providers';
 import { z } from 'zod/v4';
 

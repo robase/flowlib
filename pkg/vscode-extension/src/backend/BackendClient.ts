@@ -1,5 +1,5 @@
 /**
- * Thin HTTP client over `@invect/core`'s REST surface.
+ * Thin HTTP client over `@flowlib/core`'s REST surface.
  *
  * Methods cover the endpoints the extension actually uses — actions
  * catalogue, flows CRUD, runs (push-then-run path + ephemeral), SSE event

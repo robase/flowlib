@@ -62,7 +62,7 @@ import type { AuthorizationService } from '../services/auth';
 import type { InvectPlugin, InvectPluginEndpoint, PluginHookRunner } from '../types/plugin.types';
 import type { DatabaseConnection } from '../database/connection';
 import type { LoggerManager, ScopedLogger, LogLevel } from '../utils/logger';
-import type { DashboardStats } from '../invect-core';
+import type { DashboardStats } from '../flowlib-core';
 import type { ChatMessageRecord } from '../services/chat/chat-messages.model';
 
 import type { ChatMessage, ChatContext, ChatStreamEvent } from '../services/chat/chat-types';
@@ -398,7 +398,7 @@ export interface PluginsAPI {
 
 /**
  * External-scheduler entry points for the periodic lifecycle work that
- * `@invect/core` would otherwise drive with in-process `setInterval`s.
+ * `@flowlib/core` would otherwise drive with in-process `setInterval`s.
  *
  * Each method performs exactly one tick and returns a `{ count }` summary
  * of how many records it touched. Designed to be invoked from a host's

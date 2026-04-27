@@ -29,8 +29,8 @@ import {
   useCreateFlowVersion,
   useFlowVersions,
   type HeaderActionProps,
-} from '@invect/ui';
-import type { FlowVersion } from '@invect/core/types';
+} from '@flowlib/ui';
+import type { FlowVersion } from '@flowlib/core/types';
 import {
   useFlowSyncHistory,
   useFlowSyncStatus,

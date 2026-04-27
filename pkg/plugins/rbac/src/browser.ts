@@ -1,5 +1,5 @@
 /**
- * @invect/rbac — Browser Entry Point
+ * @flowlib/rbac — Browser Entry Point
  *
  * Resolved via the `browser` condition in package.json exports.
  * Returns only the frontend plugin — no server-side code is bundled.

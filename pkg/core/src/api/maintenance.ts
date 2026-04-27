@@ -1,17 +1,17 @@
 /**
  * Maintenance API — single-tick entry points for the lifecycle loops that
- * `@invect/core` would otherwise drive with in-process `setInterval`s.
+ * `@flowlib/core` would otherwise drive with in-process `setInterval`s.
  *
  * PR 5/14 (flowlib-hosted/UPSTREAM.md): hosted edge runtimes can't run
  * timers between requests, so each periodic loop is exposed here as an
  * idempotent method that performs exactly one tick. A Cloudflare Cron
  * Trigger / Vercel Cron Job invokes these from its own scheduler:
  *
- *   await invect.maintenance.detectStaleRuns();          // every 1–5 min
- *   await invect.maintenance.pollBatchJobs();            // every 1 min
- *   await invect.maintenance.pollPendingBatches();       // every 1 min
- *   await invect.maintenance.evictExpiredChatSessions(); // every 5 min
- *   await invect.maintenance.cleanupExpiredOAuthStates();// every 5 min
+ *   await flowlib.maintenance.detectStaleRuns();          // every 1–5 min
+ *   await flowlib.maintenance.pollBatchJobs();            // every 1 min
+ *   await flowlib.maintenance.pollPendingBatches();       // every 1 min
+ *   await flowlib.maintenance.evictExpiredChatSessions(); // every 5 min
+ *   await flowlib.maintenance.cleanupExpiredOAuthStates();// every 5 min
  *
  * Self-hosted long-lived Node processes don't need to call any of these —
  * the existing `start*Polling` lifecycle methods continue to drive them

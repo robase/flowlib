@@ -1,12 +1,12 @@
 {
-  "name": "@invect/vercel-workflows",
+  "name": "@flowlib/vercel-workflows",
   "version": "0.1.1",
   "description": "Run Invect primitive flows as Vercel Workflows — server plugin and single-step wrapping helpers",
   "license": "MIT",
-  "author": "robase <team@invect.dev>",
+  "author": "robase <team@flowlib.dev>",
   "repository": {
     "type": "git",
-    "url": "https://github.com/robase/invect.git",
+    "url": "https://github.com/robase/flowlib.git",
     "directory": "pkg/plugins/vercel-workflows"
   },
   "files": [
@@ -52,14 +52,14 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "@invect/action-kit": "workspace:*",
-    "@invect/actions": "workspace:*",
-    "@invect/core": "workspace:*",
-    "@invect/primitives": "workspace:*",
-    "@invect/sdk": "workspace:*"
+    "@flowlib/action-kit": "workspace:*",
+    "@flowlib/actions": "workspace:*",
+    "@flowlib/core": "workspace:*",
+    "@flowlib/primitives": "workspace:*",
+    "@flowlib/sdk": "workspace:*"
   },
   "devDependencies": {
-    "@invect/ui": "workspace:*",
+    "@flowlib/ui": "workspace:*",
     "@types/react": "18.3.7",
     "lucide-react": "^0.475.0",
     "react": "^18.3.1",
@@ -68,13 +68,13 @@
     "vitest": "^4.1.4"
   },
   "peerDependencies": {
-    "@invect/ui": ">=0.0.12",
+    "@flowlib/ui": ">=0.0.12",
     "lucide-react": ">=0.475.0",
     "react": ">=18.0.0",
     "workflow": "*"
   },
   "peerDependenciesMeta": {
-    "@invect/ui": {
+    "@flowlib/ui": {
       "optional": true
     },
     "lucide-react": {

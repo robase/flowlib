@@ -5,7 +5,7 @@
  * timestamps, permalink URLs, share counts, and like summaries.
  */
 
-import { defineAction } from '@invect/action-kit';
+import { defineAction } from '@flowlib/action-kit';
 import { FACEBOOK_PROVIDER } from '../providers';
 import { z } from 'zod/v4';
 

@@ -12,24 +12,24 @@ import { FlowRunStatus } from '../../../src';
 import type { InvectInstance } from '../../../src/api/types';
 import type { InvectDefinition } from '../../../src/services/flow-versions/schemas-fresh';
 import type { NodeOutput } from '../../../src/types/node-io-types';
-import { createTestInvect } from '../helpers/test-invect';
+import { createTestInvect } from '../helpers/test-flowlib';
 
 describe('Flow Execution', () => {
-  let invect: InvectInstance;
+  let flowlib: InvectInstance;
 
   beforeAll(async () => {
-    invect = await createTestInvect();
+    flowlib = await createTestInvect();
   });
 
   afterAll(async () => {
-    await invect.shutdown();
+    await flowlib.shutdown();
   });
 
   /** Helper: create a flow, save a version, and execute it */
   async function runFlow(name: string, definition: InvectDefinition) {
-    const flow = await invect.flows.create({ name: `exec-${name}-${Date.now()}` });
-    await invect.versions.create(flow.id, { invectDefinition: definition });
-    return invect.runs.start(flow.id, {}, { useBatchProcessing: false });
+    const flow = await flowlib.flows.create({ name: `exec-${name}-${Date.now()}` });
+    await flowlib.versions.create(flow.id, { invectDefinition: definition });
+    return flowlib.runs.start(flow.id, {}, { useBatchProcessing: false });
   }
 
   /** Helper to extract a node's output value */
@@ -380,8 +380,8 @@ describe('Flow Execution', () => {
   // ---------------------------------------------------------------------------
 
   it('should persist flow run records', async () => {
-    const flow = await invect.flows.create({ name: `run-record-${Date.now()}` });
-    await invect.versions.create(flow.id, {
+    const flow = await flowlib.flows.create({ name: `run-record-${Date.now()}` });
+    await flowlib.versions.create(flow.id, {
       invectDefinition: {
         nodes: [
           {
@@ -397,11 +397,11 @@ describe('Flow Execution', () => {
       },
     });
 
-    const result = await invect.runs.start(flow.id, {}, { useBatchProcessing: false });
+    const result = await flowlib.runs.start(flow.id, {}, { useBatchProcessing: false });
     expect(result.flowRunId).toBeTruthy();
 
     // Verify the run is persisted
-    const runs = await invect.runs.listByFlowId(flow.id);
+    const runs = await flowlib.runs.listByFlowId(flow.id);
     expect(runs.data.length).toBeGreaterThanOrEqual(1);
     expect(runs.data.some((r) => r.id === result.flowRunId)).toBe(true);
   });
@@ -411,8 +411,8 @@ describe('Flow Execution', () => {
   // ---------------------------------------------------------------------------
 
   it('should persist node execution traces', async () => {
-    const flow = await invect.flows.create({ name: `trace-test-${Date.now()}` });
-    await invect.versions.create(flow.id, {
+    const flow = await flowlib.flows.create({ name: `trace-test-${Date.now()}` });
+    await flowlib.versions.create(flow.id, {
       invectDefinition: {
         nodes: [
           {
@@ -436,8 +436,8 @@ describe('Flow Execution', () => {
       },
     });
 
-    const result = await invect.runs.start(flow.id, {}, { useBatchProcessing: false });
-    const tracesResult = await invect.runs.getNodeExecutions(result.flowRunId);
+    const result = await flowlib.runs.start(flow.id, {}, { useBatchProcessing: false });
+    const tracesResult = await flowlib.runs.getNodeExecutions(result.flowRunId);
 
     expect(tracesResult.data.length).toBeGreaterThanOrEqual(2);
   });
@@ -491,8 +491,8 @@ describe('Flow Execution', () => {
     });
 
     it('should override defaults with caller inputs (code-triggered run)', async () => {
-      const flow = await invect.flows.create({ name: `trigger-code-override-${Date.now()}` });
-      await invect.versions.create(flow.id, {
+      const flow = await flowlib.flows.create({ name: `trigger-code-override-${Date.now()}` });
+      await flowlib.versions.create(flow.id, {
         invectDefinition: {
           nodes: [
             {
@@ -510,7 +510,7 @@ describe('Flow Execution', () => {
         },
       });
 
-      const result = await invect.runs.start(
+      const result = await flowlib.runs.start(
         flow.id,
         { topic: 'billing', email: 'user@example.com' },
         { useBatchProcessing: false },
@@ -526,8 +526,8 @@ describe('Flow Execution', () => {
     });
 
     it('should pass through all flowInputs when no defaultInputs configured', async () => {
-      const flow = await invect.flows.create({ name: `trigger-passthrough-${Date.now()}` });
-      await invect.versions.create(flow.id, {
+      const flow = await flowlib.flows.create({ name: `trigger-passthrough-${Date.now()}` });
+      await flowlib.versions.create(flow.id, {
         invectDefinition: {
           nodes: [
             {
@@ -543,7 +543,7 @@ describe('Flow Execution', () => {
         },
       });
 
-      const result = await invect.runs.start(
+      const result = await flowlib.runs.start(
         flow.id,
         { anything: 'works' },
         { useBatchProcessing: false },

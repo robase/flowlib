@@ -34,7 +34,7 @@ import {
 let tmpDir: string;
 
 beforeEach(() => {
-  tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'invect-cli-test-'));
+  tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'flowlib-cli-test-'));
 });
 
 afterEach(() => {
@@ -151,7 +151,7 @@ describe('generateDrizzleSchema (single dialect)', () => {
       dialect: 'sqlite',
     });
 
-    expect(result.fileName).toBe('./db/invect.schema.ts');
+    expect(result.fileName).toBe('./db/flowlib.schema.ts');
   });
 
   it('should use same default path for all dialects', async () => {
@@ -159,9 +159,9 @@ describe('generateDrizzleSchema (single dialect)', () => {
     const pg = await generateDrizzleSchema({ plugins: [], dialect: 'postgresql' });
     const mysql = await generateDrizzleSchema({ plugins: [], dialect: 'mysql' });
 
-    expect(sqlite.fileName).toBe('./db/invect.schema.ts');
-    expect(pg.fileName).toBe('./db/invect.schema.ts');
-    expect(mysql.fileName).toBe('./db/invect.schema.ts');
+    expect(sqlite.fileName).toBe('./db/flowlib.schema.ts');
+    expect(pg.fileName).toBe('./db/flowlib.schema.ts');
+    expect(mysql.fileName).toBe('./db/flowlib.schema.ts');
   });
 });
 
@@ -170,7 +170,7 @@ describe('generateDrizzleSchema (single dialect)', () => {
 // =============================================================================
 
 describe('generateAllDrizzleSchemas (single dialect)', () => {
-  it('should generate a single invect.schema.ts file', async () => {
+  it('should generate a single flowlib.schema.ts file', async () => {
     const { results } = await generateAllDrizzleSchemas({
       plugins: [],
       outputDir: tmpDir,
@@ -178,7 +178,7 @@ describe('generateAllDrizzleSchemas (single dialect)', () => {
     });
 
     expect(results).toHaveLength(1);
-    expect(results[0].fileName).toBe(`${tmpDir}/invect.schema.ts`);
+    expect(results[0].fileName).toBe(`${tmpDir}/flowlib.schema.ts`);
     expect(results[0].code).toBeDefined();
     expect(results[0].overwrite).toBeFalsy();
   });
@@ -292,7 +292,7 @@ describe('generateAllDrizzleSchemas (single dialect)', () => {
       dialect: 'sqlite',
     });
 
-    expect(results[0].fileName).toBe('./db/invect.schema.ts');
+    expect(results[0].fileName).toBe('./db/flowlib.schema.ts');
   });
 
   it('should throw on unsupported dialect', async () => {

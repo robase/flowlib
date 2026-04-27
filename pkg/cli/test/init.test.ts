@@ -1,8 +1,8 @@
 /**
  * Init Command Tests
  *
- * Tests the utility/generator functions used by `npx invect-cli init`:
- * - generateConfigFile()       — creates invect.config.ts content
+ * Tests the utility/generator functions used by `npx flowlib-cli init`:
+ * - generateConfigFile()       — creates flowlib.config.ts content
  * - getInstallCommand()        — builds install commands for each PM
  * - generateDrizzleConfigFile()— creates drizzle.config.ts content
  * - parseDrizzleConfig()       — parses schema/dialect from drizzle config
@@ -46,7 +46,7 @@ describe('FRAMEWORKS constant', () => {
         expect(fw.adapterPackage).toBeNull();
       } else {
         expect(fw.adapterPackage).toBeTruthy();
-        expect(fw.adapterPackage).toContain('@invect/');
+        expect(fw.adapterPackage).toContain('@flowlib/');
       }
     }
   });
@@ -133,43 +133,43 @@ describe('generateConfigFile()', () => {
     const config = generateConfigFile(expressFramework, sqliteDb);
     expect(config).toContain("type: 'sqlite'");
     expect(config).toContain("connectionString: 'file:./dev.db'");
-    expect(config).toContain("import { defineConfig } from '@invect/core'");
+    expect(config).toContain("import { defineConfig } from '@flowlib/core'");
   });
 
   it('should generate PostgreSQL config with connection string', () => {
     const config = generateConfigFile(expressFramework, postgresDb);
     expect(config).toContain("type: 'postgresql'");
     expect(config).toContain('process.env.DATABASE_URL');
-    expect(config).toContain('postgresql://localhost:5432/invect');
+    expect(config).toContain('postgresql://localhost:5432/flowlib');
   });
 
   it('should generate MySQL config with connection string', () => {
     const config = generateConfigFile(expressFramework, mysqlDb);
     expect(config).toContain("type: 'mysql'");
     expect(config).toContain('process.env.DATABASE_URL');
-    expect(config).toContain('mysql://root@localhost:3306/invect');
+    expect(config).toContain('mysql://root@localhost:3306/flowlib');
   });
 
   it('should include adapter package import comment for Express', () => {
     const config = generateConfigFile(expressFramework, sqliteDb);
-    expect(config).toContain('@invect/express');
+    expect(config).toContain('@flowlib/express');
   });
 
   it('should include adapter package import comment for NestJS', () => {
     const config = generateConfigFile(nestjsFramework, sqliteDb);
-    expect(config).toContain('@invect/nestjs');
+    expect(config).toContain('@flowlib/nestjs');
   });
 
   it('should include adapter package import comment for Next.js', () => {
     const config = generateConfigFile(nextjsFramework, sqliteDb);
-    expect(config).toContain('@invect/nextjs');
+    expect(config).toContain('@flowlib/nextjs');
   });
 
   it('should not include adapter import for "Other" framework', () => {
     const config = generateConfigFile(otherFramework, sqliteDb);
-    expect(config).not.toContain('@invect/express');
-    expect(config).not.toContain('@invect/nestjs');
-    expect(config).not.toContain('@invect/nextjs');
+    expect(config).not.toContain('@flowlib/express');
+    expect(config).not.toContain('@flowlib/nestjs');
+    expect(config).not.toContain('@flowlib/nextjs');
   });
 
   it('should include driver field for non-default drivers (libsql)', () => {
@@ -226,65 +226,65 @@ describe('generateConfigFile()', () => {
 describe('getInstallCommand()', () => {
   // npm
   it('should generate npm install for regular deps', () => {
-    const cmd = getInstallCommand('npm', ['@invect/core', '@invect/express'], false);
-    expect(cmd).toBe('npm install @invect/core @invect/express');
+    const cmd = getInstallCommand('npm', ['@flowlib/core', '@flowlib/express'], false);
+    expect(cmd).toBe('npm install @flowlib/core @flowlib/express');
   });
 
   it('should generate npm install --save-dev for dev deps', () => {
-    const cmd = getInstallCommand('npm', ['@invect/cli'], true);
-    expect(cmd).toBe('npm install --save-dev @invect/cli');
+    const cmd = getInstallCommand('npm', ['@flowlib/cli'], true);
+    expect(cmd).toBe('npm install --save-dev @flowlib/cli');
   });
 
   // pnpm
   it('should generate pnpm add for regular deps', () => {
-    const cmd = getInstallCommand('pnpm', ['@invect/core'], false);
-    expect(cmd).toBe('pnpm add @invect/core');
+    const cmd = getInstallCommand('pnpm', ['@flowlib/core'], false);
+    expect(cmd).toBe('pnpm add @flowlib/core');
   });
 
   it('should generate pnpm add --save-dev for dev deps', () => {
-    const cmd = getInstallCommand('pnpm', ['@invect/cli'], true);
-    expect(cmd).toBe('pnpm add --save-dev @invect/cli');
+    const cmd = getInstallCommand('pnpm', ['@flowlib/cli'], true);
+    expect(cmd).toBe('pnpm add --save-dev @flowlib/cli');
   });
 
   // yarn
   it('should generate yarn add for regular deps', () => {
-    const cmd = getInstallCommand('yarn', ['@invect/core'], false);
-    expect(cmd).toBe('yarn add @invect/core');
+    const cmd = getInstallCommand('yarn', ['@flowlib/core'], false);
+    expect(cmd).toBe('yarn add @flowlib/core');
   });
 
   it('should generate yarn add --dev for dev deps', () => {
-    const cmd = getInstallCommand('yarn', ['@invect/cli'], true);
-    expect(cmd).toBe('yarn add --dev @invect/cli');
+    const cmd = getInstallCommand('yarn', ['@flowlib/cli'], true);
+    expect(cmd).toBe('yarn add --dev @flowlib/cli');
   });
 
   // bun
   it('should generate bun add for regular deps', () => {
-    const cmd = getInstallCommand('bun', ['@invect/core'], false);
-    expect(cmd).toBe('bun add @invect/core');
+    const cmd = getInstallCommand('bun', ['@flowlib/core'], false);
+    expect(cmd).toBe('bun add @flowlib/core');
   });
 
   it('should generate bun add --dev for dev deps', () => {
-    const cmd = getInstallCommand('bun', ['@invect/cli'], true);
-    expect(cmd).toBe('bun add --dev @invect/cli');
+    const cmd = getInstallCommand('bun', ['@flowlib/cli'], true);
+    expect(cmd).toBe('bun add --dev @flowlib/cli');
   });
 
   // Edge cases
   it('should handle multiple packages', () => {
     const cmd = getInstallCommand(
       'npm',
-      ['@invect/core', '@invect/express', 'better-sqlite3'],
+      ['@flowlib/core', '@flowlib/express', 'better-sqlite3'],
       false,
     );
-    expect(cmd).toBe('npm install @invect/core @invect/express better-sqlite3');
+    expect(cmd).toBe('npm install @flowlib/core @flowlib/express better-sqlite3');
   });
 
   it('should handle single package', () => {
-    const cmd = getInstallCommand('npm', ['@invect/core'], false);
-    expect(cmd).toBe('npm install @invect/core');
+    const cmd = getInstallCommand('npm', ['@flowlib/core'], false);
+    expect(cmd).toBe('npm install @flowlib/core');
   });
 
   it('should collapse extra whitespace', () => {
-    const cmd = getInstallCommand('npm', ['@invect/core'], false);
+    const cmd = getInstallCommand('npm', ['@flowlib/core'], false);
     expect(cmd).not.toMatch(/\s{2,}/);
   });
 });
@@ -311,14 +311,14 @@ describe('generateDrizzleConfigFile()', () => {
     const config = generateDrizzleConfigFile(postgresDb, './db/schema.ts');
     expect(config).toContain("dialect: 'postgresql'");
     expect(config).toContain("schema: './db/schema.ts'");
-    expect(config).toContain('postgresql://localhost:5432/invect');
+    expect(config).toContain('postgresql://localhost:5432/flowlib');
   });
 
   it('should generate MySQL drizzle config', () => {
     const config = generateDrizzleConfigFile(mysqlDb, './db/schema.ts');
     expect(config).toContain("dialect: 'mysql'");
     expect(config).toContain("schema: './db/schema.ts'");
-    expect(config).toContain('mysql://root@localhost:3306/invect');
+    expect(config).toContain('mysql://root@localhost:3306/flowlib');
   });
 
   it('should use the provided schema path', () => {
@@ -367,19 +367,19 @@ describe('getPreferredPackageSpec()', () => {
   });
 
   it('should prefer workspace protocol for local Invect packages', () => {
-    const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'invect-cli-workspace-'));
+    const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'flowlib-cli-workspace-'));
 
     try {
       fs.writeFileSync(path.join(tempRoot, 'pnpm-workspace.yaml'), 'packages:\n  - pkg/*\n');
       fs.mkdirSync(path.join(tempRoot, 'pkg', 'cli'), { recursive: true });
       fs.writeFileSync(
         path.join(tempRoot, 'pkg', 'cli', 'package.json'),
-        JSON.stringify({ name: '@invect/cli' }),
+        JSON.stringify({ name: '@flowlib/cli' }),
       );
       fs.mkdirSync(path.join(tempRoot, 'examples', 'app'), { recursive: true });
 
-      expect(getPreferredPackageSpec('@invect/cli', path.join(tempRoot, 'examples', 'app'))).toBe(
-        '@invect/cli@workspace:*',
+      expect(getPreferredPackageSpec('@flowlib/cli', path.join(tempRoot, 'examples', 'app'))).toBe(
+        '@flowlib/cli@workspace:*',
       );
     } finally {
       fs.rmSync(tempRoot, { recursive: true, force: true });
@@ -387,10 +387,10 @@ describe('getPreferredPackageSpec()', () => {
   });
 
   it('should leave Invect packages unchanged outside a workspace', () => {
-    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'invect-cli-no-workspace-'));
+    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'flowlib-cli-no-workspace-'));
 
     try {
-      expect(getPreferredPackageSpec('@invect/cli', tempDir)).toBe('@invect/cli');
+      expect(getPreferredPackageSpec('@flowlib/cli', tempDir)).toBe('@flowlib/cli');
     } finally {
       fs.rmSync(tempDir, { recursive: true, force: true });
     }

@@ -106,7 +106,7 @@ export interface ChatReadState {
  */
 export interface ChatToolContext {
   /** The Invect core instance for accessing all services */
-  invect: InvectInstance;
+  flowlib: InvectInstance;
   /** The requesting user's identity (for RBAC) */
   identity?: InvectIdentity;
   /** Chat context from the frontend */

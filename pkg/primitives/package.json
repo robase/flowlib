@@ -1,12 +1,12 @@
 {
-  "name": "@invect/primitives",
+  "name": "@flowlib/primitives",
   "version": "0.1.1",
   "description": "TypeScript-native flow execution primitives — run Invect flows in any JS runtime without a database or framework",
   "license": "MIT",
-  "author": "robase <team@invect.dev>",
+  "author": "robase <team@flowlib.dev>",
   "repository": {
     "type": "git",
-    "url": "https://github.com/robase/invect.git",
+    "url": "https://github.com/robase/flowlib.git",
     "directory": "pkg/primitives"
   },
   "files": [
@@ -33,9 +33,9 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "@invect/action-kit": "workspace:*",
-    "@invect/actions": "workspace:*",
-    "@invect/core": "workspace:*",
+    "@flowlib/action-kit": "workspace:*",
+    "@flowlib/actions": "workspace:*",
+    "@flowlib/core": "workspace:*",
     "zod": "^3.25.1"
   },
   "devDependencies": {

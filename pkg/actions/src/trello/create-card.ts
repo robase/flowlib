@@ -5,7 +5,7 @@
  * and position. Requires a Trello OAuth2 credential.
  */
 
-import { defineAction } from '@invect/action-kit';
+import { defineAction } from '@flowlib/action-kit';
 import { TRELLO_PROVIDER } from '../providers';
 import { z } from 'zod/v4';
 

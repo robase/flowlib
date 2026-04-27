@@ -1,11 +1,11 @@
 /**
  * React hooks for the webhooks plugin API.
  *
- * Uses @invect/ui's ApiContext for the base URL.
+ * Uses @flowlib/ui's ApiContext for the base URL.
  */
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useApiBaseURL } from '@invect/ui';
+import { useApiBaseURL } from '@flowlib/ui';
 import type {
   WebhookTrigger,
   CreateWebhookTriggerInput,

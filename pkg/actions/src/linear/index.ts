@@ -7,7 +7,7 @@ export { linearCreateIssueAction } from './create-issue';
 export { linearUpdateIssueAction } from './update-issue';
 export { linearListTeamsAction } from './list-teams';
 
-import type { ActionDefinition } from '@invect/action-kit';
+import type { ActionDefinition } from '@flowlib/action-kit';
 import { linearListIssuesAction } from './list-issues';
 import { linearCreateIssueAction } from './create-issue';
 import { linearUpdateIssueAction } from './update-issue';

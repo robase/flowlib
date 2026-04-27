@@ -10,7 +10,7 @@ import { Step, Steps } from 'fumadocs-ui/components/steps';
 The fastest way to install Invect is with the CLI:
 
 ```bash
-npx invect-cli init
+npx flowlib-cli init
 ```
 
 It detects your framework, installs packages, generates database schemas, and runs the initial migration. The manual steps below are for reference.
@@ -30,28 +30,28 @@ It detects your framework, installs packages, generates database schemas, and ru
 <Tab value="pnpm">
 
 ```bash
-pnpm add @invect/core @invect/express
+pnpm add @flowlib/core @flowlib/express
 ```
 
 </Tab>
 <Tab value="npm">
 
 ```bash
-npm install @invect/core @invect/express
+npm install @flowlib/core @flowlib/express
 ```
 
 </Tab>
 <Tab value="yarn">
 
 ```bash
-yarn add @invect/core @invect/express
+yarn add @flowlib/core @flowlib/express
 ```
 
 </Tab>
 <Tab value="bun">
 
 ```bash
-bun add @invect/core @invect/express
+bun add @flowlib/core @flowlib/express
 ```
 
 </Tab>
@@ -62,28 +62,28 @@ bun add @invect/core @invect/express
 <Tab value="pnpm">
 
 ```bash
-pnpm add @invect/core @invect/nestjs
+pnpm add @flowlib/core @flowlib/nestjs
 ```
 
 </Tab>
 <Tab value="npm">
 
 ```bash
-npm install @invect/core @invect/nestjs
+npm install @flowlib/core @flowlib/nestjs
 ```
 
 </Tab>
 <Tab value="yarn">
 
 ```bash
-yarn add @invect/core @invect/nestjs
+yarn add @flowlib/core @flowlib/nestjs
 ```
 
 </Tab>
 <Tab value="bun">
 
 ```bash
-bun add @invect/core @invect/nestjs
+bun add @flowlib/core @flowlib/nestjs
 ```
 
 </Tab>
@@ -94,28 +94,28 @@ bun add @invect/core @invect/nestjs
 <Tab value="pnpm">
 
 ```bash
-pnpm add @invect/core @invect/nextjs @invect/ui
+pnpm add @flowlib/core @flowlib/nextjs @flowlib/ui
 ```
 
 </Tab>
 <Tab value="npm">
 
 ```bash
-npm install @invect/core @invect/nextjs @invect/ui
+npm install @flowlib/core @flowlib/nextjs @flowlib/ui
 ```
 
 </Tab>
 <Tab value="yarn">
 
 ```bash
-yarn add @invect/core @invect/nextjs @invect/ui
+yarn add @flowlib/core @flowlib/nextjs @flowlib/ui
 ```
 
 </Tab>
 <Tab value="bun">
 
 ```bash
-bun add @invect/core @invect/nextjs @invect/ui
+bun add @flowlib/core @flowlib/nextjs @flowlib/ui
 ```
 
 </Tab>
@@ -136,7 +136,7 @@ Next.js is self-contained — the API handler and frontend run in the same app.
 
 ```bash title=".env"
 DATABASE_URL=file:./dev.db
-INVECT_ENCRYPTION_KEY=   # Generate with: npx invect-cli secret
+INVECT_ENCRYPTION_KEY=   # Generate with: npx flowlib-cli secret
 ```
 
 </Tab>
@@ -144,7 +144,7 @@ INVECT_ENCRYPTION_KEY=   # Generate with: npx invect-cli secret
 
 ```bash title=".env"
 DATABASE_URL=file:./dev.db
-INVECT_ENCRYPTION_KEY=   # Generate with: npx invect-cli secret
+INVECT_ENCRYPTION_KEY=   # Generate with: npx flowlib-cli secret
 ```
 
 </Tab>
@@ -152,7 +152,7 @@ INVECT_ENCRYPTION_KEY=   # Generate with: npx invect-cli secret
 
 ```bash title=".env.local"
 DATABASE_URL=file:./dev.db
-INVECT_ENCRYPTION_KEY=   # Generate with: npx invect-cli secret
+INVECT_ENCRYPTION_KEY=   # Generate with: npx flowlib-cli secret
 ```
 
 </Tab>
@@ -168,13 +168,13 @@ INVECT_ENCRYPTION_KEY=   # Generate with: npx invect-cli secret
 ```ts title="index.ts"
 import 'dotenv/config';
 import express from 'express';
-import { createInvectRouter } from '@invect/express';
+import { createInvectRouter } from '@flowlib/express';
 
 const app = express();
 app.use(express.json());
 
 app.use(
-  '/invect',
+  '/flowlib',
   await createInvectRouter({
     database: {
       type: 'sqlite',
@@ -185,7 +185,7 @@ app.use(
 );
 
 app.listen(3000, () => {
-  console.log('Invect API at http://localhost:3000/invect');
+  console.log('Invect API at http://localhost:3000/flowlib');
 });
 ```
 
@@ -194,7 +194,7 @@ app.listen(3000, () => {
 
 ```ts title="app.module.ts"
 import { Module } from '@nestjs/common';
-import { InvectModule } from '@invect/nestjs';
+import { InvectModule } from '@flowlib/nestjs';
 
 @Module({
   imports: [
@@ -210,15 +210,15 @@ import { InvectModule } from '@invect/nestjs';
 export class AppModule {}
 ```
 
-This registers the `INVECT_CORE` provider (singleton), `InvectService` (injectable wrapper), and `InvectController` (REST endpoints under `/invect`).
+This registers the `INVECT_CORE` provider (singleton), `InvectService` (injectable wrapper), and `InvectController` (REST endpoints under `/flowlib`).
 
 </Tab>
 <Tab value="Next.js">
 
 Create the catch-all API route handler:
 
-```ts title="app/api/invect/[...invect]/route.ts"
-import { createInvectHandler } from '@invect/nextjs';
+```ts title="app/api/flowlib/[...flowlib]/route.ts"
+import { createInvectHandler } from '@flowlib/nextjs';
 
 const handler = createInvectHandler({
   database: {
@@ -237,8 +237,8 @@ export const DELETE = handler.DELETE;
 
 Add a dedicated maintenance route for cron-driven background work on Vercel:
 
-```ts title="app/api/invect/cron/route.ts"
-import { createInvectCronHandler } from '@invect/nextjs';
+```ts title="app/api/flowlib/cron/route.ts"
+import { createInvectCronHandler } from '@flowlib/nextjs';
 
 const handleCron = createInvectCronHandler({
   database: {
@@ -248,7 +248,7 @@ const handleCron = createInvectCronHandler({
   encryptionKey: process.env.INVECT_ENCRYPTION_KEY,
   triggers: {
     cronEnabled: true,
-    webhookBaseUrl: 'https://your-app.com/api/invect',
+    webhookBaseUrl: 'https://your-app.com/api/flowlib',
   },
 });
 
@@ -259,7 +259,7 @@ Then configure one Vercel cron in `vercel.json`:
 
 ```json title="vercel.json"
 {
-  "crons": [{ "path": "/api/invect/cron", "schedule": "* * * * *" }]
+  "crons": [{ "path": "/api/flowlib/cron", "schedule": "* * * * *" }]
 }
 ```
 
@@ -279,18 +279,18 @@ Then configure one Vercel cron in `vercel.json`:
 <Tabs groupId="framework" items={['Express', 'NestJS', 'Next.js']} persist>
 <Tab value="Express">
 
-The visual flow editor runs as a separate React app. Install `@invect/ui` in your frontend project:
+The visual flow editor runs as a separate React app. Install `@flowlib/ui` in your frontend project:
 
 ```bash
-pnpm add @invect/ui
+pnpm add @flowlib/ui
 ```
 
 Then mount the editor:
 
 ```tsx title="App.tsx"
-import { Invect } from '@invect/ui';
-import '@invect/ui/styles';
-import { invectConfig } from '../invect.config';
+import { Invect } from '@flowlib/ui';
+import '@flowlib/ui/styles';
+import { invectConfig } from '../flowlib.config';
 
 function App() {
   return <Invect config={invectConfig} />;
@@ -300,18 +300,18 @@ function App() {
 </Tab>
 <Tab value="NestJS">
 
-The visual flow editor runs as a separate React app. Install `@invect/ui` in your frontend project:
+The visual flow editor runs as a separate React app. Install `@flowlib/ui` in your frontend project:
 
 ```bash
-pnpm add @invect/ui
+pnpm add @flowlib/ui
 ```
 
 Then mount the editor:
 
 ```tsx title="App.tsx"
-import { Invect } from '@invect/ui';
-import '@invect/ui/styles';
-import { invectConfig } from '../invect.config';
+import { Invect } from '@flowlib/ui';
+import '@flowlib/ui/styles';
+import { invectConfig } from '../flowlib.config';
 
 function App() {
   return <Invect config={invectConfig} />;
@@ -323,14 +323,14 @@ function App() {
 
 Mount the frontend in a catch-all page route:
 
-```tsx title="app/invect/[[...slug]]/page.tsx"
+```tsx title="app/flowlib/[[...slug]]/page.tsx"
 'use client';
 
 import dynamic from 'next/dynamic';
-import '@invect/ui/styles';
-import config from '../../invect.config';
+import '@flowlib/ui/styles';
+import config from '../../flowlib.config';
 
-const Invect = dynamic(() => import('@invect/ui').then((mod) => ({ default: mod.Invect })), {
+const Invect = dynamic(() => import('@flowlib/ui').then((mod) => ({ default: mod.Invect })), {
   ssr: false,
 });
 
@@ -340,7 +340,7 @@ export default function InvectPage() {
 ```
 
 <Callout type="info">
-Dynamic import with `ssr: false` is required because the flow editor uses browser APIs. `invect.config.ts` sets `frontendPath` so the router knows where it is mounted.
+Dynamic import with `ssr: false` is required because the flow editor uses browser APIs. `flowlib.config.ts` sets `frontendPath` so the router knows where it is mounted.
 </Callout>
 </Tab>
 </Tabs>
@@ -350,8 +350,8 @@ Dynamic import with `ssr: false` is required because the flow editor uses browse
 ### Generate and migrate the database
 
 ```bash
-npx invect-cli generate
-npx invect-cli migrate
+npx flowlib-cli generate
+npx flowlib-cli migrate
 ```
 
 </Step>
@@ -366,7 +366,7 @@ npx invect-cli migrate
 npx tsx index.ts
 ```
 
-The API is now live at `http://localhost:3000/invect`. Open your frontend app to access the visual flow editor.
+The API is now live at `http://localhost:3000/flowlib`. Open your frontend app to access the visual flow editor.
 
 </Tab>
 <Tab value="NestJS">
@@ -375,7 +375,7 @@ The API is now live at `http://localhost:3000/invect`. Open your frontend app to
 npx nest start --watch
 ```
 
-The API is now live at `http://localhost:3000/invect`. Open your frontend app to access the visual flow editor.
+The API is now live at `http://localhost:3000/flowlib`. Open your frontend app to access the visual flow editor.
 
 </Tab>
 <Tab value="Next.js">
@@ -384,7 +384,7 @@ The API is now live at `http://localhost:3000/invect`. Open your frontend app to
 npx next dev
 ```
 
-Open `http://localhost:3000/invect` — the visual flow editor is ready.
+Open `http://localhost:3000/flowlib` — the visual flow editor is ready.
 
 </Tab>
 </Tabs>
@@ -402,10 +402,10 @@ All frameworks accept the full [`InvectConfig`](/docs/reference/configuration) o
 <Tab value="Express">
 
 ```ts title="index.ts"
-import { createInvectRouter } from '@invect/express';
+import { createInvectRouter } from '@flowlib/express';
 
 app.use(
-  '/invect',
+  '/flowlib',
   await createInvectRouter({
     database: {
       type: 'sqlite',
@@ -418,7 +418,7 @@ app.use(
     },
     triggers: {
       cronEnabled: true,
-      webhookBaseUrl: 'https://your-app.com/invect',
+      webhookBaseUrl: 'https://your-app.com/flowlib',
     },
     plugins: [
       // Add plugins here
@@ -440,7 +440,7 @@ app.use(
 <Tab value="NestJS">
 
 ```ts title="app.module.ts"
-import { InvectModule } from '@invect/nestjs';
+import { InvectModule } from '@flowlib/nestjs';
 
 @Module({
   imports: [
@@ -456,7 +456,7 @@ import { InvectModule } from '@invect/nestjs';
       },
       triggers: {
         cronEnabled: true,
-        webhookBaseUrl: 'https://your-app.com/invect',
+        webhookBaseUrl: 'https://your-app.com/flowlib',
       },
       plugins: [
         // Add plugins here
@@ -479,10 +479,10 @@ export class AppModule {}
 </Tab>
 <Tab value="Next.js">
 
-```ts title="app/api/invect/[...invect]/route.ts"
-import { createInvectHandler } from '@invect/nextjs';
-import { auth } from '@invect/user-auth';
-import { rbac } from '@invect/rbac';
+```ts title="app/api/flowlib/[...flowlib]/route.ts"
+import { createInvectHandler } from '@flowlib/nextjs';
+import { auth } from '@flowlib/user-auth';
+import { rbac } from '@flowlib/rbac';
 
 const handler = createInvectHandler({
   database: {
@@ -496,7 +496,7 @@ const handler = createInvectHandler({
   },
   triggers: {
     cronEnabled: true,
-    webhookBaseUrl: 'https://your-app.com/api/invect',
+    webhookBaseUrl: 'https://your-app.com/api/flowlib',
   },
   plugins: [
     auth({
@@ -522,10 +522,10 @@ export const PUT = handler.PUT;
 export const DELETE = handler.DELETE;
 ```
 
-```ts title="app/api/invect/cron/route.ts"
-import { createInvectCronHandler } from '@invect/nextjs';
-import { auth } from '@invect/user-auth';
-import { rbac } from '@invect/rbac';
+```ts title="app/api/flowlib/cron/route.ts"
+import { createInvectCronHandler } from '@flowlib/nextjs';
+import { auth } from '@flowlib/user-auth';
+import { rbac } from '@flowlib/rbac';
 
 export const GET = createInvectCronHandler({
   database: {
@@ -539,7 +539,7 @@ export const GET = createInvectCronHandler({
   },
   triggers: {
     cronEnabled: true,
-    webhookBaseUrl: 'https://your-app.com/api/invect',
+    webhookBaseUrl: 'https://your-app.com/api/flowlib',
   },
   plugins: [
     auth({
@@ -561,7 +561,7 @@ export const GET = createInvectCronHandler({
 
 ```json title="vercel.json"
 {
-  "crons": [{ "path": "/api/invect/cron", "schedule": "* * * * *" }]
+  "crons": [{ "path": "/api/flowlib/cron", "schedule": "* * * * *" }]
 }
 ```
 
@@ -572,16 +572,16 @@ export const GET = createInvectCronHandler({
 
 ## With plugins
 
-After adding plugins with database tables, run `npx invect-cli generate` and `npx invect-cli migrate` again.
+After adding plugins with database tables, run `npx flowlib-cli generate` and `npx flowlib-cli migrate` again.
 
 <Tabs groupId="framework" items={['Express', 'NestJS', 'Next.js']} persist>
 <Tab value="Express">
 
 ```ts title="index.ts"
-import { createInvectRouter } from '@invect/express';
-import { invectConfig } from './invect.config';
+import { createInvectRouter } from '@flowlib/express';
+import { invectConfig } from './flowlib.config';
 
-app.use('/invect', await createInvectRouter(invectConfig));
+app.use('/flowlib', await createInvectRouter(invectConfig));
 ```
 
 </Tab>
@@ -589,8 +589,8 @@ app.use('/invect', await createInvectRouter(invectConfig));
 
 ```ts title="app.module.ts"
 import { Module } from '@nestjs/common';
-import { InvectModule } from '@invect/nestjs';
-import { invectConfig } from './invect.config';
+import { InvectModule } from '@flowlib/nestjs';
+import { invectConfig } from './flowlib.config';
 
 @Module({
   imports: [InvectModule.forRoot(invectConfig)],
@@ -601,9 +601,9 @@ export class AppModule {}
 </Tab>
 <Tab value="Next.js">
 
-```ts title="app/api/invect/[...invect]/route.ts"
-import { createInvectHandler } from '@invect/nextjs';
-import { invectConfig } from '@/invect.config';
+```ts title="app/api/flowlib/[...flowlib]/route.ts"
+import { createInvectHandler } from '@flowlib/nextjs';
+import { invectConfig } from '@/flowlib.config';
 
 const handler = createInvectHandler(invectConfig);
 
@@ -616,14 +616,14 @@ export const DELETE = handler.DELETE;
 
 Then mount the frontend:
 
-```tsx title="app/invect/[[...slug]]/page.tsx"
+```tsx title="app/flowlib/[[...slug]]/page.tsx"
 'use client';
 
 import dynamic from 'next/dynamic';
-import '@invect/ui/styles';
-import config from '../../invect.config';
+import '@flowlib/ui/styles';
+import config from '../../flowlib.config';
 
-const Invect = dynamic(() => import('@invect/ui').then((m) => ({ default: m.Invect })), {
+const Invect = dynamic(() => import('@flowlib/ui').then((m) => ({ default: m.Invect })), {
   ssr: false,
 });
 
@@ -632,7 +632,7 @@ export default function InvectPage() {
 }
 ```
 
-When the `@invect/user-auth` plugin is included in `invect.config.ts`, `<Invect>` automatically wraps itself with an auth gate — no extra wrapper component needed. The OAuth callback route is handled internally at `<frontendPath>/oauth/callback`.
+When the `@flowlib/user-auth` plugin is included in `flowlib.config.ts`, `<Invect>` automatically wraps itself with an auth gate — no extra wrapper component needed. The OAuth callback route is handled internally at `<frontendPath>/oauth/callback`.
 
 See [Authentication Plugin](/docs/plugins/authentication) and [Access Control Plugin](/docs/plugins/access-control) for details.
 
@@ -650,7 +650,7 @@ Use `forRootAsync` when you need to inject dependencies (e.g., `ConfigService`):
 ```ts title="app.module.ts"
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { InvectModule } from '@invect/nestjs';
+import { InvectModule } from '@flowlib/nestjs';
 
 @Module({
   imports: [
@@ -674,14 +674,14 @@ export class AppModule {}
 
 ```ts title="my.service.ts"
 import { Injectable } from '@nestjs/common';
-import { InvectService } from '@invect/nestjs';
+import { InvectService } from '@flowlib/nestjs';
 
 @Injectable()
 export class MyService {
-  constructor(private readonly invect: InvectService) {}
+  constructor(private readonly flowlib: InvectService) {}
 
   async runWorkflow(flowId: string, inputs: Record<string, unknown>) {
-    const core = this.invect.getCore();
+    const core = this.flowlib.getCore();
     return core.runs.start(flowId, inputs);
   }
 }

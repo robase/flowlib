@@ -31,7 +31,7 @@ export async function generateRawSql(options: {
     generateSqliteRawSql,
     generatePostgresRawSql,
     generateMysqlRawSql,
-  } = await import('@invect/core');
+  } = await import('@flowlib/core');
 
   // oxlint-disable-next-line typescript/no-explicit-any -- plugins/transforms types from dynamic import don't match exactly
   const mergedSchema = mergeSchemas(options.plugins as any, options.transforms as any);
@@ -53,9 +53,9 @@ export async function generateRawSql(options: {
   const code = generator(mergedSchema);
 
   const dialectFileNames: Record<string, string> = {
-    sqlite: 'invect-migration-sqlite.sql',
-    postgresql: 'invect-migration-postgres.sql',
-    mysql: 'invect-migration-mysql.sql',
+    sqlite: 'flowlib-migration-sqlite.sql',
+    postgresql: 'flowlib-migration-postgres.sql',
+    mysql: 'flowlib-migration-mysql.sql',
   };
 
   const dir = options.outputDir || '.';

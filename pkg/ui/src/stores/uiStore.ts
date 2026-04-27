@@ -192,7 +192,7 @@ export const useUIStore: UseBoundStore<StoreApi<UIStore>> = create<UIStore>()(
         reset: () => set(() => ({ ...initialState })),
       })),
       {
-        name: 'invect-ui',
+        name: 'flowlib-ui',
         // Only persist certain fields
         partialize: (state) => ({
           sidebarCollapsed: state.sidebarCollapsed,

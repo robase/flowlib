@@ -1,4 +1,4 @@
-# @invect/layouts
+# @flowlib/layouts
 
 ## 0.0.12
 

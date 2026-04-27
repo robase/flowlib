@@ -1,25 +1,25 @@
 {
-  "name": "@invect/ui",
+  "name": "@flowlib/ui",
   "version": "0.0.12",
   "description": "Complete React components and routes for Invect workflow management",
   "keywords": [
     "components",
     "frontend",
-    "invect",
+    "flowlib",
     "react",
     "react-router",
     "typescript",
     "workflow"
   ],
-  "homepage": "https://invect.dev",
+  "homepage": "https://flowlib.dev",
   "bugs": {
-    "url": "https://github.com/robase/invect/issues"
+    "url": "https://github.com/robase/flowlib/issues"
   },
   "license": "MIT",
-  "author": "robase <team@invect.dev>",
+  "author": "robase <team@flowlib.dev>",
   "repository": {
     "type": "git",
-    "url": "https://github.com/robase/invect.git",
+    "url": "https://github.com/robase/flowlib.git",
     "directory": "pkg/ui"
   },
   "style": "dist/index.css",
@@ -81,8 +81,8 @@
     "@codemirror/view": "^6.38.8",
     "@fsegurai/codemirror-theme-vscode-dark": "^6.2.4",
     "@fsegurai/codemirror-theme-vscode-light": "^6.2.4",
-    "@invect/layouts": "workspace:*",
-    "@invect/sdk": "workspace:*",
+    "@flowlib/layouts": "workspace:*",
+    "@flowlib/sdk": "workspace:*",
     "@lezer/highlight": "^1.2.3",
     "@radix-ui/react-accordion": "^1.2.12",
     "@radix-ui/react-alert-dialog": "^1.1.15",
@@ -116,7 +116,7 @@
     "zustand": "^5.0.9"
   },
   "devDependencies": {
-    "@invect/core": "workspace:*",
+    "@flowlib/core": "workspace:*",
     "@tailwindcss/postcss": "^4.1.0",
     "@types/node": "^24.0.13",
     "@types/react": "18.3.7",

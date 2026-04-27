@@ -64,7 +64,7 @@ export interface BatchPollingRunResult {
  *
  * Adapters are registered dynamically at runtime via `registerAdapter()`.
  * Credentials from the UI/API are resolved into adapters by the caller
- * (e.g. the node-execution-coordinator or invect-core) before invoking
+ * (e.g. the node-execution-coordinator or flowlib-core) before invoking
  * prompt/batch/model-listing operations.
  */
 export class BaseAIClient {
@@ -440,7 +440,7 @@ export class BaseAIClient {
    * total number of pending batch jobs polled across all providers).
    *
    * Hosts on serverless / edge runtimes invoke this from
-   * `invect.maintenance.pollPendingBatches()` from a cron tick; the
+   * `flowlib.maintenance.pollPendingBatches()` from a cron tick; the
    * in-process `setInterval` started by `startBatchPolling()` is the
    * long-lived-Node-process equivalent.
    */

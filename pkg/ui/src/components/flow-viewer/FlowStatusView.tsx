@@ -15,8 +15,8 @@ import { BatchFlowEdge, defaultEdgeOptions } from '../graph';
 import { NodeViewProvider, createContextAwareNodes } from '../nodes';
 import { getNodeComponent } from '../nodes/nodeRegistry';
 import { withNodeContext } from '../nodes/withNodeContext';
-import { FlowRunStatus, NodeExecutionStatus, ReactFlowNodeData } from '@invect/core/types';
-import { FlowRun } from '@invect/core/types';
+import { FlowRunStatus, NodeExecutionStatus, ReactFlowNodeData } from '@flowlib/core/types';
+import { FlowRun } from '@flowlib/core/types';
 import { Node } from '@xyflow/react';
 import { useTheme } from '~/contexts/ThemeProvider';
 import { InvectLoader } from '../shared/InvectLoader';
@@ -28,7 +28,7 @@ import { useFlowData } from '../../hooks/use-flow-data';
 const baseNodeTypes = createContextAwareNodes();
 
 const edgeTypes = {
-  // invect: BatchFlowEdge,
+  // flowlib: BatchFlowEdge,
   default: BatchFlowEdge,
 } as EdgeTypes;
 

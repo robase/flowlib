@@ -17,9 +17,9 @@ import { Button } from '~/components/ui/button';
 import { useFlowEditorStore } from '~/stores/flow-editor.store';
 import { useUIStore } from '~/stores/uiStore';
 import { useFlow, useFlowVersions } from '~/api/flows.api';
-import type { InvectDefinition } from '@invect/core/types';
+import type { InvectDefinition } from '@flowlib/core/types';
 import { transformToInvectDefinition } from '~/utils/flowTransformations';
-import { emitSdkSource, SdkEmitError } from '@invect/sdk';
+import { emitSdkSource, SdkEmitError } from '@flowlib/sdk';
 import {
   CODEMIRROR_IOSEVKA_FONT_STACK,
   useCodeMirrorVscodePalette,

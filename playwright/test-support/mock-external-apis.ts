@@ -306,7 +306,7 @@ function createServer() {
     }),
     http.get('https://api.github.com/user', () => {
       return HttpResponse.json({
-        login: 'invect-msw',
+        login: 'flowlib-msw',
         id: 1001,
         name: 'Invect Mock User',
       });

@@ -1,7 +1,7 @@
 /**
- * @invect/webhooks — Frontend entry point.
+ * @flowlib/webhooks — Frontend entry point.
  *
- * Import as: import { webhooksFrontend, ... } from '@invect/webhooks/ui';
+ * Import as: import { webhooksFrontend, ... } from '@flowlib/webhooks/ui';
  */
 
 export { webhooksFrontend } from './plugins/webhooksFrontendPlugin';

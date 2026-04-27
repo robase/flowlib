@@ -1,11 +1,11 @@
 /**
- * Webview app — renders the full `<Invect>` UI from `@invect/ui`,
+ * Webview app — renders the full `<Invect>` UI from `@flowlib/ui`,
  * pointed at the in-process Express server the host bootstrapped on
  * `127.0.0.1:<port>`.
  *
  * The host posts an `init` message with the server URL and the optional
- * deep-link path (e.g. `/invect/flow/<id>` or
- * `/invect/flow/<id>/runs?runId=...`). We mount Invect inside our own
+ * deep-link path (e.g. `/flowlib/flow/<id>` or
+ * `/flowlib/flow/<id>/runs?runId=...`). We mount Invect inside our own
  * MemoryRouter so we can control the initial entry; subsequent
  * navigation happens internally via the standard ModeSwitcher / sidebar.
  */
@@ -13,8 +13,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { MemoryRouter, useNavigate } from 'react-router';
 import { QueryClient } from '@tanstack/react-query';
-import { Invect } from '@invect/ui';
-import { webhooks } from '@invect/webhooks';
+import { Invect } from '@flowlib/ui';
+import { webhooks } from '@flowlib/webhooks';
 
 import { logToHost, onHostMessage, postToHost, type HostToWebview } from './vscode-bridge';
 
@@ -23,7 +23,7 @@ interface AppState {
   /**
    * Where to mount the MemoryRouter. `null` means "no flow context" —
    * we render an empty / error state rather than falling back to
-   * `/invect` (the SPA dashboard), which the extension never wants
+   * `/flowlib` (the SPA dashboard), which the extension never wants
    * to show inside a `.flow.ts` editor tab.
    */
   initialPath: string | null;
@@ -85,7 +85,7 @@ export function FlowEditorApp(): JSX.Element {
             // Don't override a previously-set `initialPath` — once
             // MemoryRouter is mounted, `initialEntries` changes are
             // ignored anyway, and a re-init message shouldn't trample
-            // an in-flight `navigate`. We never fall back to `/invect`
+            // an in-flight `navigate`. We never fall back to `/flowlib`
             // (dashboard) — null means "show the empty/error state".
             initialPath: s.initialPath ?? msg.initialPath ?? null,
             theme: msg.theme,
@@ -141,7 +141,7 @@ export function FlowEditorApp(): JSX.Element {
   const config = useMemo(
     () => ({
       apiPath: state.apiUrl ?? '',
-      frontendPath: '/invect',
+      frontendPath: '/flowlib',
       theme: state.theme,
       plugins,
     }),
@@ -155,7 +155,7 @@ export function FlowEditorApp(): JSX.Element {
 
   if (!state.apiUrl) {
     return (
-      <div className="invect-fallback">
+      <div className="flowlib-fallback">
         <h2>Connecting…</h2>
         <p style={{ fontSize: 11, opacity: 0.6 }}>
           Waiting for the host to start the embedded backend.
@@ -167,10 +167,10 @@ export function FlowEditorApp(): JSX.Element {
   // No deep-link path AND no fallback DB row — render the parse error
   // (or a generic empty state) full-screen instead of falling back to
   // the SPA dashboard. The extension's `.flow.ts` editor should never
-  // land on `/invect`.
+  // land on `/flowlib`.
   if (!state.initialPath) {
     return (
-      <div className="invect-fallback">
+      <div className="flowlib-fallback">
         <h2>Can't open this flow</h2>
         <p>{state.parseError ?? 'No flow context. Open a .flow.ts file from the sidebar.'}</p>
       </div>

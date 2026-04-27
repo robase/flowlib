@@ -89,7 +89,7 @@ async function enableDarkMode(page: Page) {
   const btn = page.locator('.imp-sidebar-shell button').filter({ hasText: 'Dark Mode' });
   if (await btn.isVisible().catch(() => false)) {
     await btn.click();
-    await expect(page.locator('.invect').first()).toHaveClass(/\bdark\b/, { timeout: 3_000 });
+    await expect(page.locator('.flowlib').first()).toHaveClass(/\bdark\b/, { timeout: 3_000 });
   }
 }
 
@@ -98,7 +98,7 @@ async function enableLightMode(page: Page) {
   const btn = page.locator('.imp-sidebar-shell button').filter({ hasText: 'Light Mode' });
   if (await btn.isVisible().catch(() => false)) {
     await btn.click();
-    await expect(page.locator('.invect').first()).not.toHaveClass(/\bdark\b/, { timeout: 3_000 });
+    await expect(page.locator('.flowlib').first()).not.toHaveClass(/\bdark\b/, { timeout: 3_000 });
   }
 }
 
@@ -136,9 +136,9 @@ type TestFixtures = {
 
 const rootDir = path.resolve(__dirname, '../..');
 const test = createSqliteBrowserIsolationTest({
-  apiPrefix: '/invect',
-  apiRoutePrefix: '/api/invect',
-  dbFilePrefix: 'invect-va',
+  apiPrefix: '/flowlib',
+  apiRoutePrefix: '/api/flowlib',
+  dbFilePrefix: 'flowlib-va',
   readyPath: '/health',
   serverCwd: path.join(rootDir, 'playwright'),
   serverScript: path.join(rootDir, 'playwright/test-support/express-test-server.ts'),
@@ -194,27 +194,27 @@ test.describe('Visual Audit — Screenshot Capture', () => {
     const screensById = Object.fromEntries(SCREENS.map((s) => [s.id, s]));
 
     // ── 01: Dashboard collapsed ───────────────────────────────────────────
-    await page.goto(`${VITE_BASE}/invect`);
+    await page.goto(`${VITE_BASE}/flowlib`);
     await waitForDashboard(page);
-    await takeScreenshot(page, screensById['01-dashboard-collapsed']!, '/invect');
+    await takeScreenshot(page, screensById['01-dashboard-collapsed']!, '/flowlib');
 
     // ── 02: Dashboard expanded ────────────────────────────────────────────
     await ensureSidebarExpanded(page);
-    await takeScreenshot(page, screensById['02-dashboard-expanded']!, '/invect');
+    await takeScreenshot(page, screensById['02-dashboard-expanded']!, '/flowlib');
 
     // ── 03: Executions page ───────────────────────────────────────────────
     await page.locator('.imp-sidebar-shell').getByRole('link', { name: 'Executions' }).click();
     await expect(page.getByRole('heading', { level: 1, name: 'Executions' })).toBeVisible({
       timeout: 15_000,
     });
-    await takeScreenshot(page, screensById['03-executions-page']!, '/invect/executions');
+    await takeScreenshot(page, screensById['03-executions-page']!, '/flowlib/executions');
 
     // ── 04: Credentials page ──────────────────────────────────────────────
     await page.locator('.imp-sidebar-shell').getByRole('link', { name: 'Credentials' }).click();
     await expect(page.getByRole('heading', { level: 1, name: 'Credentials' })).toBeVisible({
       timeout: 15_000,
     });
-    await takeScreenshot(page, screensById['04-credentials-page']!, '/invect/credentials');
+    await takeScreenshot(page, screensById['04-credentials-page']!, '/flowlib/credentials');
 
     // ── 05: Add Flow modal ────────────────────────────────────────────────
     await page.locator('.imp-sidebar-shell').getByRole('link', { name: 'Home' }).click();
@@ -224,7 +224,7 @@ test.describe('Visual Audit — Screenshot Capture', () => {
     if (await newFlowBtn.isVisible().catch(() => false)) {
       await newFlowBtn.click();
       await page.waitForTimeout(500);
-      await takeScreenshot(page, screensById['05-add-flow-modal']!, '/invect');
+      await takeScreenshot(page, screensById['05-add-flow-modal']!, '/flowlib');
       await page.keyboard.press('Escape');
       await page.waitForTimeout(300);
     }
@@ -238,7 +238,7 @@ test.describe('Visual Audit — Screenshot Capture', () => {
     if (await addCredBtn.isVisible().catch(() => false)) {
       await addCredBtn.click();
       await page.waitForTimeout(500);
-      await takeScreenshot(page, screensById['06-add-credential-modal']!, '/invect/credentials');
+      await takeScreenshot(page, screensById['06-add-credential-modal']!, '/flowlib/credentials');
       await page.keyboard.press('Escape');
       await page.waitForTimeout(300);
     }
@@ -254,7 +254,7 @@ test.describe('Visual Audit — Screenshot Capture', () => {
         description: 'Credential seeded for edit modal visual capture',
       },
     });
-    await page.goto(`${VITE_BASE}/invect/credentials`);
+    await page.goto(`${VITE_BASE}/flowlib/credentials`);
     await expect(page.getByRole('heading', { level: 1, name: 'Credentials' })).toBeVisible({
       timeout: 15_000,
     });
@@ -270,7 +270,7 @@ test.describe('Visual Audit — Screenshot Capture', () => {
         await editTab.click();
       }
       await page.waitForTimeout(500);
-      await takeScreenshot(page, screensById['06b-credential-edit-modal']!, '/invect/credentials');
+      await takeScreenshot(page, screensById['06b-credential-edit-modal']!, '/flowlib/credentials');
       await page.keyboard.press('Escape');
       await page.waitForTimeout(300);
     }
@@ -279,11 +279,11 @@ test.describe('Visual Audit — Screenshot Capture', () => {
     const flowId = dataPipelineId ?? (await getFlowIdByName(apiBase, request, 'Data Pipeline'));
     expect(flowId, 'Data Pipeline flow must exist').not.toBeNull();
 
-    await page.goto(`${VITE_BASE}/invect/flow/${flowId}`);
+    await page.goto(`${VITE_BASE}/flowlib/flow/${flowId}`);
     await expect(page.locator('.react-flow')).toBeVisible({ timeout: 15_000 });
     await expect(page.locator('.react-flow__node').first()).toBeVisible({ timeout: 10_000 });
     await page.waitForTimeout(1000); // Let canvas settle
-    await takeScreenshot(page, screensById['07-editor-canvas']!, `/invect/flow/${flowId}`);
+    await takeScreenshot(page, screensById['07-editor-canvas']!, `/flowlib/flow/${flowId}`);
 
     // ── 08: Node selected ─────────────────────────────────────────────────
     const transformNode = page.locator('.react-flow__node').filter({ hasText: 'Transform' });
@@ -291,7 +291,7 @@ test.describe('Visual Audit — Screenshot Capture', () => {
       await transformNode.click();
       await page.waitForTimeout(300);
     }
-    await takeScreenshot(page, screensById['08-node-selected']!, `/invect/flow/${flowId}`);
+    await takeScreenshot(page, screensById['08-node-selected']!, `/flowlib/flow/${flowId}`);
 
     // ── 09: Input node config panel ───────────────────────────────────────
     const inputNode = page.locator('.react-flow__node').filter({ hasText: 'User Data' });
@@ -303,7 +303,7 @@ test.describe('Visual Audit — Screenshot Capture', () => {
         .catch(() => {});
       await page.waitForTimeout(500);
     }
-    await takeScreenshot(page, screensById['09-input-config-panel']!, `/invect/flow/${flowId}`);
+    await takeScreenshot(page, screensById['09-input-config-panel']!, `/flowlib/flow/${flowId}`);
     await page.keyboard.press('Escape');
     await page.waitForTimeout(300);
 
@@ -316,14 +316,14 @@ test.describe('Visual Audit — Screenshot Capture', () => {
         .catch(() => {});
       await page.waitForTimeout(500);
     }
-    await takeScreenshot(page, screensById['10-jq-config-panel']!, `/invect/flow/${flowId}`);
+    await takeScreenshot(page, screensById['10-jq-config-panel']!, `/flowlib/flow/${flowId}`);
     await page.keyboard.press('Escape');
     await page.waitForTimeout(300);
 
     // ── 11: Agent node config panel (AI Assistant flow) ───────────────────
     const agentFlowId = aiAssistantId ?? (await getFlowIdByName(apiBase, request, 'AI Assistant'));
     if (agentFlowId) {
-      await page.goto(`${VITE_BASE}/invect/flow/${agentFlowId}`);
+      await page.goto(`${VITE_BASE}/flowlib/flow/${agentFlowId}`);
       await expect(page.locator('.react-flow')).toBeVisible({ timeout: 15_000 });
       await expect(page.locator('.react-flow__node').first()).toBeVisible({ timeout: 10_000 });
       await page.waitForTimeout(1000);
@@ -340,7 +340,7 @@ test.describe('Visual Audit — Screenshot Capture', () => {
       await takeScreenshot(
         page,
         screensById['11-agent-config-panel']!,
-        `/invect/flow/${agentFlowId}`,
+        `/flowlib/flow/${agentFlowId}`,
       );
       await page.keyboard.press('Escape');
       await page.waitForTimeout(300);
@@ -348,10 +348,10 @@ test.describe('Visual Audit — Screenshot Capture', () => {
 
     // ── 12: Editor toolbar ────────────────────────────────────────────────
     // Go back to data pipeline to capture toolbar
-    await page.goto(`${VITE_BASE}/invect/flow/${flowId}`);
+    await page.goto(`${VITE_BASE}/flowlib/flow/${flowId}`);
     await expect(page.locator('.react-flow')).toBeVisible({ timeout: 15_000 });
     await page.waitForTimeout(500);
-    await takeScreenshot(page, screensById['12-editor-toolbar']!, `/invect/flow/${flowId}`);
+    await takeScreenshot(page, screensById['12-editor-toolbar']!, `/flowlib/flow/${flowId}`);
 
     // ── Chat Assistant Screenshots ────────────────────────────────────────
 
@@ -368,7 +368,7 @@ test.describe('Visual Audit — Screenshot Capture', () => {
     const credentialId = credResp.ok() ? (await credResp.json()).id : null;
 
     // Navigate to the data pipeline flow for chat screenshots
-    await page.goto(`${VITE_BASE}/invect/flow/${flowId}`);
+    await page.goto(`${VITE_BASE}/flowlib/flow/${flowId}`);
     await expect(page.locator('.react-flow')).toBeVisible({ timeout: 15_000 });
     await expect(page.locator('.react-flow__node').first()).toBeVisible({ timeout: 10_000 });
     await page.waitForTimeout(500);
@@ -380,7 +380,7 @@ test.describe('Visual Audit — Screenshot Capture', () => {
       await chatToggle.click();
       await page.waitForTimeout(500);
     }
-    await takeScreenshot(page, screensById['13-chat-no-credential']!, `/invect/flow/${flowId}`);
+    await takeScreenshot(page, screensById['13-chat-no-credential']!, `/flowlib/flow/${flowId}`);
 
     // ── 14: Chat settings panel ───────────────────────────────────────────
     // Click the settings gear icon in the chat header
@@ -389,7 +389,7 @@ test.describe('Visual Audit — Screenshot Capture', () => {
       await settingsButton.click();
       await page.waitForTimeout(500);
     }
-    await takeScreenshot(page, screensById['14-chat-settings-panel']!, `/invect/flow/${flowId}`);
+    await takeScreenshot(page, screensById['14-chat-settings-panel']!, `/flowlib/flow/${flowId}`);
 
     // Close settings panel — click the "Back to chat" arrow button in the overlay header
     const backButton = page.locator("button[title='Back to chat']");
@@ -403,13 +403,13 @@ test.describe('Visual Audit — Screenshot Capture', () => {
     if (credentialId) {
       await page.evaluate((cId) => {
         localStorage.setItem(
-          'invect-chat-settings',
+          'flowlib-chat-settings',
           JSON.stringify({ maxSteps: 8, credentialId: cId }),
         );
       }, credentialId);
     }
     // Reload to pick up the stored credential
-    await page.goto(`${VITE_BASE}/invect/flow/${flowId}`);
+    await page.goto(`${VITE_BASE}/flowlib/flow/${flowId}`);
     await expect(page.locator('.react-flow')).toBeVisible({ timeout: 15_000 });
     await page.waitForTimeout(500);
     // Re-open chat panel
@@ -418,7 +418,7 @@ test.describe('Visual Audit — Screenshot Capture', () => {
       await chatToggle2.click();
       await page.waitForTimeout(500);
     }
-    await takeScreenshot(page, screensById['15-chat-ready']!, `/invect/flow/${flowId}`);
+    await takeScreenshot(page, screensById['15-chat-ready']!, `/flowlib/flow/${flowId}`);
 
     // ── 16–19: Chat conversation states ───────────────────────────────────
     // We mock the /chat/messages/:flowId endpoint to return pre-built
@@ -601,7 +601,7 @@ test.describe('Visual Audit — Screenshot Capture', () => {
     // Mock the chat messages endpoint to return our pre-built conversations.
     // The route is registered AFTER the general API rewrite interceptor,
     // so Playwright checks it first (LIFO order).
-    const chatMsgUrl = `${VITE_BASE}/api/invect/chat/messages/${flowId}`;
+    const chatMsgUrl = `${VITE_BASE}/api/flowlib/chat/messages/${flowId}`;
 
     // ── 16: Single user message ───────────────────────────────────────────
     await page.route(chatMsgUrl, async (route) => {
@@ -615,7 +615,7 @@ test.describe('Visual Audit — Screenshot Capture', () => {
         await route.fallback();
       }
     });
-    await page.goto(`${VITE_BASE}/invect/flow/${flowId}`);
+    await page.goto(`${VITE_BASE}/flowlib/flow/${flowId}`);
     await expect(page.locator('.react-flow')).toBeVisible({ timeout: 15_000 });
     await page.waitForTimeout(500);
     const chatToggle3 = page.locator('button', { hasText: 'Assistant' });
@@ -623,7 +623,7 @@ test.describe('Visual Audit — Screenshot Capture', () => {
       await chatToggle3.click();
       await page.waitForTimeout(800);
     }
-    await takeScreenshot(page, screensById['16-chat-user-message']!, `/invect/flow/${flowId}`);
+    await takeScreenshot(page, screensById['16-chat-user-message']!, `/flowlib/flow/${flowId}`);
     await page.unroute(chatMsgUrl);
 
     // ── 17: Assistant reply with tool calls ────────────────────────────────
@@ -638,7 +638,7 @@ test.describe('Visual Audit — Screenshot Capture', () => {
         await route.fallback();
       }
     });
-    await page.goto(`${VITE_BASE}/invect/flow/${flowId}`);
+    await page.goto(`${VITE_BASE}/flowlib/flow/${flowId}`);
     await expect(page.locator('.react-flow')).toBeVisible({ timeout: 15_000 });
     await page.waitForTimeout(500);
     const chatToggle4 = page.locator('button', { hasText: 'Assistant' });
@@ -646,7 +646,7 @@ test.describe('Visual Audit — Screenshot Capture', () => {
       await chatToggle4.click();
       await page.waitForTimeout(800);
     }
-    await takeScreenshot(page, screensById['17-chat-assistant-reply']!, `/invect/flow/${flowId}`);
+    await takeScreenshot(page, screensById['17-chat-assistant-reply']!, `/flowlib/flow/${flowId}`);
 
     // ── 18: Tool call expanded ────────────────────────────────────────────
     // Click on the first tool call CollapsibleTrigger to expand it
@@ -659,7 +659,7 @@ test.describe('Visual Audit — Screenshot Capture', () => {
       await toolCallTrigger.click();
       await page.waitForTimeout(400);
     }
-    await takeScreenshot(page, screensById['18-chat-tool-expanded']!, `/invect/flow/${flowId}`);
+    await takeScreenshot(page, screensById['18-chat-tool-expanded']!, `/flowlib/flow/${flowId}`);
     await page.unroute(chatMsgUrl);
 
     // ── 19: Multi-turn conversation ───────────────────────────────────────
@@ -674,7 +674,7 @@ test.describe('Visual Audit — Screenshot Capture', () => {
         await route.fallback();
       }
     });
-    await page.goto(`${VITE_BASE}/invect/flow/${flowId}`);
+    await page.goto(`${VITE_BASE}/flowlib/flow/${flowId}`);
     await expect(page.locator('.react-flow')).toBeVisible({ timeout: 15_000 });
     await page.waitForTimeout(500);
     const chatToggle5 = page.locator('button', { hasText: 'Assistant' });
@@ -682,20 +682,20 @@ test.describe('Visual Audit — Screenshot Capture', () => {
       await chatToggle5.click();
       await page.waitForTimeout(800);
     }
-    await takeScreenshot(page, screensById['19-chat-multi-turn']!, `/invect/flow/${flowId}`);
+    await takeScreenshot(page, screensById['19-chat-multi-turn']!, `/flowlib/flow/${flowId}`);
     await page.unroute(chatMsgUrl);
 
     // ── 20: Dashboard dark mode ───────────────────────────────────────────
-    await page.goto(`${VITE_BASE}/invect`);
+    await page.goto(`${VITE_BASE}/flowlib`);
     await waitForDashboard(page);
     await enableDarkMode(page);
-    await takeScreenshot(page, screensById['20-dashboard-dark']!, '/invect');
+    await takeScreenshot(page, screensById['20-dashboard-dark']!, '/flowlib');
 
     // ── 21: Editor dark mode ──────────────────────────────────────────────
-    await page.goto(`${VITE_BASE}/invect/flow/${flowId}`);
+    await page.goto(`${VITE_BASE}/flowlib/flow/${flowId}`);
     await expect(page.locator('.react-flow')).toBeVisible({ timeout: 15_000 });
     await page.waitForTimeout(500);
-    await takeScreenshot(page, screensById['21-editor-dark']!, `/invect/flow/${flowId}`);
+    await takeScreenshot(page, screensById['21-editor-dark']!, `/flowlib/flow/${flowId}`);
 
     // Restore light mode
     await enableLightMode(page);
@@ -706,14 +706,14 @@ test.describe('Visual Audit — Screenshot Capture', () => {
     const assistantFlowId =
       aiAssistantId ?? (await getFlowIdByName(apiBase, request, 'AI Assistant'));
     if (assistantFlowId) {
-      await page.goto(`${VITE_BASE}/invect/flow/${assistantFlowId}`);
+      await page.goto(`${VITE_BASE}/flowlib/flow/${assistantFlowId}`);
       await expect(page.locator('.react-flow')).toBeVisible({ timeout: 15_000 });
       await expect(page.locator('.react-flow__node').first()).toBeVisible({ timeout: 10_000 });
       await page.waitForTimeout(1000);
       await takeScreenshot(
         page,
         screensById['22-agent-node-canvas-empty']!,
-        `/invect/flow/${assistantFlowId}`,
+        `/flowlib/flow/${assistantFlowId}`,
       );
     }
 
@@ -721,14 +721,14 @@ test.describe('Visual Audit — Screenshot Capture', () => {
     const withToolsFlowId =
       agentWithToolsFlowId ?? (await getFlowIdByName(apiBase, request, 'Agent With Tools'));
     if (withToolsFlowId) {
-      await page.goto(`${VITE_BASE}/invect/flow/${withToolsFlowId}`);
+      await page.goto(`${VITE_BASE}/flowlib/flow/${withToolsFlowId}`);
       await expect(page.locator('.react-flow')).toBeVisible({ timeout: 15_000 });
       await expect(page.locator('.react-flow__node').first()).toBeVisible({ timeout: 10_000 });
       await page.waitForTimeout(1000);
       await takeScreenshot(
         page,
         screensById['23-agent-node-canvas-with-tools']!,
-        `/invect/flow/${withToolsFlowId}`,
+        `/flowlib/flow/${withToolsFlowId}`,
       );
     }
 
@@ -736,7 +736,7 @@ test.describe('Visual Audit — Screenshot Capture', () => {
     const emptyAgentFlowId =
       agentEmptyFlowId ?? (await getFlowIdByName(apiBase, request, 'Empty Agent Flow'));
     if (emptyAgentFlowId) {
-      await page.goto(`${VITE_BASE}/invect/flow/${emptyAgentFlowId}`);
+      await page.goto(`${VITE_BASE}/flowlib/flow/${emptyAgentFlowId}`);
       await expect(page.locator('.react-flow')).toBeVisible({ timeout: 15_000 });
       await expect(page.locator('.react-flow__node').first()).toBeVisible({ timeout: 10_000 });
       await page.waitForTimeout(1000);
@@ -752,7 +752,7 @@ test.describe('Visual Audit — Screenshot Capture', () => {
       await takeScreenshot(
         page,
         screensById['24-agent-config-panel-empty']!,
-        `/invect/flow/${emptyAgentFlowId}`,
+        `/flowlib/flow/${emptyAgentFlowId}`,
       );
       await page.keyboard.press('Escape');
       await page.waitForTimeout(300);
@@ -760,7 +760,7 @@ test.describe('Visual Audit — Screenshot Capture', () => {
 
     // ── 25: Agent config panel — seeded (Research Agent) ─────────────────
     if (assistantFlowId) {
-      await page.goto(`${VITE_BASE}/invect/flow/${assistantFlowId}`);
+      await page.goto(`${VITE_BASE}/flowlib/flow/${assistantFlowId}`);
       await expect(page.locator('.react-flow')).toBeVisible({ timeout: 15_000 });
       await expect(page.locator('.react-flow__node').first()).toBeVisible({ timeout: 10_000 });
       await page.waitForTimeout(1000);
@@ -778,7 +778,7 @@ test.describe('Visual Audit — Screenshot Capture', () => {
       await takeScreenshot(
         page,
         screensById['25-agent-config-panel-seeded']!,
-        `/invect/flow/${assistantFlowId}`,
+        `/flowlib/flow/${assistantFlowId}`,
       );
       await page.keyboard.press('Escape');
       await page.waitForTimeout(300);
@@ -787,7 +787,7 @@ test.describe('Visual Audit — Screenshot Capture', () => {
     // ── 26: Agent actions sidebar — empty (no tools added yet) ───────────
     // Click "Add Tools" on the agent node with no tools to open the actions sidebar
     if (assistantFlowId) {
-      await page.goto(`${VITE_BASE}/invect/flow/${assistantFlowId}`);
+      await page.goto(`${VITE_BASE}/flowlib/flow/${assistantFlowId}`);
       await expect(page.locator('.react-flow')).toBeVisible({ timeout: 15_000 });
       await expect(page.locator('.react-flow__node').first()).toBeVisible({ timeout: 10_000 });
       await page.waitForTimeout(1000);
@@ -803,14 +803,14 @@ test.describe('Visual Audit — Screenshot Capture', () => {
       await takeScreenshot(
         page,
         screensById['26-agent-actions-sidebar-empty']!,
-        `/invect/flow/${assistantFlowId}`,
+        `/flowlib/flow/${assistantFlowId}`,
       );
     }
 
     // ── 27: Agent actions sidebar — seeded (tools already added) ─────────
     // Click "Configure" on the agent node that already has tools
     if (withToolsFlowId) {
-      await page.goto(`${VITE_BASE}/invect/flow/${withToolsFlowId}`);
+      await page.goto(`${VITE_BASE}/flowlib/flow/${withToolsFlowId}`);
       await expect(page.locator('.react-flow')).toBeVisible({ timeout: 15_000 });
       await expect(page.locator('.react-flow__node').first()).toBeVisible({ timeout: 10_000 });
       await page.waitForTimeout(1000);
@@ -826,14 +826,14 @@ test.describe('Visual Audit — Screenshot Capture', () => {
       await takeScreenshot(
         page,
         screensById['27-agent-actions-sidebar-seeded']!,
-        `/invect/flow/${withToolsFlowId}`,
+        `/flowlib/flow/${withToolsFlowId}`,
       );
     }
 
     // ── 28: Tool config panel ─────────────────────────────────────────────
     // Click on a tool tile in the AgentToolsBox to open the ToolConfigPanel
     if (withToolsFlowId) {
-      await page.goto(`${VITE_BASE}/invect/flow/${withToolsFlowId}`);
+      await page.goto(`${VITE_BASE}/flowlib/flow/${withToolsFlowId}`);
       await expect(page.locator('.react-flow')).toBeVisible({ timeout: 15_000 });
       await expect(page.locator('.react-flow__node').first()).toBeVisible({ timeout: 10_000 });
       await page.waitForTimeout(1000);
@@ -856,7 +856,7 @@ test.describe('Visual Audit — Screenshot Capture', () => {
       await takeScreenshot(
         page,
         screensById['28-tool-config-panel']!,
-        `/invect/flow/${withToolsFlowId}`,
+        `/flowlib/flow/${withToolsFlowId}`,
       );
     }
 
@@ -864,7 +864,7 @@ test.describe('Visual Audit — Screenshot Capture', () => {
 
     // The RbacProvider needs GET /plugins/auth/me to determine auth state.
     // Register this mock first so it's available for all plugin page navigations.
-    const pluginApiBase = `${VITE_BASE}/api/invect`;
+    const pluginApiBase = `${VITE_BASE}/api/flowlib`;
 
     const mockAuthMe = {
       identity: { id: 'test-user', name: 'Test User', role: 'admin', resolvedRole: 'admin' },
@@ -915,9 +915,9 @@ test.describe('Visual Audit — Screenshot Capture', () => {
     // ════════════════════════════════════════════════════════════════════════
 
     // ── 29: Webhooks empty state ──────────────────────────────────────────
-    await page.goto(`${VITE_BASE}/invect/webhooks`);
+    await page.goto(`${VITE_BASE}/flowlib/webhooks`);
     await page.waitForTimeout(1500);
-    await takeScreenshot(page, screensById['29-webhooks-empty']!, '/invect/webhooks');
+    await takeScreenshot(page, screensById['29-webhooks-empty']!, '/flowlib/webhooks');
 
     // ── 30: Create webhook modal (form) ───────────────────────────────────
     const newWebhookBtn = page.getByRole('button', { name: /new webhook/i });
@@ -940,7 +940,7 @@ test.describe('Visual Audit — Screenshot Capture', () => {
       }
       await page.waitForTimeout(300);
     }
-    await takeScreenshot(page, screensById['30-webhook-create-form']!, '/invect/webhooks');
+    await takeScreenshot(page, screensById['30-webhook-create-form']!, '/flowlib/webhooks');
 
     // ── 31: Create webhook modal (success) ────────────────────────────────
     const createWhBtn = page.getByRole('button', { name: /create webhook/i });
@@ -952,7 +952,7 @@ test.describe('Visual Audit — Screenshot Capture', () => {
         .catch(() => {});
       await page.waitForTimeout(500);
     }
-    await takeScreenshot(page, screensById['31-webhook-create-success']!, '/invect/webhooks');
+    await takeScreenshot(page, screensById['31-webhook-create-success']!, '/flowlib/webhooks');
 
     // Close the success modal
     const doneBtn = page.getByRole('button', { name: /done/i });
@@ -963,7 +963,7 @@ test.describe('Visual Audit — Screenshot Capture', () => {
 
     // ── 32: Webhooks list (populated) ─────────────────────────────────────
     await page.waitForTimeout(1000);
-    await takeScreenshot(page, screensById['32-webhooks-list']!, '/invect/webhooks');
+    await takeScreenshot(page, screensById['32-webhooks-list']!, '/flowlib/webhooks');
 
     // ── 33: Webhook detail panel (overview tab) ──────────────────────────
     const webhookRow = page.locator('button.w-full.text-left').first();
@@ -975,7 +975,7 @@ test.describe('Visual Audit — Screenshot Capture', () => {
         .catch(() => {});
       await page.waitForTimeout(600);
     }
-    await takeScreenshot(page, screensById['33-webhook-detail-overview']!, '/invect/webhooks');
+    await takeScreenshot(page, screensById['33-webhook-detail-overview']!, '/flowlib/webhooks');
 
     // ── 34: Webhook detail panel (edit tab) ──────────────────────────────
     const editTab = page.getByRole('dialog').getByRole('button', { name: 'Edit' });
@@ -983,7 +983,7 @@ test.describe('Visual Audit — Screenshot Capture', () => {
       await editTab.click();
       await page.waitForTimeout(500);
     }
-    await takeScreenshot(page, screensById['34-webhook-detail-edit']!, '/invect/webhooks');
+    await takeScreenshot(page, screensById['34-webhook-detail-edit']!, '/flowlib/webhooks');
 
     // Close dialog
     await page.keyboard.press('Escape');
@@ -1022,9 +1022,9 @@ test.describe('Visual Audit — Screenshot Capture', () => {
     });
 
     // ── 35: Users page with list ──────────────────────────────────────────
-    await page.goto(`${VITE_BASE}/invect/users`);
+    await page.goto(`${VITE_BASE}/flowlib/users`);
     await page.waitForTimeout(1500);
-    await takeScreenshot(page, screensById['35-users-list']!, '/invect/users');
+    await takeScreenshot(page, screensById['35-users-list']!, '/flowlib/users');
 
     // ── 36: Create user form expanded ─────────────────────────────────────
     const createUserBtn = page.getByRole('button', { name: /create user/i });
@@ -1047,7 +1047,7 @@ test.describe('Visual Audit — Screenshot Capture', () => {
       }
       await page.waitForTimeout(300);
     }
-    await takeScreenshot(page, screensById['36-users-create-form']!, '/invect/users');
+    await takeScreenshot(page, screensById['36-users-create-form']!, '/flowlib/users');
 
     // Close the create form
     const cancelCreateBtn = page.getByRole('button', { name: 'Cancel' });
@@ -1059,12 +1059,12 @@ test.describe('Visual Audit — Screenshot Capture', () => {
     await page.unroute(`${pluginApiBase}/plugins/auth/users**`);
 
     // ── 37: Profile page ──────────────────────────────────────────────────
-    await page.goto(`${VITE_BASE}/invect/profile`);
+    await page.goto(`${VITE_BASE}/flowlib/profile`);
     await page.waitForTimeout(1500);
-    await takeScreenshot(page, screensById['37-user-profile']!, '/invect/profile');
+    await takeScreenshot(page, screensById['37-user-profile']!, '/flowlib/profile');
 
     // ── 38: Sidebar user menu ─────────────────────────────────────────────
-    await page.goto(`${VITE_BASE}/invect`);
+    await page.goto(`${VITE_BASE}/flowlib`);
     await waitForDashboard(page);
     await ensureSidebarExpanded(page);
     const userMenuLink = page
@@ -1075,7 +1075,7 @@ test.describe('Visual Audit — Screenshot Capture', () => {
     if (await userMenuLink.isVisible().catch(() => false)) {
       await page.waitForTimeout(300);
     }
-    await takeScreenshot(page, screensById['38-sidebar-user-menu']!, '/invect');
+    await takeScreenshot(page, screensById['38-sidebar-user-menu']!, '/flowlib');
 
     // ════════════════════════════════════════════════════════════════════════
     // RBAC / ACCESS CONTROL PLUGIN FLOW
@@ -1335,12 +1335,12 @@ test.describe('Visual Audit — Screenshot Capture', () => {
     });
 
     // ── 39: Access Control page with tree (right pane empty) ──────────────
-    await page.goto(`${VITE_BASE}/invect/access`);
+    await page.goto(`${VITE_BASE}/flowlib/access`);
     await expect(page.getByRole('heading', { name: 'Access Control' }))
       .toBeVisible({ timeout: 15_000 })
       .catch(() => {});
     await page.waitForTimeout(1500);
-    await takeScreenshot(page, screensById['39-access-control-tree']!, '/invect/access');
+    await takeScreenshot(page, screensById['39-access-control-tree']!, '/flowlib/access');
 
     // ── 40: Team selected — ScopeDetailPanel ─────────────────────────────
     const engTeam = page.getByText('Engineering').first();
@@ -1348,7 +1348,7 @@ test.describe('Visual Audit — Screenshot Capture', () => {
       await engTeam.click();
       await page.waitForTimeout(1000);
     }
-    await takeScreenshot(page, screensById['40-access-control-team-detail']!, '/invect/access');
+    await takeScreenshot(page, screensById['40-access-control-team-detail']!, '/flowlib/access');
 
     // ── 41: Flow selected — FlowDetailPanel ──────────────────────────────
     const flowInTree = page.getByText('AI Assistant').first();
@@ -1356,7 +1356,7 @@ test.describe('Visual Audit — Screenshot Capture', () => {
       await flowInTree.click();
       await page.waitForTimeout(1000);
     }
-    await takeScreenshot(page, screensById['41-access-control-flow-detail']!, '/invect/access');
+    await takeScreenshot(page, screensById['41-access-control-flow-detail']!, '/flowlib/access');
 
     // Clean up RBAC mocks
     await page.unroute(`${pluginApiBase}/plugins/rbac/scopes/tree`);
@@ -1415,13 +1415,13 @@ test.describe('Visual Audit — Screenshot Capture', () => {
         }
       });
 
-      await page.goto(`${VITE_BASE}/invect/flow/${dataPipelineId}`);
+      await page.goto(`${VITE_BASE}/flowlib/flow/${dataPipelineId}`);
       await expect(page.locator('.react-flow')).toBeVisible({ timeout: 15_000 });
       await page.waitForTimeout(1000);
       await takeScreenshot(
         page,
         screensById['42-share-button-flow']!,
-        `/invect/flow/${dataPipelineId}`,
+        `/flowlib/flow/${dataPipelineId}`,
       );
 
       // ── 43: Share flow modal ──────────────────────────────────────────
@@ -1433,7 +1433,7 @@ test.describe('Visual Audit — Screenshot Capture', () => {
       await takeScreenshot(
         page,
         screensById['43-share-flow-modal']!,
-        `/invect/flow/${dataPipelineId}`,
+        `/flowlib/flow/${dataPipelineId}`,
       );
 
       // Close the share modal

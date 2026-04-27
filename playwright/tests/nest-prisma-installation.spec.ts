@@ -6,7 +6,7 @@
  *
  *   1. Start with a clean PostgreSQL database (via Docker)
  *   2. Push the app-only Prisma schema (SaaS tables, no Invect)
- *   3. Run `npx invect generate --adapter prisma` to merge Invect models
+ *   3. Run `npx flowlib generate --adapter prisma` to merge Invect models
  *   4. Push the updated schema (SaaS + Invect tables)
  *   5. Start the NestJS server
  *   6. Verify Invect API is functional (flow CRUD, credentials, agent tools)
@@ -25,10 +25,10 @@ const EXAMPLE_DIR = path.resolve(REPO_ROOT, 'examples/nest-prisma');
 const SCHEMA_FILE = path.join(EXAMPLE_DIR, 'prisma/schema.prisma');
 
 // Docker container name and test database — isolated per test run
-const CONTAINER_NAME = `invect-pw-nestprisma-${process.pid}`;
+const CONTAINER_NAME = `flowlib-pw-nestprisma-${process.pid}`;
 const PG_PORT = 5490 + (process.pid % 100); // semi-random port to avoid collisions
 const DB_NAME = `invect_test_${Date.now()}`;
-const DATABASE_URL = `postgresql://invect:invect@localhost:${PG_PORT}/${DB_NAME}`;
+const DATABASE_URL = `postgresql://flowlib:flowlib@localhost:${PG_PORT}/${DB_NAME}`;
 
 const NEST_PORT = 4100 + (process.pid % 100);
 
@@ -65,7 +65,7 @@ function run(cmd: string, env?: Record<string, string>): string {
 /** Query PostgreSQL for table names in the public schema. */
 function getTableNames(): string[] {
   const output = run(
-    `docker exec ${CONTAINER_NAME} psql -U invect -d ${DB_NAME} -t -A -c "SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' AND table_type = 'BASE TABLE' ORDER BY table_name"`,
+    `docker exec ${CONTAINER_NAME} psql -U flowlib -d ${DB_NAME} -t -A -c "SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' AND table_type = 'BASE TABLE' ORDER BY table_name"`,
   );
   return output
     .trim()
@@ -96,7 +96,7 @@ function waitForPostgres(timeoutMs = 30_000): void {
   const deadline = Date.now() + timeoutMs;
   while (Date.now() < deadline) {
     try {
-      execSync(`docker exec ${CONTAINER_NAME} pg_isready -U invect -d ${DB_NAME}`, {
+      execSync(`docker exec ${CONTAINER_NAME} pg_isready -U flowlib -d ${DB_NAME}`, {
         stdio: 'pipe',
         timeout: 5_000,
       });
@@ -127,8 +127,8 @@ test.describe('NestJS + Prisma + PostgreSQL — Invect Installation', () => {
 
     execSync(
       `docker run -d --name ${CONTAINER_NAME} ` +
-        `-e POSTGRES_USER=invect ` +
-        `-e POSTGRES_PASSWORD=invect ` +
+        `-e POSTGRES_USER=flowlib ` +
+        `-e POSTGRES_PASSWORD=flowlib ` +
         `-e POSTGRES_DB=${DB_NAME} ` +
         `-p ${PG_PORT}:5432 ` +
         `postgres:16-alpine`,
@@ -189,11 +189,11 @@ test.describe('NestJS + Prisma + PostgreSQL — Invect Installation', () => {
     expect(tables).not.toContain('credentials');
   });
 
-  // ─── Step 2: Run invect generate ─────────────────────────────
+  // ─── Step 2: Run flowlib generate ─────────────────────────────
 
-  test('Step 2: Run `npx invect generate --adapter prisma` to merge Invect tables', () => {
+  test('Step 2: Run `npx flowlib generate --adapter prisma` to merge Invect tables', () => {
     const output = run(
-      'npx invect generate --adapter prisma --config invect.config.ts --dialect postgresql --yes',
+      'npx flowlib generate --adapter prisma --config flowlib.config.ts --dialect postgresql --yes',
       { DATABASE_URL },
     );
 
@@ -252,7 +252,7 @@ test.describe('NestJS + Prisma + PostgreSQL — Invect Installation', () => {
         ...process.env,
         DATABASE_URL,
         PORT: String(NEST_PORT),
-        INVECT_BASE_PATH: '/invect',
+        INVECT_BASE_PATH: '/flowlib',
         NODE_ENV: 'development',
       },
       stdio: ['pipe', 'pipe', 'pipe'],
@@ -267,7 +267,7 @@ test.describe('NestJS + Prisma + PostgreSQL — Invect Installation', () => {
       }
     });
 
-    const apiBase = `http://localhost:${NEST_PORT}/invect`;
+    const apiBase = `http://localhost:${NEST_PORT}/flowlib`;
 
     // Wait for server readiness
     const ready = await waitForUrl(`${apiBase}/flows/list`, 60_000);

@@ -21,8 +21,8 @@
     "baseUrl": ".",
     "paths": {
       "src/*": ["src/*"],
-      "@invect/types": ["../types/dist"],
-      "@invect/types/*": ["../types/dist/*"]
+      "@flowlib/types": ["../types/dist"],
+      "@flowlib/types/*": ["../types/dist/*"]
     }
   },
   "include": ["src/**/*", "../types/src/schemas"],

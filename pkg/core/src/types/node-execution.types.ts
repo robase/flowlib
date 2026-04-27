@@ -1,5 +1,5 @@
 /**
- * Node Execution Types — re-exports from `@invect/action-kit`.
+ * Node Execution Types — re-exports from `@flowlib/action-kit`.
  */
 
 export type {
@@ -7,4 +7,4 @@ export type {
   NodeExecutionFailedResult,
   NodeExecutionPendingResult,
   NodeExecutionSuccessResult,
-} from '@invect/action-kit';
+} from '@flowlib/action-kit';

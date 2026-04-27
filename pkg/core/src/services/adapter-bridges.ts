@@ -1,7 +1,7 @@
 /**
  * Adapter bridges — translate between the pluggable adapter interfaces
  * (`src/types/services.ts`) and the concrete service classes that the rest
- * of `@invect/core` already calls into.
+ * of `@flowlib/core` already calls into.
  *
  * Each bridge is a thin shim. Their only purpose is to let `ServiceFactory`
  * substitute a user-provided adapter without touching every call site.

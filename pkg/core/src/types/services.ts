@@ -109,7 +109,7 @@ export interface ChatSessionStore {
  *
  * Edge runtimes that use externally-managed cron (Cloudflare Cron
  * Triggers, Vercel Cron) should pass a no-op adapter and call
- * `invect.triggers.runDueTriggers()` (PR 5) directly from their
+ * `flowlib.triggers.runDueTriggers()` (PR 5) directly from their
  * platform's cron entry point.
  */
 export interface CronSchedulerAdapter {
@@ -130,7 +130,7 @@ export interface CronSchedulerAdapter {
  * (no timers between requests).
  *
  * Edge hosts pass a no-op adapter and invoke
- * `invect.runs.pollBatchJobs()` (PR 5) from a Cloudflare Cron Trigger
+ * `flowlib.runs.pollBatchJobs()` (PR 5) from a Cloudflare Cron Trigger
  * or Vercel Cron Job. `start()` then returns immediately and the
  * `setInterval` is never created.
  */
@@ -170,7 +170,7 @@ export interface JobOptions {
  * Pluggable background job runner (PR 13/14 from
  * flowlib-hosted/UPSTREAM.md).
  *
- * Two work-shapes inside `@invect/core` route through this contract:
+ * Two work-shapes inside `@flowlib/core` route through this contract:
  *
  *  - `'flow-run'` — fired by trigger handlers (cron, webhook) and by
  *    `executeFlowAsync`. Default in-process payload is

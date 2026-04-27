@@ -1,5 +1,5 @@
 {
-  "name": "@invect/nestjs",
+  "name": "@flowlib/nestjs",
   "version": "0.0.12",
   "private": false,
   "description": "A NestJS module for executing Invect workflows with batch processing capabilities",
@@ -7,20 +7,20 @@
     "ai",
     "anthropic",
     "batch-processing",
-    "invect",
+    "flowlib",
     "nestjs",
     "openai",
     "workflow"
   ],
-  "homepage": "https://invect.dev",
+  "homepage": "https://flowlib.dev",
   "bugs": {
-    "url": "https://github.com/robase/invect/issues"
+    "url": "https://github.com/robase/flowlib/issues"
   },
   "license": "MIT",
-  "author": "robase <team@invect.dev>",
+  "author": "robase <team@flowlib.dev>",
   "repository": {
     "type": "git",
-    "url": "https://github.com/robase/invect.git",
+    "url": "https://github.com/robase/flowlib.git",
     "directory": "pkg/nestjs"
   },
   "files": [
@@ -57,7 +57,7 @@
     "drizzle:studio": "drizzle-kit studio"
   },
   "dependencies": {
-    "@invect/core": "workspace:*",
+    "@flowlib/core": "workspace:*",
     "@nestjs/common": "^11.1.18",
     "@nestjs/core": "^11.1.18",
     "reflect-metadata": "^0.2.2",

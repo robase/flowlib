@@ -98,14 +98,14 @@ pnpm drizzle-kit migrate
 Credentials are managed automatically when using `createInvect()` or a framework adapter. For direct usage:
 
 ```typescript
-import { EncryptionService, CredentialsService } from '@invect/core';
+import { EncryptionService, CredentialsService } from '@flowlib/core';
 
 const encryption = createEncryptionService();
 ```
 
 ### 4. API Routes
 
-All credential endpoints are handled automatically by the framework adapters (`@invect/express`, `@invect/nestjs`, `@invect/nextjs`). No manual route setup is needed.
+All credential endpoints are handled automatically by the framework adapters (`@flowlib/express`, `@flowlib/nestjs`, `@flowlib/nextjs`). No manual route setup is needed.
 
 ## Usage Examples
 

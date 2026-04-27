@@ -7,7 +7,7 @@
  *
  * This file is runtime-safe: no SDK imports, no Node-only APIs. Error classes
  * from `openai` / `@anthropic-ai/sdk` are recognized via `constructor.name`
- * duck-typing so `@invect/action-kit` stays a types-only package.
+ * duck-typing so `@flowlib/action-kit` stays a types-only package.
  */
 
 import type { NodeErrorCode, NodeErrorDetails } from './node-execution';

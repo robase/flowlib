@@ -1,8 +1,8 @@
 /**
- * @invect/rbac/ui — Frontend Plugin Types
+ * @flowlib/rbac/ui — Frontend Plugin Types
  *
  * Types for the frontend plugin system. These are consumed by
- * @invect/ui to render plugin-contributed UI.
+ * @flowlib/ui to render plugin-contributed UI.
  */
 
 import type { ComponentType, ReactNode } from 'react';

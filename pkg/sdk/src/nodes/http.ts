@@ -9,8 +9,8 @@
  *   - `httpRequest('ref', { url, method? })` — positional form.
  */
 
-import { httpRequestAction } from '@invect/actions/http';
-import type { NodeOptions, SdkFlowNode } from '@invect/action-kit';
+import { httpRequestAction } from '@flowlib/actions/http';
+import type { NodeOptions, SdkFlowNode } from '@flowlib/action-kit';
 
 export interface HttpRequestParams {
   url: string;

@@ -7,7 +7,7 @@
  * Requires a LinkedIn OAuth2 credential with w_member_social scope.
  */
 
-import { defineAction } from '@invect/action-kit';
+import { defineAction } from '@flowlib/action-kit';
 import { LINKEDIN_PROVIDER } from '../providers';
 import { z } from 'zod/v4';
 

@@ -67,7 +67,7 @@ export class ChatStreamService {
     private readonly flowVersionsService: FlowVersionsService,
     private readonly actionRegistry: ActionRegistry | null,
     /** Invect core instance — wired post-init via setInvectInstance() */
-    private invect: InvectInstance | null,
+    private flowlib: InvectInstance | null,
   ) {
     // Parse and apply defaults to chat config
     this.chatConfig = ChatConfigSchema.parse({});
@@ -85,7 +85,7 @@ export class ChatStreamService {
    * breaking the circular dependency between ServiceFactory and InvectInstance.
    */
   setInvectInstance(instance: InvectInstance): void {
-    this.invect = instance;
+    this.flowlib = instance;
   }
 
   /**
@@ -171,7 +171,7 @@ export class ChatStreamService {
       config: resolvedConfig,
       adapter,
       identity,
-      invect: this.invect as InvectInstance,
+      flowlib: this.flowlib as InvectInstance,
       actionRegistry: this.actionRegistry,
     });
 
@@ -502,11 +502,11 @@ export class ChatStreamService {
 
       // When a run is selected (runs view), load its error context
       let runContext: FlowContextData['runContext'];
-      if (selectedRunId && viewMode === 'runs' && this.invect) {
+      if (selectedRunId && viewMode === 'runs' && this.flowlib) {
         try {
-          const run = await this.invect.runs.get(selectedRunId);
+          const run = await this.flowlib.runs.get(selectedRunId);
           if (run) {
-            const nodeExecsResult = await this.invect.runs.getNodeExecutions(selectedRunId);
+            const nodeExecsResult = await this.flowlib.runs.getNodeExecutions(selectedRunId);
             const failedNodes = nodeExecsResult.data
               .filter((ex) => ex.status === 'FAILED' || ex.error)
               .map((ex) => ({

@@ -12,7 +12,7 @@ import * as assert from 'node:assert';
 import * as path from 'node:path';
 import * as vscode from 'vscode';
 
-const FLOW_EDITOR_VIEW_TYPE = 'invect.flowEditor';
+const FLOW_EDITOR_VIEW_TYPE = 'flowlib.flowEditor';
 
 function fixtureFlow(): vscode.Uri {
   // The launchArgs in runTest.ts open the workspace at this path, so
@@ -26,7 +26,7 @@ function fixtureFlow(): vscode.Uri {
 }
 
 async function activateExtension(): Promise<void> {
-  const candidateIds = ['invect.@invect/vscode', 'invect.vscode'];
+  const candidateIds = ['flowlib.@flowlib/vscode', 'flowlib.vscode'];
   for (const id of candidateIds) {
     const ext = vscode.extensions.getExtension(id);
     if (ext) {
@@ -81,12 +81,12 @@ suite('Custom editor + visual ↔ code toggle', () => {
     );
   });
 
-  test('invect.editAsCode swaps the open custom editor for a text editor', async () => {
+  test('flowlib.editAsCode swaps the open custom editor for a text editor', async () => {
     const uri = fixtureFlow();
     await vscode.commands.executeCommand('vscode.openWith', uri, FLOW_EDITOR_VIEW_TYPE);
     assert.ok(findTab(uri), 'precondition: custom editor open');
 
-    await vscode.commands.executeCommand('invect.editAsCode');
+    await vscode.commands.executeCommand('flowlib.editAsCode');
 
     // Wait briefly for the editor swap to settle (VSCode disposes the
     // custom editor + opens a text editor as separate microtasks).
@@ -104,12 +104,12 @@ suite('Custom editor + visual ↔ code toggle', () => {
     assert.notStrictEqual(input.viewType, FLOW_EDITOR_VIEW_TYPE);
   });
 
-  test('invect.editVisually swaps the open text editor for the custom editor', async () => {
+  test('flowlib.editVisually swaps the open text editor for the custom editor', async () => {
     const uri = fixtureFlow();
     await vscode.commands.executeCommand('vscode.openWith', uri, 'default');
     await waitFor(() => !!vscode.window.activeTextEditor, 2000);
 
-    await vscode.commands.executeCommand('invect.editVisually');
+    await vscode.commands.executeCommand('flowlib.editVisually');
 
     await waitFor(() => {
       const tab = findTab(uri);
@@ -126,8 +126,8 @@ suite('Custom editor + visual ↔ code toggle', () => {
   test('toggle commands no-op gracefully with no .flow.ts active', async () => {
     // No file open. Both commands should resolve without throwing —
     // they show a warning notification instead.
-    await vscode.commands.executeCommand('invect.editAsCode');
-    await vscode.commands.executeCommand('invect.editVisually');
+    await vscode.commands.executeCommand('flowlib.editAsCode');
+    await vscode.commands.executeCommand('flowlib.editVisually');
   });
 });
 

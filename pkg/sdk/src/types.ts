@@ -2,11 +2,11 @@
  * Public SDK types.
  *
  * These are the shapes authored flow files produce and the serializer/runtime
- * consumes. Re-exports the canonical node shape from `@invect/action-kit` and
+ * consumes. Re-exports the canonical node shape from `@flowlib/action-kit` and
  * adds edge + flow-definition shapes on top.
  */
 
-import type { SdkFlowNode, NodeOptions, MapperOptions } from '@invect/action-kit';
+import type { SdkFlowNode, NodeOptions, MapperOptions } from '@flowlib/action-kit';
 
 export type { SdkFlowNode, NodeOptions, MapperOptions };
 

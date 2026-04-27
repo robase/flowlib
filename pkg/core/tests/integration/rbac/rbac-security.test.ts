@@ -27,7 +27,7 @@ import { mkdtempSync, rmSync } from 'fs';
 import { tmpdir } from 'os';
 import { dirname, join, resolve } from 'path';
 import { fileURLToPath } from 'url';
-import { createInvect } from '../../../src/api/create-invect';
+import { createInvect } from '../../../src/api/create-flowlib';
 import type { InvectInstance } from '../../../src/api/types';
 import { rbac } from '../../../../plugins/rbac/src/backend/plugin';
 import type { InvectIdentity } from '../../../src/types/auth.types';
@@ -168,7 +168,7 @@ const OUTSIDER: InvectIdentity = {
 // Shared test state
 // ─────────────────────────────────────────────────────────────
 
-let invect: InvectInstance;
+let flowlib: InvectInstance;
 let pluginDef: InvectPluginDefinition;
 let plugin: InvectPlugin;
 let rawDb: Database.Database;
@@ -234,12 +234,12 @@ function createContext(overrides: {
     database: dbApi,
     request: new Request('http://localhost/test'),
     core: {
-      getPermissions: (id) => invect.auth.getPermissions(id),
-      getAvailableRoles: () => invect.auth.getAvailableRoles(),
-      getResolvedRole: (id) => invect.auth.getService().getResolvedRole(id),
-      authorize: (context) => invect.auth.authorize(context),
+      getPermissions: (id) => flowlib.auth.getPermissions(id),
+      getAvailableRoles: () => flowlib.auth.getAvailableRoles(),
+      getResolvedRole: (id) => flowlib.auth.getService().getResolvedRole(id),
+      authorize: (context) => flowlib.auth.authorize(context),
     },
-    getInvect: () => invect,
+    getInvect: () => flowlib,
   };
 }
 
@@ -281,7 +281,7 @@ async function call(
 describe('RBAC Plugin — Security Red Team', () => {
   beforeAll(async () => {
     process.env.INVECT_ENCRYPTION_KEY = randomBytes(32).toString('base64');
-    tmpDir = mkdtempSync(join(tmpdir(), 'invect-rbac-test-'));
+    tmpDir = mkdtempSync(join(tmpdir(), 'flowlib-rbac-test-'));
     dbPath = join(tmpDir, 'test.db');
 
     // 1. Run core Drizzle migrations
@@ -330,7 +330,7 @@ describe('RBAC Plugin — Security Red Team', () => {
     // 7. Create plugin + Invect
     pluginDef = rbac({ enableTeams: true }) as unknown as InvectPluginDefinition;
     plugin = pluginDef.backend!;
-    invect = await createInvect({
+    flowlib = await createInvect({
       encryptionKey: 'dGVzdC1lbmNyeXB0aW9uLWtleS0xMjM0NTY3ODkw',
       database: {
         type: 'sqlite',
@@ -353,9 +353,9 @@ describe('RBAC Plugin — Security Red Team', () => {
     };
 
     // 9. Create test flows via Invect (gets correct schema)
-    const f1 = await invect.flows.create({ name: 'Flow Unscoped' });
-    const f2 = await invect.flows.create({ name: 'Flow Scoped A' });
-    const f3 = await invect.flows.create({ name: 'Flow Scoped B-Child' });
+    const f1 = await flowlib.flows.create({ name: 'Flow Unscoped' });
+    const f2 = await flowlib.flows.create({ name: 'Flow Scoped A' });
+    const f3 = await flowlib.flows.create({ name: 'Flow Scoped B-Child' });
     flowId1 = f1.id;
     flowId2 = f2.id;
     flowId3 = f3.id;
@@ -400,7 +400,7 @@ describe('RBAC Plugin — Security Red Team', () => {
 
   afterAll(async () => {
     rawDb?.close();
-    await invect?.shutdown();
+    await flowlib?.shutdown();
     try {
       rmSync(tmpDir, { recursive: true, force: true });
     } catch {
@@ -1122,7 +1122,7 @@ describe('RBAC Plugin — Security Red Team', () => {
 
       // Effective permission should be 'editor' (team > individual)
       // Use the onAuthorize hook for permission checking via authorize()
-      const authResult = await invect.auth.authorize({
+      const authResult = await flowlib.auth.authorize({
         identity: TEAM_MEMBER,
         action: 'flow:read',
         resource: { type: 'flow', id: flowId1 },
@@ -1199,7 +1199,7 @@ describe('RBAC Plugin — Security Red Team', () => {
       const tempTeamId = (createRes.body as Record<string, unknown>).id as string;
 
       // Create a flow scoped to it
-      const flow = await invect.flows.create({ name: 'Temp Flow' });
+      const flow = await flowlib.flows.create({ name: 'Temp Flow' });
       rawDb.prepare('UPDATE invect_flows SET scope_id = ? WHERE id = ?').run(tempTeamId, flow.id);
 
       // Delete the temp team

@@ -5,7 +5,7 @@
  * Returns rows of dimensions and metrics for the specified date range.
  */
 
-import { defineAction } from '@invect/action-kit';
+import { defineAction } from '@flowlib/action-kit';
 import { GOOGLE_ANALYTICS_PROVIDER } from '../providers';
 import { z } from 'zod/v4';
 

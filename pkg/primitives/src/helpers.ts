@@ -1,4 +1,4 @@
-import { newToolInstanceId } from '@invect/action-kit';
+import { newToolInstanceId } from '@flowlib/action-kit';
 import type {
   PrimitiveNode,
   PrimitiveEdge,
@@ -157,7 +157,7 @@ export function tool(
 
 // Assign runtime-level `instanceId`s using the canonical `tool_XXXXXXXX`
 // format shared with the chat agent tools, the editor tool panel, and seed
-// fixtures — see `newToolInstanceId` in `@invect/action-kit`.
+// fixtures — see `newToolInstanceId` in `@flowlib/action-kit`.
 function assignToolInstanceIds(
   tools: ToolInstance[],
 ): Array<ToolInstance & { instanceId: string }> {
@@ -208,7 +208,7 @@ export function code(
   };
 }
 
-/** Alias of `code()` — matches the `javascript()` name used in `@invect/core/sdk`. */
+/** Alias of `code()` — matches the `javascript()` name used in `@flowlib/core/sdk`. */
 export const javascript = code;
 
 // Generic node builder for action types without a dedicated helper (e.g.

@@ -17,11 +17,11 @@
  *
  * Per-URI debouncing lives in `Debouncer` so the editor coalesces the
  * pulse-train of canvas drag events into a single WorkspaceEdit (default
- * 400ms, configurable via `invect.autoSaveDebounceMs`).
+ * 400ms, configurable via `flowlib.autoSaveDebounceMs`).
  */
 
 import * as vscode from 'vscode';
-import type { SdkFlowDefinition } from '@invect/sdk';
+import type { SdkFlowDefinition } from '@flowlib/sdk';
 import { emitFlowFile } from '../flow-file/emit';
 
 export class TextSync {

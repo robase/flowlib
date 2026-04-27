@@ -129,7 +129,7 @@ export const updateFlowDefinitionTool: ChatToolDefinition = {
         targetHandle?: string;
       }>;
     };
-    const invect = ctx.invect;
+    const flowlib = ctx.flowlib;
     const flowId = ctx.chatContext.flowId;
 
     if (!flowId) {
@@ -138,7 +138,7 @@ export const updateFlowDefinitionTool: ChatToolDefinition = {
 
     try {
       // Validate all node types exist in the action registry
-      const availableNodes = invect.actions.getAvailableNodes();
+      const availableNodes = flowlib.actions.getAvailableNodes();
       const validTypes = new Set(availableNodes.map((n) => n.type));
       const invalidNodes = nodes.filter((n) => !validTypes.has(n.type));
       if (invalidNodes.length > 0) {
@@ -164,7 +164,7 @@ export const updateFlowDefinitionTool: ChatToolDefinition = {
         return node;
       });
 
-      const version = await invect.versions.create(flowId, {
+      const version = await flowlib.versions.create(flowId, {
         invectDefinition: {
           nodes: positionedNodes,
           edges,
@@ -218,7 +218,7 @@ export const runFlowTool: ChatToolDefinition = {
   }),
   async execute(params: unknown, ctx: ChatToolContext): Promise<ChatToolResult> {
     const { inputs } = params as { inputs?: Record<string, unknown> };
-    const invect = ctx.invect;
+    const flowlib = ctx.flowlib;
     const flowId = ctx.chatContext.flowId;
 
     if (!flowId) {
@@ -229,7 +229,7 @@ export const runFlowTool: ChatToolDefinition = {
       // Read trigger defaultInputs and merge for any missing fields
       const mergedInputs = { ...inputs };
       try {
-        const version = await invect.versions.get(flowId, 'latest');
+        const version = await flowlib.versions.get(flowId, 'latest');
         if (version) {
           const def =
             typeof version.invectDefinition === 'string'
@@ -252,7 +252,7 @@ export const runFlowTool: ChatToolDefinition = {
         // Non-critical — proceed with whatever inputs we have
       }
 
-      const result = await invect.runs.start(flowId, mergedInputs);
+      const result = await flowlib.runs.start(flowId, mergedInputs);
 
       return {
         success: true,
@@ -290,10 +290,10 @@ export const createFlowTool: ChatToolDefinition = {
   }),
   async execute(params: unknown, ctx: ChatToolContext): Promise<ChatToolResult> {
     const { name } = params as { name: string };
-    const invect = ctx.invect;
+    const flowlib = ctx.flowlib;
 
     try {
-      const flow = await invect.flows.create({ name });
+      const flow = await flowlib.flows.create({ name });
 
       return {
         success: true,
@@ -328,10 +328,10 @@ export const listFlowsTool: ChatToolDefinition = {
   }),
   async execute(params: unknown, ctx: ChatToolContext): Promise<ChatToolResult> {
     const { search, limit } = params as { search?: string; limit?: number };
-    const invect = ctx.invect;
+    const flowlib = ctx.flowlib;
 
     try {
-      const result = await invect.flows.list();
+      const result = await flowlib.flows.list();
       let flows = result.data;
 
       // Relevance scoring: match any term, sort by number of matches
@@ -387,7 +387,7 @@ export const validateFlowTool: ChatToolDefinition = {
     'Use this proactively after making changes.',
   parameters: z.object({}),
   async execute(_params: unknown, ctx: ChatToolContext): Promise<ChatToolResult> {
-    const invect = ctx.invect;
+    const flowlib = ctx.flowlib;
     const flowId = ctx.chatContext.flowId;
 
     if (!flowId) {
@@ -396,12 +396,12 @@ export const validateFlowTool: ChatToolDefinition = {
 
     try {
       // Get the latest definition to validate
-      const version = await invect.versions.get(flowId, 'latest');
+      const version = await flowlib.versions.get(flowId, 'latest');
       if (!version) {
         return { success: false, error: 'No flow version found to validate' };
       }
 
-      const result = await invect.flows.validate(flowId, version.invectDefinition);
+      const result = await flowlib.flows.validate(flowId, version.invectDefinition);
 
       if (result.isValid) {
         return {

@@ -7,7 +7,7 @@
     "probe": "node probe.mjs"
   },
   "dependencies": {
-    "@invect/core": "workspace:*",
+    "@flowlib/core": "workspace:*",
     "@libsql/client": "*"
   }
 }

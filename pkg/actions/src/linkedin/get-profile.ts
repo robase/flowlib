@@ -6,7 +6,7 @@
  * Requires a LinkedIn OAuth2 credential with openid + profile scopes.
  */
 
-import { defineAction } from '@invect/action-kit';
+import { defineAction } from '@flowlib/action-kit';
 import { LINKEDIN_PROVIDER } from '../providers';
 import { z } from 'zod/v4';
 

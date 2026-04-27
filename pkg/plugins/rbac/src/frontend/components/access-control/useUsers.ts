@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { useApiClient } from '@invect/ui';
+import { useApiClient } from '@flowlib/ui';
 import type { AuthUser } from './types';
 
 export function useUsers(): AuthUser[] {

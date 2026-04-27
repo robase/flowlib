@@ -1,5 +1,5 @@
 import { useMemo, useCallback } from 'react';
-import { newToolInstanceId, type ReactFlowNodeData } from '@invect/core/types';
+import { newToolInstanceId, type ReactFlowNodeData } from '@flowlib/core/types';
 import type { ToolDefinition, AddedToolInstance } from '../../../nodes/ToolSelectorModal';
 import type { Node } from '@xyflow/react';
 

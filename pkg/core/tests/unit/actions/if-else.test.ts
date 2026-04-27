@@ -2,7 +2,7 @@
  * Unit tests: core.if_else action — JS expression evaluation
  */
 import { describe, it, expect, vi } from 'vitest';
-import { ifElseAction } from '@invect/actions';
+import { ifElseAction } from '@flowlib/actions';
 
 const evaluator = {
   evaluate: async (expression: string, data: Record<string, unknown>): Promise<unknown> => {

@@ -234,7 +234,7 @@ export class ActiveChatSessions {
    *
    * PR 5/14 (flowlib-hosted/UPSTREAM.md) — provided so hosts on serverless
    * / edge runtimes can drive eviction from an external cron entry point
-   * (`invect.maintenance.evictExpiredChatSessions()`) instead of relying on
+   * (`flowlib.maintenance.evictExpiredChatSessions()`) instead of relying on
    * per-session `setTimeout`s that don't run between worker invocations.
    * Long-lived Node processes use the in-process `setTimeout`s (set in
    * `create()` and `close()`) and rarely need to call this.

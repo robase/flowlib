@@ -15,10 +15,10 @@ export default defineConfig({
   clean: true,
   deps: {
     neverBundle: [
-      '@invect/core',
-      '@invect/primitives',
-      '@invect/sdk',
-      '@invect/ui',
+      '@flowlib/core',
+      '@flowlib/primitives',
+      '@flowlib/sdk',
+      '@flowlib/ui',
       'react',
       'react-dom',
       'lucide-react',

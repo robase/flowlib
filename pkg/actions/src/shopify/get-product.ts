@@ -5,7 +5,7 @@
  * Requires a Shopify OAuth2 credential and the store subdomain.
  */
 
-import { defineAction } from '@invect/action-kit';
+import { defineAction } from '@flowlib/action-kit';
 import { SHOPIFY_PROVIDER } from '../providers';
 import { z } from 'zod/v4';
 

@@ -1,21 +1,21 @@
 {
-  "name": "@invect/action-kit",
+  "name": "@flowlib/action-kit",
   "version": "0.0.2",
   "description": "Framework-agnostic type kit for defining Invect actions (flow nodes + agent tools)",
   "keywords": [
     "actions",
-    "invect",
+    "flowlib",
     "types"
   ],
-  "homepage": "https://invect.dev",
+  "homepage": "https://flowlib.dev",
   "bugs": {
-    "url": "https://github.com/robase/invect/issues"
+    "url": "https://github.com/robase/flowlib/issues"
   },
   "license": "MIT",
-  "author": "robase <team@invect.dev>",
+  "author": "robase <team@flowlib.dev>",
   "repository": {
     "type": "git",
-    "url": "https://github.com/robase/invect.git",
+    "url": "https://github.com/robase/flowlib.git",
     "directory": "pkg/action-kit"
   },
   "files": [

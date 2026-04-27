@@ -4,12 +4,12 @@
  * Public API for the Provider-Actions system.
  *
  * Integration provider actions (Gmail, Slack, GitHub, …) live in
- * `@invect/actions`. Core-runtime actions (Model, JavaScript, If/Else,
+ * `@flowlib/actions`. Core-runtime actions (Model, JavaScript, If/Else,
  * Switch, Template, HTTP, Triggers) stay here because they depend on
  * core's execution internals.
  */
 
-// ── Types & helpers (re-exported from @invect/action-kit) ───────────────
+// ── Types & helpers (re-exported from @flowlib/action-kit) ───────────────
 export type {
   ActionDefinition,
   ActionExecutionContext,
@@ -30,7 +30,7 @@ export type {
 
 export { defineAction } from './define-action';
 
-// ── Providers (from @invect/actions) ────────────────────────────────────
+// ── Providers (from @flowlib/actions) ────────────────────────────────────
 export {
   CORE_PROVIDER,
   HTTP_PROVIDER,
@@ -75,7 +75,7 @@ export {
   PAGERDUTY_PROVIDER,
 } from './providers';
 
-// ── Registry (from @invect/actions) ─────────────────────────────────────
+// ── Registry (from @flowlib/actions) ─────────────────────────────────────
 export {
   ActionRegistry,
   getGlobalActionRegistry,
@@ -91,7 +91,7 @@ export {
   createToolExecutorForAction,
 } from './action-executor';
 
-// ── Action bundles — from @invect/actions ───────────────────────────────
+// ── Action bundles — from @flowlib/actions ───────────────────────────────
 export {
   coreActions,
   asanaActions,
@@ -134,12 +134,12 @@ export {
   twitterActions,
   woocommerceActions,
   zendeskActions,
-} from '@invect/actions';
+} from '@flowlib/actions';
 
 // ── Convenience: all built-in actions ───────────────────────────────────
 
 import type { ActionDefinition } from './types';
-import { allProviderActions } from '@invect/actions';
+import { allProviderActions } from '@flowlib/actions';
 
 /** Every built-in action across all providers. */
 export const allBuiltinActions: ActionDefinition[] = [...allProviderActions];

@@ -10,7 +10,7 @@ export { googleDriveCreateFolderAction } from './create-folder';
 export { googleDriveSearchFilesAction } from './search-files';
 export { googleDriveShareFileAction } from './share-file';
 
-import type { ActionDefinition } from '@invect/action-kit';
+import type { ActionDefinition } from '@flowlib/action-kit';
 import { googleDriveListFilesAction } from './list-files';
 import { googleDriveGetFileAction } from './get-file';
 import { googleDriveCreateFileAction } from './create-file';

@@ -31,12 +31,12 @@ export const searchFlowsTool: ChatToolDefinition = {
   }),
   async execute(params: unknown, ctx: ChatToolContext): Promise<ChatToolResult> {
     const { query, limit } = params as { query?: string; limit?: number };
-    const invect = ctx.invect;
+    const flowlib = ctx.flowlib;
     const currentFlowId = ctx.chatContext.flowId;
     const maxResults = limit ?? 20;
 
     try {
-      const { data: flows } = await invect.flows.list({ pagination: { page: 1, limit: 100 } });
+      const { data: flows } = await flowlib.flows.list({ pagination: { page: 1, limit: 100 } });
 
       let filtered = flows;
       if (query) {
@@ -90,15 +90,15 @@ export const getFlowDefinitionTool: ChatToolDefinition = {
   }),
   async execute(params: unknown, ctx: ChatToolContext): Promise<ChatToolResult> {
     const { flowId } = params as { flowId: string };
-    const invect = ctx.invect;
+    const flowlib = ctx.flowlib;
 
     try {
-      const flow = await invect.flows.get(flowId);
+      const flow = await flowlib.flows.get(flowId);
       if (!flow) {
         return { success: false, error: `Flow "${flowId}" not found` };
       }
 
-      const version = await invect.versions.get(flowId, 'latest');
+      const version = await flowlib.versions.get(flowId, 'latest');
       if (!version) {
         return {
           success: true,

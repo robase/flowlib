@@ -127,9 +127,9 @@ export const ExecutionConfigSchema = z.object({
    * runtime allows it, and automatically fall back to the configured
    * sandbox evaluator (or throw) when the runtime forbids it.
    *
-   * Note: `@invect/core`'s server runtime always uses the QuickJS-backed
+   * Note: `@flowlib/core`'s server runtime always uses the QuickJS-backed
    * `JsExpressionService` and never `DirectEvaluator`, so this flag only
-   * affects edge-runtime hosts (`@invect/primitives` consumers, the Vercel
+   * affects edge-runtime hosts (`@flowlib/primitives` consumers, the Vercel
    * Workflows / Cloudflare Workers runtimes) that opt into `DirectEvaluator`.
    *
    * @default false
@@ -221,24 +221,24 @@ export const InvectConfigSchema = z.object({
   /**
    * AES-256-GCM encryption key for credential storage (base64-encoded, 32 bytes).
    *
-   * Generate with: `npx invect-cli secret`
+   * Generate with: `npx flowlib-cli secret`
    */
   encryptionKey: z
     .string()
-    .min(1, 'encryptionKey is required. Generate one with: npx invect-cli secret'),
+    .min(1, 'encryptionKey is required. Generate one with: npx flowlib-cli secret'),
   logging: LoggingConfigSchema.default(() => ({
     level: 'info' as const,
   })).optional(),
   logger: z.any().optional(),
   /**
    * The path where the Invect frontend UI is mounted.
-   * @example '/invect'
+   * @example '/flowlib'
    */
   frontendPath: z.string().optional(),
   /**
    * The path where the Invect API is mounted.
    * Used by the frontend to make API requests.
-   * @example '/api/invect'
+   * @example '/api/flowlib'
    */
   apiPath: z.string().optional(),
 
@@ -266,7 +266,7 @@ export const InvectConfigSchema = z.object({
    * to detect build-time, since those checks break on edge runtimes that
    * don't expose `process` (Cloudflare Workers, Deno Deploy, etc.).
    *
-   * The Next.js adapter (`@invect/nextjs`) sets this automatically when it
+   * The Next.js adapter (`@flowlib/nextjs`) sets this automatically when it
    * detects `process.env.NEXT_PHASE === 'phase-production-build'`.
    *
    * @default false
@@ -282,7 +282,7 @@ export const InvectConfigSchema = z.object({
       /**
        * The public-facing base URL where Invect routes are mounted.
        * Used to display the full webhook URL in the flow editor.
-       * Example: "https://api.myapp.com/invect"
+       * Example: "https://api.myapp.com/flowlib"
        */
       webhookBaseUrl: z.string().optional(),
       /**
@@ -305,9 +305,9 @@ export const InvectConfigSchema = z.object({
    *
    * @example
    * ```typescript
-   * import { auth } from '@invect/user-auth';
-   * import { authFrontend } from '@invect/user-auth/ui';
-   * import { rbac } from '@invect/rbac';
+   * import { auth } from '@flowlib/user-auth';
+   * import { authFrontend } from '@flowlib/user-auth/ui';
+   * import { rbac } from '@flowlib/rbac';
    *
    * const config = defineConfig({
    *   plugins: [
@@ -442,7 +442,7 @@ export type InvectConfig = Omit<z.input<typeof InvectConfigSchema>, 'services'> 
  *
  * @example
  * ```typescript
- * import { defineConfig } from '@invect/core';
+ * import { defineConfig } from '@flowlib/core';
  *
  * export default defineConfig({
  *   database: {
@@ -462,7 +462,7 @@ export function defineConfig(config: InvectConfig): InvectConfig {
  *
  * @example
  * ```typescript
- * import { definePlugin } from '@invect/core';
+ * import { definePlugin } from '@flowlib/core';
  *
  * export const myPlugin = definePlugin({
  *   id: 'my-plugin',

@@ -17,8 +17,8 @@ async function bootstrap() {
   // Enable CORS
   app.enableCors();
 
-  // Mount Invect API under /invect/*
-  const basePath = process.env.INVECT_BASE_PATH || '/invect';
+  // Mount Invect API under /flowlib/*
+  const basePath = process.env.INVECT_BASE_PATH || '/flowlib';
   app.setGlobalPrefix(basePath.replace(/^\//, ''));
 
   const port = parseInt(process.env.PORT || '3001', 10);

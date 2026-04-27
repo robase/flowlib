@@ -1,6 +1,6 @@
 import anthropic from './anthropic.svg?raw';
 import anthropicLight from './anthropic_light.svg?raw';
-import { INVECT_ICON_DARK_SVG, INVECT_ICON_LIGHT_SVG } from '../invect-branding';
+import { INVECT_ICON_DARK_SVG, INVECT_ICON_LIGHT_SVG } from '../flowlib-branding';
 import cloudwatch from './cloudwatch.svg?raw';
 import dropbox from './dropbox.svg?raw';
 import facebook from './facebook.svg?raw';

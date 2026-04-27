@@ -1,12 +1,12 @@
 /**
- * Programmatic API for @invect/cli
+ * Programmatic API for @flowlib/cli
  *
  * Programmatic API for the Invect CLI generators.
  * Import this to use schema generators in tests or build scripts.
  *
  * @example
  * ```ts
- * import { generateSchema, generateAllDrizzleSchemas } from '@invect/cli/api';
+ * import { generateSchema, generateAllDrizzleSchemas } from '@flowlib/cli/api';
  *
  * const result = await generateSchema({
  *   adapter: 'drizzle',

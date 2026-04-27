@@ -1,23 +1,23 @@
 import { z } from 'zod/v4';
 import type { NodeExecutionResult } from './types/node-execution.types';
 import type { NodeOutput } from './types/node-io-types';
-import type { Logger } from './schemas/invect-config';
+import type { Logger } from './schemas/flowlib-config';
 import type { FlowEdge, FlowNodeDefinitions } from './services/flow-versions/schemas-fresh';
 import type { AgentPromptResult } from './types/agent-tool.types';
-import type { JsExpressionEvaluator } from '@invect/action-kit';
+import type { JsExpressionEvaluator } from '@flowlib/action-kit';
 
 export type {
   SubmitPromptRequest,
   SubmitAgentPromptRequest,
   SubmitPromptResult,
   RecordToolExecutionInput,
-} from '@invect/action-kit';
+} from '@flowlib/action-kit';
 import type {
   SubmitPromptRequest,
   SubmitAgentPromptRequest,
   SubmitPromptResult,
   RecordToolExecutionInput,
-} from '@invect/action-kit';
+} from '@flowlib/action-kit';
 
 /**
  * Context of an individual run of a flow

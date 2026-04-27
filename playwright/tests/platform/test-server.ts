@@ -78,7 +78,7 @@ process.on('unhandledRejection', (err) => {
 });
 
 app.use(
-  '/invect',
+  '/flowlib',
   await createInvectRouter({
     encryptionKey: 'dGVzdC1lbmNyeXB0aW9uLWtleS0xMjM0NTY3ODkw',
     database: {

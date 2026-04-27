@@ -4,11 +4,11 @@
  * This file is read by the Invect CLI for schema generation
  * and by your application at runtime.
  *
- * Docs: https://invect.dev/docs
+ * Docs: https://flowlib.dev/docs
  */
 
-import { defineConfig } from '@invect/core';
-// import { ... } from '@invect/nextjs';
+import { defineConfig } from '@flowlib/core';
+// import { ... } from '@flowlib/nextjs';
 
 export const config = defineConfig({
   encryptionKey: process.env.INVECT_ENCRYPTION_KEY || 'change me',
@@ -17,8 +17,8 @@ export const config = defineConfig({
     driver: 'libsql',
     connectionString: 'file:./dev.db',
   },
-  frontendPath: '/invect',
-  apiPath: '/api/invect',
+  frontendPath: '/flowlib',
+  apiPath: '/api/flowlib',
 
   defaultCredentials: [
     ...(process.env.SEED_ANTHROPIC_API_KEY

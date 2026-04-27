@@ -2,15 +2,15 @@
  * Chat Memory — Browser-local persistence via localStorage.
  *
  * Stores notes in two scopes:
- *   - Flow-scoped:     localStorage key = `invect:chat-memory:flow:<flowId>`
- *   - Workspace-scoped: localStorage key = `invect:chat-memory:workspace`
+ *   - Flow-scoped:     localStorage key = `flowlib:chat-memory:flow:<flowId>`
+ *   - Workspace-scoped: localStorage key = `flowlib:chat-memory:workspace`
  *
  * Each key stores a JSON array of strings (the note contents).
  * Maximum 50 notes per scope to prevent unbounded growth.
  */
 
-const FLOW_KEY_PREFIX = 'invect:chat-memory:flow:';
-const WORKSPACE_KEY = 'invect:chat-memory:workspace';
+const FLOW_KEY_PREFIX = 'flowlib:chat-memory:flow:';
+const WORKSPACE_KEY = 'flowlib:chat-memory:workspace';
 const MAX_NOTES = 50;
 
 function getKey(scope: 'flow' | 'workspace', flowId?: string): string {

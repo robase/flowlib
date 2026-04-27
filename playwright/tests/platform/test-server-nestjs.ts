@@ -80,7 +80,7 @@ process.on('SIGTERM', () => {
 async function bootstrap() {
   const app = await NestFactory.create(TestAppModule, { logger: false });
   app.enableCors();
-  app.setGlobalPrefix('invect');
+  app.setGlobalPrefix('flowlib');
 
   await app.listen(port);
   const url = await app.getUrl();

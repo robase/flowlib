@@ -1,5 +1,5 @@
-import { createFlowRunner, createFetchPromptClient, InMemoryAdapter } from '@invect/primitives';
-import type { FlowRunnerConfig, FlowRunner } from '@invect/primitives';
+import { createFlowRunner, createFetchPromptClient, InMemoryAdapter } from '@flowlib/primitives';
+import type { FlowRunnerConfig, FlowRunner } from '@flowlib/primitives';
 
 export interface VercelFlowRunnerConfig extends Omit<FlowRunnerConfig, 'submitPrompt' | 'adapter'> {
   // The workflow-patched fetch — import from 'workflow' and pass here.
@@ -19,7 +19,7 @@ export interface VercelFlowRunnerConfig extends Omit<FlowRunnerConfig, 'submitPr
 // Usage (inside a "use workflow" function):
 //
 //   import { fetch, sleep } from 'workflow'
-//   import { createVercelFlowRunner } from '@invect/vercel-workflows'
+//   import { createVercelFlowRunner } from '@flowlib/vercel-workflows'
 //   import { myFlow } from './my-flow'
 //
 //   export async function myFlowWorkflow(inputs) {

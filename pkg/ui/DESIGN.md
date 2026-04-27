@@ -9,7 +9,7 @@ description: Linear-inspired theme system for Invect UI components.
 
 A dark-mode-first design language where content emerges from darkness with surgical precision. The overall impression is one of extreme precision engineering: every element exists in a carefully calibrated hierarchy of luminance, managed through subtle gradations of opacity rather than color variation.
 
-This document maps that vision onto Invect's `imp-*` token system, `.invect` CSS scope, Tailwind utility classes, and component architecture (CVA variants, Radix primitives, shadcn/ui foundation).
+This document maps that vision onto Invect's `imp-*` token system, `.flowlib` CSS scope, Tailwind utility classes, and component architecture (CVA variants, Radix primitives, shadcn/ui foundation).
 
 ### Core Design Principles
 
@@ -23,7 +23,7 @@ This document maps that vision onto Invect's `imp-*` token system, `.invect` CSS
 
 ## 2. Color Palette — `imp-*` Token Mapping
 
-All values are set via `--imp-*` CSS custom properties in [pkg/ui/src/app.css](../../pkg/ui/src/app.css). The `.invect` scope activates them; `.invect.dark` applies the dark overrides.
+All values are set via `--imp-*` CSS custom properties in [pkg/ui/src/app.css](../../pkg/ui/src/app.css). The `.flowlib` scope activates them; `.flowlib.dark` applies the dark overrides.
 
 ### Dark Mode (Primary Experience)
 
@@ -128,7 +128,7 @@ Light mode inverts the luminance hierarchy while preserving the same accent and 
 | `--imp-input`             | `#dcdce4`   |                                               |
 | `--imp-ring`              | `#5b5bd6`   |                                               |
 
-Full light-mode token list remains in [app.css](../../pkg/ui/src/app.css) — the `.invect` base scope (before `.dark`).
+Full light-mode token list remains in [app.css](../../pkg/ui/src/app.css) — the `.flowlib` base scope (before `.dark`).
 
 ---
 
@@ -331,7 +331,7 @@ On dark surfaces, elevation is communicated primarily through **background lumin
 - Don't use weight 700+ — max emphasis weight is 600 (`font-semibold`)
 - Don't introduce warm colors into the UI chrome — the palette is cool gray with indigo-violet accent only
 - Don't use heavy drop shadows for elevation on dark surfaces — use background luminance stepping
-- Don't break out of the `.invect` CSS scope — all tokens are scoped to this container
+- Don't break out of the `.flowlib` CSS scope — all tokens are scoped to this container
 
 ---
 
@@ -343,7 +343,7 @@ All token definitions live in [pkg/ui/src/app.css](../../pkg/ui/src/app.css), in
 
 ```
 @layer utilities {
-  .invect {
+  .flowlib {
     /* Light mode tokens (base) */
     --imp-background: #fafafa;
     ...
@@ -379,7 +379,7 @@ To change a token value, edit the `--imp-*` variable. Everything downstream upda
 
 ### Adding New Tokens
 
-1. Add `--imp-<name>` in the `.invect` scope (light value) and `.invect.dark` scope (dark value)
+1. Add `--imp-<name>` in the `.flowlib` scope (light value) and `.flowlib.dark` scope (dark value)
 2. Add `--<name>: var(--imp-<name>)` alias
 3. Add `--color-<name>: var(--<name>)` in the `@theme inline` block
 4. Use via Tailwind: `bg-<name>`, `text-<name>`, etc.

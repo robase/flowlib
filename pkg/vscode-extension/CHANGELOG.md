@@ -1,3 +1,3 @@
 # Changelog
 
-All notable changes to `@invect/vscode` will be documented in this file.
+All notable changes to `@flowlib/vscode` will be documented in this file.

@@ -2,7 +2,7 @@
  * Emitter input/output types.
  *
  * The emitter operates on a `DbFlowDefinition` — a structural shape that the
- * concrete `InvectDefinition` from `@invect/core` satisfies. Keeping the input
+ * concrete `InvectDefinition` from `@flowlib/core` satisfies. Keeping the input
  * loose means the emitter package has no hard dep on core.
  */
 
@@ -42,12 +42,12 @@ export interface DbFlowDefinition {
 export interface EmitOptions {
   /** Name of the exported flow constant. Defaults to `myFlow`. */
   flowName?: string;
-  /** Package to import the SDK from. Defaults to `@invect/sdk`. */
+  /** Package to import the SDK from. Defaults to `@flowlib/sdk`. */
   sdkImport?: string;
-  /** Base import root for action catalogue packages. Defaults to `@invect/actions`. */
+  /** Base import root for action catalogue packages. Defaults to `@flowlib/actions`. */
   actionsImportRoot?: string;
   /**
-   * Append a `/* @invect-definition {...} *\/` JSON footer carrying the full
+   * Append a `/* @flowlib-definition {...} *\/` JSON footer carrying the full
    * DB-shape definition. The sync plugin uses this for authoritative round-trip
    * without needing to re-evaluate the TS.
    */
@@ -66,7 +66,7 @@ export interface NodeSpan {
 export interface EmitResult {
   /** The full TypeScript source, imports + defineFlow call + optional footer. */
   code: string;
-  /** SDK helpers imported from `@invect/sdk` (e.g. `input`, `code`, `agent`). */
+  /** SDK helpers imported from `@flowlib/sdk` (e.g. `input`, `code`, `agent`). */
   sdkImports: string[];
   /** Action-catalogue imports, keyed by module path. */
   actionImports: Record<string, string[]>;

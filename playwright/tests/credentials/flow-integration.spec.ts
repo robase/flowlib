@@ -3,9 +3,9 @@
 
 import { test, expect } from '../fixtures';
 
-/** Helper: navigate to /invect/credentials and wait for the page to load */
+/** Helper: navigate to /flowlib/credentials and wait for the page to load */
 async function goToCredentials(page: import('@playwright/test').Page) {
-  await page.goto('/invect/credentials');
+  await page.goto('/flowlib/credentials');
   await expect(page.getByRole('heading', { level: 1, name: 'Credentials' })).toBeVisible({
     timeout: 15_000,
   });
@@ -42,23 +42,23 @@ test.describe('Credential Usage in Flow Execution', () => {
   });
 
   test('credentials page is accessible from the dashboard', async ({ page }) => {
-    // 1. Navigate to /invect (dashboard)
-    await page.goto('/invect');
+    // 1. Navigate to /flowlib (dashboard)
+    await page.goto('/flowlib');
     await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible({ timeout: 15_000 });
 
     // 2. Click the Credentials link in the sidebar navigation (key icon)
-    const credsSidebarLink = page.locator('a[href="/invect/credentials"]').first();
+    const credsSidebarLink = page.locator('a[href="/flowlib/credentials"]').first();
     await expect(credsSidebarLink).toBeVisible();
     await credsSidebarLink.click();
 
-    // The page navigates to /invect/credentials
-    await expect(page).toHaveURL(/\/invect\/credentials/);
+    // The page navigates to /flowlib/credentials
+    await expect(page).toHaveURL(/\/flowlib\/credentials/);
     await expect(page.getByRole('heading', { level: 1, name: 'Credentials' })).toBeVisible({
       timeout: 15_000,
     });
 
     // Go back to dashboard
-    await page.goto('/invect');
+    await page.goto('/flowlib');
     await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible({ timeout: 15_000 });
 
     // 3. Click the 'Credentials' button in the dashboard header area
@@ -67,8 +67,8 @@ test.describe('Credential Usage in Flow Execution', () => {
     await expect(credsHeaderLink).toBeVisible();
     await credsHeaderLink.click();
 
-    // Navigates to /invect/credentials
-    await expect(page).toHaveURL(/\/invect\/credentials/);
+    // Navigates to /flowlib/credentials
+    await expect(page).toHaveURL(/\/flowlib\/credentials/);
     await expect(page.getByRole('heading', { level: 1, name: 'Credentials' })).toBeVisible({
       timeout: 15_000,
     });

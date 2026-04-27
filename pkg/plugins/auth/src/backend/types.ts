@@ -1,4 +1,4 @@
-import type { InvectIdentity, InvectRole } from '@invect/core';
+import type { InvectIdentity, InvectRole } from '@flowlib/core';
 
 // ---------------------------------------------------------------------------
 // Better Auth type stubs
@@ -232,7 +232,7 @@ export interface ApiKeyPluginOptions {
   enableSessionForAPIKeys?: boolean;
   /** Disable hashing of API keys (NOT recommended — insecure). */
   disableKeyHashing?: boolean;
-  /** Header(s) to read the API key from. @default 'x-invect-token' */
+  /** Header(s) to read the API key from. @default 'x-flowlib-token' */
   apiKeyHeaders?: string | string[];
   /** Key expiration defaults. */
   keyExpiration?: {
@@ -452,12 +452,12 @@ export interface AuthenticationPluginOptions {
   /**
    * Frontend plugin (sidebar, routes, providers) for the auth UI.
    *
-   * Import from `@invect/user-auth/ui` and pass here.
+   * Import from `@flowlib/user-auth/ui` and pass here.
    * Omit for backend-only setups (Express without React).
    *
    * @example
    * ```ts
-   * import { authFrontend } from '@invect/user-auth/ui';
+   * import { authFrontend } from '@flowlib/user-auth/ui';
    * auth({ frontend: authFrontend })
    * ```
    */

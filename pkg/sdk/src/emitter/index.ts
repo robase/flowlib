@@ -1,8 +1,8 @@
 /**
- * Unified SDK emitter — `InvectDefinition` (DB form) → `@invect/sdk` source.
+ * Unified SDK emitter — `InvectDefinition` (DB form) → `@flowlib/sdk` source.
  *
- * Produces TypeScript source that imports from `@invect/sdk` and any relevant
- * `@invect/actions/<provider>` packages and uses the callable action helpers
+ * Produces TypeScript source that imports from `@flowlib/sdk` and any relevant
+ * `@flowlib/actions/<provider>` packages and uses the callable action helpers
  * to rebuild the flow graph. The emitted source is what FlowCodePanel shows,
  * what the chat assistant reads + writes, what copy-paste + git sync produce,
  * and what users hand-author.
@@ -43,7 +43,7 @@ export { SdkEmitError };
 // ═══════════════════════════════════════════════════════════════════════════
 
 /**
- * Action types known to emit via `@invect/sdk`'s friendly helpers. Anything
+ * Action types known to emit via `@flowlib/sdk`'s friendly helpers. Anything
  * not here falls through to the provider-import path (for action-catalogue
  * actions like `gmail.send_message`) or the generic `node()` fallback.
  */
@@ -61,7 +61,7 @@ const SDK_HELPERS: Record<string, string> = {
   'trigger.cron': 'trigger.cron',
 };
 
-/** SDK-helper names that need a top-level import from `@invect/sdk`. */
+/** SDK-helper names that need a top-level import from `@flowlib/sdk`. */
 const SDK_IMPORT_NAMES: Record<string, string> = {
   'core.input': 'input',
   'core.output': 'output',
@@ -82,8 +82,8 @@ const SDK_IMPORT_NAMES: Record<string, string> = {
 
 export function emitSdkSource(def: DbFlowDefinition, options: EmitOptions = {}): EmitResult {
   const flowName = options.flowName ?? 'myFlow';
-  const sdkImport = options.sdkImport ?? '@invect/sdk';
-  const actionsImportRoot = options.actionsImportRoot ?? '@invect/actions';
+  const sdkImport = options.sdkImport ?? '@flowlib/sdk';
+  const actionsImportRoot = options.actionsImportRoot ?? '@flowlib/actions';
   if (!isValidJsIdent(flowName)) {
     throw new SdkEmitError(`flowName "${flowName}" is not a valid JS identifier`);
   }
@@ -92,7 +92,7 @@ export function emitSdkSource(def: DbFlowDefinition, options: EmitOptions = {}):
 
   // Every `defineFlow(...)` export needs `defineFlow` itself.
   const sdkImports = new Set<string>(['defineFlow']);
-  // Action-catalogue imports: { '@invect/actions/gmail': Set{ 'gmailSendMessageAction' } }
+  // Action-catalogue imports: { '@flowlib/actions/gmail': Set{ 'gmailSendMessageAction' } }
   const actionImports = new Map<string, Set<string>>();
 
   // Render each node as a helper-call expression (no leading referenceId,
@@ -162,7 +162,7 @@ export function emitSdkSource(def: DbFlowDefinition, options: EmitOptions = {}):
   let code = body.join('\n');
 
   if (options.includeJsonFooter) {
-    code += `\n/* @invect-definition\n${JSON.stringify({ nodes: def.nodes, edges: def.edges, metadata })}\n*/\n`;
+    code += `\n/* @flowlib-definition\n${JSON.stringify({ nodes: def.nodes, edges: def.edges, metadata })}\n*/\n`;
   }
 
   // Compute 1-based line spans for each emitted node. The final code layout is:
@@ -627,7 +627,7 @@ function buildUpstreamMap(nodes: DbFlowNode[], edges: DbFlowEdge[]): Map<string,
 /**
  * Convert a provider + action id to the export name the action catalogue uses.
  * Format: `<provider><ActionName>Action` — matches the conventions in
- * `@invect/actions/*` (e.g. `gmail.send_message` → `gmailSendMessageAction`).
+ * `@flowlib/actions/*` (e.g. `gmail.send_message` → `gmailSendMessageAction`).
  */
 function toActionExportName(providerId: string, actionId: string): string {
   const providerPart = snakeToCamel(providerId);

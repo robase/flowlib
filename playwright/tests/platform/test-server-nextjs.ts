@@ -1,7 +1,7 @@
 /**
  * Standalone Next.js-adapter + Invect server for E2E test isolation.
  *
- * Mounts the @invect/nextjs Web-API handlers on a plain node:http server,
+ * Mounts the @flowlib/nextjs Web-API handlers on a plain node:http server,
  * so we don't need the full Next.js build pipeline.
  *
  * Usage:  tsx tests/platform/test-server-nextjs.ts
@@ -69,10 +69,10 @@ process.on('SIGTERM', () => {
 // ── 3. Bridge: node:http → Web Request/Response ───────────────────────
 //
 // The Next.js handler expects:
-//   (request: Request, context: { params: Promise<{ invect: string[] }> })
-// We strip the /api/invect/ prefix and pass the remaining path segments.
+//   (request: Request, context: { params: Promise<{ flowlib: string[] }> })
+// We strip the /api/flowlib/ prefix and pass the remaining path segments.
 
-const API_PREFIX = '/api/invect/';
+const API_PREFIX = '/api/flowlib/';
 
 const server = http.createServer(async (req, res) => {
   try {
@@ -85,14 +85,14 @@ const server = http.createServer(async (req, res) => {
       return;
     }
 
-    // Only handle /api/invect/* routes
+    // Only handle /api/flowlib/* routes
     if (!url.pathname.startsWith(API_PREFIX)) {
       res.writeHead(404, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ error: 'Not Found' }));
       return;
     }
 
-    // Extract path segments after /api/invect/
+    // Extract path segments after /api/flowlib/
     const subPath = url.pathname.slice(API_PREFIX.length);
     const pathSegments = subPath ? subPath.split('/') : [];
 
@@ -116,7 +116,7 @@ const server = http.createServer(async (req, res) => {
       body: ['GET', 'HEAD'].includes(req.method || '') ? undefined : new Uint8Array(body),
     });
 
-    const context = { params: Promise.resolve({ invect: pathSegments }) };
+    const context = { params: Promise.resolve({ flowlib: pathSegments }) };
 
     // Dispatch to the correct HTTP method handler
     const method = (req.method || 'GET').toUpperCase();

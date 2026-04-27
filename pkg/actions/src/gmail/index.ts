@@ -8,7 +8,7 @@ export { gmailGetMessageAction } from './get-message';
 export { gmailCreateDraftAction } from './create-draft';
 export { gmailModifyLabelsAction } from './modify-labels';
 
-import type { ActionDefinition } from '@invect/action-kit';
+import type { ActionDefinition } from '@flowlib/action-kit';
 import { gmailListMessagesAction } from './list-messages';
 import { gmailSendMessageAction } from './send-message';
 import { gmailGetMessageAction } from './get-message';

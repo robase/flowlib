@@ -3,7 +3,7 @@ import { Edit, History } from 'lucide-react';
 import { Button } from '~/components/ui/button';
 import { useLatestFlowRun } from '~/api/executions.api';
 import { StatusBadge, formatRelativeTime } from './status-helpers';
-import type { Flow } from '@invect/core/types';
+import type { Flow } from '@flowlib/core/types';
 
 interface FlowCardProps {
   flow: Flow;

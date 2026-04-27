@@ -6,7 +6,7 @@
  * Requires a HubSpot OAuth2 credential with crm.objects.deals.read scope.
  */
 
-import { defineAction } from '@invect/action-kit';
+import { defineAction } from '@flowlib/action-kit';
 import { HUBSPOT_PROVIDER } from '../providers';
 import { z } from 'zod/v4';
 

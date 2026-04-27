@@ -3,7 +3,7 @@ import { defineConfig } from 'tsdown';
 export default defineConfig({
   entry: {
     index: 'src/index.ts',
-    'router/index': 'src/invect-router.ts',
+    'router/index': 'src/flowlib-router.ts',
   },
   format: ['cjs', 'esm'],
   dts: true,
@@ -13,7 +13,7 @@ export default defineConfig({
   report: false,
   unbundle: true,
   deps: {
-    neverBundle: ['@invect/core', 'express', 'cors', 'zod'],
+    neverBundle: ['@flowlib/core', 'express', 'cors', 'zod'],
   },
   outExtensions({ format }) {
     return {

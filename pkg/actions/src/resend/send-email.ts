@@ -8,7 +8,7 @@
  * @see https://resend.com/docs/api-reference/emails/send-email
  */
 
-import { defineAction } from '@invect/action-kit';
+import { defineAction } from '@flowlib/action-kit';
 import { RESEND_PROVIDER } from '../providers';
 import { z } from 'zod/v4';
 
@@ -210,7 +210,7 @@ export const resendSendEmailAction = defineAction({
         headers: {
           Authorization: `Bearer ${apiKey}`,
           'Content-Type': 'application/json',
-          'User-Agent': 'invect/1.0',
+          'User-Agent': 'flowlib/1.0',
         },
         body: JSON.stringify(body),
       });

@@ -37,7 +37,7 @@ describe('emitSdkSource', () => {
       };
       const { code, sdkImports } = emitSdkSource(def, { flowName: 'myFlow' });
       assertParses(code);
-      expect(code).toContain(`import { defineFlow, input, output } from "@invect/sdk"`);
+      expect(code).toContain(`import { defineFlow, input, output } from "@flowlib/sdk"`);
       expect(code).toContain(`export const myFlow = defineFlow({`);
       expect(code).toContain(`query: input(),`);
       expect(code).toContain(`out: output({`);
@@ -426,9 +426,9 @@ describe('emitSdkSource', () => {
       };
       const { code, actionImports } = emitSdkSource(def);
       assertParses(code);
-      expect(code).toContain(`import { gmailSendMessageAction } from "@invect/actions/gmail"`);
+      expect(code).toContain(`import { gmailSendMessageAction } from "@flowlib/actions/gmail"`);
       expect(code).toContain(`notify: gmailSendMessageAction({`);
-      expect(actionImports['@invect/actions/gmail']).toEqual(['gmailSendMessageAction']);
+      expect(actionImports['@flowlib/actions/gmail']).toEqual(['gmailSendMessageAction']);
     });
 
     it('types with no dot → generic node() fallback', () => {
@@ -445,7 +445,7 @@ describe('emitSdkSource', () => {
   });
 
   describe('JSON footer', () => {
-    it('emits /* @invect-definition */ footer when includeJsonFooter is true', () => {
+    it('emits /* @flowlib-definition */ footer when includeJsonFooter is true', () => {
       const def: DbFlowDefinition = {
         nodes: [{ id: 'n1', type: 'core.input', referenceId: 'q', params: {} }],
         edges: [],
@@ -453,10 +453,10 @@ describe('emitSdkSource', () => {
       };
       const { code } = emitSdkSource(def, { includeJsonFooter: true });
       assertParses(code);
-      expect(code).toContain('/* @invect-definition');
+      expect(code).toContain('/* @flowlib-definition');
       expect(code).toContain('*/');
       // Footer contains the full definition as JSON.
-      const footerMatch = code.match(/\/\* @invect-definition\n([\s\S]*?)\n\*\//);
+      const footerMatch = code.match(/\/\* @flowlib-definition\n([\s\S]*?)\n\*\//);
       expect(footerMatch).not.toBeNull();
       if (footerMatch) {
         const parsed = JSON.parse(footerMatch[1]);
@@ -471,7 +471,7 @@ describe('emitSdkSource', () => {
         edges: [],
       };
       const { code } = emitSdkSource(def);
-      expect(code).not.toContain('@invect-definition');
+      expect(code).not.toContain('@flowlib-definition');
     });
   });
 

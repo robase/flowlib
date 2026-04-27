@@ -2,10 +2,10 @@ import express from 'express';
 import type { ErrorRequestHandler } from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { createInvectRouter } from '@invect/express';
-import { auth } from '@invect/user-auth';
-import { rbac } from '@invect/rbac';
-import { webhooks } from '@invect/webhooks';
+import { createInvectRouter } from '@flowlib/express';
+import { auth } from '@flowlib/user-auth';
+import { rbac } from '@flowlib/rbac';
+import { webhooks } from '@flowlib/webhooks';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -15,23 +15,23 @@ const staticDir = process.env.STATIC_DIR || '/app/frontend';
 
 // --- Database ---
 const dbType = (process.env.INVECT_DB_TYPE as 'sqlite' | 'postgres' | 'mysql') || 'sqlite';
-const dbConnectionString = process.env.DATABASE_URL || 'file:./data/invect.db';
+const dbConnectionString = process.env.DATABASE_URL || 'file:./data/flowlib.db';
 
 // --- Encryption key (required) ---
 const encryptionKey = process.env.INVECT_ENCRYPTION_KEY;
 if (!encryptionKey) {
   console.error(
-    'FATAL: INVECT_ENCRYPTION_KEY is required. Generate one with: npx invect-cli secret',
+    'FATAL: INVECT_ENCRYPTION_KEY is required. Generate one with: npx flowlib-cli secret',
   );
   process.exit(1);
 }
 
 // --- Auth ---
-const adminEmail = process.env.INVECT_ADMIN_EMAIL || 'admin@invect.local';
+const adminEmail = process.env.INVECT_ADMIN_EMAIL || 'admin@flowlib.local';
 const adminPassword = process.env.INVECT_ADMIN_PASSWORD || 'changeme';
 
 // --- Webhooks ---
-const webhookBaseUrl = process.env.INVECT_WEBHOOK_BASE_URL || `http://localhost:${port}/invect`;
+const webhookBaseUrl = process.env.INVECT_WEBHOOK_BASE_URL || `http://localhost:${port}/flowlib`;
 
 // --- Trusted Origins (comma-separated) ---
 const trustedOrigins = process.env.INVECT_TRUSTED_ORIGINS
@@ -67,7 +67,7 @@ app.use(express.json());
 const invectRouter = await createInvectRouter({
   encryptionKey,
   database: {
-    id: 'invect-docker',
+    id: 'flowlib-docker',
     type: dbType,
     connectionString: dbConnectionString,
   },
@@ -83,7 +83,7 @@ app.get('/health', (_req, res) => {
 });
 
 // --- Mount Invect API ---
-app.use('/invect', invectRouter);
+app.use('/flowlib', invectRouter);
 
 // --- Serve static frontend ---
 app.use(express.static(staticDir));

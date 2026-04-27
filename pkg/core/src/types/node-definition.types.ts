@@ -1,5 +1,5 @@
 /**
- * Node definition types — re-exported from `@invect/action-kit` so that
+ * Node definition types — re-exported from `@flowlib/action-kit` so that
  * internal `src/...` import paths keep working while the canonical defs
  * live in the standalone action-kit package.
  */
@@ -9,4 +9,4 @@ export type {
   NodeHandleDefinition,
   NodeParamField,
   NodeDefinition,
-} from '@invect/action-kit';
+} from '@flowlib/action-kit';

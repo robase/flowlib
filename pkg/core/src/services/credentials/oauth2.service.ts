@@ -83,7 +83,7 @@ const STATE_EXPIRY_MS = 10 * 60 * 1000;
 // by the host. The previous module-level `setInterval` started a timer at
 // import time which broke edge runtimes (no timers between requests, the
 // interval ran in every isolate, and was never cleared). Hosts must now
-// invoke `invect.maintenance.cleanupExpiredOAuthStates()` from a cron entry
+// invoke `flowlib.maintenance.cleanupExpiredOAuthStates()` from a cron entry
 // point, OR call `OAuth2Service.cleanupExpiredStates()` directly.
 
 /**
@@ -98,7 +98,7 @@ export class OAuth2Service {
    *
    * Self-hosted long-lived processes can wire this to a `setInterval`;
    * serverless / edge hosts should drive it from an external cron tick
-   * via `invect.maintenance.cleanupExpiredOAuthStates()`.
+   * via `flowlib.maintenance.cleanupExpiredOAuthStates()`.
    */
   cleanupExpiredStates(now: number = Date.now()): { count: number } {
     let count = 0;

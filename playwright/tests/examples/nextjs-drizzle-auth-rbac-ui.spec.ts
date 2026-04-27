@@ -24,7 +24,7 @@ const exampleEnvBase = {
 let appPort = 3003;
 let appOrigin = `http://127.0.0.1:${appPort}`;
 let workflowsBase = `${appOrigin}/dashboard/workflows`;
-let apiBase = `${appOrigin}/api/invect`;
+let apiBase = `${appOrigin}/api/flowlib`;
 
 let containerName = '';
 let databaseUrl = '';
@@ -58,7 +58,7 @@ function setRuntimeUrls(port: number) {
   appPort = port;
   appOrigin = `http://127.0.0.1:${port}`;
   workflowsBase = `${appOrigin}/dashboard/workflows`;
-  apiBase = `${appOrigin}/api/invect`;
+  apiBase = `${appOrigin}/api/flowlib`;
 }
 
 async function getFreePort() {
@@ -90,7 +90,7 @@ async function getFreePort() {
 }
 
 async function startPostgresContainer(): Promise<{ containerName: string; port: number }> {
-  const name = `invect-pw-pg-${Date.now()}`;
+  const name = `flowlib-pw-pg-${Date.now()}`;
   const pgPort = await getFreePort();
 
   execSync(

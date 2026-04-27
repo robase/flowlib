@@ -10,10 +10,10 @@ export function registerResources(server: McpServer, client: InvectClient): void
   // Resource template: individual flow definition
   server.registerResource(
     'flow-definition',
-    new ResourceTemplate('invect://flows/{flowId}/definition', { list: undefined }),
+    new ResourceTemplate('flowlib://flows/{flowId}/definition', { list: undefined }),
     { description: 'The current definition of a specific flow (nodes, edges, params)' },
     async (uri) => {
-      const match = uri.href.match(/^invect:\/\/flows\/([^/]+)\/definition$/);
+      const match = uri.href.match(/^flowlib:\/\/flows\/([^/]+)\/definition$/);
       if (!match?.[1]) {
         return {
           contents: [{ uri: uri.href, text: 'Invalid flow URI', mimeType: 'text/plain' }],
@@ -36,10 +36,10 @@ export function registerResources(server: McpServer, client: InvectClient): void
   // Resource template: flow run result
   server.registerResource(
     'flow-run',
-    new ResourceTemplate('invect://runs/{flowRunId}', { list: undefined }),
+    new ResourceTemplate('flowlib://runs/{flowRunId}', { list: undefined }),
     { description: 'The result details of a specific flow run' },
     async (uri) => {
-      const match = uri.href.match(/^invect:\/\/runs\/([^/]+)$/);
+      const match = uri.href.match(/^flowlib:\/\/runs\/([^/]+)$/);
       if (!match?.[1]) {
         return {
           contents: [{ uri: uri.href, text: 'Invalid run URI', mimeType: 'text/plain' }],
@@ -62,7 +62,7 @@ export function registerResources(server: McpServer, client: InvectClient): void
   // Static resource: list of flows
   server.registerResource(
     'flows',
-    'invect://flows',
+    'flowlib://flows',
     { description: 'List of all flows' },
     async (uri) => {
       const flows = await client.listFlows();
@@ -81,7 +81,7 @@ export function registerResources(server: McpServer, client: InvectClient): void
   // Static resource: sanitised credential list
   server.registerResource(
     'credentials',
-    'invect://credentials',
+    'flowlib://credentials',
     { description: 'List of all credentials (metadata only, no secrets)' },
     async (uri) => {
       const creds = await client.listCredentials();
@@ -100,10 +100,10 @@ export function registerResources(server: McpServer, client: InvectClient): void
   // Resource template: node executions for a flow run
   server.registerResource(
     'run-node-executions',
-    new ResourceTemplate('invect://runs/{flowRunId}/node-executions', { list: undefined }),
+    new ResourceTemplate('flowlib://runs/{flowRunId}/node-executions', { list: undefined }),
     { description: 'Per-node execution traces for a flow run' },
     async (uri) => {
-      const match = uri.href.match(/^invect:\/\/runs\/([^/]+)\/node-executions$/);
+      const match = uri.href.match(/^flowlib:\/\/runs\/([^/]+)\/node-executions$/);
       if (!match?.[1]) {
         return {
           contents: [{ uri: uri.href, text: 'Invalid URI', mimeType: 'text/plain' }],

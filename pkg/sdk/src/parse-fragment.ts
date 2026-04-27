@@ -1,7 +1,7 @@
 /**
  * Browser-safe fragment parser — evaluates authored SDK text via `new Function`
  * with the SDK helpers injected into scope. Complements the Node-only
- * `@invect/sdk/evaluator` subpath for contexts that can't run jiti:
+ * `@flowlib/sdk/evaluator` subpath for contexts that can't run jiti:
  *
  *   - The flow editor's clipboard paste (copy-paste in the browser).
  *   - Light server-side round-trip checks where the full module-eval overhead
@@ -16,7 +16,7 @@
  *      gets unwrapped to the body, with `defineFlow` stubbed as identity
  *      during evaluation.
  *
- * Returns `{ nodes, edges }` in `@invect/sdk` shape — `SdkFlowNode` with
+ * Returns `{ nodes, edges }` in `@flowlib/sdk` shape — `SdkFlowNode` with
  * optional `id`/`label`/`position`, plus edges in the canonical
  * `{ from, to, handle? }` form.
  *
@@ -41,7 +41,7 @@ export interface ParsedFragment {
 
 /**
  * Helper names injected into the fragment evaluation scope. Matches the
- * public `@invect/sdk` surface one-to-one.
+ * public `@flowlib/sdk` surface one-to-one.
  */
 const SDK_HELPERS: Record<string, unknown> = {
   input,

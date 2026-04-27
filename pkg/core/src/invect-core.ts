@@ -160,13 +160,13 @@ const _INVECT_CORE_PROVIDER: NonNullable<NodeDefinition['provider']> = {
  *
  * @example
  * ```typescript
- * const invect = new Invect(config);
- * await invect.initialize();
+ * const flowlib = new Invect(config);
+ * await flowlib.initialize();
  *
- * const flow = await invect.createFlow({ name: "My Flow", description: "..." });
- * const result = await invect.startFlowRun(flow.id, inputs);
+ * const flow = await flowlib.createFlow({ name: "My Flow", description: "..." });
+ * const result = await flowlib.startFlowRun(flow.id, inputs);
  *
- * await invect.shutdown();
+ * await flowlib.shutdown();
  * ```
  */
 export class Invect {
@@ -231,7 +231,7 @@ export class Invect {
    *
    * @example
    * ```typescript
-   * const result = await invect.authorize({
+   * const result = await flowlib.authorize({
    *   identity: { id: 'user_123', role: 'editor' },
    *   action: 'flow:create',
    * });
@@ -356,7 +356,7 @@ export class Invect {
    *
    * @example
    * ```typescript
-   * invect.onAuthEvent('auth:forbidden', (event) => {
+   * flowlib.onAuthEvent('auth:forbidden', (event) => {
    *   auditLogger.warn('Access denied', event);
    * });
    * ```
@@ -384,7 +384,7 @@ export class Invect {
    *
    * @example
    * ```typescript
-   * const logger = invect.getLogger('execution', 'MyService');
+   * const logger = flowlib.getLogger('execution', 'MyService');
    * logger.debug('Starting execution'); // Only logs if execution scope is 'debug'
    * ```
    */
@@ -405,7 +405,7 @@ export class Invect {
    * @example
    * ```typescript
    * // Enable debug logging for execution during troubleshooting
-   * invect.setLogLevel('execution', 'debug');
+   * flowlib.setLogLevel('execution', 'debug');
    * ```
    */
   setLogLevel(scope: string, level: LogLevel): void {
@@ -1963,7 +1963,7 @@ export class Invect {
    *
    * @example
    * ```typescript
-   * const stream = await invect.createChatStream({
+   * const stream = await flowlib.createChatStream({
    *   messages: [{ role: 'user', content: 'Add a Gmail node' }],
    *   context: { flowId: 'flow_123' },
    * });

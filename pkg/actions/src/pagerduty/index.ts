@@ -15,7 +15,7 @@ export { pagerdutyListServicesAction } from './list-services';
 
 // ── Bulk array ──────────────────────────────────────────────────────────
 
-import type { ActionDefinition } from '@invect/action-kit';
+import type { ActionDefinition } from '@flowlib/action-kit';
 
 import { pagerdutyListIncidentsAction } from './list-incidents';
 import { pagerdutyCreateIncidentAction } from './create-incident';

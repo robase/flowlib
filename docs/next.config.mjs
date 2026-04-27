@@ -19,7 +19,7 @@ const config = {
   turbopack: {
     root: monorepoRoot,
   },
-  transpilePackages: ['@invect/ui', '@invect/core'],
+  transpilePackages: ['@flowlib/ui', '@flowlib/core'],
 };
 
 export default withMDX(config);

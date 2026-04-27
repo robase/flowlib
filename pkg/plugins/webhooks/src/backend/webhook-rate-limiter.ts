@@ -1,6 +1,6 @@
 /**
  * Webhook Rate Limiter — sliding-window in-memory rate limiter.
- * Moved from @invect/core to the webhooks plugin.
+ * Moved from @flowlib/core to the webhooks plugin.
  */
 
 export interface RateLimiterOptions {

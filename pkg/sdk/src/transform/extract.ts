@@ -8,7 +8,7 @@
  * closures over identifiers not in `ctx` / the allowed-globals set.
  *
  * Uses the TypeScript compiler API for parsing + walking. TypeScript is only
- * pulled in for the transform subpath (`@invect/sdk/transform`); normal
+ * pulled in for the transform subpath (`@flowlib/sdk/transform`); normal
  * consumers never import it.
  *
  * Strategy:

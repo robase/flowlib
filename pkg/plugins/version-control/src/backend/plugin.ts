@@ -2,7 +2,7 @@
 // Version Control Plugin — Main Entry Point
 // =============================================================================
 
-import type { InvectPlugin, InvectPluginDefinition, PluginEndpointContext } from '@invect/core';
+import type { InvectPlugin, InvectPluginDefinition, PluginEndpointContext } from '@flowlib/core';
 
 import type { VersionControlPluginOptions } from './types';
 import { VC_SCHEMA } from './schema';
@@ -15,8 +15,8 @@ import { configureSyncInputSchema, historyLimitSchema } from './validation';
  * Syncs Invect flows to a Git remote as readable `.flow.ts` files.
  *
  * ```ts
- * import { versionControl } from '@invect/version-control';
- * import { githubProvider } from '@invect/version-control/providers/github';
+ * import { versionControl } from '@flowlib/version-control';
+ * import { githubProvider } from '@flowlib/version-control/providers/github';
  *
  * new Invect({
  *   plugins: [
@@ -50,7 +50,7 @@ function _vcBackendPlugin(options: Omit<VersionControlPluginOptions, 'frontend'>
     schema: VC_SCHEMA,
 
     setupInstructions:
-      'Run `npx invect-cli generate` then `npx invect-cli migrate` to create the invect_vc_sync_config and invect_vc_sync_history tables.',
+      'Run `npx flowlib-cli generate` then `npx flowlib-cli migrate` to create the invect_vc_sync_config and invect_vc_sync_history tables.',
 
     // =======================================================================
     // Initialization
@@ -298,7 +298,7 @@ function _vcBackendPlugin(options: Omit<VersionControlPluginOptions, 'frontend'>
   // =========================================================================
 
   async function handlePrMerged(
-    db: import('@invect/core').PluginDatabaseApi,
+    db: import('@flowlib/core').PluginDatabaseApi,
     prNumber: number,
   ): Promise<void> {
     // Find the sync config with this active PR — read draft_branch BEFORE clearing it

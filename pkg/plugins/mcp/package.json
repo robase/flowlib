@@ -1,25 +1,25 @@
 {
-  "name": "@invect/mcp",
+  "name": "@flowlib/mcp",
   "version": "0.0.12",
   "description": "MCP (Model Context Protocol) plugin for Invect — exposes flow building, editing, execution, and debugging as MCP tools for Claude Desktop, VS Code Copilot, and other MCP clients",
   "keywords": [
     "ai-agent",
     "claude",
     "copilot",
-    "invect",
+    "flowlib",
     "mcp",
     "model-context-protocol",
     "plugin"
   ],
   "license": "MIT",
-  "author": "robase <team@invect.dev>",
+  "author": "robase <team@flowlib.dev>",
   "repository": {
     "type": "git",
-    "url": "https://github.com/robase/invect.git",
+    "url": "https://github.com/robase/flowlib.git",
     "directory": "pkg/plugins/mcp"
   },
   "bin": {
-    "invect-mcp": "./dist/cli/index.mjs"
+    "flowlib-mcp": "./dist/cli/index.mjs"
   },
   "files": [
     "dist/**/*"
@@ -59,8 +59,8 @@
     "lint": "oxlint --fix"
   },
   "dependencies": {
-    "@invect/core": "workspace:*",
-    "@invect/sdk": "workspace:*",
+    "@flowlib/core": "workspace:*",
+    "@flowlib/sdk": "workspace:*",
     "@modelcontextprotocol/sdk": "^1.29.0",
     "zod": "^3.25.0"
   },

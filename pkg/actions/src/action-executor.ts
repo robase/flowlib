@@ -9,7 +9,7 @@
  *
  * Both ultimately call the same `action.execute(params, context)` function.
  * The executor consumes the structural `NodeExecutionContext` exported by
- * `@invect/action-kit`, so it has no dependency on `@invect/core`.
+ * `@flowlib/action-kit`, so it has no dependency on `@flowlib/core`.
  */
 
 import {
@@ -28,7 +28,7 @@ import {
   type NodeExecutionFailedResult,
   type NodeExecutionPendingResult,
   type NodeExecutionResult,
-} from '@invect/action-kit';
+} from '@flowlib/action-kit';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // HELPERS

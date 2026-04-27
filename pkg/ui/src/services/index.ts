@@ -3,4 +3,4 @@ export type {
   FlowValidationError,
   FlowValidationWarning,
   FlowValidationResult,
-} from '@invect/core/types';
+} from '@flowlib/core/types';

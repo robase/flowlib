@@ -31,7 +31,7 @@ export class ErrorBoundary extends Component<Props, State> {
   render(): ReactNode {
     if (this.state.error) {
       return (
-        <div className="invect-fallback">
+        <div className="flowlib-fallback">
           <h2>Webview crashed</h2>
           <p>{this.state.error.message}</p>
           <p style={{ fontSize: 11, opacity: 0.6 }}>{this.state.error.stack}</p>

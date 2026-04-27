@@ -1,6 +1,6 @@
 import React, { createContext, useContext } from 'react';
 
-const FrontendPathContext = createContext<string>('/invect');
+const FrontendPathContext = createContext<string>('/flowlib');
 
 export interface FrontendPathProviderProps {
   children: React.ReactNode;
@@ -9,7 +9,7 @@ export interface FrontendPathProviderProps {
 
 export function FrontendPathProvider({
   children,
-  basePath = '/invect',
+  basePath = '/flowlib',
 }: FrontendPathProviderProps) {
   return (
     <FrontendPathContext.Provider value={normalizeBasePath(basePath)}>

@@ -1,7 +1,7 @@
-export { InvectModule } from './invect-nestjs.module';
-export { InvectController } from './invect-nestjs.controller';
-export { InvectService } from './invect-nestjs.service';
-export { createInvect } from '@invect/core';
-export type { InvectConfig, InvectInstance } from '@invect/core';
+export { InvectModule } from './flowlib-nestjs.module';
+export { InvectController } from './flowlib-nestjs.controller';
+export { InvectService } from './flowlib-nestjs.service';
+export { createInvect } from '@flowlib/core';
+export type { InvectConfig, InvectInstance } from '@flowlib/core';
 // Backwards-compatible re-export
-export { Invect } from '@invect/core';
+export { Invect } from '@flowlib/core';

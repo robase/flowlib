@@ -90,7 +90,7 @@ async function createWebhookTrigger(
 }
 
 async function goToWebhooksPage(page: Page) {
-  await page.goto('/invect');
+  await page.goto('/flowlib');
   await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible({ timeout: 15_000 });
 
   await page.locator('.imp-sidebar-shell').getByRole('link', { name: 'Webhooks' }).click();
@@ -210,7 +210,7 @@ test.describe('Webhooks Plugin UI', () => {
     await expect(flowLink).toBeVisible();
     await flowLink.click();
 
-    await expect(page).toHaveURL(new RegExp(`/invect/flow/${flowId}$`), { timeout: 10_000 });
+    await expect(page).toHaveURL(new RegExp(`/flowlib/flow/${flowId}$`), { timeout: 10_000 });
 
     const triggerStillExists = await request.get(
       `${apiBase}/plugins/webhooks/triggers/${linkedTrigger.id}`,

@@ -12,7 +12,7 @@ export default defineConfig({
   sourcemap: true,
   clean: true,
   deps: {
-    neverBundle: ['@invect/action-kit', '@invect/actions', 'zod', 'typescript', 'jiti'],
+    neverBundle: ['@flowlib/action-kit', '@flowlib/actions', 'zod', 'typescript', 'jiti'],
   },
   outExtensions({ format }) {
     return { js: format === 'cjs' ? '.cjs' : '.mjs' };

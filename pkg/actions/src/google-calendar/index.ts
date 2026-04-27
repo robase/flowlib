@@ -9,7 +9,7 @@ export { googleCalendarDeleteEventAction } from './delete-event';
 export { googleCalendarGetEventAction } from './get-event';
 export { googleCalendarQueryFreebusyAction } from './query-freebusy';
 
-import type { ActionDefinition } from '@invect/action-kit';
+import type { ActionDefinition } from '@flowlib/action-kit';
 import { googleCalendarListEventsAction } from './list-events';
 import { googleCalendarCreateEventAction } from './create-event';
 import { googleCalendarUpdateEventAction } from './update-event';

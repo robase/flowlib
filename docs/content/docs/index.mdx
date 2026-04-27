@@ -11,7 +11,7 @@ Invect is an open-source workflow orchestration library that you mount directly 
 ## Get started in one command
 
 ```bash
-npx invect-cli init
+npx flowlib-cli init
 ```
 
 The CLI detects your framework, installs the right packages, creates your config, and sets up the database. Or see the framework-specific code below.
@@ -23,14 +23,14 @@ The CLI detects your framework, installs the right packages, creates your config
 
 ```ts title="index.ts"
 import express from 'express';
-import { createInvectRouter } from '@invect/express';
+import { createInvectRouter } from '@flowlib/express';
 
 const app = express();
 const router = await createInvectRouter({
   database: { type: 'sqlite', connectionString: 'file:./dev.db' },
   encryptionKey: process.env.INVECT_ENCRYPTION_KEY,
 });
-app.use('/invect', router);
+app.use('/flowlib', router);
 app.listen(3000);
 ```
 
@@ -39,7 +39,7 @@ app.listen(3000);
 
 ```ts title="app.module.ts"
 import { Module } from '@nestjs/common';
-import { InvectModule } from '@invect/nestjs';
+import { InvectModule } from '@flowlib/nestjs';
 
 @Module({
   imports: [
@@ -55,8 +55,8 @@ export class AppModule {}
 </Tab>
 <Tab value="Next.js">
 
-```ts title="app/api/invect/[...invect]/route.ts"
-import { createInvectHandler } from '@invect/nextjs';
+```ts title="app/api/flowlib/[...flowlib]/route.ts"
+import { createInvectHandler } from '@flowlib/nextjs';
 
 const handler = createInvectHandler({
   database: { type: 'sqlite', connectionString: 'file:./dev.db' },

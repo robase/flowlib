@@ -1,5 +1,5 @@
 import { cn } from '../../lib/utils';
-import { NodeExecutionStatus } from '@invect/core/types';
+import { NodeExecutionStatus } from '@flowlib/core/types';
 
 // Utility functions for styling nodes and edges, inspired by Invect
 
@@ -62,12 +62,12 @@ export const mapExecutionStatusToNodeStatus = (
 };
 
 // Invect-inspired color palette (simplified)
-// Reference: https://github.com/invect-ai/invect/blob/main/src/frontend/src/utils/styleUtils.ts
-// and https://github.com/invect-ai/invect/blob/main/src/frontend/src/style/index.css
+// Reference: https://github.com/flowlib-ai/flowlib/blob/main/src/frontend/src/utils/styleUtils.ts
+// and https://github.com/flowlib-ai/flowlib/blob/main/src/frontend/src/style/index.css
 export const langflowColors = {
-  // Categories (using names from invect's nodeColorsName for consistency)
+  // Categories (using names from flowlib's nodeColorsName for consistency)
   emerald: { light: '#d1fae5', DEFAULT: '#10b981', dark: '#059669' }, // inputs
-  sky: { light: '#dbeafe', DEFAULT: '#3b82f6', dark: '#2563eb' }, // outputs (using sky for blue from invect)
+  sky: { light: '#dbeafe', DEFAULT: '#3b82f6', dark: '#2563eb' }, // outputs (using sky for blue from flowlib)
   fuchsia: { light: '#f5d0fe', DEFAULT: '#c026d3', dark: '#a21caf' }, // models
   amber: { light: '#fef3c7', DEFAULT: '#f59e0b', dark: '#d97706' }, // prompts
   orange: { light: '#fed7aa', DEFAULT: '#f97316', dark: '#ea580c' }, // chains
@@ -123,7 +123,7 @@ export const nodeTypeToColorName: Record<NodeType, keyof typeof langflowColors> 
 };
 
 // Get icon name (Lucide icon names) for different node types
-// Reference: https://github.com/invect-ai/invect/blob/main/src/frontend/src/utils/styleUtils.ts nodeIconToDisplayIconMap
+// Reference: https://github.com/flowlib-ai/flowlib/blob/main/src/frontend/src/utils/styleUtils.ts nodeIconToDisplayIconMap
 export const getNodeIconName = (type: NodeType, icon?: string): string => {
   if (icon && icon !== 'Default' /* Handle Invect's "Default" placeholder */) {
     // Attempt to map known Invect icon names to Lucide, or use directly if valid

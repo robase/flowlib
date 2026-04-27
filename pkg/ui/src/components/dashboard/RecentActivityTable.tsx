@@ -9,7 +9,7 @@ import {
   TableRow,
 } from '~/components/ui/table';
 import { StatusBadge, formatRelativeTime, formatDuration } from './status-helpers';
-import type { Flow, FlowRun } from '@invect/core/types';
+import type { Flow, FlowRun } from '@flowlib/core/types';
 import { InvectLoader } from '../shared/InvectLoader';
 
 interface RecentActivityTableProps {

@@ -8,14 +8,14 @@ import type { APIRequestContext, Page } from '@playwright/test';
 // Shared helpers
 // ---------------------------------------------------------------------------
 
-/** Navigate to /invect and wait for the Dashboard heading to appear. */
+/** Navigate to /flowlib and wait for the Dashboard heading to appear. */
 async function goToDashboard(page: Page) {
-  await page.goto('/invect');
+  await page.goto('/flowlib');
   await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible({ timeout: 15_000 });
 }
 
 /**
- * GET /invect/flows and return the id of the flow matching `name`,
+ * GET /flowlib/flows and return the id of the flow matching `name`,
  * or null if the list request fails or no match is found.
  */
 async function getFlowIdByName(
@@ -32,7 +32,7 @@ async function getFlowIdByName(
   return flows.find((f) => f.name === name)?.id ?? null;
 }
 
-/** POST /invect/flows/:id/run with an empty payload and return the run record. */
+/** POST /flowlib/flows/:id/run with an empty payload and return the run record. */
 async function triggerFlowRun(
   apiBase: string,
   request: APIRequestContext,
@@ -45,7 +45,7 @@ async function triggerFlowRun(
   return resp.json();
 }
 
-/** POST /invect/flows — create a minimal flow and return the created record. */
+/** POST /flowlib/flows — create a minimal flow and return the created record. */
 async function createFlowViaApi(
   apiBase: string,
   request: APIRequestContext,

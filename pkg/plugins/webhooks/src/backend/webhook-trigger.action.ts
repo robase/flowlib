@@ -10,7 +10,7 @@
  * `{{ webhook_trigger.body.pull_request.title }}`.
  */
 
-import { defineAction, TRIGGERS_PROVIDER } from '@invect/core';
+import { defineAction, TRIGGERS_PROVIDER } from '@flowlib/core';
 import { z } from 'zod/v4';
 
 const paramsSchema = z.object({

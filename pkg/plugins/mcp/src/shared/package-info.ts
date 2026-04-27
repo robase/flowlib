@@ -22,6 +22,6 @@ function readVersion(): string {
   }
 }
 
-export const MCP_SERVER_NAME = 'invect-mcp';
+export const MCP_SERVER_NAME = 'flowlib-mcp';
 export const MCP_SERVER_VERSION = readVersion();
 export const MCP_PROTOCOL_VERSION = '2025-03-26';

@@ -1,5 +1,5 @@
 /**
- * `invect.showMcpConfig` — opens an editor tab containing the JSON
+ * `flowlib.showMcpConfig` — opens an editor tab containing the JSON
  * snippet the user pastes into Claude Code / Cursor / Claude Desktop
  * to register the embedded Invect server as an MCP source.
  *
@@ -12,12 +12,12 @@
 import * as vscode from 'vscode';
 
 export interface ShowMcpConfigDeps {
-  /** Resolves the embedded server URL (e.g. `http://127.0.0.1:5xxx/invect`). */
+  /** Resolves the embedded server URL (e.g. `http://127.0.0.1:5xxx/flowlib`). */
   getApiUrl: () => Promise<string>;
 }
 
 export function registerShowMcpConfigCommand(deps: ShowMcpConfigDeps): vscode.Disposable {
-  return vscode.commands.registerCommand('invect.showMcpConfig', async () => {
+  return vscode.commands.registerCommand('flowlib.showMcpConfig', async () => {
     let apiUrl: string;
     try {
       apiUrl = await deps.getApiUrl();
@@ -50,7 +50,7 @@ function renderMarkdown(mcpEndpoint: string): string {
   const config = JSON.stringify(
     {
       mcpServers: {
-        invect: {
+        flowlib: {
           url: mcpEndpoint,
         },
       },
@@ -123,7 +123,7 @@ Once configured, the assistant can:
 - **Run a flow** with inputs
 - **Read run history + logs** for debugging
 - **Inspect node executions** for a given run
-- **List available actions** (every \`@invect/actions\` provider + plugin contribution)
+- **List available actions** (every \`@flowlib/actions\` provider + plugin contribution)
 
 The assistant operates against the same in-process SQLite database the
 visual editor uses — changes it makes are visible in the canvas.

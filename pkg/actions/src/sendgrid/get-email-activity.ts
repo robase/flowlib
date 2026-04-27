@@ -8,7 +8,7 @@
  * @see https://www.twilio.com/docs/sendgrid/api-reference/email-activity/filter-all-messages
  */
 
-import { defineAction } from '@invect/action-kit';
+import { defineAction } from '@flowlib/action-kit';
 import { SENDGRID_PROVIDER } from '../providers';
 import { z } from 'zod/v4';
 
@@ -121,7 +121,7 @@ export const sendgridGetEmailActivityAction = defineAction({
       const response = await fetch(url, {
         headers: {
           Authorization: `Bearer ${apiKey}`,
-          'User-Agent': 'invect/1.0',
+          'User-Agent': 'flowlib/1.0',
         },
       });
 

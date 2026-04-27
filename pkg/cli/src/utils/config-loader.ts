@@ -3,14 +3,14 @@
  *
  * Resolves and loads the user's Invect configuration file to discover
  * plugins and their schemas. Uses jiti for runtime TypeScript loading
- * Discovers and loads the user's invect.config.ts file.
+ * Discovers and loads the user's flowlib.config.ts file.
  *
  * Search order:
  *   1. Explicit --config path
- *   2. invect.config.ts / invect.config.js in cwd
- *   3. src/invect.config.ts
- *   4. lib/invect.config.ts
- *   5. config/invect.config.ts
+ *   2. flowlib.config.ts / flowlib.config.js in cwd
+ *   3. src/flowlib.config.ts
+ *   4. lib/flowlib.config.ts
+ *   5. config/flowlib.config.ts
  *   6. Inline config in common framework files
  */
 
@@ -41,7 +41,7 @@ interface ResolvedConfig {
    * Optional schema transforms (e.g., multi-tenant column injection).
    *
    * Plumbed straight through to `mergeSchemas` — the loader does not validate
-   * the shape so the consumer (`@invect/core`) can evolve the contract.
+   * the shape so the consumer (`@flowlib/core`) can evolve the contract.
    */
   schemaTransforms: unknown[];
   /** Raw config object */
@@ -50,12 +50,12 @@ interface ResolvedConfig {
   configPath: string;
 }
 
-const CONFIG_FILENAMES = ['invect.config.ts', 'invect.config.js', 'invect.config.mjs'];
+const CONFIG_FILENAMES = ['flowlib.config.ts', 'flowlib.config.js', 'flowlib.config.mjs'];
 
 const CONFIG_DIRECTORIES = ['.', 'src', 'lib', 'config', 'utils'];
 
 /**
- * Find the invect config file.
+ * Find the flowlib config file.
  */
 export function findConfigPath(explicitPath?: string): string | null {
   if (explicitPath) {

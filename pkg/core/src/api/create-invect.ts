@@ -124,14 +124,14 @@ async function seedDefaultCredentials(sf: ServiceFactory, config: InvectConfig):
  *
  * @example
  * ```typescript
- * const invect = await createInvect({
+ * const flowlib = await createInvect({
  *   database: { type: 'sqlite', connectionString: 'file:./dev.db' },
  * });
  *
- * const flow = await invect.flows.create({ name: 'My Flow' });
- * const result = await invect.runs.start(flow.id, { input: 'hello' });
+ * const flow = await flowlib.flows.create({ name: 'My Flow' });
+ * const result = await flowlib.runs.start(flow.id, { input: 'hello' });
  *
- * await invect.shutdown();
+ * await flowlib.shutdown();
  * ```
  */
 export async function createInvect(config: InvectConfig): Promise<InvectInstance> {

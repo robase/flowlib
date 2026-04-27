@@ -144,12 +144,12 @@
   stroke: var(--destructive, #ef4444);
 }
 
-/* Custom dark mode variant scoped to .invect container */
+/* Custom dark mode variant scoped to .flowlib container */
 @custom-variant dark (&:is(.dark *));
 
-/* Scope all utilities to .invect container */
+/* Scope all utilities to .flowlib container */
 @layer utilities {
-  .invect {
+  .flowlib {
     @tailwind utilities;
 
     /* Theme CSS variables - light mode */
@@ -270,7 +270,7 @@
     --sidebar-border: var(--imp-sidebar-border);
     --sidebar-ring: var(--imp-sidebar-ring);
 
-    /* Apply Geist Sans for UI text within .invect and reserve Iosevka for code-oriented surfaces. */
+    /* Apply Geist Sans for UI text within .flowlib and reserve Iosevka for code-oriented surfaces. */
     font-family: 'Geist Variable', 'Geist', ui-sans-serif, system-ui, sans-serif;
 
     @theme inline {
@@ -436,13 +436,13 @@
       --imp-info-muted: #1e3a5f;
     }
 
-    /* Base styles scoped to .invect */
+    /* Base styles scoped to .flowlib */
     * {
       @apply border-border outline-ring/50;
     }
 
-    /* Explicitly set bg & text on the .invect container so the host app's
-       body/root colours never bleed through. This makes invect fully self-contained. */
+    /* Explicitly set bg & text on the .flowlib container so the host app's
+       body/root colours never bleed through. This makes flowlib fully self-contained. */
     background-color: var(--background);
     color: var(--foreground);
 

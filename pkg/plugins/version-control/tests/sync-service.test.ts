@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { VcSyncService } from '../src/backend/sync-service';
 import type { GitProvider } from '../src/backend/git-provider';
-import type { PluginDatabaseApi } from '@invect/core';
+import type { PluginDatabaseApi } from '@flowlib/core';
 import type { VersionControlPluginOptions } from '../src/backend/types';
 
 // ── Mock GitProvider ────────────────────────────────────────────────────

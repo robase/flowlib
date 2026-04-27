@@ -8,7 +8,7 @@
  */
 import { strict as assert } from 'node:assert';
 import { FlowRunStatus, type NodeOutput } from '../../src';
-import { defineFlow, input, template, model } from '@invect/sdk';
+import { defineFlow, input, template, model } from '@flowlib/sdk';
 import type { InvectInstance } from '../../src/api/types';
 import type { FlowExample } from './example-types';
 
@@ -17,7 +17,7 @@ import type { FlowExample } from './example-types';
  * Creates a credential with proper provider metadata for detection.
  */
 async function ensureAICredential(
-  invect: InvectInstance,
+  flowlib: InvectInstance,
 ): Promise<{ id: string; name: string; isOpenAI: boolean }> {
   const openaiKey = process.env.OPENAI_API_KEY;
   const anthropicKey = process.env.ANTHROPIC_API_KEY;
@@ -32,7 +32,7 @@ async function ensureAICredential(
   const apiKey = openaiKey || anthropicKey!;
   const providerName = isOpenAI ? 'openai' : 'anthropic';
 
-  const created = await invect.credentials.create({
+  const created = await flowlib.credentials.create({
     name: `E2E ${providerName.charAt(0).toUpperCase() + providerName.slice(1)} Credential`,
     type: 'http-api',
     authType: 'bearer',
@@ -84,24 +84,24 @@ export const inputTemplateModelExample: FlowExample = {
   description:
     'User builds a flow that takes a topic, creates a prompt, and generates an AI response.',
 
-  async execute(invect) {
-    const credential = await ensureAICredential(invect);
+  async execute(flowlib) {
+    const credential = await ensureAICredential(flowlib);
     console.log(`  📝 Using credential: ${credential.name} (${credential.id})`);
     console.log(`  🤖 Provider: ${credential.isOpenAI ? 'OpenAI' : 'Anthropic'}`);
 
-    const flow = await invect.flows.create({
+    const flow = await flowlib.flows.create({
       name: `e2e-input-template-model-${Date.now()}`,
     });
     console.log(`  📁 Created flow: ${flow.name} (${flow.id})`);
 
     const flowDefinition = buildFlowDefinition(credential.id, credential.isOpenAI);
-    await invect.versions.create(flow.id, {
+    await flowlib.versions.create(flow.id, {
       invectDefinition: flowDefinition,
     });
     console.log(`  💾 Saved flow version with ${flowDefinition.nodes.length} nodes`);
 
     console.log(`  🚀 Executing flow...`);
-    const result = await invect.runs.start(
+    const result = await flowlib.runs.start(
       flow.id,
       { topic: 'the invention of the telephone' },
       { useBatchProcessing: false },

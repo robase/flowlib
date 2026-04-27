@@ -11,7 +11,7 @@ import type { ServiceFactory } from '../services/service-factory';
 import type { Logger } from '../schemas';
 import * as Schemas from '../schemas';
 import { FlowRunStatus } from '../types/base';
-import type { DashboardStats } from '../invect-core';
+import type { DashboardStats } from '../flowlib-core';
 import { FlowValidator } from '../services/flow-validator';
 import { invectDefinitionSchema } from '../services/flow-versions/schemas-fresh';
 import type { InvectDefinition } from '../services/flow-versions/schemas-fresh';

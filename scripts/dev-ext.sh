@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Launch the @invect/vscode extension in a VSCode Extension Development Host
+# Launch the @flowlib/vscode extension in a VSCode Extension Development Host
 # AND start watch builds for the packages the extension consumes.
 #
 # Watch sequence:
-#   - @invect/ui          (Vite watch — rebuilds dist/ on source changes)
-#   - @invect/vscode host (tsdown --watch — rebuilds dist/extension.js)
-#   - @invect/vscode webview (Vite watch — rebuilds dist/webview/main.js)
+#   - @flowlib/ui          (Vite watch — rebuilds dist/ on source changes)
+#   - @flowlib/vscode host (tsdown --watch — rebuilds dist/extension.js)
+#   - @flowlib/vscode webview (Vite watch — rebuilds dist/webview/main.js)
 #
 # When any of these rebuilds, hit Cmd+R in the Extension Development Host
 # window to reload the webview / activate the new host bundle.
@@ -32,9 +32,9 @@ EOF
   exit 1
 fi
 
-echo "==> Building @invect/ui + @invect/vscode (host + webview)…"
-pnpm --filter @invect/ui build
-pnpm --filter @invect/vscode build
+echo "==> Building @flowlib/ui + @flowlib/vscode (host + webview)…"
+pnpm --filter @flowlib/ui build
+pnpm --filter @flowlib/vscode build
 
 # Track child PIDs so the trap can clean everything up if the user Ctrl+C's.
 PIDS=()
@@ -54,13 +54,13 @@ trap cleanup EXIT INT TERM
 echo
 echo "==> Starting watch jobs (logs prefixed by package)…"
 
-(pnpm --filter @invect/ui dev 2>&1 | sed -u 's/^/[ui]      /') &
+(pnpm --filter @flowlib/ui dev 2>&1 | sed -u 's/^/[ui]      /') &
 PIDS+=($!)
 
-(pnpm --filter @invect/vscode build:watch 2>&1 | sed -u 's/^/[ext]     /') &
+(pnpm --filter @flowlib/vscode build:watch 2>&1 | sed -u 's/^/[ext]     /') &
 PIDS+=($!)
 
-(pnpm --filter @invect/vscode build:webview --watch 2>&1 | sed -u 's/^/[webview] /') &
+(pnpm --filter @flowlib/vscode build:webview --watch 2>&1 | sed -u 's/^/[webview] /') &
 PIDS+=($!)
 
 echo

@@ -5,7 +5,7 @@
  * Requires a Salesforce OAuth2 credential with API access.
  */
 
-import { defineAction } from '@invect/action-kit';
+import { defineAction } from '@flowlib/action-kit';
 import { SALESFORCE_PROVIDER } from '../providers';
 import { z } from 'zod/v4';
 

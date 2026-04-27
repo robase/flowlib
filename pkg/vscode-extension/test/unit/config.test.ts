@@ -29,8 +29,8 @@ suite('config — defaults + URL validation', () => {
   });
 
   test('isValidBackendUrl accepts http and https', () => {
-    assert.deepEqual(isValidBackendUrl('http://localhost:3000/invect'), { ok: true });
-    assert.deepEqual(isValidBackendUrl('https://invect.example.com'), { ok: true });
+    assert.deepEqual(isValidBackendUrl('http://localhost:3000/flowlib'), { ok: true });
+    assert.deepEqual(isValidBackendUrl('https://flowlib.example.com'), { ok: true });
     assert.deepEqual(isValidBackendUrl('http://192.168.1.5:8080/'), { ok: true });
   });
 });

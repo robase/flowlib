@@ -7,7 +7,7 @@ export { facebookListPagesAction } from './list-pages';
 export { facebookCreatePagePostAction } from './create-page-post';
 export { facebookGetPagePostsAction } from './get-page-posts';
 
-import type { ActionDefinition } from '@invect/action-kit';
+import type { ActionDefinition } from '@flowlib/action-kit';
 import { facebookGetMeAction } from './get-me';
 import { facebookListPagesAction } from './list-pages';
 import { facebookCreatePagePostAction } from './create-page-post';

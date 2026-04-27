@@ -1,9 +1,9 @@
 import { createRoot } from 'react-dom/client';
 
-// Order matters: load @invect/ui's stylesheet first (carries the canvas
+// Order matters: load @flowlib/ui's stylesheet first (carries the canvas
 // tokens, react-flow CSS, Tailwind utilities, the lot), then theme-bridge
 // CSS overrides --imp-* tokens with VSCode equivalents at :root.
-import '@invect/ui/styles';
+import '@flowlib/ui/styles';
 import './theme-bridge.css';
 import { ErrorBoundary } from './error-boundary';
 import { FlowEditorApp } from './FlowEditorApp';

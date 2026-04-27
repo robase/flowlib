@@ -1,7 +1,7 @@
 name: Deploy Docs to GitHub Pages
 
 env:
-  CUSTOM_DOMAIN: invect.dev
+  CUSTOM_DOMAIN: flowlib.dev
 
 on:
   push:
@@ -39,10 +39,10 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Build workspace packages
-        run: pnpm --filter @invect/core --filter @invect/layouts --filter @invect/ui run build
+        run: pnpm --filter @flowlib/core --filter @flowlib/layouts --filter @flowlib/ui run build
 
       - name: Build docs
-        run: pnpm --filter @invect/docs run build
+        run: pnpm --filter @flowlib/docs run build
         env:
           DOCS_BASE_PATH: ''
 

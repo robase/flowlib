@@ -28,13 +28,13 @@ import {
   editFlowSourceTool,
   writeFlowSourceTool,
 } from '../../../src/services/chat/tools/sdk-tools';
-import { createTestInvect } from '../helpers/test-invect';
+import { createTestInvect } from '../helpers/test-flowlib';
 
 function ensureSdkBuilt(): void {
   const repoRoot = join(__dirname, '..', '..', '..', '..', '..');
   const sdkDist = join(repoRoot, 'pkg', 'sdk', 'dist', 'index.mjs');
   if (!fsSync.existsSync(sdkDist)) {
-    execSync('pnpm --filter @invect/sdk build', { cwd: repoRoot, stdio: 'inherit' });
+    execSync('pnpm --filter @flowlib/sdk build', { cwd: repoRoot, stdio: 'inherit' });
   }
 }
 
@@ -46,8 +46,8 @@ interface ToolInstance {
   params: Record<string, unknown>;
 }
 
-function getAgentTools(invect: InvectInstance, flowId: string): Promise<ToolInstance[]> {
-  return invect.versions.get(flowId, 'latest').then((v) => {
+function getAgentTools(flowlib: InvectInstance, flowId: string): Promise<ToolInstance[]> {
+  return flowlib.versions.get(flowId, 'latest').then((v) => {
     if (!v?.invectDefinition) {
       return [];
     }
@@ -57,29 +57,29 @@ function getAgentTools(invect: InvectInstance, flowId: string): Promise<ToolInst
 }
 
 describe('Chat SDK tools — agent-tool lifecycle', () => {
-  let invect: InvectInstance;
+  let flowlib: InvectInstance;
   let baseCtx: Omit<ChatToolContext, 'chatContext'>;
 
   beforeAll(async () => {
     ensureSdkBuilt();
-    invect = await createTestInvect();
-    baseCtx = { invect };
+    flowlib = await createTestInvect();
+    baseCtx = { flowlib };
   });
 
   afterAll(async () => {
-    await invect.shutdown();
+    await flowlib.shutdown();
   });
 
   let flowId: string;
   beforeEach(async () => {
-    const flow = await invect.flows.create({ name: 'Agent tool lifecycle test' });
+    const flow = await flowlib.flows.create({ name: 'Agent tool lifecycle test' });
     flowId = flow.id;
   });
 
   describe('create agent with tools', () => {
     it('mints fresh instanceIds for each tool at creation', async () => {
       const source = `
-import { defineFlow, input, agent, tool } from '@invect/sdk';
+import { defineFlow, input, agent, tool } from '@flowlib/sdk';
 
 export default defineFlow({
   nodes: [
@@ -103,7 +103,7 @@ export default defineFlow({
       );
       expect(result.success).toBe(true);
 
-      const tools = await getAgentTools(invect, flowId);
+      const tools = await getAgentTools(flowlib, flowId);
       expect(tools).toHaveLength(2);
       expect(tools[0].toolId).toBe('gmail.send_message');
       expect(tools[0].instanceId).toMatch(/^tool_/);
@@ -116,7 +116,7 @@ export default defineFlow({
   describe('preservation across edits', () => {
     async function seedAgentWithTools() {
       const source = `
-import { defineFlow, input, agent, tool } from '@invect/sdk';
+import { defineFlow, input, agent, tool } from '@flowlib/sdk';
 
 export default defineFlow({
   nodes: [
@@ -139,7 +139,7 @@ export default defineFlow({
         { ...baseCtx, chatContext: { flowId } },
       );
       expect(result.success).toBe(true);
-      return await getAgentTools(invect, flowId);
+      return await getAgentTools(flowlib, flowId);
     }
 
     it('editing a non-tool param leaves tool instanceIds intact', async () => {
@@ -158,7 +158,7 @@ export default defineFlow({
       );
       expect(editResult.success).toBe(true);
 
-      const after = await getAgentTools(invect, flowId);
+      const after = await getAgentTools(flowlib, flowId);
       expect(after).toHaveLength(2);
       expect(after[0].instanceId).toBe(before[0].instanceId);
       expect(after[1].instanceId).toBe(before[1].instanceId);
@@ -178,7 +178,7 @@ export default defineFlow({
       );
       expect(editResult.success).toBe(true);
 
-      const after = await getAgentTools(invect, flowId);
+      const after = await getAgentTools(flowlib, flowId);
       const gmailBefore = before.find((t) => t.toolId === 'gmail.send_message')!;
       const gmailAfter = after.find((t) => t.toolId === 'gmail.send_message')!;
       expect(gmailAfter.instanceId).toBe(gmailBefore.instanceId);
@@ -189,7 +189,7 @@ export default defineFlow({
       const before = await seedAgentWithTools();
 
       const newSource = `
-import { defineFlow, input, agent, tool } from '@invect/sdk';
+import { defineFlow, input, agent, tool } from '@flowlib/sdk';
 
 export default defineFlow({
   nodes: [
@@ -214,7 +214,7 @@ export default defineFlow({
       );
       expect(result.success).toBe(true);
 
-      const after = await getAgentTools(invect, flowId);
+      const after = await getAgentTools(flowlib, flowId);
       expect(after).toHaveLength(3);
       expect(after.find((t) => t.toolId === 'gmail.send_message')?.instanceId).toBe(
         before[0].instanceId,
@@ -234,7 +234,7 @@ export default defineFlow({
 
       // Rewrite without the slack tool.
       const newSource = `
-import { defineFlow, input, agent, tool } from '@invect/sdk';
+import { defineFlow, input, agent, tool } from '@flowlib/sdk';
 
 export default defineFlow({
   nodes: [
@@ -257,7 +257,7 @@ export default defineFlow({
       );
       expect(result.success).toBe(true);
 
-      const after = await getAgentTools(invect, flowId);
+      const after = await getAgentTools(flowlib, flowId);
       expect(after).toHaveLength(1);
       expect(after[0].toolId).toBe('gmail.send_message');
       expect(after[0].instanceId).toBe(before[0].instanceId);
@@ -268,7 +268,7 @@ export default defineFlow({
 
       // Swap the order — slack first, then gmail.
       const newSource = `
-import { defineFlow, input, agent, tool } from '@invect/sdk';
+import { defineFlow, input, agent, tool } from '@flowlib/sdk';
 
 export default defineFlow({
   nodes: [
@@ -292,7 +292,7 @@ export default defineFlow({
       );
       expect(result.success).toBe(true);
 
-      const after = await getAgentTools(invect, flowId);
+      const after = await getAgentTools(flowlib, flowId);
       expect(after).toHaveLength(2);
       // Order now slack, gmail — each still has its original instanceId.
       expect(after[0].toolId).toBe('slack.send_message');
@@ -307,7 +307,7 @@ export default defineFlow({
 
     it('duplicate toolIds with different descriptions get separate instanceIds', async () => {
       const source = `
-import { defineFlow, input, agent, tool } from '@invect/sdk';
+import { defineFlow, input, agent, tool } from '@flowlib/sdk';
 
 export default defineFlow({
   nodes: [
@@ -327,7 +327,7 @@ export default defineFlow({
 `;
       await writeFlowSourceTool.execute({ source }, { ...baseCtx, chatContext: { flowId } });
 
-      const tools = await getAgentTools(invect, flowId);
+      const tools = await getAgentTools(flowlib, flowId);
       expect(tools).toHaveLength(2);
       expect(tools[0].instanceId).not.toBe(tools[1].instanceId);
 
@@ -343,7 +343,7 @@ export default defineFlow({
       );
       expect(secondResult.success).toBe(true);
 
-      const toolsAfter = await getAgentTools(invect, flowId);
+      const toolsAfter = await getAgentTools(flowlib, flowId);
       expect(toolsAfter.find((t) => t.name === 'Send Alert')?.instanceId).toBe(idAlert);
       expect(toolsAfter.find((t) => t.name === 'Send Report')?.instanceId).toBe(idReport);
     });

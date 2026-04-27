@@ -5,29 +5,29 @@
   </picture>
 </p>
 
-<h1 align="center">@invect/rbac</h1>
+<h1 align="center">@flowlib/rbac</h1>
 
 <p align="center">
   Role-based access control plugin for Invect.
   <br />
-  <a href="https://invect.dev/docs/plugins"><strong>Docs</strong></a>
+  <a href="https://flowlib.dev/docs/plugins"><strong>Docs</strong></a>
 </p>
 
 ---
 
-Adds flow-level permissions, sharing UI, and access control enforcement to Invect. Requires [`@invect/user-auth`](../auth) for session resolution.
+Adds flow-level permissions, sharing UI, and access control enforcement to Invect. Requires [`@flowlib/user-auth`](../auth) for session resolution.
 
 ## Install
 
 ```bash
-pnpm add @invect/rbac
+pnpm add @flowlib/rbac
 ```
 
 ## Backend
 
 ```ts
-import { auth } from '@invect/user-auth';
-import { rbac } from '@invect/rbac';
+import { auth } from '@flowlib/user-auth';
+import { rbac } from '@flowlib/rbac';
 
 const invectRouter = await createInvectRouter({
   database: { type: 'sqlite', connectionString: 'file:./dev.db' },
@@ -38,16 +38,16 @@ const invectRouter = await createInvectRouter({
   ],
 });
 
-app.use('/invect', invectRouter);
+app.use('/flowlib', invectRouter);
 ```
 
 ## Frontend
 
 ```tsx
-import { Invect } from '@invect/ui';
-import { rbacFrontend } from '@invect/rbac/ui';
+import { Invect } from '@flowlib/ui';
+import { rbacFrontend } from '@flowlib/rbac/ui';
 
-<Invect apiBaseUrl="http://localhost:3000/invect" plugins={[rbacFrontend]} />;
+<Invect apiBaseUrl="http://localhost:3000/flowlib" plugins={[rbacFrontend]} />;
 ```
 
 The plugin contributes sidebar items, an access management page, a flow-level access panel tab, and a share button in the flow editor header.
@@ -56,9 +56,9 @@ The plugin contributes sidebar items, an access management page, a flow-level ac
 
 | Entry Point          | Content                                                                               |
 | -------------------- | ------------------------------------------------------------------------------------- |
-| `@invect/rbac`       | Backend plugin (Node.js)                                                              |
-| `@invect/rbac/ui`    | Frontend plugin — `rbacFrontend`, `RbacProvider`, `ShareFlowModal`, `FlowAccessPanel` |
-| `@invect/rbac/types` | Shared types — `FlowAccessRecord`, `FlowAccessPermission`, etc.                       |
+| `@flowlib/rbac`       | Backend plugin (Node.js)                                                              |
+| `@flowlib/rbac/ui`    | Frontend plugin — `rbacFrontend`, `RbacProvider`, `ShareFlowModal`, `FlowAccessPanel` |
+| `@flowlib/rbac/types` | Shared types — `FlowAccessRecord`, `FlowAccessPermission`, etc.                       |
 
 ## License
 

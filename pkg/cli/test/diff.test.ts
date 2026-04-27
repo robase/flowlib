@@ -2,12 +2,12 @@
  * Schema Diff & Change Detection Tests
  *
  * Tests the diffSchemas() utility and the CLI generator's ability to
- * detect unchanged files. These are crucial for the `npx invect-cli generate`
+ * detect unchanged files. These are crucial for the `npx flowlib-cli generate`
  * UX — only files that actually changed should be flagged for writing.
  */
 
 import { describe, it, expect } from 'vitest';
-import { mergeSchemas, diffSchemas } from '@invect/core';
+import { mergeSchemas, diffSchemas } from '@flowlib/core';
 
 import {
   multiTenantPlugin,

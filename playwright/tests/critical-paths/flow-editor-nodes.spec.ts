@@ -139,7 +139,7 @@ test.describe('Flow Editor — Node Operations', () => {
     if (sidebarAlreadyOpen) {
       // Sidebar is open — verify it shows node category buttons (palette content)
       const categoryButtons = page.getByRole('button', {
-        name: /triggers|invect core|github|slack|http|input|output/i,
+        name: /triggers|flowlib core|github|slack|http|input|output/i,
       });
       await expect(categoryButtons.first()).toBeVisible({ timeout: 5_000 });
 
@@ -168,7 +168,7 @@ test.describe('Flow Editor — Node Operations', () => {
 
     // Assert the palette lists at least 3 provider category buttons
     const categoryButtons = page.getByRole('button', {
-      name: /triggers|invect core|github|slack|http|input|output/i,
+      name: /triggers|flowlib core|github|slack|http|input|output/i,
     });
     const categoryCount = await categoryButtons.count();
     expect(
@@ -240,7 +240,7 @@ test.describe('Flow Editor — Node Operations', () => {
 
     try {
       // 3. Navigate directly to the flow editor for this flow
-      await page.goto(`/invect/flow/${flow.id}`);
+      await page.goto(`/flowlib/flow/${flow.id}`);
 
       // 4. Assert the ReactFlow canvas renders
       await expect(page.locator('.react-flow')).toBeVisible({

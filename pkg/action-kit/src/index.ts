@@ -1,8 +1,8 @@
 /**
- * `@invect/action-kit` — types-only package defining the Invect action
+ * `@flowlib/action-kit` — types-only package defining the Invect action
  * authoring surface.
  *
- * Consumed by `@invect/core`, `@invect/actions`, and runtime plugins so they
+ * Consumed by `@flowlib/core`, `@flowlib/actions`, and runtime plugins so they
  * can speak the same type language without pulling the action catalogue.
  */
 

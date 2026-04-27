@@ -46,7 +46,7 @@ import {
 import type { UpstreamSlot } from '../flow-editor/node-config-panel/types';
 import { getIconComponent, formatNodeTypeLabel } from '../flow-editor/node-config-panel/utils';
 import { createPortal } from 'react-dom';
-import { useInvectPortalClass } from '../../hooks/use-invect-portal-class';
+import { useInvectPortalClass } from '../../hooks/use-flowlib-portal-class';
 
 interface CodeMirrorJsonEditorProps {
   value: string;

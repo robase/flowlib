@@ -11,7 +11,7 @@ import {
   Users,
   Workflow,
 } from 'lucide-react';
-import { PageLayout } from '@invect/ui';
+import { PageLayout } from '@flowlib/ui';
 import { useRbac } from '../../providers/RbacProvider';
 import { useTeams, useCreateTeam } from '../../hooks/useTeams';
 import { useScopeTree, usePreviewMove } from '../../hooks/useScopes';

@@ -6,7 +6,7 @@
  * Requires a Google Gmail OAuth2 credential.
  */
 
-import { defineAction } from '@invect/action-kit';
+import { defineAction } from '@flowlib/action-kit';
 import { GMAIL_PROVIDER } from '../providers';
 import { z } from 'zod/v4';
 

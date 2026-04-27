@@ -1,5 +1,5 @@
 /**
- * Shared Vitest base config for all @invect/* packages.
+ * Shared Vitest base config for all @flowlib/* packages.
  *
  * Usage in package vitest.config.ts:
  *

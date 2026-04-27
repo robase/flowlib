@@ -1,5 +1,5 @@
-import type { DurabilityAdapter, StepOptions } from '@invect/primitives';
-import { WaitTimeoutError } from '@invect/primitives';
+import type { DurabilityAdapter, StepOptions } from '@flowlib/primitives';
+import { WaitTimeoutError } from '@flowlib/primitives';
 
 // Cloudflare Workflows step interface (matches WorkflowStep from cloudflare:workers)
 interface CFWorkflowStep {

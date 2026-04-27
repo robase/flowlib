@@ -5,7 +5,7 @@
  * API.  Requires a Segment write key stored as an API-key credential.
  */
 
-import { defineAction } from '@invect/action-kit';
+import { defineAction } from '@flowlib/action-kit';
 import { SEGMENT_PROVIDER } from '../providers';
 import { z } from 'zod/v4';
 

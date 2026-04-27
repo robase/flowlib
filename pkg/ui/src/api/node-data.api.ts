@@ -2,8 +2,8 @@
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useApiClient } from '../contexts/ApiContext';
 import { queryKeys, getErrorMessage } from './query-keys';
-import { type SubmitPromptRequest } from '@invect/core/types';
-import { BatchProvider } from '@invect/core/types';
+import { type SubmitPromptRequest } from '@flowlib/core/types';
+import { BatchProvider } from '@flowlib/core/types';
 
 // JS Expression Testing (for data mapper)
 export function useTestJsExpression() {

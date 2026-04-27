@@ -3,7 +3,7 @@
  *
  * Callers implement whatever they like; the structural shape below is
  * the only contract actions rely on. Mirrors the shape of
- * `Logger` in `@invect/core` by design so a single concrete logger
+ * `Logger` in `@flowlib/core` by design so a single concrete logger
  * satisfies both.
  */
 export interface Logger {

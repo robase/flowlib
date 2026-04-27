@@ -4,7 +4,7 @@
  * Tests evaluate against a mock context without a full Invect instance.
  */
 import { describe, it, expect, vi } from 'vitest';
-import { switchAction } from '@invect/actions';
+import { switchAction } from '@flowlib/actions';
 
 const evaluator = {
   evaluate: async (expression: string, data: Record<string, unknown>): Promise<unknown> => {

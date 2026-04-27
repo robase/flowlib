@@ -1,9 +1,9 @@
 /**
  * Codegen — produces `webview/static-action-catalogue.json` from
- * `@invect/actions`'s `allProviderActions`.
+ * `@flowlib/actions`'s `allProviderActions`.
  *
  * Why a static JSON: the webview lives in a sandboxed iframe under strict
- * CSP, with no network and no Node APIs. We can't `import` `@invect/actions`
+ * CSP, with no network and no Node APIs. We can't `import` `@flowlib/actions`
  * from the webview (it pulls QuickJS, googleapis, pg, etc.). Instead, this
  * script runs at extension build time, walks every registered action, calls
  * `actionToNodeDefinition` (the same conversion the REST `/nodes` endpoint
@@ -20,8 +20,8 @@
 import { writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { actionToNodeDefinition, allProviderActions } from '@invect/actions';
-import type { NodeDefinition } from '@invect/ui/flow-canvas';
+import { actionToNodeDefinition, allProviderActions } from '@flowlib/actions';
+import type { NodeDefinition } from '@flowlib/ui/flow-canvas';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);

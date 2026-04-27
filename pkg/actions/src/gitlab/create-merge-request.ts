@@ -7,7 +7,7 @@
  * Requires a GitLab OAuth2 credential or personal access token.
  */
 
-import { defineAction } from '@invect/action-kit';
+import { defineAction } from '@flowlib/action-kit';
 import { GITLAB_PROVIDER } from '../providers';
 import { z } from 'zod/v4';
 

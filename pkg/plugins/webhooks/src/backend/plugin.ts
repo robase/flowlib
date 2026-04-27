@@ -1,5 +1,5 @@
 /**
- * @invect/webhooks — Backend Plugin
+ * @flowlib/webhooks — Backend Plugin
  *
  * Adds webhook trigger management, signature verification, rate limiting,
  * deduplication, and a management API. Works alongside the core trigger
@@ -13,7 +13,7 @@ import type {
   InvectPluginSchema,
   InvectPluginEndpoint,
   PluginEndpointContext,
-} from '@invect/core';
+} from '@flowlib/core';
 import { WebhookSignatureService } from './webhook-signature.service';
 import { WebhookRateLimiter } from './webhook-rate-limiter';
 import { WebhookDedupService } from './webhook-dedup.service';
@@ -27,7 +27,7 @@ import type { CreateWebhookTriggerInput, UpdateWebhookTriggerInput } from '../sh
 // ─── Plugin Options ─────────────────────────────────────────────────
 
 export interface WebhooksPluginOptions {
-  /** Base URL for webhook endpoints (e.g. "https://example.com/api/invect") */
+  /** Base URL for webhook endpoints (e.g. "https://example.com/api/flowlib") */
   webhookBaseUrl?: string;
   /** Rate limit: max requests per window. @default 60 */
   rateLimitMaxRequests?: number;
@@ -39,7 +39,7 @@ export interface WebhooksPluginOptions {
   /**
    * Frontend plugin (sidebar, routes) for the webhooks UI.
    *
-   * Import from `@invect/webhooks/ui` and pass here.
+   * Import from `@flowlib/webhooks/ui` and pass here.
    * Omit for backend-only setups.
    */
   frontend?: unknown;
@@ -436,6 +436,6 @@ function _webhooksBackendPlugin(options?: Omit<WebhooksPluginOptions, 'frontend'
     },
 
     setupInstructions:
-      'Run `npx invect-cli generate` to generate the invect_webhook_triggers table schema, then `npx invect-cli migrate` to apply it.',
+      'Run `npx flowlib-cli generate` to generate the invect_webhook_triggers table schema, then `npx flowlib-cli migrate` to apply it.',
   };
 }

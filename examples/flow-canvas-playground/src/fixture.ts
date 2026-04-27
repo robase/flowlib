@@ -3,11 +3,11 @@
  *
  * Mirrors the shape of `pkg/core/tests/e2e/complex-branching-flow.ts`
  * but written directly as a plain `InvectDefinition` to keep the
- * playground off the `@invect/sdk` dependency graph.
+ * playground off the `@flowlib/sdk` dependency graph.
  */
 
-import type { InvectDefinition } from '@invect/core/types';
-import type { ActionMetadata } from '@invect/ui/flow-canvas';
+import type { InvectDefinition } from '@flowlib/core/types';
+import type { ActionMetadata } from '@flowlib/ui/flow-canvas';
 
 export const fixtureFlow: InvectDefinition = {
   nodes: [
@@ -79,7 +79,7 @@ export const fixtureFlow: InvectDefinition = {
 /**
  * Minimal action catalogue used by the playground. In the VSCode
  * extension, this will be replaced by the build-time codegen output
- * from `@invect/actions` (Lane L7).
+ * from `@flowlib/actions` (Lane L7).
  */
 export const fixtureActions: ActionMetadata[] = [
   {

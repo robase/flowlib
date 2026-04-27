@@ -8,7 +8,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import type { InvectDefinition } from '@invect/core/types';
+import type { InvectDefinition } from '@flowlib/core/types';
 import {
   invectDefinitionToReactFlowData,
   reactFlowToInvectDefinition,

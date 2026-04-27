@@ -5,7 +5,7 @@
  * tables and columns matching the abstract schema (core + plugins).
  *
  * This does NOT run migrations — the developer is responsible for running
- * `npx invect-cli generate` (CLI) and then applying the schema themselves
+ * `npx flowlib-cli generate` (CLI) and then applying the schema themselves
  * (e.g., via Drizzle Kit push/migrate, Prisma migrate, or raw SQL).
  *
  * The core calls `verifySchema()` on startup after connecting to the DB.
@@ -125,7 +125,7 @@ export async function verifySchema(
       ...messages,
       '',
       'To fix this, run:',
-      '  npx invect-cli generate    # regenerate schema files',
+      '  npx flowlib-cli generate    # regenerate schema files',
       '  npx drizzle-kit push    # apply schema to database (Drizzle)',
       '  npx prisma db push      # apply schema to database (Prisma)',
     ].join('\n');

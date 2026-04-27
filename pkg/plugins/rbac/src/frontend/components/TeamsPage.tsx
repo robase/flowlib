@@ -4,7 +4,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ChevronDown, ChevronRight, Plus, Search, Trash2, User, Users, X } from 'lucide-react';
-import { useApiClient, PageLayout } from '@invect/ui';
+import { useApiClient, PageLayout } from '@flowlib/ui';
 import { useRbac } from '../providers/RbacProvider';
 import {
   useTeams,

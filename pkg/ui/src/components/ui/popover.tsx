@@ -2,7 +2,7 @@ import * as React from 'react';
 import * as PopoverPrimitive from '@radix-ui/react-popover';
 
 import { cn } from '~/lib/utils';
-import { useInvectPortalClass } from '~/hooks/use-invect-portal-class';
+import { useInvectPortalClass } from '~/hooks/use-flowlib-portal-class';
 
 const Popover = PopoverPrimitive.Root;
 

@@ -4,9 +4,9 @@
 import { test, expect } from '../fixtures';
 const CRED_NAME = 'Update Test Cred';
 
-/** Helper: navigate to /invect/credentials and wait for the page to load */
+/** Helper: navigate to /flowlib/credentials and wait for the page to load */
 async function goToCredentials(page: import('@playwright/test').Page) {
-  await page.goto('/invect/credentials');
+  await page.goto('/flowlib/credentials');
   await expect(page.getByRole('heading', { level: 1, name: 'Credentials' })).toBeVisible({
     timeout: 15_000,
   });

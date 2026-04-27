@@ -69,7 +69,7 @@ let nextJobIdCounter = 0;
 
 function generateJobId(): string {
   // crypto.randomUUID is available in Node 19+, Workers, Deno, Bun —
-  // anywhere we'd reasonably run @invect/core. Fall back to a counter
+  // anywhere we'd reasonably run @flowlib/core. Fall back to a counter
   // for the (very rare) runtime that lacks it.
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
     return crypto.randomUUID();

@@ -5,48 +5,48 @@
   </picture>
 </p>
 
-<h1 align="center">@invect/core</h1>
+<h1 align="center">@flowlib/core</h1>
 
 <p align="center">
   Framework-agnostic workflow orchestration engine.
   <br />
-  <a href="https://invect.dev/docs"><strong>Docs</strong></a> · <a href="https://invect.dev/docs/quick-start"><strong>Quick Start</strong></a>
+  <a href="https://flowlib.dev/docs"><strong>Docs</strong></a> · <a href="https://flowlib.dev/docs/quick-start"><strong>Quick Start</strong></a>
 </p>
 
 ---
 
 The core engine behind Invect. Contains all business logic — flows, execution, actions, agents, credentials, and database — independent of any web framework.
 
-Framework packages ([`@invect/express`](../express), [`@invect/nestjs`](../nestjs), [`@invect/nextjs`](../nextjs)) are thin adapters that wrap this core.
+Framework packages ([`@flowlib/express`](../express), [`@flowlib/nestjs`](../nestjs), [`@flowlib/nextjs`](../nextjs)) are thin adapters that wrap this core.
 
 ## Install
 
 ```bash
-npx invect-cli init
+npx flowlib-cli init
 ```
 
 Or install manually:
 
 ```bash
-npm install @invect/core
+npm install @flowlib/core
 ```
 
 ## Usage
 
 ```ts
-import { createInvect } from '@invect/core';
+import { createInvect } from '@flowlib/core';
 
-const invect = await createInvect({
+const flowlib = await createInvect({
   database: {
     type: 'sqlite',
     connectionString: 'file:./dev.db',
   },
-  encryptionKey: process.env.INVECT_ENCRYPTION_KEY, // npx invect-cli secret
+  encryptionKey: process.env.INVECT_ENCRYPTION_KEY, // npx flowlib-cli secret
 });
 
 // Create and run flows programmatically
-const flow = await invect.flows.create({ name: 'My Workflow' });
-const result = await invect.runs.start(flow.id, { message: 'Hello' });
+const flow = await flowlib.flows.create({ name: 'My Workflow' });
+const result = await flowlib.runs.start(flow.id, { message: 'Hello' });
 ```
 
 ## What's Inside
@@ -64,7 +64,7 @@ const result = await invect.runs.start(flow.id, { message: 'Hello' });
 Import types for frontend consumption from the `/types` subpath (no runtime code):
 
 ```ts
-import type { FlowDefinition, FlowRunResult } from '@invect/core/types';
+import type { FlowDefinition, FlowRunResult } from '@flowlib/core/types';
 ```
 
 ## License

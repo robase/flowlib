@@ -5,7 +5,7 @@ import { NodeExecutionStatus } from 'src/types/base';
 import { DatabaseError } from 'src/types/common/errors.types';
 import { Logger, PaginatedResponse, QueryOptions } from 'src/schemas';
 import type { NodeOutput } from 'src/types/node-io-types';
-import type { NodeErrorDetails } from '@invect/action-kit';
+import type { NodeErrorDetails } from '@flowlib/action-kit';
 
 /**
  * Execution Trace entity (node-level trace, parentNodeExecutionId is null)

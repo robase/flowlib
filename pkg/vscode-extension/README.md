@@ -1,4 +1,4 @@
-# @invect/vscode
+# @flowlib/vscode
 
 VSCode extension for editing Invect flows visually. `.flow.ts` files are the source of truth — open one and the visual editor opens as a custom editor; save to write the file back.
 
@@ -7,10 +7,10 @@ This is the Phase 1 / Lane L4 scaffold. The real editor loop, webview app, actio
 ## Develop
 
 ```bash
-pnpm --filter @invect/vscode build      # bundle host (tsdown) + webview (vite)
-pnpm --filter @invect/vscode typecheck  # tsc --noEmit
-pnpm --filter @invect/vscode test       # @vscode/test-electron smoke
-pnpm --filter @invect/vscode package    # produce a .vsix
+pnpm --filter @flowlib/vscode build      # bundle host (tsdown) + webview (vite)
+pnpm --filter @flowlib/vscode typecheck  # tsc --noEmit
+pnpm --filter @flowlib/vscode test       # @vscode/test-electron smoke
+pnpm --filter @flowlib/vscode package    # produce a .vsix
 ```
 
 To launch the extension against a live VSCode for manual smoke:

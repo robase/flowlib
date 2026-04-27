@@ -1,5 +1,5 @@
 // ============================================================================
-// @invect/cloudflare-agents — shared types (browser-safe, no runtime code)
+// @flowlib/cloudflare-agents — shared types (browser-safe, no runtime code)
 // ============================================================================
 
 /**

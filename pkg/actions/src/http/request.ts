@@ -5,10 +5,10 @@
  * Supports authentication via credentials (Bearer, Basic, API Key).
  */
 
-import { defineAction } from '@invect/action-kit';
+import { defineAction } from '@flowlib/action-kit';
 import { HTTP_PROVIDER } from '../providers';
 import { z } from 'zod/v4';
-import type { ActionCredential } from '@invect/action-kit';
+import type { ActionCredential } from '@flowlib/action-kit';
 
 const paramsSchema = z.object({
   url: z.string().min(1, 'URL is required'),

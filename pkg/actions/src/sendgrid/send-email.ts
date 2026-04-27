@@ -8,7 +8,7 @@
  * @see https://www.twilio.com/docs/sendgrid/api-reference/mail-send/mail-send
  */
 
-import { defineAction } from '@invect/action-kit';
+import { defineAction } from '@flowlib/action-kit';
 import { SENDGRID_PROVIDER } from '../providers';
 import { z } from 'zod/v4';
 
@@ -300,7 +300,7 @@ export const sendgridSendEmailAction = defineAction({
         headers: {
           Authorization: `Bearer ${apiKey}`,
           'Content-Type': 'application/json',
-          'User-Agent': 'invect/1.0',
+          'User-Agent': 'flowlib/1.0',
         },
         body: JSON.stringify(payload),
       });

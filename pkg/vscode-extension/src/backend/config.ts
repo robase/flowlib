@@ -10,10 +10,10 @@
 import * as vscode from 'vscode';
 import { readConfig } from '../util/config';
 
-const SECRET_PREFIX = 'invect.apiKey:';
+const SECRET_PREFIX = 'flowlib.apiKey:';
 
 function secretKey(scope: vscode.Uri | undefined): string {
-  // Per-folder scope mirrors `invect.backendUrl` resource scope. Falls back
+  // Per-folder scope mirrors `flowlib.backendUrl` resource scope. Falls back
   // to a single global key when no folder is in play (single-file workspaces,
   // tests).
   return SECRET_PREFIX + (scope?.toString() ?? '__global__');
@@ -51,5 +51,5 @@ export async function setBackendUrl(url: string, scope?: vscode.Uri): Promise<vo
   const target = scope
     ? vscode.ConfigurationTarget.WorkspaceFolder
     : vscode.ConfigurationTarget.Workspace;
-  await vscode.workspace.getConfiguration('invect', scope).update('backendUrl', url, target);
+  await vscode.workspace.getConfiguration('flowlib', scope).update('backendUrl', url, target);
 }

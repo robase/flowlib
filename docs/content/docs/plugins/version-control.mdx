@@ -1,6 +1,6 @@
 ---
 title: Version Control
-description: Sync flows to Git repositories with @invect/version-control.
+description: Sync flows to Git repositories with @flowlib/version-control.
 ---
 
 import { Callout } from 'fumadocs-ui/components/callout';
@@ -15,28 +15,28 @@ The version control plugin syncs flows to Git repositories (GitHub, GitLab, Bitb
 <Tab value="pnpm">
 
 ```bash
-pnpm add @invect/version-control
+pnpm add @flowlib/version-control
 ```
 
 </Tab>
 <Tab value="npm">
 
 ```bash
-npm install @invect/version-control
+npm install @flowlib/version-control
 ```
 
 </Tab>
 <Tab value="yarn">
 
 ```bash
-yarn add @invect/version-control
+yarn add @flowlib/version-control
 ```
 
 </Tab>
 <Tab value="bun">
 
 ```bash
-bun add @invect/version-control
+bun add @flowlib/version-control
 ```
 
 </Tab>
@@ -46,9 +46,9 @@ bun add @invect/version-control
 
 The plugin requires a Git provider and a target repository:
 
-```ts title="invect.config.ts"
-import { versionControl } from '@invect/version-control';
-import { githubProvider } from '@invect/version-control/providers/github';
+```ts title="flowlib.config.ts"
+import { versionControl } from '@flowlib/version-control';
+import { githubProvider } from '@flowlib/version-control/providers/github';
 
 export const invectConfig = defineConfig({
   // ...
@@ -64,8 +64,8 @@ export const invectConfig = defineConfig({
 After adding the plugin, regenerate and apply the schema:
 
 ```bash
-npx invect-cli generate
-npx invect-cli migrate --push
+npx flowlib-cli generate
+npx flowlib-cli migrate --push
 ```
 
 ### Options

@@ -135,7 +135,7 @@ test.describe('Flow Editor Assistant And Tooling', () => {
       edges: [{ id: 'edge-input-template', source: 'input-topic', target: 'template-prompt' }],
     });
 
-    await page.goto(`/invect/flow/${flowId}`);
+    await page.goto(`/flowlib/flow/${flowId}`);
     await expect(page.locator('.react-flow')).toBeVisible({ timeout: 15_000 });
 
     await page.getByRole('button', { name: /Open Assistant/i }).click();
@@ -171,7 +171,7 @@ test.describe('Flow Editor Assistant And Tooling', () => {
     await cleanupFlowByName(apiBase, request, flowName);
     const flowId = await createFlow(apiBase, request, flowName);
 
-    await page.goto(`/invect/flow/${flowId}`);
+    await page.goto(`/flowlib/flow/${flowId}`);
     await expect(page.locator('.react-flow')).toBeVisible({ timeout: 15_000 });
 
     await expect(page.getByRole('button', { name: 'Add Node' })).toBeVisible({ timeout: 10_000 });
@@ -225,7 +225,7 @@ test.describe('Flow Editor Assistant And Tooling', () => {
       edges: [{ id: 'edge-trigger-agent', source: 'trigger-manual', target: 'agent-linear' }],
     });
 
-    await page.goto(`/invect/flow/${flowId}`);
+    await page.goto(`/flowlib/flow/${flowId}`);
     await expect(page.locator('.react-flow')).toBeVisible({ timeout: 15_000 });
 
     await page.getByRole('button', { name: 'Inactive', exact: true }).click();

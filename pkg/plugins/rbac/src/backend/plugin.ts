@@ -1,5 +1,5 @@
 /**
- * @invect/rbac — Backend Plugin
+ * @flowlib/rbac — Backend Plugin
  *
  * RBAC plugin that provides:
  * - Flow access management endpoints (grant/revoke/list)
@@ -7,7 +7,7 @@
  * - Authorization hooks (enforces flow-level ACLs)
  * - UI manifest for the frontend plugin to render
  *
- * Requires the @invect/user-auth plugin to be loaded first
+ * Requires the @flowlib/user-auth plugin to be loaded first
  * for session resolution. This plugin handles the *authorization* layer
  * on top of that authentication.
  */
@@ -21,7 +21,7 @@ import type {
   InvectIdentity,
   PluginDatabaseApi,
   PluginEndpointContext,
-} from '@invect/core';
+} from '@flowlib/core';
 import type {
   EffectiveAccessRecord,
   FlowAccessPermission,
@@ -44,7 +44,7 @@ import type {
  *
  * @example
  * ```ts
- * import { resolveTeamIds } from '@invect/rbac/backend';
+ * import { resolveTeamIds } from '@flowlib/rbac/backend';
  *
  * auth({
  *   auth: betterAuthInstance,
@@ -87,7 +87,7 @@ export interface RbacPluginOptions {
   /**
    * Frontend plugin (sidebar, routes, providers) for the RBAC UI.
    *
-   * Import from `@invect/rbac/ui` and pass here.
+   * Import from `@flowlib/rbac/ui` and pass here.
    * Omit for backend-only setups.
    */
   frontend?: unknown;
@@ -785,8 +785,8 @@ function _rbacBackendPlugin(options: Omit<RbacPluginOptions, 'frontend'> = {}): 
     ],
     setupInstructions:
       'The RBAC plugin requires user-auth tables (invect_user, invect_session). ' +
-      'Make sure @invect/user-auth is configured, then run ' +
-      '`npx invect-cli generate` followed by `npx drizzle-kit push`.',
+      'Make sure @flowlib/user-auth is configured, then run ' +
+      '`npx flowlib-cli generate` followed by `npx drizzle-kit push`.',
 
     // ─── Initialization ───────────────────────────────────────
 
@@ -794,7 +794,7 @@ function _rbacBackendPlugin(options: Omit<RbacPluginOptions, 'frontend'> = {}): 
       // Verify that the auth plugin is loaded
       if (!ctx.hasPlugin('user-auth')) {
         ctx.logger.warn(
-          'RBAC plugin requires the @invect/user-auth plugin. ' +
+          'RBAC plugin requires the @flowlib/user-auth plugin. ' +
             'RBAC will work with reduced functionality (no session resolution). ' +
             'Make sure auth() is registered before rbac().',
         );
@@ -1976,7 +1976,7 @@ function _rbacBackendPlugin(options: Omit<RbacPluginOptions, 'frontend'> = {}): 
         status: 401,
       },
       'rbac:plugin_missing': {
-        message: 'The RBAC plugin requires the @invect/user-auth plugin.',
+        message: 'The RBAC plugin requires the @flowlib/user-auth plugin.',
         status: 500,
       },
     },

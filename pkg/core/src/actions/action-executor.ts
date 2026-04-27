@@ -1,5 +1,5 @@
 /**
- * Shim — the action executor lives in `@invect/actions`. Re-exported here so
+ * Shim — the action executor lives in `@flowlib/actions`. Re-exported here so
  * existing `import { executeActionAsNode } from 'src/actions/action-executor'`
  * call-sites inside core keep working.
  */
@@ -9,4 +9,4 @@ export {
   executeActionAsTool,
   createToolExecutorForAction,
   coerceJsonStringParams,
-} from '@invect/actions';
+} from '@flowlib/actions';

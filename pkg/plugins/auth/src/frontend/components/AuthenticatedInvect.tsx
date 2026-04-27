@@ -2,7 +2,7 @@
  * AuthenticatedInvect — Wraps the Invect component with auth gating.
  *
  * Renders InvectShell → AuthProvider → AuthGate around Invect.
- * The shell establishes the `.invect` CSS scope so all theme tokens
+ * The shell establishes the `.flowlib` CSS scope so all theme tokens
  * work for both the sign-in page and the Invect editor.
  *
  * When the user is not authenticated, shows the sign-in page.
@@ -14,15 +14,15 @@
  *
  * @example
  * ```tsx
- * import { AuthenticatedInvect } from '@invect/user-auth/ui';
- * import { Invect, InvectShell } from '@invect/ui';
- * import '@invect/ui/styles';
+ * import { AuthenticatedInvect } from '@flowlib/user-auth/ui';
+ * import { Invect, InvectShell } from '@flowlib/ui';
+ * import '@flowlib/ui/styles';
  *
  * export default function Page() {
  *   return (
  *     <AuthenticatedInvect
- *       apiBaseUrl="/api/invect"
- *       basePath="/invect"
+ *       apiBaseUrl="/api/flowlib"
+ *       basePath="/flowlib"
  *       InvectComponent={Invect}
  *       ShellComponent={InvectShell}
  *     />
@@ -59,22 +59,22 @@ export interface AuthenticatedInvectProps<TPlugin = unknown> {
   /**
    * Base URL for the Invect API.
    * Used for both auth endpoints and the Invect component.
-   * @example '/api/invect' or 'http://localhost:3000/invect'
+   * @example '/api/flowlib' or 'http://localhost:3000/flowlib'
    */
   apiBaseUrl?: string;
   /**
    * Base path where Invect is mounted in the browser.
-   * @default '/invect'
+   * @default '/flowlib'
    */
   basePath?: string;
   /**
    * The Invect component to render when authenticated.
-   * Pass this to avoid a direct dependency on @invect/ui.
+   * Pass this to avoid a direct dependency on @flowlib/ui.
    * Accepts both plain and React.memo-wrapped components.
    *
    * @example
    * ```tsx
-   * import { Invect } from '@invect/ui';
+   * import { Invect } from '@flowlib/ui';
    * <AuthenticatedInvect InvectComponent={Invect} />
    * ```
    */
@@ -85,13 +85,13 @@ export interface AuthenticatedInvectProps<TPlugin = unknown> {
     plugins?: TPlugin[];
   }>;
   /**
-   * The InvectShell component that provides the `.invect` CSS scope.
+   * The InvectShell component that provides the `.flowlib` CSS scope.
    * This ensures theme tokens work for both the sign-in page and the
-   * Invect editor. Import from `@invect/ui`.
+   * Invect editor. Import from `@flowlib/ui`.
    *
    * `children` is typed as `unknown` rather than `ReactNode` to avoid a
    * structural incompatibility between `@types/react@18` (used here) and
-   * `@types/react@19` (used by `@invect/ui`) where `ReactPortal`
+   * `@types/react@19` (used by `@flowlib/ui`) where `ReactPortal`
    * changed between versions.
    *
    * If not provided, the auth UI renders without the Invect CSS scope
@@ -99,7 +99,7 @@ export interface AuthenticatedInvectProps<TPlugin = unknown> {
    *
    * @example
    * ```tsx
-   * import { InvectShell } from '@invect/ui';
+   * import { InvectShell } from '@flowlib/ui';
    * <AuthenticatedInvect ShellComponent={InvectShell} />
    * ```
    */
@@ -129,7 +129,7 @@ export interface AuthenticatedInvectProps<TPlugin = unknown> {
    *
    * @example
    * ```tsx
-   * import { rbacFrontend } from '@invect/rbac/ui';
+   * import { rbacFrontend } from '@flowlib/rbac/ui';
    * <AuthenticatedInvect plugins={[rbacFrontend]} />
    * ```
    */
@@ -147,8 +147,8 @@ const defaultQueryClient = new QueryClient({
 });
 
 export function AuthenticatedInvect<TPlugin = unknown>({
-  apiBaseUrl = 'http://localhost:3000/invect',
-  basePath = '/invect',
+  apiBaseUrl = 'http://localhost:3000/flowlib',
+  basePath = '/flowlib',
   InvectComponent,
   ShellComponent,
   reactQueryClient,
@@ -186,7 +186,7 @@ export function AuthenticatedInvect<TPlugin = unknown>({
     </QueryClientProvider>
   );
 
-  // Wrap in the shell if provided — gives us the .invect CSS scope
+  // Wrap in the shell if provided — gives us the .flowlib CSS scope
   if (Shell) {
     return (
       <Shell theme={theme} className="h-full">

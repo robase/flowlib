@@ -42,7 +42,7 @@ export class InvectPanelProvider implements vscode.Disposable {
 
   /**
    * Open (or focus) a panel showing the Invect UI deep-linked to
-   * `initialPath` (e.g. `/invect/credentials`). `key` deduplicates
+   * `initialPath` (e.g. `/flowlib/credentials`). `key` deduplicates
    * panels — opening the same key twice reveals the existing tab.
    */
   async open(key: string, title: string, initialPath: string): Promise<void> {
@@ -58,7 +58,7 @@ export class InvectPanelProvider implements vscode.Disposable {
       return;
     }
     const panel = vscode.window.createWebviewPanel(
-      'invect.panel',
+      'flowlib.panel',
       title,
       vscode.ViewColumn.Active,
       {

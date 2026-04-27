@@ -1,11 +1,11 @@
 /**
- * @invect/vercel-workflows/ui — Frontend Plugin Entry Point
+ * @flowlib/vercel-workflows/ui — Frontend Plugin Entry Point
  *
  * Browser-safe entry point that exports the Vercel Workflows frontend plugin.
- * Import via: `import { vercelWorkflowsFrontendPlugin } from '@invect/vercel-workflows/ui'`
+ * Import via: `import { vercelWorkflowsFrontendPlugin } from '@flowlib/vercel-workflows/ui'`
  */
 
-import type { InvectFrontendPlugin } from '@invect/ui';
+import type { InvectFrontendPlugin } from '@flowlib/ui';
 import { DeployButton } from './DeployButton';
 
 export const vercelWorkflowsFrontendPlugin: InvectFrontendPlugin = {

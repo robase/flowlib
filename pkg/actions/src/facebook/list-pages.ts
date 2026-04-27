@@ -5,7 +5,7 @@
  * including each page's access token for posting.
  */
 
-import { defineAction } from '@invect/action-kit';
+import { defineAction } from '@flowlib/action-kit';
 import { FACEBOOK_PROVIDER } from '../providers';
 import { z } from 'zod/v4';
 

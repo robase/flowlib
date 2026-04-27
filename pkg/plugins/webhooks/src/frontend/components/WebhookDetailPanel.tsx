@@ -18,7 +18,7 @@ import {
   Workflow,
   Loader2,
 } from 'lucide-react';
-import { DialogHeader, DialogTitle, DialogDescription } from '@invect/ui';
+import { DialogHeader, DialogTitle, DialogDescription } from '@flowlib/ui';
 import { useUpdateWebhookTrigger, useDeleteWebhookTrigger } from '../hooks/useWebhookQueries';
 import { CopyableField } from './CopyableField';
 import type { WebhookTrigger, UpdateWebhookTriggerInput } from '../../shared/types';
@@ -249,7 +249,7 @@ const OverviewSection: FC<{
           <div className="flex-1 min-w-0">
             <span className="block text-xs text-muted-foreground">Linked Flow</span>
             <a
-              href={`/invect/flow/${trigger.flowId}`}
+              href={`/flowlib/flow/${trigger.flowId}`}
               className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline"
             >
               {flowName ?? trigger.flowId}

@@ -6,8 +6,8 @@ import type {
   ToolExecutionRecord,
   AgentExecutionOutput,
   AgentFinishReason,
-} from '@invect/core/types';
-import { NodeExecutionStatus as NodeStatusEnum } from '@invect/core/types';
+} from '@flowlib/core/types';
+import { NodeExecutionStatus as NodeStatusEnum } from '@flowlib/core/types';
 
 /**
  * Individual tool call executed by an AI Agent
@@ -50,7 +50,7 @@ export interface ExecutionLogAttempt {
   inputs?: Record<string, unknown>;
   outputs?: NodeExecution['outputs'];
   error?: string;
-  errorDetails?: import('@invect/core/types').NodeErrorDetails;
+  errorDetails?: import('@flowlib/core/types').NodeErrorDetails;
   nodeExecutionId?: string;
   /** Tool calls for agent nodes */
   toolCalls?: ExecutionLogToolCall[];
@@ -264,7 +264,7 @@ export function useExecutionLogData({ nodes, nodeExecutions }: UseExecutionLogDa
         outputs: execution.outputs,
         error: execution.error,
         errorDetails: (
-          execution as { errorDetails?: import('@invect/core/types').NodeErrorDetails }
+          execution as { errorDetails?: import('@flowlib/core/types').NodeErrorDetails }
         ).errorDetails,
         nodeExecutionId: execution.id,
         startedAtMs: toTimestamp(execution.startedAt),

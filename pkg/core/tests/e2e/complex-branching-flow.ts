@@ -22,7 +22,7 @@
  */
 import { strict as assert } from 'node:assert';
 import { FlowRunStatus, type NodeOutput } from '../../src';
-import { defineFlow, input, javascript, ifElse, template } from '@invect/sdk';
+import { defineFlow, input, javascript, ifElse, template } from '@flowlib/sdk';
 import type { FlowExample } from './example-types';
 
 /**
@@ -82,20 +82,20 @@ export const complexBranchingFlowExample: FlowExample = {
   name: 'Complex Branching Flow (Adult Path)',
   description: 'Tests Input → JS → If-Else → Template with conditional branching (adult user).',
 
-  async execute(invect) {
-    const flow = await invect.flows.create({
+  async execute(flowlib) {
+    const flow = await flowlib.flows.create({
       name: `e2e-complex-branching-adult-${Date.now()}`,
     });
     console.log(`  📁 Created flow: ${flow.name} (${flow.id})`);
 
     const flowDefinition = buildFlowDefinition(true);
-    await invect.versions.create(flow.id, {
+    await flowlib.versions.create(flow.id, {
       invectDefinition: flowDefinition,
     });
     console.log(`  💾 Saved flow version with ${flowDefinition.nodes.length} nodes`);
 
     console.log(`  🚀 Executing flow with adult user (age 25)...`);
-    const result = await invect.runs.start(flow.id, {}, { useBatchProcessing: false });
+    const result = await flowlib.runs.start(flow.id, {}, { useBatchProcessing: false });
     console.log(`  ✅ Flow completed with status: ${result.status}`);
 
     return result;
@@ -165,20 +165,20 @@ export const complexBranchingFlowMinorExample: FlowExample = {
   name: 'Complex Branching Flow (Minor Path)',
   description: 'Tests Input → JS → If-Else → Template with conditional branching (minor user).',
 
-  async execute(invect) {
-    const flow = await invect.flows.create({
+  async execute(flowlib) {
+    const flow = await flowlib.flows.create({
       name: `e2e-complex-branching-minor-${Date.now()}`,
     });
     console.log(`  📁 Created flow: ${flow.name} (${flow.id})`);
 
     const flowDefinition = buildFlowDefinition(false);
-    await invect.versions.create(flow.id, {
+    await flowlib.versions.create(flow.id, {
       invectDefinition: flowDefinition,
     });
     console.log(`  💾 Saved flow version with ${flowDefinition.nodes.length} nodes`);
 
     console.log(`  🚀 Executing flow with minor user (age 15)...`);
-    const result = await invect.runs.start(flow.id, {}, { useBatchProcessing: false });
+    const result = await flowlib.runs.start(flow.id, {}, { useBatchProcessing: false });
     console.log(`  ✅ Flow completed with status: ${result.status}`);
 
     return result;

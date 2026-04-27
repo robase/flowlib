@@ -6,7 +6,7 @@
  * action parses it and returns an array of event objects.
  */
 
-import { defineAction } from '@invect/action-kit';
+import { defineAction } from '@flowlib/action-kit';
 import { MIXPANEL_PROVIDER } from '../providers';
 import { z } from 'zod/v4';
 

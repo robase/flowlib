@@ -9,7 +9,7 @@ export { hubspotListDealsAction } from './list-deals';
 export { hubspotCreateDealAction } from './create-deal';
 export { hubspotSearchObjectsAction } from './search-objects';
 
-import type { ActionDefinition } from '@invect/action-kit';
+import type { ActionDefinition } from '@flowlib/action-kit';
 import { hubspotListContactsAction } from './list-contacts';
 import { hubspotGetContactAction } from './get-contact';
 import { hubspotCreateContactAction } from './create-contact';

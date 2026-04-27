@@ -33,7 +33,7 @@ function getSystemTheme(): ResolvedTheme {
 export function ThemeProvider({
   children,
   defaultTheme = 'dark',
-  storageKey = 'invect-ui-theme',
+  storageKey = 'flowlib-ui-theme',
   className,
 }: ThemeProviderProps) {
   const [theme, setTheme] = useState<Theme>(() => {
@@ -83,7 +83,7 @@ export function ThemeProvider({
   return (
     <ThemeContext.Provider value={value}>
       <div
-        className={['invect', resolvedTheme, 'flex-1 w-full h-full min-h-0', className]
+        className={['flowlib', resolvedTheme, 'flex-1 w-full h-full min-h-0', className]
           .filter(Boolean)
           .join(' ')}
       >

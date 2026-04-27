@@ -2,7 +2,7 @@
 
 ## Application Overview
 
-Test plan for the Invect credential management system. Covers CRUD operations on the /invect/credentials page (create, read, update, delete), auth type variations (Bearer, API Key, Basic, Connection String), the test-connection feature, credential webhook lifecycle (enable, display URL/secret, ingest), and integration with flow execution. The credentials page is a React SPA at /invect/credentials backed by Express API routes at /api/credentials/\*. Credential secrets are AES-256-GCM encrypted at rest. Two seeded credentials exist: "Anthropic API Key" (bearer) and "Linear OAuth2" (oauth2, webhook-enabled).
+Test plan for the Invect credential management system. Covers CRUD operations on the /flowlib/credentials page (create, read, update, delete), auth type variations (Bearer, API Key, Basic, Connection String), the test-connection feature, credential webhook lifecycle (enable, display URL/secret, ingest), and integration with flow execution. The credentials page is a React SPA at /flowlib/credentials backed by Express API routes at /api/credentials/\*. Credential secrets are AES-256-GCM encrypted at rest. Two seeded credentials exist: "Anthropic API Key" (bearer) and "Linear OAuth2" (oauth2, webhook-enabled).
 
 ## Test Scenarios
 
@@ -16,7 +16,7 @@ Test plan for the Invect credential management system. Covers CRUD operations on
 
 **Steps:**
 
-1. Navigate to /invect/credentials
+1. Navigate to /flowlib/credentials
    - expect: The 'Credentials' heading is visible
    - expect: The existing seeded credentials are listed
 
@@ -40,7 +40,7 @@ Test plan for the Invect credential management system. Covers CRUD operations on
 
 **Steps:**
 
-1. Navigate to /invect/credentials and click 'New Credential'
+1. Navigate to /flowlib/credentials and click 'New Credential'
    - expect: The Create Credential dialog opens
 
 2. Fill Name as 'My API Key Cred', select auth type 'API Key'
@@ -59,7 +59,7 @@ Test plan for the Invect credential management system. Covers CRUD operations on
 
 **Steps:**
 
-1. Navigate to /invect/credentials and click 'New Credential'
+1. Navigate to /flowlib/credentials and click 'New Credential'
    - expect: The Create Credential dialog opens
 
 2. Fill Name as 'Basic Auth Cred', select auth type 'Basic Auth'
@@ -75,7 +75,7 @@ Test plan for the Invect credential management system. Covers CRUD operations on
 
 **Steps:**
 
-1. Navigate to /invect/credentials and click 'New Credential'
+1. Navigate to /flowlib/credentials and click 'New Credential'
    - expect: The Create Credential dialog opens
 
 2. Select 'Database' for Credential Type
@@ -94,7 +94,7 @@ Test plan for the Invect credential management system. Covers CRUD operations on
 
 **Steps:**
 
-1. Navigate to /invect/credentials and click 'New Credential'
+1. Navigate to /flowlib/credentials and click 'New Credential'
    - expect: Dialog opens with Name field focused
 
 2. Leave Name empty, enter a token value, and click 'Create Credential'
@@ -111,7 +111,7 @@ Test plan for the Invect credential management system. Covers CRUD operations on
 
 **Steps:**
 
-1. Navigate to /invect/credentials
+1. Navigate to /flowlib/credentials
    - expect: The credentials list shows 'Anthropic API Key' with a 'Bearer' badge and an active status dot
 
 2. Click on the 'Anthropic API Key' row
@@ -131,7 +131,7 @@ Test plan for the Invect credential management system. Covers CRUD operations on
 
 **Steps:**
 
-1. Navigate to /invect/credentials
+1. Navigate to /flowlib/credentials
    - expect: All credentials are visible in the list
 
 2. Type 'Anthropic' into the search field
@@ -150,7 +150,7 @@ Test plan for the Invect credential management system. Covers CRUD operations on
 
 **Steps:**
 
-1. Navigate to /invect/credentials
+1. Navigate to /flowlib/credentials
    - expect: The filter pills show 'All' plus one pill per auth type present in the data
 
 2. Click the 'Bearer' filter pill
@@ -166,7 +166,7 @@ Test plan for the Invect credential management system. Covers CRUD operations on
 
 **Steps:**
 
-1. Navigate to /invect/credentials and click on a credential row
+1. Navigate to /flowlib/credentials and click on a credential row
    - expect: Detail dialog opens with three tabs: 'Overview', 'Edit', and 'Webhook'
 
 2. Click the 'Edit' tab
@@ -188,7 +188,7 @@ Test plan for the Invect credential management system. Covers CRUD operations on
 
 **Steps:**
 
-1. Navigate to /invect/credentials and click on 'Anthropic API Key'
+1. Navigate to /flowlib/credentials and click on 'Anthropic API Key'
    - expect: Detail dialog opens on the Overview tab
 
 2. Click the 'Edit' tab
@@ -210,7 +210,7 @@ Test plan for the Invect credential management system. Covers CRUD operations on
 
 **Steps:**
 
-1. Navigate to /invect/credentials and open a credential's detail dialog
+1. Navigate to /flowlib/credentials and open a credential's detail dialog
    - expect: Overview shows 'Active' status badge
 
 2. Click 'Edit' tab, uncheck the 'Active' checkbox
@@ -249,7 +249,7 @@ Test plan for the Invect credential management system. Covers CRUD operations on
 
 **Steps:**
 
-1. Navigate to /invect/credentials, create a new bearer credential named 'Cred To Delete'
+1. Navigate to /flowlib/credentials, create a new bearer credential named 'Cred To Delete'
    - expect: 'Cred To Delete' appears in the list
 
 2. Click on 'Cred To Delete' to open detail dialog
@@ -269,7 +269,7 @@ Test plan for the Invect credential management system. Covers CRUD operations on
 
 **Steps:**
 
-1. Navigate to /invect/credentials and open a credential's detail dialog
+1. Navigate to /flowlib/credentials and open a credential's detail dialog
    - expect: Detail dialog opens with Overview tab
 
 2. Click 'Delete' button
@@ -290,7 +290,7 @@ Test plan for the Invect credential management system. Covers CRUD operations on
 
 **Steps:**
 
-1. Navigate to /invect/credentials and click on 'Anthropic API Key'
+1. Navigate to /flowlib/credentials and click on 'Anthropic API Key'
    - expect: Detail dialog opens on Overview tab
    - expect: A 'Test Connection' section is visible with a 'Test' button
 
@@ -304,7 +304,7 @@ Test plan for the Invect credential management system. Covers CRUD operations on
 
 **Steps:**
 
-1. Navigate to /invect/credentials, click 'New Credential'
+1. Navigate to /flowlib/credentials, click 'New Credential'
    - expect: Create dialog opens
 
 2. Fill Name 'Test Inline Cred', auth type 'Bearer Token', Token 'fake-token'
@@ -330,7 +330,7 @@ Test plan for the Invect credential management system. Covers CRUD operations on
 
 **Steps:**
 
-1. Navigate to /invect/credentials, create a new bearer credential named 'Webhook Test Cred'
+1. Navigate to /flowlib/credentials, create a new bearer credential named 'Webhook Test Cred'
    - expect: 'Webhook Test Cred' appears in the list
 
 2. Click 'Webhook Test Cred' to open detail, then click the 'Webhook' tab
@@ -352,7 +352,7 @@ Test plan for the Invect credential management system. Covers CRUD operations on
 
 **Steps:**
 
-1. Navigate to /invect/credentials and click on 'Linear OAuth2' (already has webhook enabled)
+1. Navigate to /flowlib/credentials and click on 'Linear OAuth2' (already has webhook enabled)
    - expect: Detail dialog opens
 
 2. Click the 'Webhook' tab
@@ -370,10 +370,10 @@ Test plan for the Invect credential management system. Covers CRUD operations on
 
 **Steps:**
 
-1. Use the API to get the webhook info for the 'Linear OAuth2' credential (GET /invect/credentials/:id/webhook-info)
+1. Use the API to get the webhook info for the 'Linear OAuth2' credential (GET /flowlib/credentials/:id/webhook-info)
    - expect: Response contains webhookPath and webhookSecret
 
-2. Send a POST request to http://localhost:3000/invect/webhooks/credentials/{webhookPath} with a JSON body { "action": "test", "data": { "issueId": "TEST-123" } }
+2. Send a POST request to http://localhost:3000/flowlib/webhooks/credentials/{webhookPath} with a JSON body { "action": "test", "data": { "issueId": "TEST-123" } }
    - expect: Response status is 200
    - expect: Response body has 'ok: true'
    - expect: Response contains 'triggeredFlows' count and 'runs' array
@@ -384,7 +384,7 @@ Test plan for the Invect credential management system. Covers CRUD operations on
 
 **Steps:**
 
-1. Send a POST request to http://localhost:3000/invect/webhooks/credentials/nonexistent-path-abc123 with a JSON body
+1. Send a POST request to http://localhost:3000/flowlib/webhooks/credentials/nonexistent-path-abc123 with a JSON body
    - expect: Response status is 404 or 400
    - expect: Response body indicates credential not found
 
@@ -424,15 +424,15 @@ Test plan for the Invect credential management system. Covers CRUD operations on
 
 **Steps:**
 
-1. Navigate to /invect (dashboard)
+1. Navigate to /flowlib (dashboard)
    - expect: Dashboard loads with sidebar visible
 
-2. Click the Credentials link in the sidebar navigation (the key icon link at /invect/credentials)
-   - expect: The page navigates to /invect/credentials
+2. Click the Credentials link in the sidebar navigation (the key icon link at /flowlib/credentials)
+   - expect: The page navigates to /flowlib/credentials
    - expect: The Credentials heading and list are visible
 
 3. Click the 'Credentials' button in the dashboard header area
-   - expect: Navigates to /invect/credentials
+   - expect: Navigates to /flowlib/credentials
 
 ### 9. Credential Edge Cases & Error Handling
 
@@ -444,10 +444,10 @@ Test plan for the Invect credential management system. Covers CRUD operations on
 
 **Steps:**
 
-1. Delete all credentials via the API (DELETE /invect/credentials/:id for each)
+1. Delete all credentials via the API (DELETE /flowlib/credentials/:id for each)
    - expect: All deletions succeed
 
-2. Navigate to /invect/credentials
+2. Navigate to /flowlib/credentials
    - expect: Empty state is shown: 'No credentials yet' heading
    - expect: 'Add API keys, connect OAuth providers, or configure database credentials...' text
    - expect: A 'Create Credential' button is visible in the empty state
@@ -474,7 +474,7 @@ Test plan for the Invect credential management system. Covers CRUD operations on
 
 **Steps:**
 
-1. Navigate to /invect/credentials, open a bearer credential's detail, click 'Edit' tab
+1. Navigate to /flowlib/credentials, open a bearer credential's detail, click 'Edit' tab
    - expect: The Token field is type='password' (input is masked)
    - expect: The placeholder says 'Enter bearer token' or shows dots
 

@@ -5,7 +5,7 @@
  * ensure consistency and prevent duplicating the ProviderDef objects.
  */
 
-import type { ProviderDef } from '@invect/action-kit';
+import type { ProviderDef } from '@flowlib/action-kit';
 
 export const CORE_PROVIDER: ProviderDef = {
   id: 'core',
@@ -122,7 +122,7 @@ export const TRIGGERS_PROVIDER: ProviderDef = {
   category: 'core',
   nodeCategory: 'Triggers',
   description: 'Flow trigger nodes — define how a flow is started',
-  docsUrl: 'https://docs.invect.dev/docs/triggers',
+  docsUrl: 'https://docs.flowlib.dev/docs/triggers',
 };
 
 export const MICROSOFT_PROVIDER: ProviderDef = {

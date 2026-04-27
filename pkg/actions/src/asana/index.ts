@@ -9,7 +9,7 @@ export { asanaGetTaskAction } from './get-task';
 export { asanaCreateTaskAction } from './create-task';
 export { asanaUpdateTaskAction } from './update-task';
 
-import type { ActionDefinition } from '@invect/action-kit';
+import type { ActionDefinition } from '@flowlib/action-kit';
 import { asanaListWorkspacesAction } from './list-workspaces';
 import { asanaListProjectsAction } from './list-projects';
 import { asanaListTasksAction } from './list-tasks';

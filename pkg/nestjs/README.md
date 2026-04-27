@@ -5,12 +5,12 @@
   </picture>
 </p>
 
-<h1 align="center">@invect/nestjs</h1>
+<h1 align="center">@flowlib/nestjs</h1>
 
 <p align="center">
   NestJS module adapter for Invect.
   <br />
-  <a href="https://invect.dev/docs/integrations/nestjs"><strong>Docs</strong></a> · <a href="https://invect.dev/docs/quick-start"><strong>Quick Start</strong></a>
+  <a href="https://flowlib.dev/docs/integrations/nestjs"><strong>Docs</strong></a> · <a href="https://flowlib.dev/docs/quick-start"><strong>Quick Start</strong></a>
 </p>
 
 ---
@@ -20,20 +20,20 @@ Mount Invect into any NestJS app as a module. Provides a controller for all API 
 ## Install
 
 ```bash
-npx invect-cli init
+npx flowlib-cli init
 ```
 
 Or install manually:
 
 ```bash
-npm install @invect/core @invect/nestjs
+npm install @flowlib/core @flowlib/nestjs
 ```
 
 ## Usage
 
 ```ts
 import { Module } from '@nestjs/common';
-import { InvectModule } from '@invect/nestjs';
+import { InvectModule } from '@flowlib/nestjs';
 
 @Module({
   imports: [
@@ -42,7 +42,7 @@ import { InvectModule } from '@invect/nestjs';
         type: 'sqlite',
         connectionString: 'file:./dev.db',
       },
-      encryptionKey: process.env.INVECT_ENCRYPTION_KEY, // npx invect-cli secret
+      encryptionKey: process.env.INVECT_ENCRYPTION_KEY, // npx flowlib-cli secret
     }),
   ],
 })
@@ -53,7 +53,7 @@ export class AppModule {}
 
 ```ts
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { InvectModule } from '@invect/nestjs';
+import { InvectModule } from '@flowlib/nestjs';
 
 @Module({
   imports: [
@@ -79,14 +79,14 @@ Inject `InvectService` to call the core engine directly:
 
 ```ts
 import { Injectable } from '@nestjs/common';
-import { InvectService } from '@invect/nestjs';
+import { InvectService } from '@flowlib/nestjs';
 
 @Injectable()
 export class MyService {
-  constructor(private readonly invect: InvectService) {}
+  constructor(private readonly flowlib: InvectService) {}
 
   async runWorkflow(flowId: string, inputs: Record<string, unknown>) {
-    return this.invect.getCore().runs.start(flowId, inputs);
+    return this.flowlib.getCore().runs.start(flowId, inputs);
   }
 }
 ```

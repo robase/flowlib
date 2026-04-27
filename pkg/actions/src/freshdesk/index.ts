@@ -8,7 +8,7 @@ export { freshdeskCreateTicketAction } from './create-ticket';
 export { freshdeskUpdateTicketAction } from './update-ticket';
 export { freshdeskListContactsAction } from './list-contacts';
 
-import type { ActionDefinition } from '@invect/action-kit';
+import type { ActionDefinition } from '@flowlib/action-kit';
 import { freshdeskListTicketsAction } from './list-tickets';
 import { freshdeskGetTicketAction } from './get-ticket';
 import { freshdeskCreateTicketAction } from './create-ticket';

@@ -1,6 +1,6 @@
 ---
 title: Webhooks
-description: Trigger flows from external HTTP requests with @invect/webhooks.
+description: Trigger flows from external HTTP requests with @flowlib/webhooks.
 ---
 
 import { Tab, Tabs } from 'fumadocs-ui/components/tabs';
@@ -13,28 +13,28 @@ The webhooks plugin adds inbound webhook support — external services can trigg
 <Tab value="pnpm">
 
 ```bash
-pnpm add @invect/webhooks
+pnpm add @flowlib/webhooks
 ```
 
 </Tab>
 <Tab value="npm">
 
 ```bash
-npm install @invect/webhooks
+npm install @flowlib/webhooks
 ```
 
 </Tab>
 <Tab value="yarn">
 
 ```bash
-yarn add @invect/webhooks
+yarn add @flowlib/webhooks
 ```
 
 </Tab>
 <Tab value="bun">
 
 ```bash
-bun add @invect/webhooks
+bun add @flowlib/webhooks
 ```
 
 </Tab>
@@ -42,14 +42,14 @@ bun add @invect/webhooks
 
 ## Setup
 
-```ts title="invect.config.ts"
-import { webhooks } from '@invect/webhooks';
+```ts title="flowlib.config.ts"
+import { webhooks } from '@flowlib/webhooks';
 
 export const invectConfig = defineConfig({
   // ...
   plugins: [
     webhooks({
-      webhookBaseUrl: 'https://api.myapp.com/invect',
+      webhookBaseUrl: 'https://api.myapp.com/flowlib',
     }),
   ],
 });
@@ -69,8 +69,8 @@ The `webhookBaseUrl` is the public URL prefix used to generate webhook URLs disp
 Regenerate the schema to add the webhook tables:
 
 ```bash
-npx invect-cli generate
-npx invect-cli migrate --push
+npx flowlib-cli generate
+npx flowlib-cli migrate --push
 ```
 
 ## How it works

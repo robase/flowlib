@@ -3,8 +3,8 @@
  *
  * Items:
  *   - "● Embedded (local SQLite)" — always present, default
- *   - "● Remote: <url>"           — present iff `invect.backendUrl` is set
- *   - "Connect to remote…"        — action row, fires `invect.connect`
+ *   - "● Remote: <url>"           — present iff `flowlib.backendUrl` is set
+ *   - "Connect to remote…"        — action row, fires `flowlib.connect`
  *
  * Active backend gets `$(check)` + bold; inactive gets `$(circle-outline)`.
  * Clicking a backend item switches to it (calls connect/disconnect under
@@ -44,12 +44,12 @@ export class BackendsExplorerProvider implements vscode.TreeDataProvider<Backend
       tree.description = item.active ? 'active' : undefined;
       tree.iconPath = new vscode.ThemeIcon(item.active ? 'check' : 'home');
       tree.tooltip = item.active
-        ? 'In-process @invect/core against a local SQLite file in this extension\'s globalStorage. Click "Disconnect" on a remote backend to return here.'
+        ? 'In-process @flowlib/core against a local SQLite file in this extension\'s globalStorage. Click "Disconnect" on a remote backend to return here.'
         : 'Switch to the embedded local backend. Disconnects any remote backend.';
       tree.command = item.active
         ? undefined
-        : { command: 'invect.disconnect', title: 'Use embedded backend' };
-      tree.contextValue = 'invect.backend.embedded';
+        : { command: 'flowlib.disconnect', title: 'Use embedded backend' };
+      tree.contextValue = 'flowlib.backend.embedded';
       return tree;
     }
 
@@ -60,8 +60,8 @@ export class BackendsExplorerProvider implements vscode.TreeDataProvider<Backend
       tree.tooltip = item.active
         ? `Connected to ${item.url}\nClick to reconnect / change URL.`
         : `Configured but not active.\nClick to connect to ${item.url}.`;
-      tree.command = { command: 'invect.connect', title: 'Connect to remote backend' };
-      tree.contextValue = 'invect.backend.remote';
+      tree.command = { command: 'flowlib.connect', title: 'Connect to remote backend' };
+      tree.contextValue = 'flowlib.backend.remote';
       return tree;
     }
 
@@ -69,8 +69,8 @@ export class BackendsExplorerProvider implements vscode.TreeDataProvider<Backend
     const tree = new vscode.TreeItem('Connect to remote backend…');
     tree.iconPath = new vscode.ThemeIcon('plug');
     tree.tooltip = 'Configure a remote (or localhost / Docker) Invect backend';
-    tree.command = { command: 'invect.connect', title: 'Connect…' };
-    tree.contextValue = 'invect.backend.connect';
+    tree.command = { command: 'flowlib.connect', title: 'Connect…' };
+    tree.contextValue = 'flowlib.backend.connect';
     return tree;
   }
 

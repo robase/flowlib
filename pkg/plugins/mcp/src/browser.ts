@@ -1,5 +1,5 @@
 /**
- * @invect/mcp — Browser Entry Point
+ * @flowlib/mcp — Browser Entry Point
  *
  * Resolved via the `browser` condition in package.json exports.
  * MCP is a server-side only plugin — no frontend UI is bundled.

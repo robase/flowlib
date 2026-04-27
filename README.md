@@ -5,12 +5,12 @@
   </picture>
 </p>
 
-<h1 align="center">invect</h1>
+<h1 align="center">flowlib</h1>
 
 <p align="center">
   Drop-in AI workflows for your Node.js app.
   <br />
-  <a href="https://invect.dev/docs"><strong>Documentation</strong></a> · <a href="https://invect.dev/docs/quick-start"><strong>Quick Start</strong></a> · <a href="https://github.com/robase/invect"><strong>GitHub</strong></a>
+  <a href="https://flowlib.dev/docs"><strong>Documentation</strong></a> · <a href="https://flowlib.dev/docs/quick-start"><strong>Quick Start</strong></a> · <a href="https://github.com/robase/flowlib"><strong>GitHub</strong></a>
 </p>
 
 <p align="center">
@@ -18,13 +18,13 @@
 </p>
 
 <p align="center">
-  <a href="https://invect.dev/demo">
+  <a href="https://flowlib.dev/demo">
     <img src=".github/assets/flow-screenshot.png" alt="Invect Flow Editor" width="800" />
   </a>
 </p>
 
 <p align="center">
-  <a href="https://invect.dev/demo"><strong>Try the live demo →</strong></a>
+  <a href="https://flowlib.dev/demo"><strong>Try the live demo →</strong></a>
 </p>
 
 ---
@@ -34,20 +34,20 @@ Invect is an open-source workflow orchestration library you mount directly into 
 ## Quick Start
 
 ```bash
-npx invect-cli init
+npx flowlib-cli init
 ```
 
 Or install manually:
 
 ```bash
-npm install @invect/core @invect/express @invect/ui
+npm install @flowlib/core @flowlib/express @flowlib/ui
 ```
 
 ### Backend
 
 ```ts
 import express from 'express';
-import { createInvectRouter } from '@invect/express';
+import { createInvectRouter } from '@flowlib/express';
 
 const app = express();
 
@@ -56,20 +56,20 @@ const invectRouter = await createInvectRouter({
     type: 'sqlite',
     connectionString: 'file:./dev.db',
   },
-  encryptionKey: process.env.INVECT_ENCRYPTION_KEY, // npx invect-cli secret
+  encryptionKey: process.env.INVECT_ENCRYPTION_KEY, // npx flowlib-cli secret
 });
 
-app.use('/invect', invectRouter);
+app.use('/flowlib', invectRouter);
 app.listen(3000);
 ```
 
 ### Frontend
 
 ```tsx
-import { Invect } from '@invect/ui';
-import '@invect/ui/styles';
+import { Invect } from '@flowlib/ui';
+import '@flowlib/ui/styles';
 
-export default () => <Invect apiBaseUrl="http://localhost:3000/invect" />;
+export default () => <Invect apiBaseUrl="http://localhost:3000/flowlib" />;
 ```
 
 ## Features
@@ -86,18 +86,18 @@ export default () => <Invect apiBaseUrl="http://localhost:3000/invect" />;
 
 | Package                                                      | Description                                                     |
 | ------------------------------------------------------------ | --------------------------------------------------------------- |
-| [`@invect/core`](pkg/core)                                   | Framework-agnostic engine — flows, execution, actions, database |
-| [`@invect/express`](pkg/express)                             | Express router adapter                                          |
-| [`@invect/nestjs`](pkg/nestjs)                               | NestJS module adapter                                           |
-| [`@invect/nextjs`](pkg/nextjs)                               | Next.js App Router handler                                      |
-| [`@invect/ui`](pkg/ui)                                       | React flow editor and dashboard                                 |
-| [`@invect/cli`](pkg/cli)                                     | CLI for schema generation, migrations, and project setup        |
-| [`@invect/user-auth`](pkg/plugins/auth)                      | Authentication plugin (Better Auth)                             |
-| [`@invect/rbac`](pkg/plugins/rbac)                           | Role-based access control plugin                                |
-| [`@invect/webhooks`](pkg/plugins/webhooks)                   | Webhook triggers with signature verification and rate limiting  |
-| [`@invect/version-control`](pkg/plugins/version-control)     | Sync flows to GitHub/GitLab/Bitbucket as `.flow.ts` files       |
-| [`@invect/cloudflare-agents`](pkg/plugins/cloudflare-agents) | Compile flows to Cloudflare Workers & Workflows                 |
-| [`@invect/mcp`](pkg/plugins/mcp)                             | Model Context Protocol server for AI coding agents              |
+| [`@flowlib/core`](pkg/core)                                   | Framework-agnostic engine — flows, execution, actions, database |
+| [`@flowlib/express`](pkg/express)                             | Express router adapter                                          |
+| [`@flowlib/nestjs`](pkg/nestjs)                               | NestJS module adapter                                           |
+| [`@flowlib/nextjs`](pkg/nextjs)                               | Next.js App Router handler                                      |
+| [`@flowlib/ui`](pkg/ui)                                       | React flow editor and dashboard                                 |
+| [`@flowlib/cli`](pkg/cli)                                     | CLI for schema generation, migrations, and project setup        |
+| [`@flowlib/user-auth`](pkg/plugins/auth)                      | Authentication plugin (Better Auth)                             |
+| [`@flowlib/rbac`](pkg/plugins/rbac)                           | Role-based access control plugin                                |
+| [`@flowlib/webhooks`](pkg/plugins/webhooks)                   | Webhook triggers with signature verification and rate limiting  |
+| [`@flowlib/version-control`](pkg/plugins/version-control)     | Sync flows to GitHub/GitLab/Bitbucket as `.flow.ts` files       |
+| [`@flowlib/cloudflare-agents`](pkg/plugins/cloudflare-agents) | Compile flows to Cloudflare Workers & Workflows                 |
+| [`@flowlib/mcp`](pkg/plugins/mcp)                             | Model Context Protocol server for AI coding agents              |
 
 ## Examples
 

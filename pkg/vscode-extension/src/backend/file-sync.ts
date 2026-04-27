@@ -7,7 +7,7 @@
  *
  *   1. **Canvas → File** (express middleware):
  *      Intercept `POST /flows/:id/versions` for file-tagged flows. Emit
- *      canonical SDK source via `@invect/sdk` and write to disk before
+ *      canonical SDK source via `@flowlib/sdk` and write to disk before
  *      forwarding to the Invect router (so the DB version is still
  *      created — our policy is "DB caches the file").
  *
@@ -28,7 +28,7 @@
 import * as crypto from 'node:crypto';
 import * as vscode from 'vscode';
 import type { NextFunction, Request, RequestHandler, Response } from 'express';
-import { emitSdkSource } from '@invect/sdk';
+import { emitSdkSource } from '@flowlib/sdk';
 
 import { getExtensionLogger } from '../util/logger';
 import { parseFlowFile } from '../flow-file/parse';
@@ -126,7 +126,7 @@ export class FileSync {
   middleware(): RequestHandler {
     return async (req: Request, _res: Response, next: NextFunction) => {
       try {
-        // The middleware is mounted on `/invect`, so req.path is the
+        // The middleware is mounted on `/flowlib`, so req.path is the
         // post-mount suffix e.g. `/flows/<id>/versions`.
         const versionsMatch =
           req.method === 'POST' ? /^\/flows\/([^/]+)\/versions\/?$/.exec(req.path) : null;

@@ -5,15 +5,15 @@ description: All commands, flags, and examples for the Invect CLI.
 
 import { Callout } from 'fumadocs-ui/components/callout';
 
-The Invect CLI (`invect-cli`) manages project initialisation, schema generation, and database migrations. It's the recommended way to set up and manage your Invect project.
+The Invect CLI (`flowlib-cli`) manages project initialisation, schema generation, and database migrations. It's the recommended way to set up and manage your Invect project.
 
 ```bash
-npx invect-cli <command> [options]
+npx flowlib-cli <command> [options]
 ```
 
 <Callout type="info">
-  You can also use your package manager's equivalent: `pnpm dlx invect-cli`, `yarn dlx invect-cli`,
-  or `bunx invect-cli`.
+  You can also use your package manager's equivalent: `pnpm dlx flowlib-cli`, `yarn dlx flowlib-cli`,
+  or `bunx flowlib-cli`.
 </Callout>
 
 All commands accept `--debug` for detailed error output and stack traces.
@@ -25,7 +25,7 @@ All commands accept `--debug` for detailed error output and stack traces.
 Interactive setup wizard. Detects framework, installs dependencies, creates config, generates schemas, runs initial migration. **This is the recommended way to get started.**
 
 ```bash
-npx invect-cli init
+npx flowlib-cli init
 ```
 
 | Flag                     | Description                                                    |
@@ -37,7 +37,7 @@ npx invect-cli init
 **Example: non-interactive setup**
 
 ```bash
-npx invect-cli init --framework express --database sqlite --package-manager pnpm
+npx flowlib-cli init --framework express --database sqlite --package-manager pnpm
 ```
 
 ---
@@ -47,7 +47,7 @@ npx invect-cli init --framework express --database sqlite --package-manager pnpm
 Generate Drizzle schema files from core + plugin schemas.
 
 ```bash
-npx invect-cli generate
+npx flowlib-cli generate
 ```
 
 | Flag                | Description                                                 |
@@ -59,7 +59,7 @@ npx invect-cli generate
 | `--schema-only`     | Generate schema files without migration files.              |
 | `-y, --yes`         | Skip confirmation prompts.                                  |
 
-The CLI reads `invect.config.ts`, discovers plugins, merges schemas, and generates dialect-specific Drizzle files. Unchanged files are skipped.
+The CLI reads `flowlib.config.ts`, discovers plugins, merges schemas, and generates dialect-specific Drizzle files. Unchanged files are skipped.
 
 **Run this after adding or updating plugins with database tables.**
 
@@ -71,10 +71,10 @@ Apply database schema changes.
 
 ```bash
 # Production: generate + apply migration files
-npx invect-cli migrate
+npx flowlib-cli migrate
 
 # Development: push schema directly (fast, no migration files)
-npx invect-cli migrate --push
+npx flowlib-cli migrate --push
 ```
 
 | Flag              | Description                                        |
@@ -90,7 +90,7 @@ npx invect-cli migrate --push
 Display diagnostic information about your setup.
 
 ```bash
-npx invect-cli info
+npx flowlib-cli info
 ```
 
 | Flag              | Description          |
@@ -107,7 +107,7 @@ Shows system info, detected framework, database type, config location, installed
 Generate a cryptographically secure 32-byte base64 encryption key for `INVECT_ENCRYPTION_KEY`.
 
 ```bash
-npx invect-cli secret
+npx flowlib-cli secret
 ```
 
 Copy the output into your `.env` file or secrets manager.
@@ -119,19 +119,19 @@ Copy the output into your `.env` file or secrets manager.
 Start a Model Context Protocol (MCP) server over stdio. Connects to a running Invect instance and exposes flow building/execution tools to AI assistants like Claude, Copilot, or Cursor.
 
 ```bash
-npx invect-cli mcp --url http://localhost:3000/invect
+npx flowlib-cli mcp --url http://localhost:3000/flowlib
 ```
 
 | Flag              | Description                                                              |
 | ----------------- | ------------------------------------------------------------------------ |
-| `--url <url>`     | URL of the running Invect API (default: `http://localhost:3000/invect`). |
+| `--url <url>`     | URL of the running Invect API (default: `http://localhost:3000/flowlib`). |
 | `--api-key <key>` | API key for authenticated access.                                        |
 | `--print-config`  | Output ready-to-paste MCP client config (e.g., for Claude Desktop).      |
 
 **Example: generate config for Claude Desktop**
 
 ```bash
-npx invect-cli mcp --print-config
+npx flowlib-cli mcp --print-config
 ```
 
 ---
@@ -141,25 +141,25 @@ npx invect-cli mcp --print-config
 ### Initial setup
 
 ```bash
-npx invect-cli init
+npx flowlib-cli init
 ```
 
 ### After adding a plugin with database tables
 
 ```bash
-npx invect-cli generate
-npx invect-cli migrate --push
+npx flowlib-cli generate
+npx flowlib-cli migrate --push
 ```
 
 ### Production database migration
 
 ```bash
-npx invect-cli generate
-npx invect-cli migrate
+npx flowlib-cli generate
+npx flowlib-cli migrate
 ```
 
 ### Generate encryption key
 
 ```bash
-npx invect-cli secret
+npx flowlib-cli secret
 ```

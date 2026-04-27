@@ -5,12 +5,12 @@
   </picture>
 </p>
 
-<h1 align="center">@invect/user-auth</h1>
+<h1 align="center">@flowlib/user-auth</h1>
 
 <p align="center">
   Authentication plugin for Invect, powered by Better Auth.
   <br />
-  <a href="https://invect.dev/docs/plugins"><strong>Docs</strong></a>
+  <a href="https://flowlib.dev/docs/plugins"><strong>Docs</strong></a>
 </p>
 
 ---
@@ -20,7 +20,7 @@ Adds user authentication, session management, and auth UI components to Invect. 
 ## Install
 
 ```bash
-pnpm add @invect/user-auth better-auth
+pnpm add @flowlib/user-auth better-auth
 ```
 
 ## Backend
@@ -28,8 +28,8 @@ pnpm add @invect/user-auth better-auth
 The simplest setup — the plugin manages Better Auth internally using Invect's database:
 
 ```ts
-import { createInvectRouter } from '@invect/express';
-import { auth } from '@invect/user-auth';
+import { createInvectRouter } from '@flowlib/express';
+import { auth } from '@flowlib/user-auth';
 
 const invectRouter = await createInvectRouter({
   database: { type: 'sqlite', connectionString: 'file:./dev.db' },
@@ -43,14 +43,14 @@ const invectRouter = await createInvectRouter({
   ],
 });
 
-app.use('/invect', invectRouter);
+app.use('/flowlib', invectRouter);
 ```
 
 For full control, provide your own Better Auth instance:
 
 ```ts
 import { betterAuth } from 'better-auth';
-import { auth } from '@invect/user-auth';
+import { auth } from '@flowlib/user-auth';
 
 const betterAuthInstance = betterAuth({
   database: { url: 'file:./auth.db', type: 'sqlite' },
@@ -63,7 +63,7 @@ const invectRouter = await createInvectRouter({
   plugins: [auth({ auth: betterAuthInstance })],
 });
 
-app.use('/invect', invectRouter);
+app.use('/flowlib', invectRouter);
 ```
 
 Sign-up is disabled in the UI. The initial admin is seeded from `globalAdmins`. Subsequent users are created by admins through the user management UI or API.
@@ -71,13 +71,13 @@ Sign-up is disabled in the UI. The initial admin is seeded from `globalAdmins`. 
 ## Frontend
 
 ```tsx
-import { Invect, InvectShell } from '@invect/ui';
-import { AuthenticatedInvect } from '@invect/user-auth/ui';
-import '@invect/ui/styles';
+import { Invect, InvectShell } from '@flowlib/ui';
+import { AuthenticatedInvect } from '@flowlib/user-auth/ui';
+import '@flowlib/ui/styles';
 
 <AuthenticatedInvect
-  apiBaseUrl="/api/invect"
-  basePath="/invect"
+  apiBaseUrl="/api/flowlib"
+  basePath="/flowlib"
   InvectComponent={Invect}
   ShellComponent={InvectShell}
   theme="light"
@@ -87,11 +87,11 @@ import '@invect/ui/styles';
 Or compose manually:
 
 ```tsx
-import { AuthProvider, AuthGate, SignInPage, UserButton } from '@invect/user-auth/ui';
+import { AuthProvider, AuthGate, SignInPage, UserButton } from '@flowlib/user-auth/ui';
 
-<AuthProvider baseUrl="http://localhost:3000/invect">
+<AuthProvider baseUrl="http://localhost:3000/flowlib">
   <AuthGate fallback={<SignInPage />}>
-    <Invect apiBaseUrl="http://localhost:3000/invect" />
+    <Invect apiBaseUrl="http://localhost:3000/flowlib" />
   </AuthGate>
 </AuthProvider>;
 ```
@@ -100,9 +100,9 @@ import { AuthProvider, AuthGate, SignInPage, UserButton } from '@invect/user-aut
 
 | Entry Point               | Content                                                                                             |
 | ------------------------- | --------------------------------------------------------------------------------------------------- |
-| `@invect/user-auth`       | Backend plugin (Node.js)                                                                            |
-| `@invect/user-auth/ui`    | Frontend components — `AuthProvider`, `AuthGate`, `SignInForm`, `UserButton`, `AuthenticatedInvect` |
-| `@invect/user-auth/types` | Shared types                                                                                        |
+| `@flowlib/user-auth`       | Backend plugin (Node.js)                                                                            |
+| `@flowlib/user-auth/ui`    | Frontend components — `AuthProvider`, `AuthGate`, `SignInForm`, `UserButton`, `AuthenticatedInvect` |
+| `@flowlib/user-auth/types` | Shared types                                                                                        |
 
 ## What It Does
 

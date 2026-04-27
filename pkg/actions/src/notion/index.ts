@@ -18,7 +18,7 @@ export { notionQueryDatabaseAction } from './query-database';
 
 // ── Bulk array ──────────────────────────────────────────────────────────
 
-import type { ActionDefinition } from '@invect/action-kit';
+import type { ActionDefinition } from '@flowlib/action-kit';
 
 import { notionSearchAction } from './search';
 import { notionGetPageAction } from './get-page';

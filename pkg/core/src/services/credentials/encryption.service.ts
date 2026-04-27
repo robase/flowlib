@@ -422,7 +422,7 @@ export class EncryptionService {
 export function createEncryptionService(masterKey: string | undefined): EncryptionService {
   if (!masterKey) {
     throw new Error(
-      'masterKey is required. Generate one with: npx invect-cli secret. ' +
+      'masterKey is required. Generate one with: npx flowlib-cli secret. ' +
         'Pass it explicitly to createEncryptionService(masterKey) — core no longer reads ' +
         'process.env.INVECT_ENCRYPTION_KEY automatically (this lets it run on edge runtimes).',
     );

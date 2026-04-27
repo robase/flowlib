@@ -1,12 +1,12 @@
 /**
- * @invect/mcp — Plugin entry point
+ * @flowlib/mcp — Plugin entry point
  *
  * Exports the `mcp()` factory that creates an InvectPluginDefinition providing
  * MCP (Model Context Protocol) endpoints for AI coding agents.
  */
 
 import { randomUUID } from 'node:crypto';
-import type { InvectPlugin, InvectPluginDefinition, InvectPluginContext } from '@invect/core';
+import type { InvectPlugin, InvectPluginDefinition, InvectPluginContext } from '@flowlib/core';
 import { WebStandardStreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js';
 import type { McpPluginOptions } from '../shared/types';
 import { DirectClient } from './client/direct-client';
@@ -27,7 +27,7 @@ const MCP_SESSION_HEADER = 'mcp-session-id';
  *
  * @example
  * ```typescript
- * import { mcp } from '@invect/mcp';
+ * import { mcp } from '@flowlib/mcp';
  *
  * defineConfig({
  *   plugins: [mcp()],

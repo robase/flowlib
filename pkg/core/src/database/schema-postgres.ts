@@ -15,7 +15,7 @@ import { relations } from 'drizzle-orm';
 import { randomUUID } from 'crypto';
 import { JSONValue } from '.';
 import { InvectDefinitionRuntime } from 'src/services/flow-versions/schemas-fresh';
-import type { NodeErrorDetails } from '@invect/action-kit';
+import type { NodeErrorDetails } from '@flowlib/action-kit';
 
 // =============================================================================
 // Enums for PostgreSQL

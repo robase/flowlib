@@ -61,7 +61,7 @@ export default defineConfig({
   sourcemap: true,
   clean: true,
   deps: {
-    neverBundle: ['zod', '@invect/action-kit'],
+    neverBundle: ['zod', '@flowlib/action-kit'],
   },
   outExtensions({ format }) {
     return { js: format === 'cjs' ? '.cjs' : '.mjs' };

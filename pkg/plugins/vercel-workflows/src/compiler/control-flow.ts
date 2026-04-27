@@ -1,4 +1,4 @@
-import type { PrimitiveFlowDefinition, PrimitiveEdge, PrimitiveNode } from '@invect/primitives';
+import type { PrimitiveFlowDefinition, PrimitiveEdge, PrimitiveNode } from '@flowlib/primitives';
 import {
   ifElseAction,
   topologicalSort,
@@ -8,7 +8,7 @@ import {
   edgeSource,
   edgeTarget,
   edgeHandle,
-} from '@invect/primitives';
+} from '@flowlib/primitives';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 

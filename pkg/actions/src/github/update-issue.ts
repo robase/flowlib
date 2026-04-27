@@ -5,7 +5,7 @@
  * or milestone. Requires a GitHub OAuth2 credential with repo scope.
  */
 
-import { defineAction } from '@invect/action-kit';
+import { defineAction } from '@flowlib/action-kit';
 import { GITHUB_PROVIDER } from '../providers';
 import { z } from 'zod/v4';
 

@@ -4,7 +4,7 @@ import {
   FlowValidationError,
   FlowValidationWarning,
   FLOW_VALIDATION_ERROR_TYPES,
-} from '@invect/core/types';
+} from '@flowlib/core/types';
 
 // Helper function to format node ID to a short display name
 const formatNodeId = (nodeId: string): string => {

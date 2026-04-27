@@ -8,8 +8,8 @@
  * resolver the evaluator installs.
  *
  * Allowlist structure:
- *   - Exact matches: `@invect/sdk`, `@invect/sdk/transform`, `@invect/sdk/evaluator`.
- *   - Prefix matches: `@invect/actions/*` (every subpath), `@invect/action-kit/*`.
+ *   - Exact matches: `@flowlib/sdk`, `@flowlib/sdk/transform`, `@flowlib/sdk/evaluator`.
+ *   - Prefix matches: `@flowlib/actions/*` (every subpath), `@flowlib/action-kit/*`.
  *   - Caller-supplied via `additionalAllowedImports` option — useful for custom
  *     user action packages registered with the evaluator.
  *
@@ -21,16 +21,16 @@ import ts from 'typescript';
 import type { EvaluatorError } from './types';
 
 const DEFAULT_ALLOWED_EXACT: ReadonlySet<string> = new Set([
-  '@invect/sdk',
-  '@invect/sdk/transform',
-  '@invect/sdk/evaluator',
-  '@invect/action-kit',
+  '@flowlib/sdk',
+  '@flowlib/sdk/transform',
+  '@flowlib/sdk/evaluator',
+  '@flowlib/action-kit',
 ]);
 
 const DEFAULT_ALLOWED_PREFIXES: readonly string[] = [
-  '@invect/actions/',
-  '@invect/action-kit/',
-  '@invect/sdk/',
+  '@flowlib/actions/',
+  '@flowlib/action-kit/',
+  '@flowlib/sdk/',
 ];
 
 export interface ScanResult {
@@ -70,7 +70,7 @@ export function scanImports(source: string, additionalAllowed: readonly string[]
     const { line } = sourceFile.getLineAndCharacterOfPosition(node.getStart(sourceFile));
     errors.push({
       code: 'import-forbidden',
-      message: `import specifier "${specifier}" is not allowed — only @invect/sdk, @invect/action-kit, @invect/actions/* and caller-registered modules are permitted`,
+      message: `import specifier "${specifier}" is not allowed — only @flowlib/sdk, @flowlib/action-kit, @flowlib/actions/* and caller-registered modules are permitted`,
       specifier,
       line: line + 1,
     });

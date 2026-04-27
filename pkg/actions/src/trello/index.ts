@@ -8,7 +8,7 @@ export { trelloListCardsAction } from './list-cards';
 export { trelloCreateCardAction } from './create-card';
 export { trelloUpdateCardAction } from './update-card';
 
-import type { ActionDefinition } from '@invect/action-kit';
+import type { ActionDefinition } from '@flowlib/action-kit';
 import { trelloListBoardsAction } from './list-boards';
 import { trelloListListsAction } from './list-lists';
 import { trelloListCardsAction } from './list-cards';

@@ -9,7 +9,7 @@
  * branch-skipping logic based on the outputVariables returned here.
  */
 
-import { defineAction, JsExpressionError, JsExpressionEvaluationError } from '@invect/action-kit';
+import { defineAction, JsExpressionError, JsExpressionEvaluationError } from '@flowlib/action-kit';
 import { CORE_PROVIDER } from '../providers';
 import { z } from 'zod/v4';
 

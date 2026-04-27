@@ -35,7 +35,7 @@
  *     projects: [{ name: "nestjs", use: { ...devices["Desktop Chrome"] } }],
  *     webServer: {
  *       command: "cd examples/nest-prisma && PORT=3001 npx nest start",
- *       url: "http://localhost:3001/invect/flows",
+ *       url: "http://localhost:3001/flowlib/flows",
  *       reuseExistingServer: !process.env.CI,
  *       timeout: 60_000,
  *       stdout: "pipe",

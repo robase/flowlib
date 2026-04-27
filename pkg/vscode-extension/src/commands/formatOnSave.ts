@@ -1,6 +1,6 @@
 /**
- * Format-on-save for `.flow.ts` — re-emits the file via `@invect/sdk`'s
- * canonical emitter when `invect.formatOnSave` is true.
+ * Format-on-save for `.flow.ts` — re-emits the file via `@flowlib/sdk`'s
+ * canonical emitter when `flowlib.formatOnSave` is true.
  *
  * Subscribes to `workspace.onWillSaveTextDocument` and uses
  * `event.waitUntil(Promise<TextEdit[]>)` to insert the canonical formatting
@@ -14,7 +14,7 @@
  */
 
 import * as vscode from 'vscode';
-import { emitSdkSource } from '@invect/sdk';
+import { emitSdkSource } from '@flowlib/sdk';
 import { parseFlowFile } from '../flow-file/parse';
 import { readConfig } from '../util/config';
 import { getExtensionLogger } from '../util/logger';

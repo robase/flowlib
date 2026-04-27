@@ -5,7 +5,7 @@
  * Requires a Google Sheets OAuth2 credential.
  */
 
-import { defineAction } from '@invect/action-kit';
+import { defineAction } from '@flowlib/action-kit';
 import { GOOGLE_SHEETS_PROVIDER } from '../providers';
 import { z } from 'zod/v4';
 

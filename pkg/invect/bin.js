@@ -1,2 +1,2 @@
 #!/usr/bin/env node
-import '@invect/cli';
+import '@flowlib/cli';

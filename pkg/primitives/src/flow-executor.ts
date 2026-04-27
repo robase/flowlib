@@ -1,6 +1,6 @@
-import { BaseLogger } from '@invect/core';
-import { allProviderActions as allBuiltinActions } from '@invect/actions';
-import type { ActionDefinition, ActionResult } from '@invect/action-kit';
+import { BaseLogger } from '@flowlib/core';
+import { allProviderActions as allBuiltinActions } from '@flowlib/actions';
+import type { ActionDefinition, ActionResult } from '@flowlib/action-kit';
 import type {
   PrimitiveFlowDefinition,
   PrimitiveEdge,
@@ -46,7 +46,7 @@ export class InMemoryAdapter implements DurabilityAdapter {
 function buildRegistry(extraActions?: ActionDefinition[]): Map<string, ActionDefinition> {
   const registry = new Map<string, ActionDefinition>();
 
-  // Register all @invect/core builtin actions
+  // Register all @flowlib/core builtin actions
   for (const action of allBuiltinActions) {
     registry.set(action.id, action);
   }

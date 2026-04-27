@@ -11,7 +11,7 @@ import {
   type FlowVersion,
   type ReactFlowData,
   type InvectDefinition,
-} from '@invect/core/types';
+} from '@flowlib/core/types';
 
 export function useDashboardStats() {
   const apiClient = useApiClient();

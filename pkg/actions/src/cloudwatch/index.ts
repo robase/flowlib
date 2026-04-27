@@ -11,7 +11,7 @@ export { cloudwatchGetQueryResultsAction } from './get-query-results';
 
 // ── Bulk array ──────────────────────────────────────────────────────────
 
-import type { ActionDefinition } from '@invect/action-kit';
+import type { ActionDefinition } from '@flowlib/action-kit';
 
 import { cloudwatchStartQueryAction } from './start-query';
 import { cloudwatchGetQueryResultsAction } from './get-query-results';

@@ -11,36 +11,36 @@ export default defineConfig({
     dedupe: ['react', 'react-dom'],
     alias: [
       // Subpath aliases must come before their package root alias.
-      // Use exact regex so @invect/ui/styles etc. are not caught.
+      // Use exact regex so @flowlib/ui/styles etc. are not caught.
       {
-        find: /^@invect\/version-control\/providers\/github$/,
+        find: /^@flowlib\/version-control\/providers\/github$/,
         replacement: pkg('plugins/version-control/src/providers/github.browser.ts'),
       },
       {
-        find: /^@invect\/version-control$/,
+        find: /^@flowlib\/version-control$/,
         replacement: pkg('plugins/version-control/src/browser.ts'),
       },
-      { find: /^@invect\/user-auth$/, replacement: pkg('plugins/auth/src/browser.ts') },
-      { find: /^@invect\/rbac$/, replacement: pkg('plugins/rbac/src/browser.ts') },
-      { find: /^@invect\/webhooks$/, replacement: pkg('plugins/webhooks/src/browser.ts') },
-      { find: /^@invect\/mcp$/, replacement: pkg('plugins/mcp/src/browser.ts') },
+      { find: /^@flowlib\/user-auth$/, replacement: pkg('plugins/auth/src/browser.ts') },
+      { find: /^@flowlib\/rbac$/, replacement: pkg('plugins/rbac/src/browser.ts') },
+      { find: /^@flowlib\/webhooks$/, replacement: pkg('plugins/webhooks/src/browser.ts') },
+      { find: /^@flowlib\/mcp$/, replacement: pkg('plugins/mcp/src/browser.ts') },
       {
-        find: /^@invect\/vercel-workflows$/,
+        find: /^@flowlib\/vercel-workflows$/,
         replacement: pkg('plugins/vercel-workflows/src/browser.ts'),
       },
-      { find: /^@invect\/layouts$/, replacement: pkg('layouts/src/index.ts') },
-      { find: /^@invect\/ui$/, replacement: pkg('ui/src/index.ts') },
-      { find: /^@invect\/action-kit$/, replacement: pkg('action-kit/src/index.ts') },
-      { find: /^@invect\/sdk$/, replacement: pkg('sdk/src/index.ts') },
-      // @invect/actions/<provider> subpath resolution — the SDK's node
-      // helpers import from these (`@invect/actions/core`, `.../http`, etc.).
+      { find: /^@flowlib\/layouts$/, replacement: pkg('layouts/src/index.ts') },
+      { find: /^@flowlib\/ui$/, replacement: pkg('ui/src/index.ts') },
+      { find: /^@flowlib\/action-kit$/, replacement: pkg('action-kit/src/index.ts') },
+      { find: /^@flowlib\/sdk$/, replacement: pkg('sdk/src/index.ts') },
+      // @flowlib/actions/<provider> subpath resolution — the SDK's node
+      // helpers import from these (`@flowlib/actions/core`, `.../http`, etc.).
       // Capture the subpath and map to the matching provider directory in
       // pkg/actions/src.
       {
-        find: /^@invect\/actions\/([^/]+)$/,
+        find: /^@flowlib\/actions\/([^/]+)$/,
         replacement: pkg('actions/src/$1/index.ts'),
       },
-      { find: /^@invect\/actions$/, replacement: pkg('actions/src/index.ts') },
+      { find: /^@flowlib\/actions$/, replacement: pkg('actions/src/index.ts') },
     ],
   },
   optimizeDeps: {
@@ -55,7 +55,7 @@ export default defineConfig({
   },
   build: {
     rollupOptions: {
-      external: [/^@invect\/core/],
+      external: [/^@flowlib\/core/],
     },
   },
   server: {
@@ -65,10 +65,10 @@ export default defineConfig({
     watch: {
       // pnpm symlinks workspace packages into node_modules — un-ignore them so
       // Vite picks up dist rebuilds from pkg/* without a manual restart.
-      ignored: (p: string) => p.includes('node_modules') && !p.includes('node_modules/@invect'),
+      ignored: (p: string) => p.includes('node_modules') && !p.includes('node_modules/@flowlib'),
     },
     proxy: {
-      '/api/invect': {
+      '/api/flowlib': {
         target: 'http://localhost:3000',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, ''),

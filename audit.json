@@ -153,7 +153,7 @@
       "resolves": [
         {
           "id": 1116251,
-          "path": "pkg__plugins__mcp>@invect/user-auth>@invect/core>drizzle-orm",
+          "path": "pkg__plugins__mcp>@flowlib/user-auth>@flowlib/core>drizzle-orm",
           "dev": false,
           "optional": false,
           "bundled": false
@@ -537,7 +537,7 @@
       "findings": [
         {
           "version": "0.44.7",
-          "paths": ["pkg__plugins__mcp>@invect/user-auth>@invect/core>drizzle-orm"]
+          "paths": ["pkg__plugins__mcp>@flowlib/user-auth>@flowlib/core>drizzle-orm"]
         }
       ],
       "found_by": null,

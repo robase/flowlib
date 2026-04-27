@@ -1,6 +1,6 @@
-import { BaseLogger, DirectEvaluator } from '@invect/core';
-import { allProviderActions as allBuiltinActions } from '@invect/actions';
-import type { ActionDefinition, ActionExecutionContext, ActionResult } from '@invect/action-kit';
+import { BaseLogger, DirectEvaluator } from '@flowlib/core';
+import { allProviderActions as allBuiltinActions } from '@flowlib/actions';
+import type { ActionDefinition, ActionExecutionContext, ActionResult } from '@flowlib/action-kit';
 import {
   buildNodeContext,
   resolveCallableParams,
@@ -9,8 +9,8 @@ import {
   switchAction,
   javascriptAction,
   outputAction,
-} from '@invect/primitives';
-import type { FlowRunnerConfig, PrimitiveFlowDefinition } from '@invect/primitives';
+} from '@flowlib/primitives';
+import type { FlowRunnerConfig, PrimitiveFlowDefinition } from '@flowlib/primitives';
 
 // Build an action registry matching createFlowRunner's behavior:
 // core builtins, then primitive forks, then user-supplied actions.
@@ -82,5 +82,5 @@ export async function executeStep(args: StepRuntimeArgs): Promise<ActionResult> 
 }
 
 // Re-export so generated files can construct the ActionExecutionContext type
-// without depending directly on @invect/core.
+// without depending directly on @flowlib/core.
 export type { ActionExecutionContext, ActionResult, BaseLogger };

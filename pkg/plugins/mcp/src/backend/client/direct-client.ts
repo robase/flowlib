@@ -2,8 +2,8 @@
  * DirectClient — wraps InvectInstance for plugin mode (zero HTTP overhead).
  */
 
-import type { InvectInstance } from '@invect/core';
-import { emitSdkSource, SdkEmitError } from '@invect/sdk';
+import type { InvectInstance } from '@flowlib/core';
+import { emitSdkSource, SdkEmitError } from '@flowlib/sdk';
 import type {
   InvectClient,
   CredentialSummary,
@@ -27,20 +27,20 @@ function toCredentialSummary(c: Record<string, unknown>): CredentialSummary {
 }
 
 export class DirectClient implements InvectClient {
-  constructor(private readonly invect: InvectInstance) {}
+  constructor(private readonly flowlib: InvectInstance) {}
 
   // ===== Flows =====
 
   async listFlows() {
-    return await this.invect.flows.list();
+    return await this.flowlib.flows.list();
   }
 
   async getFlow(flowId: string) {
-    return await this.invect.flows.get(flowId);
+    return await this.flowlib.flows.get(flowId);
   }
 
   async getFlowDefinition(flowId: string) {
-    return await this.invect.versions.get(flowId, 'latest');
+    return await this.flowlib.versions.get(flowId, 'latest');
   }
 
   async getFlowSdkSource(
@@ -48,7 +48,7 @@ export class DirectClient implements InvectClient {
     options: GetFlowSdkSourceOptions = {},
   ): Promise<FlowSdkSourceResult> {
     const requestedVersion = options.version ?? 'latest';
-    const version = await this.invect.versions.get(flowId, requestedVersion);
+    const version = await this.flowlib.versions.get(flowId, requestedVersion);
     if (!version) {
       throw new Error(`Flow ${flowId} has no version "${requestedVersion}"`);
     }
@@ -80,20 +80,20 @@ export class DirectClient implements InvectClient {
   }
 
   async createFlow(data: { name: string; description?: string }) {
-    return await this.invect.flows.create(data);
+    return await this.flowlib.flows.create(data);
   }
 
   async updateFlow(flowId: string, data: { name?: string; description?: string }) {
-    return await this.invect.flows.update(flowId, data);
+    return await this.flowlib.flows.update(flowId, data);
   }
 
   async deleteFlow(flowId: string) {
-    await this.invect.flows.delete(flowId);
+    await this.flowlib.flows.delete(flowId);
   }
 
   async validateFlow(flowId: string, definition: unknown) {
     try {
-      const result = await this.invect.flows.validate(flowId, definition);
+      const result = await this.flowlib.flows.validate(flowId, definition);
       if (result.isValid) {
         return { valid: true };
       }
@@ -114,15 +114,15 @@ export class DirectClient implements InvectClient {
   // ===== Versions =====
 
   async listVersions(flowId: string) {
-    return await this.invect.versions.list(flowId);
+    return await this.flowlib.versions.list(flowId);
   }
 
   async getVersion(flowId: string, version: string | number | 'latest') {
-    return await this.invect.versions.get(flowId, version);
+    return await this.flowlib.versions.get(flowId, version);
   }
 
   async publishVersion(flowId: string, data: unknown) {
-    return await this.invect.versions.create(
+    return await this.flowlib.versions.create(
       flowId,
       data as Parameters<InvectInstance['versions']['create']>[1],
     );
@@ -131,51 +131,51 @@ export class DirectClient implements InvectClient {
   // ===== Runs =====
 
   async startRun(flowId: string, inputs?: Record<string, unknown>) {
-    return await this.invect.runs.start(flowId, inputs);
+    return await this.flowlib.runs.start(flowId, inputs);
   }
 
   async startRunAsync(flowId: string, inputs?: Record<string, unknown>) {
-    return await this.invect.runs.startAsync(flowId, inputs);
+    return await this.flowlib.runs.startAsync(flowId, inputs);
   }
 
   async runToNode(flowId: string, nodeId: string, inputs?: Record<string, unknown>) {
-    return await this.invect.runs.executeToNode(flowId, nodeId, inputs);
+    return await this.flowlib.runs.executeToNode(flowId, nodeId, inputs);
   }
 
   async listRuns(flowId: string) {
-    return await this.invect.runs.listByFlowId(flowId);
+    return await this.flowlib.runs.listByFlowId(flowId);
   }
 
   async getRun(flowRunId: string) {
-    return await this.invect.runs.get(flowRunId);
+    return await this.flowlib.runs.get(flowRunId);
   }
 
   async cancelRun(flowRunId: string) {
-    return await this.invect.runs.cancel(flowRunId);
+    return await this.flowlib.runs.cancel(flowRunId);
   }
 
   async pauseRun(flowRunId: string) {
-    return await this.invect.runs.pause(flowRunId);
+    return await this.flowlib.runs.pause(flowRunId);
   }
 
   async resumeRun(flowRunId: string) {
-    return await this.invect.runs.resume(flowRunId);
+    return await this.flowlib.runs.resume(flowRunId);
   }
 
   // ===== Debug =====
 
   async getNodeExecutions(flowRunId: string) {
-    const result = await this.invect.runs.getNodeExecutions(flowRunId);
+    const result = await this.flowlib.runs.getNodeExecutions(flowRunId);
     return result.data;
   }
 
   async listNodeExecutions() {
-    const result = await this.invect.runs.listNodeExecutions();
+    const result = await this.flowlib.runs.listNodeExecutions();
     return result.data;
   }
 
   async getToolExecutions(nodeExecutionId: string) {
-    return await this.invect.runs.getToolExecutionsByNodeExecutionId(nodeExecutionId);
+    return await this.flowlib.runs.getToolExecutionsByNodeExecutionId(nodeExecutionId);
   }
 
   async testNode(
@@ -183,40 +183,40 @@ export class DirectClient implements InvectClient {
     params: Record<string, unknown>,
     inputData?: Record<string, unknown>,
   ) {
-    return await this.invect.testing.testNode(nodeType, params, inputData);
+    return await this.flowlib.testing.testNode(nodeType, params, inputData);
   }
 
   async testJsExpression(expression: string, context: Record<string, unknown>) {
-    return await this.invect.testing.testJsExpression({ expression, context });
+    return await this.flowlib.testing.testJsExpression({ expression, context });
   }
 
   async testMapper(expression: string, incomingData: Record<string, unknown>) {
-    return await this.invect.testing.testMapper({ expression, incomingData });
+    return await this.flowlib.testing.testMapper({ expression, incomingData });
   }
 
   // ===== Credentials =====
 
   async listCredentials(): Promise<CredentialSummary[]> {
-    const creds = await this.invect.credentials.list();
+    const creds = await this.flowlib.credentials.list();
     return creds.map((c) => toCredentialSummary(c as unknown as Record<string, unknown>));
   }
 
   async testCredential(credentialId: string) {
-    return await this.invect.credentials.test(credentialId);
+    return await this.flowlib.credentials.test(credentialId);
   }
 
   async listOAuth2Providers() {
-    return this.invect.credentials.getOAuth2Providers();
+    return this.flowlib.credentials.getOAuth2Providers();
   }
 
   // ===== Triggers =====
 
   async listTriggers(flowId: string) {
-    return await this.invect.triggers.list(flowId);
+    return await this.flowlib.triggers.list(flowId);
   }
 
   async getTrigger(triggerId: string) {
-    const trigger = await this.invect.triggers.get(triggerId);
+    const trigger = await this.flowlib.triggers.get(triggerId);
     if (trigger === null) {
       throw new Error(`Trigger ${triggerId} not found`);
     }
@@ -224,59 +224,59 @@ export class DirectClient implements InvectClient {
   }
 
   async createTrigger(input: unknown) {
-    return await this.invect.triggers.create(
+    return await this.flowlib.triggers.create(
       input as Parameters<InvectInstance['triggers']['create']>[0],
     );
   }
 
   async updateTrigger(triggerId: string, input: unknown) {
-    return await this.invect.triggers.update(
+    return await this.flowlib.triggers.update(
       triggerId,
       input as Parameters<InvectInstance['triggers']['update']>[1],
     );
   }
 
   async deleteTrigger(triggerId: string) {
-    await this.invect.triggers.delete(triggerId);
+    await this.flowlib.triggers.delete(triggerId);
   }
 
   async syncTriggers(flowId: string, definition: unknown) {
-    return await this.invect.triggers.sync(
+    return await this.flowlib.triggers.sync(
       flowId,
       definition as Parameters<InvectInstance['triggers']['sync']>[1],
     );
   }
 
   async executeCronTrigger(triggerId: string) {
-    return await this.invect.triggers.executeCron(triggerId);
+    return await this.flowlib.triggers.executeCron(triggerId);
   }
 
   async listEnabledCronTriggers() {
-    return await this.invect.triggers.getEnabledCron();
+    return await this.flowlib.triggers.getEnabledCron();
   }
 
   // ===== Node Reference =====
 
   async listProviders() {
-    return this.invect.actions.getProviders();
+    return this.flowlib.actions.getProviders();
   }
 
   async listAvailableNodes() {
-    return this.invect.actions.getAvailableNodes();
+    return this.flowlib.actions.getAvailableNodes();
   }
 
   async listNodesForProvider(providerId: string) {
-    return this.invect.actions.getForProvider(providerId);
+    return this.flowlib.actions.getForProvider(providerId);
   }
 
   async resolveFieldOptions(actionId: string, fieldName: string, deps: Record<string, unknown>) {
-    return await this.invect.actions.resolveFieldOptions(actionId, fieldName, deps);
+    return await this.flowlib.actions.resolveFieldOptions(actionId, fieldName, deps);
   }
 
   // ===== Agent =====
 
   async listAgentTools() {
-    return this.invect.agent.getTools();
+    return this.flowlib.agent.getTools();
   }
 }
 

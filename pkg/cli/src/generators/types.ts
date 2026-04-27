@@ -19,7 +19,7 @@ export interface SchemaGeneratorOptions {
   dialect: 'sqlite' | 'postgresql' | 'mysql';
   /**
    * Optional schema transforms (e.g., column injection for multi-tenancy).
-   * Typed as `unknown[]` here so this types module stays free of `@invect/core`
+   * Typed as `unknown[]` here so this types module stays free of `@flowlib/core`
    * dependencies; the generator passes them straight through to `mergeSchemas`.
    */
   transforms?: unknown[];

@@ -147,7 +147,7 @@ export default defineConfig({
       stderr: 'pipe',
     },
     {
-      command: `pnpm --filter invect-nextjs-example exec next dev --hostname localhost -p ${nextjsPort}`,
+      command: `pnpm --filter flowlib-nextjs-example exec next dev --hostname localhost -p ${nextjsPort}`,
       url: nextjsBaseUrl,
       reuseExistingServer: !process.env.CI,
       timeout: 60_000,

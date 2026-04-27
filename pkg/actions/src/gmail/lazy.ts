@@ -6,7 +6,7 @@
  * the action is actually used.
  */
 
-import type { LazyActionDefinition } from '@invect/action-kit';
+import type { LazyActionDefinition } from '@flowlib/action-kit';
 
 const gmailProvider = { id: 'gmail' };
 

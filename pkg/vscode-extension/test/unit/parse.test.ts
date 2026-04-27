@@ -2,11 +2,11 @@ import * as assert from 'node:assert';
 import { parseFlowFile } from '../../src/flow-file/parse';
 
 // The TS source IS the canonical definition. The parser evaluates the
-// file via @invect/sdk/evaluator and returns whatever `defineFlow(...)`
+// file via @flowlib/sdk/evaluator and returns whatever `defineFlow(...)`
 // produced. No JSON footer is read.
 
 const SIMPLE_FLOW = `
-import { defineFlow, input, output } from '@invect/sdk';
+import { defineFlow, input, output } from '@flowlib/sdk';
 export default defineFlow({
   nodes: [input('x'), output('result')],
   edges: [{ from: 'x', to: 'result' }],
@@ -14,7 +14,7 @@ export default defineFlow({
 `;
 
 const BROKEN_TS = `
-import { defineFlow } from '@invect/sdk';
+import { defineFlow } from '@flowlib/sdk';
 export default defineFlow({
   nodes: [{ id: 'n1', // unterminated
 });

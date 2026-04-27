@@ -4,7 +4,7 @@
  *
  * Three tools replace the bulk of the granular JSON-patch toolkit:
  *
- *   - `get_flow_source` — returns the current flow as canonical `@invect/sdk`
+ *   - `get_flow_source` — returns the current flow as canonical `@flowlib/sdk`
  *     TypeScript source. What the LLM reads.
  *   - `edit_flow_source` — str_replace-style edit against the emitted source.
  *     Re-evaluates, transforms arrows → strings, merges into the prior DB
@@ -19,11 +19,11 @@
  */
 
 import { z } from 'zod/v4';
-import { emitSdkSource } from '@invect/sdk';
-import { evaluateSdkSource, typecheckSdkSource } from '@invect/sdk/evaluator';
-import { transformArrowsToStrings } from '@invect/sdk/transform';
-import { mergeParsedIntoDefinition } from '@invect/sdk';
-import type { DbFlowDefinition, NodeSpan } from '@invect/sdk';
+import { emitSdkSource } from '@flowlib/sdk';
+import { evaluateSdkSource, typecheckSdkSource } from '@flowlib/sdk/evaluator';
+import { transformArrowsToStrings } from '@flowlib/sdk/transform';
+import { mergeParsedIntoDefinition } from '@flowlib/sdk';
+import type { DbFlowDefinition, NodeSpan } from '@flowlib/sdk';
 import type { ChatToolContext, ChatToolDefinition, ChatToolResult } from '../chat-types';
 import type { InvectInstance } from 'src/api/types';
 
@@ -191,7 +191,7 @@ function findAllMatchLocations(source: string, needle: string): AmbiguousMatch[]
 /** Load + emit canonical source. Shared by `get_flow_source` and the edit
  *  tools so they stay in sync on emit options. */
 async function emitCurrentSource(
-  invect: InvectInstance,
+  flowlib: InvectInstance,
   flowId: string,
 ): Promise<
   | { ok: true; code: string; nodeSpans: Record<string, NodeSpan>; def: DbFlowDefinition }
@@ -199,8 +199,8 @@ async function emitCurrentSource(
 > {
   try {
     const [flow, version] = await Promise.all([
-      invect.flows.get(flowId),
-      invect.versions.get(flowId, 'latest'),
+      flowlib.flows.get(flowId),
+      flowlib.versions.get(flowId, 'latest'),
     ]);
     if (!version?.invectDefinition) {
       return { ok: false, error: 'Flow has no versions yet' };
@@ -295,7 +295,7 @@ export const getFlowSourceTool: ChatToolDefinition = {
   id: 'get_flow_source',
   name: 'Get Flow Source',
   description:
-    'Return the current flow as canonical TypeScript source using the @invect/sdk. ' +
+    'Return the current flow as canonical TypeScript source using the @flowlib/sdk. ' +
     'The source is what FlowCodePanel shows, what users hand-author, and what copy-paste / git sync produce. ' +
     'Prefer this over the granular JSON-inspection tools when reasoning about the flow as a whole. ' +
     'Call this before any `edit_flow_source` / `write_flow_source` — those tools require a read in the current turn.',
@@ -308,8 +308,8 @@ export const getFlowSourceTool: ChatToolDefinition = {
 
     try {
       const [flow, version] = await Promise.all([
-        ctx.invect.flows.get(flowId),
-        ctx.invect.versions.get(flowId, 'latest'),
+        ctx.flowlib.flows.get(flowId),
+        ctx.flowlib.versions.get(flowId, 'latest'),
       ]);
       if (!version?.invectDefinition) {
         return {
@@ -390,7 +390,7 @@ export const editFlowSourceTool: ChatToolDefinition = {
       return { success: false, error: 'No flow is currently open' };
     }
 
-    const emitted = await emitCurrentSource(ctx.invect, flowId);
+    const emitted = await emitCurrentSource(ctx.flowlib, flowId);
     if (!emitted.ok) {
       return {
         success: false,
@@ -503,7 +503,7 @@ export const editFlowSourceTool: ChatToolDefinition = {
 
     // Evaluate + transform + merge + save. On success the stored state changes,
     // so clear this flow's read-state; the next edit will need a fresh read.
-    const result = await saveFlowFromSource(ctx.invect, flowId, newSource, def);
+    const result = await saveFlowFromSource(ctx.flowlib, flowId, newSource, def);
     if (result.success) {
       ctx.readState?.delete(flowId);
     } else {
@@ -530,10 +530,10 @@ export const writeFlowSourceTool: ChatToolDefinition = {
     'Replace the entire flow with the provided TypeScript source. ' +
     'Use this for new flows or when making several coordinated edits that would be awkward as individual `edit_flow_source` calls. ' +
     'For flows that already have a version, this tool REQUIRES a prior `get_flow_source` call in this turn. ' +
-    'The source must be a complete `@invect/sdk` flow file. Use the **named-record** form for nodes — keys are referenceIds, edges narrow `from`/`to`/`handle` against them. Example:\n\n' +
+    'The source must be a complete `@flowlib/sdk` flow file. Use the **named-record** form for nodes — keys are referenceIds, edges narrow `from`/`to`/`handle` against them. Example:\n\n' +
     '```ts\n' +
-    "import { defineFlow, input, output, ifElse } from '@invect/sdk';\n" +
-    "import { gmail } from '@invect/sdk/actions';\n\n" +
+    "import { defineFlow, input, output, ifElse } from '@flowlib/sdk';\n" +
+    "import { gmail } from '@flowlib/sdk/actions';\n\n" +
     'export default defineFlow({\n' +
     '  name: "Triage email",\n' +
     '  nodes: {\n' +
@@ -556,7 +556,7 @@ export const writeFlowSourceTool: ChatToolDefinition = {
       .string()
       .min(1)
       .describe(
-        'Complete TypeScript source for the flow. Must include imports from @invect/sdk and an `export default defineFlow({...})`. ' +
+        'Complete TypeScript source for the flow. Must include imports from @flowlib/sdk and an `export default defineFlow({...})`. ' +
           'Use the named-record form `nodes: { ref: helper(...) }` and object-form edges `{ from, to, handle? }`.',
       ),
   }),
@@ -573,7 +573,7 @@ export const writeFlowSourceTool: ChatToolDefinition = {
       // there's nothing to read.
       let priorDef: DbFlowDefinition | null = null;
       try {
-        const version = await ctx.invect.versions.get(flowId, 'latest');
+        const version = await ctx.flowlib.versions.get(flowId, 'latest');
         if (version?.invectDefinition) {
           priorDef = version.invectDefinition as DbFlowDefinition;
         }
@@ -584,7 +584,7 @@ export const writeFlowSourceTool: ChatToolDefinition = {
       // Read-before-edit invariant: enforced only when the session wires a
       // `readState` map AND a prior version exists. Brand-new flows skip.
       if (priorDef && ctx.readState) {
-        const emitted = await emitCurrentSource(ctx.invect, flowId);
+        const emitted = await emitCurrentSource(ctx.flowlib, flowId);
         if (emitted.ok) {
           const currentHash = await sha1(emitted.code);
           const priorRead = ctx.readState.get(flowId);
@@ -629,7 +629,7 @@ export const writeFlowSourceTool: ChatToolDefinition = {
         }
       }
 
-      const result = await saveFlowFromSource(ctx.invect, flowId, source, priorDef);
+      const result = await saveFlowFromSource(ctx.flowlib, flowId, source, priorDef);
       if (result.success) {
         ctx.readState?.delete(flowId);
       } else {
@@ -660,7 +660,7 @@ export const writeFlowSourceTool: ChatToolDefinition = {
  * the LLM can see exactly what went wrong.
  */
 async function saveFlowFromSource(
-  invect: InvectInstance,
+  flowlib: InvectInstance,
   flowId: string,
   source: string,
   priorDef: DbFlowDefinition | null,
@@ -725,13 +725,13 @@ async function saveFlowFromSource(
   }
 
   // 4. Save — publish a new flow version via the standard versions API.
-  //    The `DbFlowDefinition` from `@invect/sdk` is structurally compatible
+  //    The `DbFlowDefinition` from `@flowlib/sdk` is structurally compatible
   //    with core's Zod-typed `InvectDefinition`; the cast bridges the
   //    weaker-types-at-the-boundary gap without a runtime conversion.
   try {
-    const version = await invect.versions.create(flowId, {
+    const version = await flowlib.versions.create(flowId, {
       invectDefinition: merged as unknown as Parameters<
-        typeof invect.versions.create
+        typeof flowlib.versions.create
       >[1]['invectDefinition'],
     });
     return {
@@ -756,7 +756,7 @@ async function saveFlowFromSource(
 function formatEvalSuggestion(errors: Array<{ code: string; message: string }>): string {
   const codes = new Set(errors.map((e) => e.code));
   if (codes.has('import-forbidden')) {
-    return 'Only imports from @invect/sdk, @invect/action-kit, and @invect/actions/* are allowed in flow source.';
+    return 'Only imports from @flowlib/sdk, @flowlib/action-kit, and @flowlib/actions/* are allowed in flow source.';
   }
   if (codes.has('dynamic-import')) {
     return 'Dynamic `import()` is not allowed — use top-level import statements only.';

@@ -4,7 +4,7 @@
   "private": true,
   "description": "Acme SaaS — NestJS + Prisma + PostgreSQL example with Invect integration",
   "license": "UNLICENSED",
-  "author": "robase <team@invect.dev>",
+  "author": "robase <team@flowlib.dev>",
   "scripts": {
     "build": "nest build",
     "format": "oxfmt",
@@ -24,13 +24,13 @@
     "db:studio": "npx prisma studio",
     "db:generate": "npx prisma generate",
     "db:seed": "npx ts-node prisma/seed.ts",
-    "invect:generate": "npx invect-cli generate --adapter prisma --config invect.config.ts --dialect postgresql --yes",
-    "invect:push": "npx prisma db push"
+    "flowlib:generate": "npx flowlib-cli generate --adapter prisma --config flowlib.config.ts --dialect postgresql --yes",
+    "flowlib:push": "npx prisma db push"
   },
   "dependencies": {
-    "@invect/cli": "workspace:*",
-    "@invect/core": "workspace:*",
-    "@invect/nestjs": "workspace:*",
+    "@flowlib/cli": "workspace:*",
+    "@flowlib/core": "workspace:*",
+    "@flowlib/nestjs": "workspace:*",
     "@nestjs/common": "^11.1.18",
     "@nestjs/config": "^4.0.2",
     "@nestjs/core": "^11.1.18",

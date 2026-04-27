@@ -1,6 +1,6 @@
 // spec: Next.js frontend rendering — Invect React component
 //
-// Validates that the @invect/ui `<Invect>` component renders correctly
+// Validates that the @flowlib/ui `<Invect>` component renders correctly
 // when imported and used in a Next.js App Router application.
 // The Next.js example runs on the shared Playwright Next.js port.
 //
@@ -21,18 +21,18 @@ test.describe('Next.js Invect Frontend Rendering', () => {
     // 3. There should be a link/button to open Invect
     const invectLink = page.getByRole('link', { name: /Open Invect/i });
     await expect(invectLink).toBeVisible({ timeout: 15_000 });
-    expect(await invectLink.getAttribute('href')).toBe('/invect');
+    expect(await invectLink.getAttribute('href')).toBe('/flowlib');
   });
 
   test('Invect component renders dashboard in Next.js', async ({ page }) => {
-    // 1. Navigate directly to the /invect page where <Invect> is mounted
-    await page.goto(`${NEXTJS_URL}/invect`);
+    // 1. Navigate directly to the /flowlib page where <Invect> is mounted
+    await page.goto(`${NEXTJS_URL}/flowlib`);
 
     // 2. The Invect shell should render — it contains a side menu and main area
     //    Wait generously since Next.js has to hydrate the client component
     await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible({ timeout: 30_000 });
 
-    // 3. Dashboard should show statistics (proves API connectivity to /api/invect)
+    // 3. Dashboard should show statistics (proves API connectivity to /api/flowlib)
     //    The dashboard calls getDashboardStats() and listFlows()
     await expect(page.getByText(/Total Flows/i)).toBeVisible({
       timeout: 15_000,
@@ -41,7 +41,7 @@ test.describe('Next.js Invect Frontend Rendering', () => {
 
   test('Invect side navigation works in Next.js', async ({ page }) => {
     // 1. Navigate to the Invect page
-    await page.goto(`${NEXTJS_URL}/invect`);
+    await page.goto(`${NEXTJS_URL}/flowlib`);
     await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible({ timeout: 30_000 });
 
     // 2. Click the Credentials nav link in the side menu
@@ -65,7 +65,7 @@ test.describe('Next.js Invect Frontend Rendering', () => {
 
   test('Invect flow editor loads in Next.js', async ({ page }) => {
     // 1. Go to dashboard
-    await page.goto(`${NEXTJS_URL}/invect`);
+    await page.goto(`${NEXTJS_URL}/flowlib`);
     await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible({ timeout: 30_000 });
 
     // 2. Create a new flow via the "New Flow" button
@@ -88,7 +88,7 @@ test.describe('Next.js Invect Frontend Rendering', () => {
     });
 
     // 1. Navigate to the Invect page
-    await page.goto(`${NEXTJS_URL}/invect`);
+    await page.goto(`${NEXTJS_URL}/flowlib`);
     await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible({ timeout: 30_000 });
 
     // 2. Verify no critical console errors related to CSS/imports
@@ -109,8 +109,8 @@ test.describe('Next.js Invect Frontend Rendering', () => {
     );
     expect(hasBuildErrors).toBeFalsy();
 
-    // 3. Verify Invect styles are actually loaded — check for the invect shell div
-    const invectShell = page.locator('.invect');
+    // 3. Verify Invect styles are actually loaded — check for the flowlib shell div
+    const invectShell = page.locator('.flowlib');
     await expect(invectShell).toBeVisible();
   });
 });

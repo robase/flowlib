@@ -6,7 +6,7 @@ import type { Logger } from 'src/schemas';
 const appConfig = {
   clientId: 'client-id.apps.googleusercontent.com',
   clientSecret: 'super-secret-client-secret',
-  redirectUri: 'http://localhost:5173/invect/oauth/callback',
+  redirectUri: 'http://localhost:5173/flowlib/oauth/callback',
 };
 
 function createLogger(): Logger {
@@ -41,7 +41,7 @@ describe('OAuth2Service', () => {
   describe('startAuthorizationFlow()', () => {
     it('builds an authorization URL with PKCE, provider defaults, and stores pending state', () => {
       const result = service.startAuthorizationFlow('google', appConfig, {
-        returnUrl: 'http://localhost:5173/invect/credentials',
+        returnUrl: 'http://localhost:5173/flowlib/credentials',
         credentialName: 'Google Workspace',
         existingCredentialId: 'cred-123',
       });
@@ -73,7 +73,7 @@ describe('OAuth2Service', () => {
         state: result.state,
         providerId: 'google',
         codeVerifier: result.codeVerifier,
-        returnUrl: 'http://localhost:5173/invect/credentials',
+        returnUrl: 'http://localhost:5173/flowlib/credentials',
         credentialName: 'Google Workspace',
         existingCredentialId: 'cred-123',
         appConfig,
@@ -101,7 +101,7 @@ describe('OAuth2Service', () => {
   describe('exchangeCodeForTokens()', () => {
     it('exchanges an authorization code, returns tokens, and clears pending state', async () => {
       const start = service.startAuthorizationFlow('google', appConfig, {
-        returnUrl: 'http://localhost:5173/invect/flow/abc',
+        returnUrl: 'http://localhost:5173/flowlib/flow/abc',
       });
       createdStates.push(start.state);
 

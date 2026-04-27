@@ -20,7 +20,7 @@ Downstream nodes access trigger outputs via `{{ manual_trigger.variableName }}`.
 ### API execution
 
 ```bash
-curl -X POST http://localhost:3000/invect/flows/{flowId}/run \
+curl -X POST http://localhost:3000/flowlib/flows/{flowId}/run \
   -H "Content-Type: application/json" \
   -d '{ "inputs": { "topic": "Machine learning" } }'
 ```
@@ -28,7 +28,7 @@ curl -X POST http://localhost:3000/invect/flows/{flowId}/run \
 ### Programmatic execution
 
 ```ts
-const core = invect.getCore();
+const core = flowlib.getCore();
 const result = await core.runs.start(flowId, {
   topic: 'Machine learning',
 });
@@ -63,7 +63,7 @@ Downstream nodes access the scheduled time via `{{ cron_trigger.scheduledTime }}
 
 <Callout type="info">
   Next.js deployments on Vercel need one dedicated Invect cron route, configured in `vercel.json`,
-  to drive scheduled work. Use a single Invect cron endpoint such as `/api/invect/cron`; it will
+  to drive scheduled work. Use a single Invect cron endpoint such as `/api/flowlib/cron`; it will
   execute due Invect cron triggers and other background maintenance for the app.
 </Callout>
 
@@ -72,12 +72,12 @@ Downstream nodes access the scheduled time via `{{ cron_trigger.scheduledTime }}
 Trigger flows from external HTTP requests. Requires the [Webhooks Plugin](/docs/plugins/webhooks).
 
 ```ts title="config"
-import { webhooks } from '@invect/webhooks';
+import { webhooks } from '@flowlib/webhooks';
 
 const config = {
   // ...
   triggers: {
-    webhookBaseUrl: 'https://your-app.com/invect',
+    webhookBaseUrl: 'https://your-app.com/flowlib',
   },
   plugins: [webhooks()],
 };
@@ -86,7 +86,7 @@ const config = {
 Once configured, each flow with a webhook trigger gets a unique URL:
 
 ```
-POST https://your-app.com/invect/webhooks/{webhookId}
+POST https://your-app.com/flowlib/webhooks/{webhookId}
 ```
 
 The request body is passed as the trigger output, available to downstream nodes via template expressions.

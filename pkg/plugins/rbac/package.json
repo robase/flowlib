@@ -1,16 +1,16 @@
 {
-  "name": "@invect/rbac",
+  "name": "@flowlib/rbac",
   "version": "0.0.12",
-  "description": "RBAC plugin for Invect — adds role-based access control UI, flow sharing, and permission management. Requires @invect/user-auth.",
-  "homepage": "https://invect.dev",
+  "description": "RBAC plugin for Invect — adds role-based access control UI, flow sharing, and permission management. Requires @flowlib/user-auth.",
+  "homepage": "https://flowlib.dev",
   "bugs": {
-    "url": "https://github.com/robase/invect/issues"
+    "url": "https://github.com/robase/flowlib/issues"
   },
   "license": "MIT",
-  "author": "robase <team@invect.dev>",
+  "author": "robase <team@flowlib.dev>",
   "repository": {
     "type": "git",
-    "url": "https://github.com/robase/invect.git",
+    "url": "https://github.com/robase/flowlib.git",
     "directory": "pkg/plugins/rbac"
   },
   "files": [
@@ -56,11 +56,11 @@
     "test:watch": "vitest --watch"
   },
   "dependencies": {
-    "@invect/core": "workspace:*"
+    "@flowlib/core": "workspace:*"
   },
   "devDependencies": {
-    "@invect/ui": "workspace:*",
-    "@invect/user-auth": "workspace:*",
+    "@flowlib/ui": "workspace:*",
+    "@flowlib/user-auth": "workspace:*",
     "@tanstack/react-query": "^5.0.0",
     "@types/node": "^20.11.20",
     "@types/react": "18.3.7",
@@ -74,8 +74,8 @@
     "zustand": "^4.5.7"
   },
   "peerDependencies": {
-    "@invect/ui": ">=0.0.12",
-    "@invect/user-auth": ">=0.0.12",
+    "@flowlib/ui": ">=0.0.12",
+    "@flowlib/user-auth": ">=0.0.12",
     "@tanstack/react-query": ">=5.0.0",
     "clsx": ">=2.0.0",
     "react": ">=18.0.0",
@@ -84,7 +84,7 @@
     "zustand": ">=4.0.0"
   },
   "peerDependenciesMeta": {
-    "@invect/ui": {
+    "@flowlib/ui": {
       "optional": true
     },
     "clsx": {

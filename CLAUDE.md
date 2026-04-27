@@ -4,7 +4,7 @@
 
 Invect is a workflow orchestration system with visual flow editor, AI agents, and batch processing via OpenAI/Anthropic APIs. **pnpm monorepo** with a framework-agnostic core (`pkg/core`) plus framework adapters (`pkg/nestjs`, `pkg/express`, `pkg/nextjs`, `pkg/ui`) and a lightweight executor (`pkg/primitives`) for running flows in any JS runtime without a database.
 
-The git repo is named `flow-backend` but all packages publish under `@invect/*`. Database: Drizzle ORM (SQLite, PostgreSQL, MySQL).
+The git repo is named `flow-backend` but all packages publish under `@flowlib/*`. Database: Drizzle ORM (SQLite, PostgreSQL, MySQL).
 
 ## Monorepo Structure (pnpm Workspaces)
 
@@ -18,7 +18,7 @@ packages:
   - docs # Documentation site (Fumadocs + Next.js)
 ```
 
-### `pkg/` — Publishable packages (npm, published as `@invect/*`)
+### `pkg/` — Publishable packages (npm, published as `@flowlib/*`)
 
 ```
 pkg/
@@ -31,24 +31,24 @@ pkg/
 ├── nextjs/         # Next.js adapter (catch-all API route handlers)
 ├── ui/             # React components (React Router v7, flow editor, InvectShell, Invect)
 ├── layouts/        # Layout components
-├── cli/            # CLI (npx invect-cli) — init, generate, migrate, info, secret, mcp
-├── invect/         # Published CLI wrapper (thin shim: `invect-cli` bin → @invect/cli)
+├── cli/            # CLI (npx flowlib-cli) — init, generate, migrate, info, secret, mcp
+├── flowlib/         # Published CLI wrapper (thin shim: `flowlib-cli` bin → @flowlib/cli)
 └── plugins/        # Official plugins
-    ├── auth/              # @invect/user-auth — Better Auth integration
-    ├── rbac/              # @invect/rbac — Role-Based Access Control
-    ├── webhooks/          # @invect/webhooks — Webhook triggers + management
-    ├── version-control/   # @invect/version-control — Git sync (GitHub/GitLab/Bitbucket)
-    ├── cloudflare-agents/ # @invect/cloudflare-agents — Compile flows to Cloudflare Workers/Workflows
-    ├── vercel-workflows/  # @invect/vercel-workflows — Compile flows to Vercel Workflows
-    └── mcp/               # @invect/mcp — Expose flows as MCP tools (Claude Desktop, Copilot)
+    ├── auth/              # @flowlib/user-auth — Better Auth integration
+    ├── rbac/              # @flowlib/rbac — Role-Based Access Control
+    ├── webhooks/          # @flowlib/webhooks — Webhook triggers + management
+    ├── version-control/   # @flowlib/version-control — Git sync (GitHub/GitLab/Bitbucket)
+    ├── cloudflare-agents/ # @flowlib/cloudflare-agents — Compile flows to Cloudflare Workers/Workflows
+    ├── vercel-workflows/  # @flowlib/vercel-workflows — Compile flows to Vercel Workflows
+    └── mcp/               # @flowlib/mcp — Expose flows as MCP tools (Claude Desktop, Copilot)
 ```
 
 **Important layering** (post-refactor — older docs may not reflect this):
 
-- `@invect/action-kit` is **types-only**. It defines `ActionDefinition`, `ActionExecutionContext`, `AgentToolDefinition`, node/flow/AI types, and the `defineAction()` helper. Both `@invect/core` and `@invect/actions` consume it without pulling each other's runtime code.
-- `@invect/actions` is the **action catalogue**. Every integration action (Gmail, Slack, GitHub, Linear, etc.) plus the primitive-runtime bundles (`core`, `http`, `triggers`) live here. Exported via per-provider subpaths (`@invect/actions/gmail`, `@invect/actions/slack`, …) and bulk `allProviderActions`.
-- `@invect/core` re-exports action infrastructure for backward compatibility. `pkg/core/src/actions/` is a thin barrel/bridge — the action **implementations** live in `@invect/actions`, and `pkg/core/src/actions/` only holds: `action-registry.ts`, `action-executor.ts` (the node↔action and tool↔action bridges), `types.ts`, `providers.ts`, `define-action.ts`, and `index.ts`.
-- `@invect/primitives` is a **DB-less, framework-less flow runner**. It reuses `@invect/actions` plus fork variants of a few actions (if-else, switch, javascript, output) that avoid QuickJS so flows can run in Cloudflare Workers, Vercel Workflows, edge runtimes, etc.
+- `@flowlib/action-kit` is **types-only**. It defines `ActionDefinition`, `ActionExecutionContext`, `AgentToolDefinition`, node/flow/AI types, and the `defineAction()` helper. Both `@flowlib/core` and `@flowlib/actions` consume it without pulling each other's runtime code.
+- `@flowlib/actions` is the **action catalogue**. Every integration action (Gmail, Slack, GitHub, Linear, etc.) plus the primitive-runtime bundles (`core`, `http`, `triggers`) live here. Exported via per-provider subpaths (`@flowlib/actions/gmail`, `@flowlib/actions/slack`, …) and bulk `allProviderActions`.
+- `@flowlib/core` re-exports action infrastructure for backward compatibility. `pkg/core/src/actions/` is a thin barrel/bridge — the action **implementations** live in `@flowlib/actions`, and `pkg/core/src/actions/` only holds: `action-registry.ts`, `action-executor.ts` (the node↔action and tool↔action bridges), `types.ts`, `providers.ts`, `define-action.ts`, and `index.ts`.
+- `@flowlib/primitives` is a **DB-less, framework-less flow runner**. It reuses `@flowlib/actions` plus fork variants of a few actions (if-else, switch, javascript, output) that avoid QuickJS so flows can run in Cloudflare Workers, Vercel Workflows, edge runtimes, etc.
 
 ### `examples/` — Dev/Demo apps (not published)
 
@@ -67,11 +67,11 @@ examples/
 
 | Example                    | Framework    | Database                    | Adapter                         | Purpose                                                                                                                                                                                                                     |
 | -------------------------- | ------------ | --------------------------- | ------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `express-drizzle`          | Express      | SQLite (`./dev.db`)         | `@invect/express`               | Primary backend dev server. Paired with `vite-react-frontend` for fullstack dev. Uses `nodemon` for hot-reload. Depends on most plugins (auth, rbac, webhooks, mcp, vercel-workflows, version-control) for breadth testing. |
-| `vite-react-frontend`      | Vite + React | N/A (frontend only)         | `@invect/ui`                    | Standalone React frontend. Connects to Express backend on port 3000. Dev server on port 5173.                                                                                                                               |
-| `nest-prisma`              | NestJS       | SQLite (`./prisma/dev.db`)  | `@invect/nestjs`                | NestJS adapter example. Uses Prisma ORM (not Drizzle). Jest test framework.                                                                                                                                                 |
-| `nextjs-app-router`        | Next.js 15   | SQLite (internal)           | `@invect/nextjs` + `@invect/ui` | Mounts Invect UI at `/invect` route.                                                                                                                                                                                        |
-| `nextjs-drizzle-auth-rbac` | Next.js 15   | PostgreSQL (Docker Compose) | `@invect/nextjs` + `@invect/ui` | Full-featured with `@invect/user-auth` + `@invect/rbac`. Uses `pg` + Drizzle.                                                                                                                                               |
+| `express-drizzle`          | Express      | SQLite (`./dev.db`)         | `@flowlib/express`               | Primary backend dev server. Paired with `vite-react-frontend` for fullstack dev. Uses `nodemon` for hot-reload. Depends on most plugins (auth, rbac, webhooks, mcp, vercel-workflows, version-control) for breadth testing. |
+| `vite-react-frontend`      | Vite + React | N/A (frontend only)         | `@flowlib/ui`                    | Standalone React frontend. Connects to Express backend on port 3000. Dev server on port 5173.                                                                                                                               |
+| `nest-prisma`              | NestJS       | SQLite (`./prisma/dev.db`)  | `@flowlib/nestjs`                | NestJS adapter example. Uses Prisma ORM (not Drizzle). Jest test framework.                                                                                                                                                 |
+| `nextjs-app-router`        | Next.js 15   | SQLite (internal)           | `@flowlib/nextjs` + `@flowlib/ui` | Mounts Invect UI at `/flowlib` route.                                                                                                                                                                                        |
+| `nextjs-drizzle-auth-rbac` | Next.js 15   | PostgreSQL (Docker Compose) | `@flowlib/nextjs` + `@flowlib/ui` | Full-featured with `@flowlib/user-auth` + `@flowlib/rbac`. Uses `pg` + Drizzle.                                                                                                                                               |
 
 The **primary development workflow** is `express-drizzle` + `vite-react-frontend` together (`pnpm dev:fullstack`). The Next.js examples are self-contained alternatives.
 
@@ -79,9 +79,9 @@ The **primary development workflow** is `express-drizzle` + `vite-react-frontend
 
 ```
 examples/express-drizzle/package.json:
-  @invect/core: "workspace:*"      → links to pkg/core
-  @invect/express: "workspace:*"   → links to pkg/express
-  @invect/user-auth: "workspace:*" → links to pkg/plugins/auth
+  @flowlib/core: "workspace:*"      → links to pkg/core
+  @flowlib/express: "workspace:*"   → links to pkg/express
+  @flowlib/user-auth: "workspace:*" → links to pkg/plugins/auth
   ...
 
 When you edit pkg/core/src/services/flows.service.ts:
@@ -98,12 +98,12 @@ When you edit pkg/core/src/services/flows.service.ts:
 - `pnpm dev` — Interactive menu (start here)
 - `pnpm dev:fullstack` — Express + Vite together (primary)
 - `pnpm dev:express-example` / `pnpm dev:vite-example` / `pnpm dev:next` / `pnpm dev:nest`
-- `pnpm dev:packages` / `pnpm dev:all` — Run watch mode for all `@invect/*` packages
+- `pnpm dev:packages` / `pnpm dev:all` — Run watch mode for all `@flowlib/*` packages
 - Hot-reload: edit `pkg/core/src/*` → tsdown rebuilds → workspace symlinks update → server restarts
 
 ### Database (plugin schema system)
 
-- `npx invect-cli generate` → `npx invect-cli migrate` (merges core + plugin schemas automatically)
+- `npx flowlib-cli generate` → `npx flowlib-cli migrate` (merges core + plugin schemas automatically)
 - Core schema is defined in abstract form in `pkg/core/src/database/core-schema.ts`
 - The CLI produces dialect-specific Drizzle files for SQLite, PostgreSQL, and MySQL from the merged schema
 - Plugins declare their own tables and extend core tables via `plugin.schema`
@@ -111,7 +111,7 @@ When you edit pkg/core/src/services/flows.service.ts:
 
 ### Agent regression guardrails
 
-- Before changing workspace package imports/exports, verify three layers stay aligned: package `exports`, emitted `dist` files, and example app direct dependencies. Workspace symlinks do not guarantee examples resolve transitive subpaths like `@invect/core/types`.
+- Before changing workspace package imports/exports, verify three layers stay aligned: package `exports`, emitted `dist` files, and example app direct dependencies. Workspace symlinks do not guarantee examples resolve transitive subpaths like `@flowlib/core/types`.
 - When changing plugin schemas or plugin-owned persistence, update real consumer surfaces together: the example app schema flow, isolated test servers under `playwright/tests/platform/`, and startup table checks. A plugin table that exists only in one place will regress builds or local dev.
 - Be careful with watch-mode builds for packages consumed from `dist/`. Cleaning `dist/` during rebuilds can trigger transient `ERR_MODULE_NOT_FOUND` crashes in example apps watching those folders.
 - Do not trust stale terminal output after package or lockfile changes. Re-run the smallest targeted build/test that exercises the changed package graph before concluding a regression still exists.
@@ -134,15 +134,15 @@ When you edit pkg/core/src/services/flows.service.ts:
 
 ## Invect Core Integration Pattern
 
-The entry point is the `createInvect()` async factory in `pkg/core/src/api/create-invect.ts`. It returns an `InvectInstance` with **11 namespaced sub-APIs**. Framework packages (`pkg/express`, `pkg/nestjs`, `pkg/nextjs`) are thin adapters that wrap this instance.
+The entry point is the `createInvect()` async factory in `pkg/core/src/api/create-flowlib.ts`. It returns an `InvectInstance` with **11 namespaced sub-APIs**. Framework packages (`pkg/express`, `pkg/nestjs`, `pkg/nextjs`) are thin adapters that wrap this instance.
 
-> **Legacy**: The `Invect` class in `pkg/core/src/invect-core.ts` still exists (flat methods like `invect.createFlow()`) but all framework adapters now use the modern factory. New code must always use `createInvect()`.
+> **Legacy**: The `Invect` class in `pkg/core/src/flowlib-core.ts` still exists (flat methods like `flowlib.createFlow()`) but all framework adapters now use the modern factory. New code must always use `createInvect()`.
 
 ### Architecture: core → framework adapters
 
 ```
 ┌─────────────────────────────────────────────┐
-│           @invect/core                      │
+│           @flowlib/core                      │
 │  createInvect(config) → InvectInstance      │
 │    .flows     (CRUD + rendering)            │
 │    .versions  (version management)          │
@@ -198,11 +198,11 @@ interface InvectInstance {
 
 ### Framework integration (summary)
 
-- **Express** (`pkg/express`): `createInvectRouter(config)` async factory — calls `createInvect()`, starts batch polling + cron scheduler, returns Express Router. Routes are thin wrappers around `invect.<namespace>.<method>()`.
+- **Express** (`pkg/express`): `createInvectRouter(config)` async factory — calls `createInvect()`, starts batch polling + cron scheduler, returns Express Router. Routes are thin wrappers around `flowlib.<namespace>.<method>()`.
 - **NestJS** (`pkg/nestjs`): `InvectModule.forRoot(config)` / `.forRootAsync({ useFactory, inject })` — injects a single `InvectInstance` via DI token `'INVECT_CORE'`. Controller delegates to service → namespaced API.
-- **Next.js** (`pkg/nextjs`): `createInvectHandler(config)` factory returns `{ GET, POST, PATCH, PUT, DELETE }` for catch-all routes (`app/api/invect/[...invect]/route.ts`). Core instance is internal singleton.
+- **Next.js** (`pkg/nextjs`): `createInvectHandler(config)` factory returns `{ GET, POST, PATCH, PUT, DELETE }` for catch-all routes (`app/api/flowlib/[...flowlib]/route.ts`). Core instance is internal singleton.
 
-**New framework adapter**: create `pkg/<framework>/`, import `createInvect`, wrap routes → `invect.<namespace>.<method>()`.
+**New framework adapter**: create `pkg/<framework>/`, import `createInvect`, wrap routes → `flowlib.<namespace>.<method>()`.
 
 ## Core Architecture Concepts
 
@@ -241,7 +241,7 @@ Node types are **string-based action IDs** (e.g., `"core.jq"`, `"gmail.send_mess
 
 ```typescript
 // pkg/actions/src/core/javascript.ts (or similar)
-import { defineAction } from '@invect/action-kit';
+import { defineAction } from '@flowlib/action-kit';
 import { CORE_PROVIDER } from '../providers';
 import { z } from 'zod';
 
@@ -264,7 +264,7 @@ export const javascriptAction = defineAction({
 });
 ```
 
-**Action directory structure** (lives in `@invect/actions`, not core):
+**Action directory structure** (lives in `@flowlib/actions`, not core):
 
 ```
 pkg/actions/src/
@@ -283,7 +283,7 @@ pkg/actions/src/
     woocommerce, zendesk, …)
 ```
 
-**Re-exported from `@invect/core/actions`** for backward compatibility — `pkg/core/src/actions/index.ts` re-exports providers, registry, executor bridges, and `allBuiltinActions` (`= [...allProviderActions]`). **New code should import directly from `@invect/actions` or `@invect/action-kit`**; `@invect/core/actions` exists to avoid breaking existing example apps.
+**Re-exported from `@flowlib/core/actions`** for backward compatibility — `pkg/core/src/actions/index.ts` re-exports providers, registry, executor bridges, and `allBuiltinActions` (`= [...allProviderActions]`). **New code should import directly from `@flowlib/actions` or `@flowlib/action-kit`**; `@flowlib/core/actions` exists to avoid breaking existing example apps.
 
 **Key characteristics**:
 
@@ -388,8 +388,8 @@ import { Logger } from 'src/schemas';
 import type { InvectDefinition } from 'src/services/flow-versions/schemas-fresh';
 
 // CORRECT — cross-package
-import type { ActionDefinition } from '@invect/action-kit';
-import { allProviderActions } from '@invect/actions';
+import type { ActionDefinition } from '@flowlib/action-kit';
+import { allProviderActions } from '@flowlib/actions';
 
 // WRONG — avoid long relative paths
 import { FlowsService } from '../../services/flows/flows.service';
@@ -397,12 +397,12 @@ import { FlowsService } from '../../services/flows/flows.service';
 
 ### Frontend/backend type separation (CRITICAL)
 
-The `@invect/core` package has multiple entry points:
+The `@flowlib/core` package has multiple entry points:
 
-- `@invect/core` — Main entry; Node.js-specific runtime code (executors, services)
-- `@invect/core/types` — Types-only entry for frontend consumption (via `types.frontend.ts`)
-- `@invect/core/sdk` — Declarative TypeScript flow builder (`defineFlow`, node helpers, provider namespaces)
-- `@invect/core/drizzle/sqlite`, `/postgres`, `/mysql` — Dialect-specific Drizzle schemas
+- `@flowlib/core` — Main entry; Node.js-specific runtime code (executors, services)
+- `@flowlib/core/types` — Types-only entry for frontend consumption (via `types.frontend.ts`)
+- `@flowlib/core/sdk` — Declarative TypeScript flow builder (`defineFlow`, node helpers, provider namespaces)
+- `@flowlib/core/drizzle/sqlite`, `/postgres`, `/mysql` — Dialect-specific Drizzle schemas
 
 **`types.frontend.ts` MUST NOT import runtime code.** Otherwise the frontend build fails with:
 
@@ -491,19 +491,19 @@ this.logger.error('Node execution failed', { nodeId, error: error.message });
 
 - **NestJS**: `InvectModule.forRoot(config)` — `config` is an `InvectConfig` (`{ database, encryptionKey, plugins?, ... }`)
 - **Frontend**: `<Invect config={...} />` — same config shape; only `apiPath`, `frontendPath`, `theme`, `plugins` are read client-side (the rest passes through harmlessly)
-- **Credentials**: AES-256-GCM encrypted. Set `INVECT_ENCRYPTION_KEY` (base64, 32 bytes — use `npx invect-cli secret`). Access in actions: `context.credential` (auto-refreshed for OAuth2) or `context.functions.getCredential(id)`
+- **Credentials**: AES-256-GCM encrypted. Set `INVECT_ENCRYPTION_KEY` (base64, 32 bytes — use `npx flowlib-cli secret`). Access in actions: `context.credential` (auto-refreshed for OAuth2) or `context.functions.getCredential(id)`
 
-## Authoring SDK (`@invect/sdk`)
+## Authoring SDK (`@flowlib/sdk`)
 
-`@invect/sdk` is the unified TypeScript flow-authoring surface — used in hand-authored `.flow.ts` files, the chat assistant's source-level edits, copy-paste round-trip, and git sync. It is type-safe end-to-end.
+`@flowlib/sdk` is the unified TypeScript flow-authoring surface — used in hand-authored `.flow.ts` files, the chat assistant's source-level edits, copy-paste round-trip, and git sync. It is type-safe end-to-end.
 
 ### Named-record `defineFlow` (preferred form)
 
 Keys are referenceIds; edges narrow `from`/`to`/`handle` against them.
 
 ```ts
-import { defineFlow, input, output, ifElse, switchNode } from '@invect/sdk';
-import { gmail, slack } from '@invect/sdk/actions';
+import { defineFlow, input, output, ifElse, switchNode } from '@flowlib/sdk';
+import { gmail, slack } from '@flowlib/sdk/actions';
 
 export default defineFlow({
   name: 'Triage event',
@@ -538,12 +538,12 @@ The legacy **array form** (`nodes: [helper('ref', ...)]`) still type-checks and 
 - **Edge `from`/`to`** narrow against `keyof N` in the named-record form. Self-loops are blocked.
 - See [pkg/action-kit/src/define-action.ts](pkg/action-kit/src/define-action.ts) for the `defineAction<S, const H>` machinery — `z.input<S>` / `z.output<S>` drive both sides.
 
-### Codegen-generated action wrappers (`@invect/sdk/actions`)
+### Codegen-generated action wrappers (`@flowlib/sdk/actions`)
 
-Every action in `@invect/actions` ships with a typed wrapper under `@invect/sdk/actions`:
+Every action in `@flowlib/actions` ships with a typed wrapper under `@flowlib/sdk/actions`:
 
 ```ts
-import { gmail, github, linear, slack } from '@invect/sdk/actions';
+import { gmail, github, linear, slack } from '@flowlib/sdk/actions';
 
 gmail.sendMessage({ credentialId, to, subject, body });
 linear.createIssue({ credentialId, teamId, title });
@@ -551,7 +551,7 @@ linear.createIssue({ credentialId, teamId, title });
 
 - Each wrapper has a `*Params` interface (e.g. `GmailSendMessageParams`) with **per-field JSDoc** lifted from `params.fields[].description`. Hover any field at a call site and IntelliSense surfaces the field's UI-form description.
 - Field types reference `z.input<typeof <action>.params.schema>['<field>']` directly — there's no risk of drift from the underlying schema.
-- The catalogue lives at [pkg/sdk/src/generated/](pkg/sdk/src/generated/) and is committed. Regenerate with `pnpm --filter @invect/sdk gen-actions`. CI runs `gen-actions:check` to fail on diff.
+- The catalogue lives at [pkg/sdk/src/generated/](pkg/sdk/src/generated/) and is committed. Regenerate with `pnpm --filter @flowlib/sdk gen-actions`. CI runs `gen-actions:check` to fail on diff.
 - Core actions (`core.input`, `core.output`, `core.javascript`, `core.if_else`, `core.switch`, `core.agent`, `http.request`, `trigger.*`) are NOT codegened — they have hand-written wrappers in [pkg/sdk/src/nodes/core.ts](pkg/sdk/src/nodes/core.ts) that carry handle-narrowing and accept arrow forms (`code: (ctx) => ...`).
 
 ### Pre-save TypeScript validation (chat assistant)
@@ -647,7 +647,7 @@ Tool instances support per-instance customization (custom name, description, par
 
 **Option A (preferred): create a new action** — also becomes a flow node.
 
-1. Create `pkg/actions/src/<provider>/<action-name>.ts` using `defineAction()` from `@invect/action-kit`
+1. Create `pkg/actions/src/<provider>/<action-name>.ts` using `defineAction()` from `@flowlib/action-kit`
 2. Export from the provider's `index.ts` barrel
 3. Add to the provider's bundle (`<providerName>Actions`) — already included in `allProviderActions`
 4. Auto-registers as flow node AND agent tool during `createInvect()` init
@@ -772,13 +772,13 @@ export const myAction = defineAction({
 
 ## Pitfalls & Key Files
 
-**Pitfalls**: Node executors are singletons (use `NodeExecutionContext` for state) | Always Zod-validate inputs | Handle batch `state: "PENDING"` | Test SQLite + PostgreSQL | Types from `@invect/core/types` or `@invect/action-kit` (never duplicate) | Restart watch if stalled
+**Pitfalls**: Node executors are singletons (use `NodeExecutionContext` for state) | Always Zod-validate inputs | Handle batch `state: "PENDING"` | Test SQLite + PostgreSQL | Types from `@flowlib/core/types` or `@flowlib/action-kit` (never duplicate) | Restart watch if stalled
 
 ### tsconfig `paths` inheritance & pnpm workspace bundling (CRITICAL)
 
-The root `tsconfig.json` has `"paths": { "src/*": ["pkg/core/src/*"] }` for core development convenience. **Any package tsconfig that extends root MUST override `paths` to `{}`**, otherwise tsdown/rolldown follows the alias into core's source tree and inlines all of `@invect/core` (18+ MB) into the package dist instead of keeping it external.
+The root `tsconfig.json` has `"paths": { "src/*": ["pkg/core/src/*"] }` for core development convenience. **Any package tsconfig that extends root MUST override `paths` to `{}`**, otherwise tsdown/rolldown follows the alias into core's source tree and inlines all of `@flowlib/core` (18+ MB) into the package dist instead of keeping it external.
 
-**Root cause**: pnpm workspace links `@invect/core` via symlink (`node_modules/@invect/core → ../../../core`). When tsdown resolves imports, the inherited `src/*` path alias redirects the resolver into `../core/src/...` — a relative file path — so `external` / `deps.neverBundle` patterns like `@invect/core` never match. Fix: override `paths: {}` so tsdown resolves `@invect/core` as a bare package specifier.
+**Root cause**: pnpm workspace links `@flowlib/core` via symlink (`node_modules/@flowlib/core → ../../../core`). When tsdown resolves imports, the inherited `src/*` path alias redirects the resolver into `../core/src/...` — a relative file path — so `external` / `deps.neverBundle` patterns like `@flowlib/core` never match. Fix: override `paths: {}` so tsdown resolves `@flowlib/core` as a bare package specifier.
 
 Root tsconfig also has `"noEmit": true`. Packages that use `tsc --emitDeclarationOnly` must override `"noEmit": false` or tsc silently emits zero `.d.ts` files (exits 0 with no output).
 
@@ -794,7 +794,7 @@ Root tsconfig also has `"noEmit": true`. Packages that use `tsc --emitDeclaratio
 }
 ```
 
-**Symptoms if missing**: dist output is 18+ MB | `head dist/index.js` shows `from "./pkg/core/src/..."` instead of `from "@invect/core"` | `tsc --emitDeclarationOnly` produces no `.d.ts` files.
+**Symptoms if missing**: dist output is 18+ MB | `head dist/index.js` shows `from "./pkg/core/src/..."` instead of `from "@flowlib/core"` | `tsc --emitDeclarationOnly` produces no `.d.ts` files.
 
 **tsdown v0.21+**: use `deps.neverBundle` (not deprecated `external`), and `outExtensions` (plural — singular is silently ignored).
 
@@ -821,7 +821,7 @@ All node types are added as **actions** using `defineAction()`.
 For an integration provider action, create `pkg/actions/src/<provider>/<action-name>.ts`:
 
 ```typescript
-import { defineAction } from '@invect/action-kit';
+import { defineAction } from '@flowlib/action-kit';
 import { MY_PROVIDER } from '../providers';
 import { z } from 'zod';
 
@@ -848,7 +848,7 @@ export const myAction = defineAction({
 });
 ```
 
-For a **core runtime primitive** (rare — needs core-only dependencies), still put it in `pkg/actions/src/core/` but be aware that `@invect/primitives` may fork it in `pkg/primitives/src/actions/` to avoid QuickJS or other Node-only deps.
+For a **core runtime primitive** (rare — needs core-only dependencies), still put it in `pkg/actions/src/core/` but be aware that `@flowlib/primitives` may fork it in `pkg/primitives/src/actions/` to avoid QuickJS or other Node-only deps.
 
 #### 2. Register
 
@@ -869,9 +869,9 @@ For a **core runtime primitive** (rare — needs core-only dependencies), still 
 
 ### Areas that may still need updates
 
-**Type system**: export new types from `@invect/action-kit` or `pkg/core/src/types.frontend.ts` for frontend consumption. Remember — `types.frontend.ts` uses `import type` only.
+**Type system**: export new types from `@flowlib/action-kit` or `pkg/core/src/types.frontend.ts` for frontend consumption. Remember — `types.frontend.ts` uses `import type` only.
 
-**Database (if action stores data)**: update ALL THREE schemas (`schema-sqlite.ts`, `schema-postgres.ts`, `schema-mysql.ts`), then `npx invect-cli generate`.
+**Database (if action stores data)**: update ALL THREE schemas (`schema-sqlite.ts`, `schema-postgres.ts`, `schema-mysql.ts`), then `npx flowlib-cli generate`.
 
 ### Common pitfalls
 
@@ -886,7 +886,7 @@ For a **core runtime primitive** (rare — needs core-only dependencies), still 
 
 1. **New service** — add to `pkg/core/src/services/`, wire in `service-factory.ts`, export from `pkg/core/src/index.ts`
 2. **New API endpoint** — add service method, expose via `createInvect()` sub-API (edit `pkg/core/src/api/<domain>.ts` + `pkg/core/src/api/types.ts`), add routes in framework packages, update frontend API client (`pkg/ui/src/api/`)
-3. **Database schema change** — update all three schema files, run `npx invect-cli generate`, test migration
+3. **Database schema change** — update all three schema files, run `npx flowlib-cli generate`, test migration
 
 ## Plugin System
 
@@ -933,7 +933,7 @@ export function auth(options: AuthenticationPluginOptions = {}): InvectPluginDef
     id: 'user-auth',
     name: 'User Authentication',
     backend: authentication(options), // returns InvectPlugin
-    frontend: options.frontend, // authFrontend from @invect/user-auth/ui
+    frontend: options.frontend, // authFrontend from @flowlib/user-auth/ui
   };
 }
 ```
@@ -992,7 +992,7 @@ interface InvectFrontendPlugin {
 ### Registration & lifecycle
 
 ```typescript
-const invect = await createInvect({
+const flowlib = await createInvect({
   database: { type: 'sqlite', connectionString: 'file:./dev.db' },
   encryptionKey: process.env.INVECT_ENCRYPTION_KEY!,
   plugins: [
@@ -1016,29 +1016,29 @@ const invect = await createInvect({
 
 ### Official plugins
 
-- **`@invect/user-auth`** (`pkg/plugins/auth`) — Light wrapper around [Better Auth](https://better-auth.com). Backend wraps a Better Auth instance, proxies auth routes as plugin endpoints. `onRequest` hook resolves sessions; `onAuthorize` enforces session-based access. **Admin-only user management**: sign-up is disabled; initial admin seeded from `INVECT_ADMIN_EMAIL` / `INVECT_ADMIN_PASSWORD` or `adminEmail`/`adminPassword` options. Frontend contributes an `appShell` (`AuthAppShell`) that wraps the Invect layout with `AuthProvider` + `AuthGate`, plus a `/users` route, a `/profile` route, a `Users` sidebar item, and a `SidebarUserMenu` footer. Also exports: `AuthProvider`, `useAuth`, `SignInForm`, `SignInPage`, `TwoFactorSetup`, `TwoFactorVerifyForm`, `UserButton`, `AuthGate`, `UserManagement`, `authFrontend`. The legacy `AuthenticatedInvect` wrapper is still exported for back-compat but no longer recommended — pass `auth()` through `<Invect config={{ plugins }} />` instead.
-- **`@invect/rbac`** (`pkg/plugins/rbac`) — Role-Based Access Control. Depends on auth. Backend provides flow-access endpoints; `onAuthorize` enforces flow-level ACLs. Frontend contributes sidebar items, `/access` routes, `FlowAccessPanel`, `ShareButton`, `RbacProvider`, teams management.
-- **`@invect/webhooks`** (`pkg/plugins/webhooks`) — Webhook management, ingestion, signature verification, dedicated UI page.
-- **`@invect/version-control`** (`pkg/plugins/version-control`) — Sync flows to GitHub/GitLab/Bitbucket as `.flow.ts` files. Enables Git-stored flows deployed via CI/CD.
-- **`@invect/cloudflare-agents`** (`pkg/plugins/cloudflare-agents`) — Compile Invect flows to Cloudflare Agents & Workflows; deploy visual flows as durable globally-distributed Workers. Has `backend/`, `compiler/`, `adapter/`, `shared/`.
-- **`@invect/vercel-workflows`** (`pkg/plugins/vercel-workflows`) — Compile Invect flows to **Vercel Workflows** (`'use workflow'` directive). Has `backend/endpoints.ts`, `compiler/` (flow-compiler, control-flow, step-emitter), `runtime/execute-step.ts`, `frontend/DeployButton.tsx`, plus `runner.ts` (`createVercelFlowRunner`). **Deploy UX**: the Deploy button shows the generated source for copy-paste into the user's Next.js app — it is NOT a CLI deploy. The plugin's `/deploy/preview` endpoint returns both the compiled `'use workflow'` source and the SDK-source file it imports.
-- **`@invect/mcp`** (`pkg/plugins/mcp`) — Exposes flow building/editing/execution/debugging as MCP tools for Claude Desktop, VS Code Copilot, other MCP clients. Includes server (`backend/`), stdio launcher (`cli/`), and resources/prompts.
+- **`@flowlib/user-auth`** (`pkg/plugins/auth`) — Light wrapper around [Better Auth](https://better-auth.com). Backend wraps a Better Auth instance, proxies auth routes as plugin endpoints. `onRequest` hook resolves sessions; `onAuthorize` enforces session-based access. **Admin-only user management**: sign-up is disabled; initial admin seeded from `INVECT_ADMIN_EMAIL` / `INVECT_ADMIN_PASSWORD` or `adminEmail`/`adminPassword` options. Frontend contributes an `appShell` (`AuthAppShell`) that wraps the Invect layout with `AuthProvider` + `AuthGate`, plus a `/users` route, a `/profile` route, a `Users` sidebar item, and a `SidebarUserMenu` footer. Also exports: `AuthProvider`, `useAuth`, `SignInForm`, `SignInPage`, `TwoFactorSetup`, `TwoFactorVerifyForm`, `UserButton`, `AuthGate`, `UserManagement`, `authFrontend`. The legacy `AuthenticatedInvect` wrapper is still exported for back-compat but no longer recommended — pass `auth()` through `<Invect config={{ plugins }} />` instead.
+- **`@flowlib/rbac`** (`pkg/plugins/rbac`) — Role-Based Access Control. Depends on auth. Backend provides flow-access endpoints; `onAuthorize` enforces flow-level ACLs. Frontend contributes sidebar items, `/access` routes, `FlowAccessPanel`, `ShareButton`, `RbacProvider`, teams management.
+- **`@flowlib/webhooks`** (`pkg/plugins/webhooks`) — Webhook management, ingestion, signature verification, dedicated UI page.
+- **`@flowlib/version-control`** (`pkg/plugins/version-control`) — Sync flows to GitHub/GitLab/Bitbucket as `.flow.ts` files. Enables Git-stored flows deployed via CI/CD.
+- **`@flowlib/cloudflare-agents`** (`pkg/plugins/cloudflare-agents`) — Compile Invect flows to Cloudflare Agents & Workflows; deploy visual flows as durable globally-distributed Workers. Has `backend/`, `compiler/`, `adapter/`, `shared/`.
+- **`@flowlib/vercel-workflows`** (`pkg/plugins/vercel-workflows`) — Compile Invect flows to **Vercel Workflows** (`'use workflow'` directive). Has `backend/endpoints.ts`, `compiler/` (flow-compiler, control-flow, step-emitter), `runtime/execute-step.ts`, `frontend/DeployButton.tsx`, plus `runner.ts` (`createVercelFlowRunner`). **Deploy UX**: the Deploy button shows the generated source for copy-paste into the user's Next.js app — it is NOT a CLI deploy. The plugin's `/deploy/preview` endpoint returns both the compiled `'use workflow'` source and the SDK-source file it imports.
+- **`@flowlib/mcp`** (`pkg/plugins/mcp`) — Exposes flow building/editing/execution/debugging as MCP tools for Claude Desktop, VS Code Copilot, other MCP clients. Includes server (`backend/`), stdio launcher (`cli/`), and resources/prompts.
 
 ### Frontend composition: `<Invect config>` + plugins
 
-`<Invect>` (from [pkg/ui/src/Invect.tsx](pkg/ui/src/Invect.tsx)) is always the main component. Hosts pass a single `config` object (the same shape as `defineConfig({...})` on the backend) containing `apiPath`, `frontendPath`, `theme`, and a unified `plugins` array. The component reads only the frontend-relevant fields and ignores the rest, so the same `invect.config.ts` can be imported by both backend and frontend.
+`<Invect>` (from [pkg/ui/src/Invect.tsx](pkg/ui/src/Invect.tsx)) is always the main component. Hosts pass a single `config` object (the same shape as `defineConfig({...})` on the backend) containing `apiPath`, `frontendPath`, `theme`, and a unified `plugins` array. The component reads only the frontend-relevant fields and ignores the rest, so the same `flowlib.config.ts` can be imported by both backend and frontend.
 
 ```tsx
-import { Invect } from '@invect/ui';
-import '@invect/ui/styles';
-import { auth } from '@invect/user-auth';
-import { rbac } from '@invect/rbac';
-import { webhooks } from '@invect/webhooks';
+import { Invect } from '@flowlib/ui';
+import '@flowlib/ui/styles';
+import { auth } from '@flowlib/user-auth';
+import { rbac } from '@flowlib/rbac';
+import { webhooks } from '@flowlib/webhooks';
 
 <Invect
   config={{
-    apiPath: 'http://localhost:3000/invect',
-    frontendPath: '/invect',
+    apiPath: 'http://localhost:3000/flowlib',
+    frontendPath: '/flowlib',
     theme: 'dark',
     plugins: [auth(), rbac(), webhooks()],
   }}
@@ -1059,7 +1059,7 @@ A frontend plugin can contribute an **`appShell`** ([pkg/ui/src/types/plugin.typ
         FrontendPathProvider
           PluginRegistryProvider
             InvectShelled ─ resolves AppShell from plugin registry
-              ↳ AuthAppShell (from @invect/user-auth)
+              ↳ AuthAppShell (from @flowlib/user-auth)
                   AuthProvider → AuthGate
                     ├─ fallback: SignInPage / TwoFactorVerifyForm
                     └─ children:
@@ -1071,18 +1071,18 @@ The auth plugin's shell is [pkg/plugins/auth/src/frontend/components/AuthAppShel
 
 #### CSS scope
 
-`@invect/ui/styles` defines theme tokens (`--imp-background`, `--imp-foreground`, …) and Tailwind utilities. The `.imp-shell` class sits on the top-level div inside `InvectAppContent`. Sign-in / 2FA pages render outside that div (the shell is a sibling of `InvectAppContent`, not a parent), so theme tokens must be available at `:root` or inherited from `ThemeProvider`'s class toggle — plugin UI components just use `imp-*` utility classes directly and they work.
+`@flowlib/ui/styles` defines theme tokens (`--imp-background`, `--imp-foreground`, …) and Tailwind utilities. The `.imp-shell` class sits on the top-level div inside `InvectAppContent`. Sign-in / 2FA pages render outside that div (the shell is a sibling of `InvectAppContent`, not a parent), so theme tokens must be available at `:root` or inherited from `ThemeProvider`'s class toggle — plugin UI components just use `imp-*` utility classes directly and they work.
 
 #### Rules for plugin frontend components
 
 1. **Always use `imp-*` theme tokens** (`bg-imp-background`, `text-imp-foreground`, `border-imp-border`, …). Never raw colors.
-2. **Don't import `@invect/ui` from a plugin frontend** unless you're only importing _types_ (`InvectFrontendPlugin`, `PluginSidebarContribution`, …). Plugin UI lives above `@invect/ui` in the dependency graph — importing runtime from it creates a cycle.
+2. **Don't import `@flowlib/ui` from a plugin frontend** unless you're only importing _types_ (`InvectFrontendPlugin`, `PluginSidebarContribution`, …). Plugin UI lives above `@flowlib/ui` in the dependency graph — importing runtime from it creates a cycle.
 3. **Plugin routes / panel tabs / sidebar items / appShell** are wired through the `InvectFrontendPlugin` shape. See [pkg/ui/src/types/plugin.types.ts](pkg/ui/src/types/plugin.types.ts) for all extension points.
 4. **Dark mode** — `ThemeProvider` (applied inside `<Invect>`) toggles the class; `system` resolves via OS preference listener.
 
 #### Legacy: `AuthenticatedInvect` and `InvectShell`
 
-`AuthenticatedInvect` ([pkg/plugins/auth/src/frontend/components/AuthenticatedInvect.tsx](pkg/plugins/auth/src/frontend/components/AuthenticatedInvect.tsx)) and `InvectShell` (CSS-scope-only wrapper, still exported from `@invect/ui`) are retained for back-compat but are **no longer the recommended pattern**. New hosts should render `<Invect config>` directly and let the auth plugin's `appShell` handle gating.
+`AuthenticatedInvect` ([pkg/plugins/auth/src/frontend/components/AuthenticatedInvect.tsx](pkg/plugins/auth/src/frontend/components/AuthenticatedInvect.tsx)) and `InvectShell` (CSS-scope-only wrapper, still exported from `@flowlib/ui`) are retained for back-compat but are **no longer the recommended pattern**. New hosts should render `<Invect config>` directly and let the auth plugin's `appShell` handle gating.
 
 ### Plugin schema system
 
@@ -1090,7 +1090,7 @@ Plugins declare DB tables using an **abstract format** (dialect-agnostic). The C
 
 Two distinct mechanisms:
 
-1. **`schema`** — Abstract table definitions consumed by `npx invect-cli generate`. Plugins that declare `schema` get their tables included in the generated output automatically.
+1. **`schema`** — Abstract table definitions consumed by `npx flowlib-cli generate`. Plugins that declare `schema` get their tables included in the generated output automatically.
 2. **`requiredTables`** — Table names checked at **startup** (existence only). Used when a plugin relies on externally-managed tables (e.g., Better Auth creates its own). If `requiredTables` is omitted but `schema` is declared, names are **inferred from `schema`**.
 
 The auth plugin uses **both**: `schema` (so generator includes auth tables) AND `requiredTables` (so startup verifies them).
@@ -1123,7 +1123,7 @@ During `DatabaseService.initialize()`:
 2. **Plugin table check** — `requiredTables` (explicit) or inferred from `schema`. Missing tables → clear plugin-attributed error with setup instructions pointing to:
 
 ```
-npx invect-cli generate   # regenerate Drizzle files (core + plugins)
+npx flowlib-cli generate   # regenerate Drizzle files (core + plugins)
 npx drizzle-kit push      # push schema to the database
 ```
 
@@ -1134,15 +1134,15 @@ npx drizzle-kit push      # push schema to the database
 3. Frontend: export an `InvectFrontendPlugin` object
 4. Shared: export browser-safe types only
 5. Top-level factory: return `{ id, name, backend, frontend }` (i.e., `InvectPluginDefinition`)
-6. If plugin has DB tables: declare `schema`, run `npx invect-cli generate`
+6. If plugin has DB tables: declare `schema`, run `npx flowlib-cli generate`
 7. Register in consumer app: `plugins: [myPlugin()]`
 
 ### Key plugin files
 
 - `pkg/core/src/types/plugin.types.ts` — All plugin type definitions
 - `pkg/core/src/services/plugin-manager.ts` — Lifecycle + hook execution
-- `pkg/core/src/api/create-invect.ts` — Modern factory entry point
-- `pkg/core/src/invect-core.ts` — Legacy `Invect` class (internal)
+- `pkg/core/src/api/create-flowlib.ts` — Modern factory entry point
+- `pkg/core/src/flowlib-core.ts` — Legacy `Invect` class (internal)
 - `pkg/core/src/database/core-schema.ts` — Core DB tables (abstract)
 - `pkg/core/src/database/schema-merger.ts` — Merges core + plugin schemas
 - `pkg/core/src/database/schema-generator.ts` — Generates dialect-specific Drizzle files
@@ -1150,27 +1150,27 @@ npx drizzle-kit push      # push schema to the database
 - `pkg/core/src/services/database/database.service.ts` — Startup existence checks
 - `pkg/plugins/auth/` | `rbac/` | `webhooks/` | `version-control/` | `cloudflare-agents/` | `vercel-workflows/` | `mcp/`
 
-## CLI (`@invect/cli`)
+## CLI (`@flowlib/cli`)
 
-`npx invect-cli <command>` manages project init, schema generation, migrations. Published as `@invect/cli`; the `invect-cli` bin lives in `pkg/invect/` (thin wrapper).
+`npx flowlib-cli <command>` manages project init, schema generation, migrations. Published as `@flowlib/cli`; the `flowlib-cli` bin lives in `pkg/flowlib/` (thin wrapper).
 
 ### Commands
 
 | Command                   | Description                                                                                                                        |
 | ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| `npx invect-cli init`     | Interactive setup wizard — detects framework, installs deps, creates `invect.config.ts`, generates schemas, runs initial migration |
-| `npx invect-cli generate` | Generates Drizzle schema files (all 3 dialects) from core + plugin schemas; optionally chains to migration                         |
-| `npx invect-cli migrate`  | Applies pending migrations via `drizzle-kit migrate` or pushes directly with `drizzle-kit push` (dev mode)                         |
-| `npx invect-cli info`     | Diagnostic info — system, frameworks, databases, config, plugins                                                                   |
-| `npx invect-cli secret`   | Cryptographically secure 32-byte base64 key for `INVECT_ENCRYPTION_KEY`                                                            |
-| `npx invect-cli mcp`      | Launches stdio MCP server for IDE/Claude integration (`--url`, `--api-key`, `--print-config`)                                      |
+| `npx flowlib-cli init`     | Interactive setup wizard — detects framework, installs deps, creates `flowlib.config.ts`, generates schemas, runs initial migration |
+| `npx flowlib-cli generate` | Generates Drizzle schema files (all 3 dialects) from core + plugin schemas; optionally chains to migration                         |
+| `npx flowlib-cli migrate`  | Applies pending migrations via `drizzle-kit migrate` or pushes directly with `drizzle-kit push` (dev mode)                         |
+| `npx flowlib-cli info`     | Diagnostic info — system, frameworks, databases, config, plugins                                                                   |
+| `npx flowlib-cli secret`   | Cryptographically secure 32-byte base64 key for `INVECT_ENCRYPTION_KEY`                                                            |
+| `npx flowlib-cli mcp`      | Launches stdio MCP server for IDE/Claude integration (`--url`, `--api-key`, `--print-config`)                                      |
 
 ### Config shape
 
-The `InvectConfig` schema is defined in [pkg/core/src/schemas/invect-config.ts](pkg/core/src/schemas/invect-config.ts). `defineConfig()` is available from two entry points:
+The `InvectConfig` schema is defined in [pkg/core/src/schemas/flowlib-config.ts](pkg/core/src/schemas/flowlib-config.ts). `defineConfig()` is available from two entry points:
 
-- **`@invect/core`** — full entry; the identity function is co-located with the Zod schema (Node-only).
-- **`@invect/core/config`** — browser-safe entry ([pkg/core/src/config.ts](pkg/core/src/config.ts)): identity function + type re-exports only, no Zod, no Node APIs. Use this if the config file is imported into a browser bundle.
+- **`@flowlib/core`** — full entry; the identity function is co-located with the Zod schema (Node-only).
+- **`@flowlib/core/config`** — browser-safe entry ([pkg/core/src/config.ts](pkg/core/src/config.ts)): identity function + type re-exports only, no Zod, no Node APIs. Use this if the config file is imported into a browser bundle.
 
 Required fields: `database` and `encryptionKey`. Optional top-level fields: `apiPath`, `frontendPath`, `theme`, `logging`, `logger`, `execution`, `triggers`, `plugins`, `defaultCredentials`.
 
@@ -1179,16 +1179,16 @@ Required fields: `database` and `encryptionKey`. Optional top-level fields: `api
 The same config object is shared between backend and frontend. `<Invect config>` reads only `apiPath`, `frontendPath`, `theme`, and `plugins` — other fields pass through the typed `[key: string]: unknown` escape hatch without error.
 
 ```typescript
-// invect.config.ts
-import { defineConfig } from '@invect/core';
-import { auth } from '@invect/user-auth';
-import { rbac } from '@invect/rbac';
+// flowlib.config.ts
+import { defineConfig } from '@flowlib/core';
+import { auth } from '@flowlib/user-auth';
+import { rbac } from '@flowlib/rbac';
 
 export default defineConfig({
   database: { type: 'sqlite', connectionString: 'file:./dev.db' },
   encryptionKey: process.env.INVECT_ENCRYPTION_KEY!,
-  apiPath: '/api/invect',
-  frontendPath: '/invect',
+  apiPath: '/api/flowlib',
+  frontendPath: '/flowlib',
   theme: 'dark',
   plugins: [auth({ globalAdmins: [{ email: 'admin@example.com', pw: '…' }] }), rbac()],
 });
@@ -1196,9 +1196,9 @@ export default defineConfig({
 
 ### Config loading (CLI)
 
-The CLI loader lives at [pkg/cli/src/utils/config-loader.ts](pkg/cli/src/utils/config-loader.ts). It is used by `invect-cli generate` / `migrate` / `info` to discover plugins and extract `.backend.schema` for codegen.
+The CLI loader lives at [pkg/cli/src/utils/config-loader.ts](pkg/cli/src/utils/config-loader.ts). It is used by `flowlib-cli generate` / `migrate` / `info` to discover plugins and extract `.backend.schema` for codegen.
 
-1. **Discovery** — explicit `--config` first; otherwise search `invect.config.{ts,js,mjs}` in `.`, `src`, `lib`, `config`, `utils` (in that order).
+1. **Discovery** — explicit `--config` first; otherwise search `flowlib.config.{ts,js,mjs}` in `.`, `src`, `lib`, `config`, `utils` (in that order).
 2. **TSConfig alias resolution** — reads `tsconfig.json` (falling back to `jsconfig.json`) and follows `references` for monorepo project-reference setups (with cycle protection). Collected `paths` aliases are passed to jiti as `alias:`.
 3. **Loading** — jiti with `interopDefault: true` and the resolved aliases. Supports TypeScript source and both CJS / ESM output.
 4. **Export resolution** — accepts any of: `export default`, `export const config`, `export const invectConfig`, or a module whose root has `database`/`plugins`. Double-wrapped defaults (`{ default: { default: … } }`) are unwrapped.
@@ -1209,9 +1209,9 @@ Note: the CLI loader does **not** invoke `InvectConfigSchema.parse()`. Full Zod 
 ### Schema generation pipeline
 
 ```
-invect-cli generate
-  ├── Load invect.config.ts (config-loader.ts)
-  ├── Import core schema + dialect generators from @invect/core
+flowlib-cli generate
+  ├── Load flowlib.config.ts (config-loader.ts)
+  ├── Import core schema + dialect generators from @flowlib/core
   ├── mergeSchemas(coreSchema, ...pluginSchemas)
   │   └── Validates no conflicting field definitions
   ├── Generate 3 dialect files (SQLite, PostgreSQL, MySQL)
@@ -1219,7 +1219,7 @@ invect-cli generate
   ├── Display summary (table counts, per-plugin details)
   ├── Prompt for confirmation
   ├── Write changed files to disk
-  └── Optionally chain to `invect-cli migrate`
+  └── Optionally chain to `flowlib-cli migrate`
 ```
 
 ### CLI key files
@@ -1231,15 +1231,15 @@ invect-cli generate
 - `pkg/cli/src/utils/config-loader.ts` — Discovery + jiti
 - `pkg/cli/test/` — Generation, diff, Prisma merge, fixtures
 
-## Primitives (`@invect/primitives`)
+## Primitives (`@flowlib/primitives`)
 
-`@invect/primitives` is a **lightweight, DB-less, framework-less flow runner**. It runs Invect flow definitions in any JS runtime (Node, Cloudflare Workers, Vercel Edge, Vercel Workflows, Deno, Bun).
+`@flowlib/primitives` is a **lightweight, DB-less, framework-less flow runner**. It runs Invect flow definitions in any JS runtime (Node, Cloudflare Workers, Vercel Edge, Vercel Workflows, Deno, Bun).
 
 ### What it provides
 
 - `createFlowRunner(config)` — build a runner with a durability adapter (`InMemoryAdapter` or external)
 - `InMemoryAdapter` — no-op adapter for simple in-process runs
-- `defineFlow`, node helpers (`input`, `output`, `model`, `ifElse`, `switchNode`, `agent`, `tool`, `code`, `javascript`, `node`, `edge`) — the same TypeScript flow builder API surface as `@invect/core/sdk`
+- `defineFlow`, node helpers (`input`, `output`, `model`, `ifElse`, `switchNode`, `agent`, `tool`, `code`, `javascript`, `node`, `edge`) — the same TypeScript flow builder API surface as `@flowlib/core/sdk`
 - `validateFlow` / `topologicalSort` / `buildNodeContext` / `resolveCallableParams` / `executeNodeAction`
 - `emitSdkSource()` — converts a DB-form `InvectDefinition` back to a TypeScript source string (used by the Vercel Workflows plugin to generate the deployable flow file)
 - `createFetchPromptClient()` — HTTP-based prompt client for environments without direct AI SDK access
@@ -1260,7 +1260,7 @@ External runtimes (Vercel Workflows, Cloudflare Workflows) supply adapters that 
 
 ### Node-type aliases
 
-`@invect/primitives` exports `INPUT_TYPES`, `OUTPUT_TYPES`, `MODEL_TYPES`, `JAVASCRIPT_TYPES`, `IF_ELSE_TYPES`, `SWITCH_TYPES`, `AGENT_TYPES`, `ALL_PRIMITIVE_TYPES` plus `isInputType`/`isOutputType`/etc. guards — used because an action ID like `core.javascript` may have both a "primitives.javascript" alias and a "core.javascript" alias in flow definitions.
+`@flowlib/primitives` exports `INPUT_TYPES`, `OUTPUT_TYPES`, `MODEL_TYPES`, `JAVASCRIPT_TYPES`, `IF_ELSE_TYPES`, `SWITCH_TYPES`, `AGENT_TYPES`, `ALL_PRIMITIVE_TYPES` plus `isInputType`/`isOutputType`/etc. guards — used because an action ID like `core.javascript` may have both a "primitives.javascript" alias and a "core.javascript" alias in flow definitions.
 
 ## Playwright Tests
 

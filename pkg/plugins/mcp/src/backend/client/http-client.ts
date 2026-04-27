@@ -2,7 +2,7 @@
  * HttpClient — wraps Invect HTTP API for CLI/stdio mode.
  */
 
-import { emitSdkSource, SdkEmitError } from '@invect/sdk';
+import { emitSdkSource, SdkEmitError } from '@flowlib/sdk';
 import type {
   InvectClient,
   CredentialSummary,

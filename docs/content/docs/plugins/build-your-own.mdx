@@ -8,7 +8,7 @@ import { Callout } from 'fumadocs-ui/components/callout';
 An Invect plugin is a plain object with an `id`. Everything else is opt-in — add only what you need.
 
 ```ts
-import type { InvectPlugin } from '@invect/core';
+import type { InvectPlugin } from '@flowlib/core';
 
 export function myPlugin(): InvectPlugin {
   return {
@@ -72,7 +72,7 @@ When multiple plugins register the same hook, they run in declaration order.
 Define actions using `defineAction()`. They automatically appear in the node palette and as agent tools.
 
 ```ts
-import { defineAction } from '@invect/core';
+import { defineAction } from '@flowlib/core';
 import { z } from 'zod/v4';
 
 const myAction = defineAction({
@@ -123,8 +123,8 @@ export function myPlugin(): InvectPlugin {
 After adding the plugin, run:
 
 ```bash
-npx invect-cli generate
-npx invect-cli migrate --push
+npx flowlib-cli generate
+npx flowlib-cli migrate --push
 ```
 
 Invect verifies required tables exist at startup and shows a clear error if they're missing.
@@ -173,7 +173,7 @@ endpoints: [
     handler: async (ctx) => {
       const { id } = ctx.params;
       const { name } = ctx.body;
-      const invect = ctx.getInvect();
+      const flowlib = ctx.getInvect();
       // Access flows, runs, etc. via the Invect instance
       return { status: 201, body: { id, name } };
     },

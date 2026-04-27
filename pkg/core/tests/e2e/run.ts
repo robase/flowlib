@@ -6,7 +6,7 @@ import Database from 'better-sqlite3';
 import { drizzle } from 'drizzle-orm/better-sqlite3';
 import { sql } from 'drizzle-orm';
 import * as schema from '../../src/database/schema-sqlite';
-import { createInvect } from '../../src/api/create-invect';
+import { createInvect } from '../../src/api/create-flowlib';
 import type { FlowExample } from './example-types';
 import { inputTemplateModelExample } from './input-template-model';
 import {
@@ -49,7 +49,7 @@ async function runExamples(): Promise<void> {
   }
 
   // Initialize Invect
-  const invect = await createInvect({
+  const flowlib = await createInvect({
     database: {
       type: 'sqlite',
       connectionString: `file:${sqlitePath}`,
@@ -72,7 +72,7 @@ async function runExamples(): Promise<void> {
       console.log('-'.repeat(80));
 
       try {
-        const result = await example.execute(invect);
+        const result = await example.execute(flowlib);
         await Promise.resolve(example.expected(result));
         console.log(`\n✅ PASSED: ${example.name}\n`);
         passed++;
@@ -108,7 +108,7 @@ async function runExamples(): Promise<void> {
   } finally {
     console.log('🧹 Shutting down Invect...');
     try {
-      await invect.shutdown();
+      await flowlib.shutdown();
       console.log('✅ Shutdown complete\n');
     } catch (error) {
       console.error('⚠️  Error during shutdown:', error);

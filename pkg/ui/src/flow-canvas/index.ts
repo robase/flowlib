@@ -1,9 +1,9 @@
 /**
- * `@invect/ui/flow-canvas` — headless flow editor exports.
+ * `@flowlib/ui/flow-canvas` — headless flow editor exports.
  *
  * See Contract C in `VSCODE_EXTENSION_TASKS.md` §3.2 and Lane L2 brief.
  *
- * Import the CSS entry from `@invect/ui/styles` (shared with `<Invect>`)
+ * Import the CSS entry from `@flowlib/ui/styles` (shared with `<Invect>`)
  * to pick up Tailwind utilities and theme tokens.
  */
 

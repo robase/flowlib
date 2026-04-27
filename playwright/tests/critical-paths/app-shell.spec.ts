@@ -164,7 +164,7 @@ test.describe('Navigation & App Shell', () => {
   // ─── Test 1 — High ─────────────────────────────────────────────────────────
   test('sidebar links navigate to all main pages', async ({ page, apiBase }) => {
     // 1. Navigate to the dashboard and wait for the Dashboard heading
-    await page.goto('/invect');
+    await page.goto('/flowlib');
     await waitForDashboard(page);
 
     // Assert the sidebar shell is present on the dashboard
@@ -199,8 +199,8 @@ test.describe('Navigation & App Shell', () => {
     // 4. Click the Home/Dashboard sidebar link (aria-label="Home")
     await page.locator('.imp-sidebar-shell').getByRole('link', { name: 'Home' }).click();
 
-    // Assert URL is /invect or /invect/
-    await expect(page).toHaveURL(/\/invect\/?$/);
+    // Assert URL is /flowlib or /flowlib/
+    await expect(page).toHaveURL(/\/flowlib\/?$/);
     // Assert "Dashboard" heading is visible
     await waitForDashboard(page);
     // Assert the sidebar persists on the Dashboard page
@@ -210,7 +210,7 @@ test.describe('Navigation & App Shell', () => {
   // ─── Test 2 — Medium ───────────────────────────────────────────────────────
   test('sidebar collapses to icon-only mode and expands again', async ({ page, apiBase }) => {
     // 1. Navigate to the dashboard and wait for the Dashboard heading
-    await page.goto('/invect');
+    await page.goto('/flowlib');
     await waitForDashboard(page);
 
     const toggle = getSidebarToggle(page);
@@ -257,14 +257,14 @@ test.describe('Navigation & App Shell', () => {
   // ─── Test 3 — Medium ───────────────────────────────────────────────────────
   test('dark/light theme toggle switches the color scheme', async ({ page, apiBase }) => {
     // 1. Navigate to the dashboard and wait for the Dashboard heading
-    await page.goto('/invect');
+    await page.goto('/flowlib');
     await waitForDashboard(page);
 
     // 2. Record the initial theme state.
-    //    ThemeProvider applies "light" or "dark" as a class on the .invect
-    //    element (NOT on <html>) via document.querySelector(".invect").classList.
+    //    ThemeProvider applies "light" or "dark" as a class on the .flowlib
+    //    element (NOT on <html>) via document.querySelector(".flowlib").classList.
     //    The provider is initialised with defaultTheme="light".
-    const invectEl = page.locator('.invect').first();
+    const invectEl = page.locator('.flowlib').first();
     const initialIsDark = await invectEl.evaluate((el) => el.classList.contains('dark'));
 
     // 3. Expand the sidebar so the theme toggle shows its visible text label
@@ -282,14 +282,14 @@ test.describe('Navigation & App Shell', () => {
     // 5. Click the theme toggle
     await themeToggleBtn.click();
 
-    // 6. Assert the .invect element has changed its theme class
+    // 6. Assert the .flowlib element has changed its theme class
     if (initialIsDark) {
       await expect(invectEl).not.toHaveClass(/\bdark\b/, { timeout: 3_000 });
     } else {
       await expect(invectEl).toHaveClass(/\bdark\b/, { timeout: 3_000 });
     }
 
-    // 7. Navigate to /invect/flow-runs via the sidebar link
+    // 7. Navigate to /flowlib/flow-runs via the sidebar link
     await page.locator('.imp-sidebar-shell').getByRole('link', { name: 'Flow Runs' }).click();
     await expect(page.getByRole('heading', { level: 1, name: 'Flow Runs' })).toBeVisible({
       timeout: 15_000,
@@ -330,8 +330,8 @@ test.describe('Navigation & App Shell', () => {
     expect(flowId, 'Flow "JQ Data Transform" must exist in the database').not.toBeNull();
 
     // 2. Navigate directly to the flow editor URL — no prior app visit (cold deep link).
-    //    The flow editor route is /invect/flow/:flowId  (singular "flow", not "flows").
-    await page.goto(`/invect/flow/${flowId}`);
+    //    The flow editor route is /flowlib/flow/:flowId  (singular "flow", not "flows").
+    await page.goto(`/flowlib/flow/${flowId}`);
 
     // 3. Assert the React Flow canvas is visible within 15s
     await expect(page.locator('.react-flow')).toBeVisible({ timeout: 15_000 });
@@ -353,8 +353,8 @@ test.describe('Navigation & App Shell', () => {
 
   // ─── Test 5 — Medium ───────────────────────────────────────────────────────
   test('deep link to executions page loads cleanly from cold start', async ({ page, apiBase }) => {
-    // 1. Navigate directly to /invect/flow-runs — cold start, no prior navigation
-    await page.goto('/invect/flow-runs');
+    // 1. Navigate directly to /flowlib/flow-runs — cold start, no prior navigation
+    await page.goto('/flowlib/flow-runs');
 
     // 2. Assert the "Executions" h1 heading is visible within 15s
     await expect(page.getByRole('heading', { level: 1, name: 'Flow Runs' })).toBeVisible({
@@ -376,7 +376,7 @@ test.describe('Navigation & App Shell', () => {
   // ─── Test 6 — Medium ───────────────────────────────────────────────────────
   test('browser back button returns from editor to dashboard', async ({ page, apiBase }) => {
     // 1. Navigate to the dashboard and wait for the Dashboard heading
-    await page.goto('/invect');
+    await page.goto('/flowlib');
     await waitForDashboard(page);
 
     // Wait for flows list to finish loading before looking for a card
@@ -401,8 +401,8 @@ test.describe('Navigation & App Shell', () => {
     // 4. Press the browser back button
     await page.goBack();
 
-    // 5. Assert the URL returns to /invect or /invect/
-    await expect(page).toHaveURL(/\/invect\/?$/, { timeout: 10_000 });
+    // 5. Assert the URL returns to /flowlib or /flowlib/
+    await expect(page).toHaveURL(/\/flowlib\/?$/, { timeout: 10_000 });
 
     // 6. Assert the "Dashboard" heading is visible again
     await waitForDashboard(page);
@@ -412,8 +412,8 @@ test.describe('Navigation & App Shell', () => {
   test('page reload on sub-routes stays on the same route', async ({ page, apiBase }) => {
     // ── Executions sub-route ──────────────────────────────────────────────────
 
-    // 1. Navigate to /invect/flow-runs and wait for the Executions heading
-    await page.goto('/invect/flow-runs');
+    // 1. Navigate to /flowlib/flow-runs and wait for the Executions heading
+    await page.goto('/flowlib/flow-runs');
     await expect(page.getByRole('heading', { level: 1, name: 'Flow Runs' })).toBeVisible({
       timeout: 15_000,
     });
@@ -426,13 +426,13 @@ test.describe('Navigation & App Shell', () => {
       timeout: 15_000,
     });
 
-    // 4. Assert the URL is still /invect/flow-runs
-    await expect(page).toHaveURL(/\/invect\/flow-runs$/);
+    // 4. Assert the URL is still /flowlib/flow-runs
+    await expect(page).toHaveURL(/\/flowlib\/flow-runs$/);
 
     // ── Credentials sub-route ─────────────────────────────────────────────────
 
-    // 5. Navigate to /invect/credentials and wait for the Credentials heading
-    await page.goto('/invect/credentials');
+    // 5. Navigate to /flowlib/credentials and wait for the Credentials heading
+    await page.goto('/flowlib/credentials');
     await expect(page.getByRole('heading', { level: 1, name: 'Credentials' })).toBeVisible({
       timeout: 15_000,
     });
@@ -445,7 +445,7 @@ test.describe('Navigation & App Shell', () => {
       timeout: 15_000,
     });
 
-    // 8. Assert the URL is still /invect/credentials
-    await expect(page).toHaveURL(/\/invect\/credentials$/);
+    // 8. Assert the URL is still /flowlib/credentials
+    await expect(page).toHaveURL(/\/flowlib\/credentials$/);
   });
 });

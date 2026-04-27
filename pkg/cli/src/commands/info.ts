@@ -1,13 +1,13 @@
 /**
- * `npx invect-cli info` — Display diagnostic information
+ * `npx flowlib-cli info` — Display diagnostic information
  *
  * Shows system info, detected frameworks, database config,
  * installed plugins, and schema status.
  *
  * Usage:
- *   npx invect-cli info
- *   npx invect-cli info --config ./my.ts
- *   npx invect-cli info --json
+ *   npx flowlib-cli info
+ *   npx flowlib-cli info --config ./my.ts
+ *   npx flowlib-cli info --json
  */
 
 import { Command } from 'commander';
@@ -36,9 +36,9 @@ export const infoCommand = new Command('info')
     info.packageManager = detectPackageManager();
 
     // Invect version
-    info.invect = {
+    info.flowlib = {
       cliVersion: '0.1.0',
-      coreVersion: await detectPackageVersion('@invect/core'),
+      coreVersion: await detectPackageVersion('@flowlib/core'),
     };
 
     // Detected frameworks
@@ -99,7 +99,7 @@ function printInfo(info: Record<string, unknown>): void {
   console.log('');
 
   // Invect
-  const imp = info.invect as Record<string, string>;
+  const imp = info.flowlib as Record<string, string>;
   console.log(pc.bold('  Invect:'));
   console.log(pc.dim(`    CLI:   ${imp.cliVersion}`));
   console.log(pc.dim(`    Core:  ${imp.coreVersion}`));

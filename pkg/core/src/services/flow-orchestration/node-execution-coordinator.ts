@@ -18,7 +18,7 @@ import type { JsExpressionService } from '../templating/js-expression.service';
 import type { MapperConfig } from '../flow-versions/schemas-fresh';
 import { getGlobalActionRegistry } from 'src/actions/action-registry';
 import { executeActionAsNode } from 'src/actions/action-executor';
-import { classifyError } from '@invect/action-kit';
+import { classifyError } from '@flowlib/action-kit';
 
 export type NodeExecutionCoordinatorDeps = {
   logger: Logger;

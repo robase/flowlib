@@ -7,7 +7,7 @@
 
 import type { DemoData } from './demo-api-client';
 import type { NodeDefinition } from '../types/node-definition.types';
-import type { ReactFlowNodeData } from '@invect/core/types';
+import type { ReactFlowNodeData } from '@flowlib/core/types';
 import type { Node, Edge } from '@xyflow/react';
 
 // ---------------------------------------------------------------------------
@@ -730,7 +730,7 @@ export const showcaseFlowNodes: Node<ReactFlowNodeData>[] = [
       params: {
         method: 'POST',
         url: 'https://events.pagerduty.com/v2/enqueue',
-        body: '{"routing_key": "R0123456789abcdef", "event_action": "trigger", "payload": {"summary": "{{ investigation.summary }}", "severity": "{{ investigation.severity }}", "source": "invect-triage"}}',
+        body: '{"routing_key": "R0123456789abcdef", "event_action": "trigger", "payload": {"summary": "{{ investigation.summary }}", "severity": "{{ investigation.severity }}", "source": "flowlib-triage"}}',
       },
     },
   },

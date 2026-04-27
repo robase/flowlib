@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { authentication } from '../../src/backend/plugin';
 import type { BetterAuthInstance } from '../../src/backend/types';
-import type { InvectIdentity } from '@invect/core/types';
+import type { InvectIdentity } from '@flowlib/core/types';
 
 // ---------------------------------------------------------------------------
 // Mock better-auth instance factory
@@ -134,7 +134,7 @@ describe('authentication', () => {
       const plugin = authentication({ auth });
 
       expect(plugin.setupInstructions).toBeDefined();
-      expect(plugin.setupInstructions).toContain('npx invect-cli generate');
+      expect(plugin.setupInstructions).toContain('npx flowlib-cli generate');
     });
 
     it('provides abstract schema for all better-auth tables', () => {
@@ -326,7 +326,7 @@ describe('authentication', () => {
       expect(proxyEndpoint).toBeDefined();
 
       const mockRequest = new Request(
-        'http://localhost/invect/plugins/auth/api/auth/sign-in/email',
+        'http://localhost/flowlib/plugins/auth/api/auth/sign-in/email',
         {
           method: 'POST',
           headers: { 'content-type': 'application/json' },

@@ -8,7 +8,7 @@ export { dropboxCreateFolderAction } from './create-folder';
 export { dropboxSearchAction } from './search';
 export { dropboxDeleteAction } from './delete';
 
-import type { ActionDefinition } from '@invect/action-kit';
+import type { ActionDefinition } from '@flowlib/action-kit';
 import { dropboxListFolderAction } from './list-folder';
 import { dropboxGetMetadataAction } from './get-metadata';
 import { dropboxCreateFolderAction } from './create-folder';

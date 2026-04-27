@@ -3,7 +3,7 @@ import type {
   FlowValidationResult,
   FlowValidationError,
   FlowValidationWarning,
-} from '@invect/core/types';
+} from '@flowlib/core/types';
 
 interface ValidationContextValue {
   validationResult: FlowValidationResult | null;

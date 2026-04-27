@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import * as ts from 'typescript';
-import { defineFlow, input, output, ifElse, code, switchNode } from '@invect/primitives';
+import { defineFlow, input, output, ifElse, code, switchNode } from '@flowlib/primitives';
 import { compile } from '../src/compiler/flow-compiler';
 
 // Parse-level validation: compile the generated source with TypeScript's parser

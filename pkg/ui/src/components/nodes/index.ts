@@ -1,5 +1,5 @@
 import { Node, NodeProps } from '@xyflow/react';
-import { NodeExecutionStatus } from '@invect/core/types';
+import { NodeExecutionStatus } from '@flowlib/core/types';
 
 // New universal node component
 export { UniversalNode } from './UniversalNode';

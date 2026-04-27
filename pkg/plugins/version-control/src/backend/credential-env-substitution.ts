@@ -2,7 +2,7 @@
  * Credential-env substitution for committed flow files.
  *
  * Emitted `.flow.ts` files carry raw credential ids (`credentialId: "cred_openai_abc"`)
- * in both the human-readable section and the `/* @invect-definition *\/`
+ * in both the human-readable section and the `/* @flowlib-definition *\/`
  * footer. Raw ids are DB-instance-specific UUIDs — committing them means the
  * file isn't portable across Invect instances, and seeing `cred_xxx` in a PR
  * diff trips the "is this a leaked secret?" instinct even though the ID
@@ -19,7 +19,7 @@
  * Callers that want different naming can pass `options.deriveEnvName`.
  */
 
-const FOOTER_START = '/* @invect-definition';
+const FOOTER_START = '/* @flowlib-definition';
 
 export interface SubstitutionOptions {
   /** Override the default env-name derivation from credential id. */
@@ -30,7 +30,7 @@ export interface SubstitutionOptions {
  * Replace raw `credentialId: "cred_xxx"` occurrences in the human-readable
  * section of an emitted `.flow.ts` file with `{{env.NAME}}` template refs.
  *
- * The JSON footer (everything from `/* @invect-definition` onward) is left
+ * The JSON footer (everything from `/* @flowlib-definition` onward) is left
  * untouched. If no footer is present, the whole content is treated as
  * human-readable.
  */

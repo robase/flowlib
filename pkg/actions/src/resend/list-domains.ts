@@ -7,7 +7,7 @@
  * @see https://resend.com/docs/api-reference/domains/list-domains
  */
 
-import { defineAction } from '@invect/action-kit';
+import { defineAction } from '@flowlib/action-kit';
 import { RESEND_PROVIDER } from '../providers';
 import { z } from 'zod/v4';
 
@@ -122,7 +122,7 @@ export const resendListDomainsAction = defineAction({
       const response = await fetch(url, {
         headers: {
           Authorization: `Bearer ${apiKey}`,
-          'User-Agent': 'invect/1.0',
+          'User-Agent': 'flowlib/1.0',
         },
       });
 

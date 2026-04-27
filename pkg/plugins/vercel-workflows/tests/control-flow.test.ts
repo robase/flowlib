@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { defineFlow, input, output, ifElse, code, switchNode } from '@invect/primitives';
+import { defineFlow, input, output, ifElse, code, switchNode } from '@flowlib/primitives';
 import { analyzeFlow, CompileError } from '../src/compiler/control-flow';
 
 describe('analyzeFlow — control-flow analyzer', () => {

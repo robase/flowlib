@@ -24,7 +24,7 @@ export const getCurrentFlowContextTool: ChatToolDefinition = {
   }),
   async execute(params: unknown, ctx: ChatToolContext): Promise<ChatToolResult> {
     const { nodeId } = params as { nodeId?: string };
-    const invect = ctx.invect;
+    const flowlib = ctx.flowlib;
     const flowId = ctx.chatContext.flowId;
 
     if (!flowId) {
@@ -32,7 +32,7 @@ export const getCurrentFlowContextTool: ChatToolDefinition = {
     }
 
     try {
-      const version = await invect.versions.get(flowId, 'latest');
+      const version = await flowlib.versions.get(flowId, 'latest');
       if (!version) {
         return { success: false, error: 'No flow version found' };
       }
@@ -92,11 +92,11 @@ export const searchActionsTool: ChatToolDefinition = {
   }),
   async execute(params: unknown, ctx: ChatToolContext): Promise<ChatToolResult> {
     const { query, limit } = params as { query: string; limit?: number };
-    const invect = ctx.invect;
+    const flowlib = ctx.flowlib;
 
     try {
       // Use getAvailableNodes() which returns NodeDefinition[] from both actions and legacy executors
-      const allNodes = invect.actions.getAvailableNodes();
+      const allNodes = flowlib.actions.getAvailableNodes();
       // Split query into individual terms for relevance scoring
       const terms = query.toLowerCase().split(/\s+/).filter(Boolean);
       const maxResults = limit ?? 10;
@@ -190,10 +190,10 @@ export const listCredentialsTool: ChatToolDefinition = {
       oauth2Provider?: string;
       requiredScopes?: string[];
     };
-    const invect = ctx.invect;
+    const flowlib = ctx.flowlib;
 
     try {
-      const credentials = await invect.credentials.list(
+      const credentials = await flowlib.credentials.list(
         oauth2Provider ? { authType: 'oauth2' } : undefined,
       );
 
@@ -264,11 +264,11 @@ export const findCredentialsForActionTool: ChatToolDefinition = {
   }),
   async execute(params: unknown, ctx: ChatToolContext): Promise<ChatToolResult> {
     const { actionId } = params as { actionId: string };
-    const invect = ctx.invect;
+    const flowlib = ctx.flowlib;
 
     try {
       // Look up the action definition to get credential requirements
-      const registry = invect.actions.getRegistry();
+      const registry = flowlib.actions.getRegistry();
       const action = registry.get(actionId);
 
       if (!action) {
@@ -292,7 +292,7 @@ export const findCredentialsForActionTool: ChatToolDefinition = {
       const { oauth2Provider, requiredScopes, type: credType } = action.credential;
 
       // Get all credentials
-      const allCredentials = await invect.credentials.list(
+      const allCredentials = await flowlib.credentials.list(
         credType === 'oauth2' ? { authType: 'oauth2' } : undefined,
       );
 
@@ -439,10 +439,10 @@ export const getActionDetailsTool: ChatToolDefinition = {
   }),
   async execute(params: unknown, ctx: ChatToolContext): Promise<ChatToolResult> {
     const { actionId } = params as { actionId: string };
-    const invect = ctx.invect;
+    const flowlib = ctx.flowlib;
 
     try {
-      const allNodes = invect.actions.getAvailableNodes();
+      const allNodes = flowlib.actions.getAvailableNodes();
       const node = allNodes.find((n) => n.type === actionId);
 
       if (!node) {
@@ -501,17 +501,17 @@ export const listProvidersTool: ChatToolDefinition = {
     'Follow up with search_actions to find specific actions within a provider.',
   parameters: z.object({}),
   async execute(_params: unknown, ctx: ChatToolContext): Promise<ChatToolResult> {
-    const invect = ctx.invect;
+    const flowlib = ctx.flowlib;
 
     try {
-      const providers = invect.actions.getProviders();
+      const providers = flowlib.actions.getProviders();
 
       return {
         success: true,
         data: {
           total: providers.length,
           providers: providers.map((p) => {
-            const actions = invect.actions.getForProvider(p.id);
+            const actions = flowlib.actions.getForProvider(p.id);
             return {
               id: p.id,
               name: p.name,
@@ -566,7 +566,7 @@ export const testExpressionTool: ChatToolDefinition = {
 
     try {
       if (type === 'javascript') {
-        const jsResult = await ctx.invect.testing.testJsExpression({
+        const jsResult = await ctx.flowlib.testing.testJsExpression({
           expression,
           context: sampleData,
         });
@@ -604,7 +604,7 @@ export const testExpressionTool: ChatToolDefinition = {
       // Test each expression block
       const results: Array<{ expression: string; result?: unknown; error?: string }> = [];
       for (const block of blocks) {
-        const jsResult = await ctx.invect.testing.testJsExpression({
+        const jsResult = await ctx.flowlib.testing.testJsExpression({
           expression: block,
           context: sampleData,
         });

@@ -10,11 +10,11 @@
 export type HostToWebview =
   | {
       type: 'init';
-      /** Base URL of the in-process Invect server, e.g. `http://127.0.0.1:5xxxx/invect`. */
+      /** Base URL of the in-process Invect server, e.g. `http://127.0.0.1:5xxxx/flowlib`. */
       apiUrl: string;
       /**
        * Initial route to push into Invect's MemoryRouter, e.g.
-       * `/invect/flow/<id>`. When `undefined`, the webview shows an
+       * `/flowlib/flow/<id>`. When `undefined`, the webview shows an
        * error/empty state instead of falling back to the dashboard —
        * inside the extension a `.flow.ts` editor should never land on
        * the SPA's home page.
@@ -36,7 +36,7 @@ export type HostToWebview =
    * Imperative navigation inside the already-mounted MemoryRouter.
    * Sent when the host wants to switch the in-canvas route without
    * remounting (e.g. user clicks a run in the sidebar → switch to
-   * `/invect/flow/<id>/runs?runId=...`). React Query cache, sidebar
+   * `/flowlib/flow/<id>/runs?runId=...`). React Query cache, sidebar
    * state, etc. all survive.
    */
   | { type: 'navigate'; path: string }

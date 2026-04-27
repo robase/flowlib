@@ -17,7 +17,7 @@ export function baseOptions(): BaseLayoutProps {
       },
       {
         text: 'GitHub',
-        url: 'https://github.com/robase/invect',
+        url: 'https://github.com/robase/flowlib',
         external: true,
       },
     ],

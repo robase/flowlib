@@ -1,7 +1,7 @@
 /**
  * Per-URI diagnostic collection lifecycle.
  *
- * Owns a single `vscode.DiagnosticCollection` named `invect`. Other lanes
+ * Owns a single `vscode.DiagnosticCollection` named `flowlib`. Other lanes
  * (L5's `FlowEditorProvider`, L9's untrusted-mode banner) call `set(uri, ...)`
  * after parsing/validating a flow document, and `clear(uri)` on close.
  *
@@ -14,7 +14,7 @@ import * as vscode from 'vscode';
 export class FlowDiagnosticManager implements vscode.Disposable {
   private readonly collection: vscode.DiagnosticCollection;
 
-  constructor(name = 'invect') {
+  constructor(name = 'flowlib') {
     this.collection = vscode.languages.createDiagnosticCollection(name);
   }
 

@@ -29,83 +29,83 @@ describe('findConfigPath()', () => {
 
   it('should return explicit path when it exists', () => {
     existsSyncSpy.mockImplementation((p: fs.PathLike) => {
-      return String(p).endsWith('custom/invect.config.ts');
+      return String(p).endsWith('custom/flowlib.config.ts');
     });
-    const result = findConfigPath('custom/invect.config.ts');
+    const result = findConfigPath('custom/flowlib.config.ts');
     expect(result).not.toBeNull();
-    expect(result!).toContain('custom/invect.config.ts');
+    expect(result!).toContain('custom/flowlib.config.ts');
   });
 
   it('should return null when explicit path does not exist', () => {
     existsSyncSpy.mockReturnValue(false);
-    expect(findConfigPath('nonexistent/invect.config.ts')).toBeNull();
+    expect(findConfigPath('nonexistent/flowlib.config.ts')).toBeNull();
   });
 
-  it('should find invect.config.ts in cwd', () => {
+  it('should find flowlib.config.ts in cwd', () => {
     existsSyncSpy.mockImplementation((p: fs.PathLike) => {
       const s = String(p);
-      // Match the candidate that is `cwd/invect.config.ts` (not in a subdir)
-      return s.endsWith('invect.config.ts') && !s.includes('/src/') && !s.includes('/lib/');
+      // Match the candidate that is `cwd/flowlib.config.ts` (not in a subdir)
+      return s.endsWith('flowlib.config.ts') && !s.includes('/src/') && !s.includes('/lib/');
     });
     const result = findConfigPath();
     expect(result).not.toBeNull();
-    expect(result!).toContain('invect.config.ts');
+    expect(result!).toContain('flowlib.config.ts');
   });
 
-  it('should find invect.config.js in cwd', () => {
+  it('should find flowlib.config.js in cwd', () => {
     existsSyncSpy.mockImplementation((p: fs.PathLike) => {
       const s = String(p);
-      return s.endsWith('invect.config.js') && !s.includes('/src/') && !s.includes('/lib/');
+      return s.endsWith('flowlib.config.js') && !s.includes('/src/') && !s.includes('/lib/');
     });
     const result = findConfigPath();
     expect(result).not.toBeNull();
-    expect(result!).toContain('invect.config.js');
+    expect(result!).toContain('flowlib.config.js');
   });
 
-  it('should find invect.config.mjs in cwd', () => {
+  it('should find flowlib.config.mjs in cwd', () => {
     existsSyncSpy.mockImplementation((p: fs.PathLike) => {
       const s = String(p);
-      return s.endsWith('invect.config.mjs') && !s.includes('/src/') && !s.includes('/lib/');
+      return s.endsWith('flowlib.config.mjs') && !s.includes('/src/') && !s.includes('/lib/');
     });
     const result = findConfigPath();
     expect(result).not.toBeNull();
-    expect(result!).toContain('invect.config.mjs');
+    expect(result!).toContain('flowlib.config.mjs');
   });
 
   it('should search src/ directory', () => {
     existsSyncSpy.mockImplementation((p: fs.PathLike) => {
-      return String(p).includes('/src/invect.config.ts');
+      return String(p).includes('/src/flowlib.config.ts');
     });
     const result = findConfigPath();
     expect(result).not.toBeNull();
-    expect(result!).toContain('src/invect.config.ts');
+    expect(result!).toContain('src/flowlib.config.ts');
   });
 
   it('should search lib/ directory', () => {
     existsSyncSpy.mockImplementation((p: fs.PathLike) => {
-      return String(p).includes('/lib/invect.config.ts');
+      return String(p).includes('/lib/flowlib.config.ts');
     });
     const result = findConfigPath();
     expect(result).not.toBeNull();
-    expect(result!).toContain('lib/invect.config.ts');
+    expect(result!).toContain('lib/flowlib.config.ts');
   });
 
   it('should search config/ directory', () => {
     existsSyncSpy.mockImplementation((p: fs.PathLike) => {
-      return String(p).includes('/config/invect.config.ts');
+      return String(p).includes('/config/flowlib.config.ts');
     });
     const result = findConfigPath();
     expect(result).not.toBeNull();
-    expect(result!).toContain('config/invect.config.ts');
+    expect(result!).toContain('config/flowlib.config.ts');
   });
 
   it('should search utils/ directory', () => {
     existsSyncSpy.mockImplementation((p: fs.PathLike) => {
-      return String(p).includes('/utils/invect.config.ts');
+      return String(p).includes('/utils/flowlib.config.ts');
     });
     const result = findConfigPath();
     expect(result).not.toBeNull();
-    expect(result!).toContain('utils/invect.config.ts');
+    expect(result!).toContain('utils/flowlib.config.ts');
   });
 
   it('should return null when no config exists anywhere', () => {

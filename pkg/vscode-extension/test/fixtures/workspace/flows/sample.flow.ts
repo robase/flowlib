@@ -2,11 +2,11 @@
  * Test fixture — minimal valid .flow.ts with a JSON footer so the
  * footer fast-path parses it without needing the evaluator.
  */
-import { defineFlow } from '@invect/sdk';
+import { defineFlow } from '@flowlib/sdk';
 
 export default defineFlow({ nodes: [], edges: [] });
 
-/* @invect-definition
+/* @flowlib-definition
 {
   "nodes": [
     { "id": "n1", "type": "core.input", "referenceId": "x", "params": {}, "position": { "x": 0, "y": 0 } },

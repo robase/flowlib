@@ -14,8 +14,8 @@ export default defineConfig({
   clean: true,
   deps: {
     neverBundle: [
-      '@invect/core',
-      '@invect/ui',
+      '@flowlib/core',
+      '@flowlib/ui',
       'react',
       'react-dom',
       'react/jsx-runtime',

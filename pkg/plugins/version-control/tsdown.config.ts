@@ -16,8 +16,8 @@ export default defineConfig({
   clean: true,
   deps: {
     neverBundle: [
-      '@invect/core',
-      '@invect/ui',
+      '@flowlib/core',
+      '@flowlib/ui',
       '@tanstack/react-query',
       'react',
       'react-dom',

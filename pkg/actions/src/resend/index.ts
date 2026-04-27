@@ -17,7 +17,7 @@ export { resendListDomainsAction } from './list-domains';
 
 // ── Bulk array ──────────────────────────────────────────────────────────
 
-import type { ActionDefinition } from '@invect/action-kit';
+import type { ActionDefinition } from '@flowlib/action-kit';
 
 import { resendSendEmailAction } from './send-email';
 import { resendSendBatchAction } from './send-batch';

@@ -4,7 +4,7 @@
  * The new `detectStaleRuns()` and `pollBatchJobs()` methods are the
  * single-tick external-scheduler entry points that wrap the existing
  * `runStaleRunSweep()` and `runBatchResumptionSweep()` logic but expose
- * a uniform `{ count }` shape on `invect.maintenance.*`.
+ * a uniform `{ count }` shape on `flowlib.maintenance.*`.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { FlowOrchestrationService } from 'src/services/flow-orchestration.service';

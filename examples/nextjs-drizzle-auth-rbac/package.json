@@ -12,8 +12,8 @@
     "db:migrate": "drizzle-kit migrate",
     "db:studio": "drizzle-kit studio",
     "db:seed": "tsx db/seed.ts",
-    "invect:generate": "npx invect-cli generate --config invect.config.ts --output db --dialect postgresql --yes",
-    "invect:migrate": "npx invect-cli migrate --config invect.config.ts --push --yes",
+    "flowlib:generate": "npx flowlib-cli generate --config flowlib.config.ts --output db --dialect postgresql --yes",
+    "flowlib:migrate": "npx flowlib-cli migrate --config flowlib.config.ts --push --yes",
     "setup": "pnpm db:push && pnpm db:seed",
     "typecheck": "tsc --noEmit",
     "lint": "oxlint --fix",
@@ -21,11 +21,11 @@
     "test:e2e": "npx playwright test --config ../../playwright/playwright.config.ts --project nextjs-drizzle-auth-rbac"
   },
   "dependencies": {
-    "@invect/core": "workspace:*",
-    "@invect/nextjs": "workspace:*",
-    "@invect/rbac": "workspace:*",
-    "@invect/ui": "workspace:*",
-    "@invect/user-auth": "workspace:*",
+    "@flowlib/core": "workspace:*",
+    "@flowlib/nextjs": "workspace:*",
+    "@flowlib/rbac": "workspace:*",
+    "@flowlib/ui": "workspace:*",
+    "@flowlib/user-auth": "workspace:*",
     "@tailwindcss/postcss": "^4.1.12",
     "autoprefixer": "^10.4.21",
     "better-auth": "^1.6.0",
@@ -38,7 +38,7 @@
     "tailwindcss": "^4.1.12"
   },
   "devDependencies": {
-    "@invect/cli": "workspace:*",
+    "@flowlib/cli": "workspace:*",
     "@playwright/test": "^1.52.0",
     "@types/node": "^20",
     "@types/pg": "^8.11.10",

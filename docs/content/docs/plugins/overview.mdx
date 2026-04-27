@@ -8,8 +8,8 @@ import { Card, Cards } from 'fumadocs-ui/components/card';
 Plugins extend Invect with additional capabilities — database tables, API endpoints, flow execution hooks, and frontend components. Pass them in the `plugins` config array:
 
 ```ts
-import { auth } from '@invect/user-auth';
-import { rbac } from '@invect/rbac';
+import { auth } from '@flowlib/user-auth';
+import { rbac } from '@flowlib/rbac';
 
 const router = await createInvectRouter({
   // ...
@@ -25,8 +25,8 @@ const router = await createInvectRouter({
 After adding plugins with database tables, regenerate and migrate:
 
 ```bash
-npx invect-cli generate
-npx invect-cli migrate --push
+npx flowlib-cli generate
+npx flowlib-cli migrate --push
 ```
 
 ## Official plugins

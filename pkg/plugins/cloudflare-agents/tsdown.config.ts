@@ -13,7 +13,7 @@ export default defineConfig({
   sourcemap: true,
   clean: true,
   deps: {
-    neverBundle: ['@invect/core', '@invect/primitives', 'zod'],
+    neverBundle: ['@flowlib/core', '@flowlib/primitives', 'zod'],
   },
   outExtensions({ format }) {
     return {

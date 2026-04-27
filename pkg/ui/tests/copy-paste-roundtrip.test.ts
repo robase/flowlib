@@ -2,7 +2,7 @@
  * Copy-paste round-trip tests.
  *
  * The flow editor's copy/paste bridges React-Flow state to the unified
- * `@invect/sdk` emitter + parser. These tests verify the two helpers that
+ * `@flowlib/sdk` emitter + parser. These tests verify the two helpers that
  * make that bridge work:
  *
  *   - `clipboardToSdkText(data, isFullGraph)` — ClipboardData → SDK source.
@@ -16,7 +16,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { parseSDKText } from '@invect/sdk';
+import { parseSDKText } from '@flowlib/sdk';
 import {
   clipboardToSdkText,
   sdkResultToClipboard,
@@ -85,7 +85,7 @@ describe('clipboardToSdkText', () => {
 
     const source = clipboardToSdkText(data, true);
 
-    expect(source).toContain(`import { defineFlow, input, output } from "@invect/sdk"`);
+    expect(source).toContain(`import { defineFlow, input, output } from "@flowlib/sdk"`);
     expect(source).toContain(`export const copiedFlow = defineFlow({`);
     expect(source).toContain(`query: input(`);
     expect(source).toContain(`result: output(`);

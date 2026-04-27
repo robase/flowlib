@@ -5,12 +5,12 @@
   </picture>
 </p>
 
-<h1 align="center">@invect/nextjs</h1>
+<h1 align="center">@flowlib/nextjs</h1>
 
 <p align="center">
   Next.js App Router handler for Invect.
   <br />
-  <a href="https://invect.dev/docs/integrations/nextjs"><strong>Docs</strong></a> · <a href="https://invect.dev/docs/quick-start"><strong>Quick Start</strong></a>
+  <a href="https://flowlib.dev/docs/integrations/nextjs"><strong>Docs</strong></a> · <a href="https://flowlib.dev/docs/quick-start"><strong>Quick Start</strong></a>
 </p>
 
 ---
@@ -22,13 +22,13 @@ For production deployments on Vercel, add one dedicated Invect cron route as wel
 ## Install
 
 ```bash
-npx invect-cli init
+npx flowlib-cli init
 ```
 
 Or install manually:
 
 ```bash
-npm install @invect/core @invect/nextjs
+npm install @flowlib/core @flowlib/nextjs
 ```
 
 ## Usage
@@ -36,15 +36,15 @@ npm install @invect/core @invect/nextjs
 Create a catch-all route in your Next.js App Router:
 
 ```ts
-// app/api/invect/[...invect]/route.ts
-import { createInvectHandler } from '@invect/nextjs';
+// app/api/flowlib/[...flowlib]/route.ts
+import { createInvectHandler } from '@flowlib/nextjs';
 
 const handler = createInvectHandler({
   database: {
     type: 'sqlite',
     connectionString: process.env.DATABASE_URL || 'file:./dev.db',
   },
-  encryptionKey: process.env.INVECT_ENCRYPTION_KEY, // npx invect-cli secret
+  encryptionKey: process.env.INVECT_ENCRYPTION_KEY, // npx flowlib-cli secret
 });
 
 export const GET = handler.GET;
@@ -54,15 +54,15 @@ export const PATCH = handler.PATCH;
 export const DELETE = handler.DELETE;
 ```
 
-All Invect API endpoints are now available under `/api/invect/`.
+All Invect API endpoints are now available under `/api/flowlib/`.
 
 ## Vercel Cron
 
 Create a dedicated maintenance route for production cron jobs:
 
 ```ts
-// app/api/invect/cron/route.ts
-import { createInvectCronHandler } from '@invect/nextjs';
+// app/api/flowlib/cron/route.ts
+import { createInvectCronHandler } from '@flowlib/nextjs';
 
 const handleCron = createInvectCronHandler({
   database: {
@@ -72,7 +72,7 @@ const handleCron = createInvectCronHandler({
   encryptionKey: process.env.INVECT_ENCRYPTION_KEY,
   triggers: {
     cronEnabled: true,
-    webhookBaseUrl: 'https://your-app.com/api/invect',
+    webhookBaseUrl: 'https://your-app.com/api/flowlib',
   },
 });
 
@@ -83,7 +83,7 @@ Then configure one Vercel cron in `vercel.json`:
 
 ```json
 {
-  "crons": [{ "path": "/api/invect/cron", "schedule": "* * * * *" }]
+  "crons": [{ "path": "/api/flowlib/cron", "schedule": "* * * * *" }]
 }
 ```
 
@@ -94,12 +94,12 @@ This single Invect cron is the fan-out point for background work in the app.
 Add the flow editor to any page:
 
 ```tsx
-// app/invect/[[...slug]]/page.tsx
-import { Invect } from '@invect/ui';
-import '@invect/ui/styles';
+// app/flowlib/[[...slug]]/page.tsx
+import { Invect } from '@flowlib/ui';
+import '@flowlib/ui/styles';
 
 export default function InvectPage() {
-  return <Invect apiBaseUrl="/api/invect" basePath="/invect" />;
+  return <Invect apiBaseUrl="/api/flowlib" basePath="/flowlib" />;
 }
 ```
 

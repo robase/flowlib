@@ -1,4 +1,4 @@
-import type { InvectPluginDefinition } from '@invect/core';
+import type { InvectPluginDefinition } from '@flowlib/core';
 import { buildBackendPlugin, type VercelWorkflowsBackendOptions } from './backend/endpoints';
 
 export interface VercelWorkflowsPluginOptions extends VercelWorkflowsBackendOptions {

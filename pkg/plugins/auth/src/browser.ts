@@ -1,15 +1,15 @@
 /**
- * @invect/user-auth — Browser Entry Point
+ * @flowlib/user-auth — Browser Entry Point
  *
  * Resolved via the `browser` condition in package.json exports when
- * `@invect/user-auth` is imported in a browser context (Vite, webpack, etc.).
+ * `@flowlib/user-auth` is imported in a browser context (Vite, webpack, etc.).
  *
  * Returns only the frontend plugin — no server-side code is bundled.
  *
  * @example
  * ```ts
- * // invect.config.ts (shared between backend and frontend)
- * import { auth } from '@invect/user-auth';
+ * // flowlib.config.ts (shared between backend and frontend)
+ * import { auth } from '@flowlib/user-auth';
  *
  * export default defineConfig({
  *   plugins: [auth()],

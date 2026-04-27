@@ -17,7 +17,7 @@ import type { InvectInstance } from '../../../src/api/types';
 import type { InvectDefinition } from '../../../src/services/flow-versions/schemas-fresh';
 import type { NodeOutput } from '../../../src/types/node-io-types';
 import type { InvectPlugin, NodeExecutionHookContext } from '../../../src/types/plugin.types';
-import { createTestInvect } from '../helpers/test-invect';
+import { createTestInvect } from '../helpers/test-flowlib';
 
 const PARALLEL_ENABLED = process.env.INVECT_PARALLEL_SCHEDULER !== '0';
 const skipOrDescribe = PARALLEL_ENABLED ? describe : describe.skip;
@@ -81,20 +81,20 @@ function getOutputString(result: { outputs?: Record<string, unknown> }, nodeId: 
 }
 
 skipOrDescribe('Parallel flow execution (ready-set scheduler)', () => {
-  let invect: InvectInstance;
+  let flowlib: InvectInstance;
 
   beforeAll(async () => {
-    invect = await createTestInvect({ plugins: [delayPlugin] });
+    flowlib = await createTestInvect({ plugins: [delayPlugin] });
   });
 
   afterAll(async () => {
-    await invect.shutdown();
+    await flowlib.shutdown();
   });
 
   async function runDef(name: string, definition: InvectDefinition) {
-    const flow = await invect.flows.create({ name: `${name}-${Date.now()}` });
-    await invect.versions.create(flow.id, { invectDefinition: definition });
-    return invect.runs.start(flow.id, {}, { useBatchProcessing: false });
+    const flow = await flowlib.flows.create({ name: `${name}-${Date.now()}` });
+    await flowlib.versions.create(flow.id, { invectDefinition: definition });
+    return flowlib.runs.start(flow.id, {}, { useBatchProcessing: false });
   }
 
   it('runs two siblings concurrently (wall time ≪ sum of delays)', async () => {

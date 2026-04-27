@@ -5,7 +5,7 @@
  * returns the resulting rows. Supports JavaScript template expressions in the query.
  */
 
-import { defineAction } from '@invect/action-kit';
+import { defineAction } from '@flowlib/action-kit';
 import { POSTGRES_PROVIDER } from '../providers';
 import { z } from 'zod/v4';
 import pgLib from 'postgres';

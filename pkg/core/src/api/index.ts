@@ -1,8 +1,8 @@
 /**
- * @invect/core public API — namespaced sub-APIs
+ * @flowlib/core public API — namespaced sub-APIs
  */
 
-export { createInvect } from './create-invect';
+export { createInvect } from './create-flowlib';
 
 // Sub-API types
 export type {

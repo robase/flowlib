@@ -1,11 +1,11 @@
 /**
- * `InProcessBackend` — thin wrapper around an in-process `@invect/express`
+ * `InProcessBackend` — thin wrapper around an in-process `@flowlib/express`
  * server, with the workspace's `.flow.ts` files as the source of truth
  * for the flow definitions themselves.
  *
  * Architecture:
  *   - On first use, `getEmbeddedServer(ctx)` boots an Express server on
- *     `127.0.0.1:<random>` serving `@invect/express`'s router.
+ *     `127.0.0.1:<random>` serving `@flowlib/express`'s router.
  *   - HTTP-only operations (runs, credentials, node executions, etc.)
  *     delegate to a `BackendClient` pointed at that URL.
  *   - File-as-source-of-truth ops (`listFlows`, `getFlow`,
@@ -16,8 +16,8 @@
  */
 
 import * as vscode from 'vscode';
-import { emitSdkSource, mergeParsedIntoDefinition } from '@invect/sdk';
-import type { DbFlowDefinition } from '@invect/sdk';
+import { emitSdkSource, mergeParsedIntoDefinition } from '@flowlib/sdk';
+import type { DbFlowDefinition } from '@flowlib/sdk';
 
 import { getExtensionLogger } from '../util/logger';
 import { parseFlowFile } from '../flow-file/parse';
@@ -49,7 +49,7 @@ export class InProcessBackend implements Backend {
   private clientPromise: Promise<BackendClient> | undefined;
   private serverUrl: string | undefined;
   private dbPath: string | undefined;
-  private bus: import('@invect/core').ExecutionEventBus | undefined;
+  private bus: import('@flowlib/core').ExecutionEventBus | undefined;
   /** fileUri → dbFlowId. Hydrated lazily on first lookup. */
   private readonly fileToDbFlow = new Map<string, string>();
   /** Reverse: dbFlowId → fileUri. Kept in sync with fileToDbFlow. */

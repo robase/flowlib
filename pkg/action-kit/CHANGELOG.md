@@ -1,4 +1,4 @@
-# @invect/action-kit
+# @flowlib/action-kit
 
 ## 0.0.2
 

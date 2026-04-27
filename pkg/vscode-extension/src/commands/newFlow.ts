@@ -1,14 +1,14 @@
 /**
- * `invect.newFlow` — drop a starter `.flow.ts` into the workspace.
+ * `flowlib.newFlow` — drop a starter `.flow.ts` into the workspace.
  *
  * Builds a `DbFlowDefinition` for each template and runs it through
- * `@invect/sdk`'s `emitSdkSource({ includeJsonFooter: true })`. Two reasons
+ * `@flowlib/sdk`'s `emitSdkSource({ includeJsonFooter: true })`. Two reasons
  * to construct the DB shape directly instead of writing the TS by hand:
  *
  *   1. The emitter generates the canonical SDK source AND the
- *      `@invect-definition` JSON footer in one pass — every freshly
+ *      `@flowlib-definition` JSON footer in one pass — every freshly
  *      scaffolded file parses through the regex fast path on first open
- *      (the evaluator can't resolve `@invect/sdk` from a temp eval dir,
+ *      (the evaluator can't resolve `@flowlib/sdk` from a temp eval dir,
  *      so footerless TS files would fail to load until they were saved
  *      through the editor at least once).
  *
@@ -18,8 +18,8 @@
  */
 
 import * as vscode from 'vscode';
-import { emitSdkSource } from '@invect/sdk';
-import type { DbFlowDefinition } from '@invect/sdk';
+import { emitSdkSource } from '@flowlib/sdk';
+import type { DbFlowDefinition } from '@flowlib/sdk';
 
 interface Template {
   label: string;
@@ -160,7 +160,7 @@ const TEMPLATES: Record<string, Template> = {
 };
 
 export function registerNewFlowCommand(): vscode.Disposable {
-  return vscode.commands.registerCommand('invect.newFlow', async () => {
+  return vscode.commands.registerCommand('flowlib.newFlow', async () => {
     const folder = vscode.workspace.workspaceFolders?.[0];
     if (!folder) {
       void vscode.window.showErrorMessage('Open a folder first — newFlow writes a .flow.ts file.');
@@ -210,7 +210,7 @@ export function registerNewFlowCommand(): vscode.Disposable {
     }
     await vscode.workspace.fs.createDirectory(vscode.Uri.joinPath(folder.uri, 'flows'));
     await vscode.workspace.fs.writeFile(target, new TextEncoder().encode(source));
-    await vscode.commands.executeCommand('vscode.openWith', target, 'invect.flowEditor');
+    await vscode.commands.executeCommand('vscode.openWith', target, 'flowlib.flowEditor');
   });
 }
 

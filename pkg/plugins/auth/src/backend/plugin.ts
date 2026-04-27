@@ -4,7 +4,7 @@ import type {
   InvectRole,
   InvectPermission,
   InvectPluginSchema,
-} from '@invect/core';
+} from '@flowlib/core';
 import type {
   AuthenticationPluginOptions,
   BetterAuthContext,
@@ -425,7 +425,7 @@ function getErrorLogDetails(error: unknown): Record<string, unknown> {
 /**
  * Abstract schema for the user-auth plugin's database tables.
  *
- * These definitions allow the Invect CLI (`npx invect-cli generate`) to include
+ * These definitions allow the Invect CLI (`npx flowlib-cli generate`) to include
  * the auth tables when generating Drizzle/Prisma schema files.
  *
  * The shapes match Better Auth's default table structure. If your Better Auth
@@ -618,7 +618,7 @@ async function createInternalBetterAuth(
     betterAuthFn = betterAuthModule.betterAuth;
   } catch {
     throw new Error(
-      'Could not import "better-auth". It is a required peer dependency of @invect/user-auth. ' +
+      'Could not import "better-auth". It is a required peer dependency of @flowlib/user-auth. ' +
         'Install it with: npm install better-auth',
     );
   }
@@ -753,7 +753,7 @@ async function createInternalBetterAuth(
     if (twoFactorConfig.issuer === undefined) {
       twoFactorConfig.issuer = 'Invect';
     }
-    // Use invect-prefixed table name for the two-factor table
+    // Use flowlib-prefixed table name for the two-factor table
     if (twoFactorConfig.twoFactorTable === undefined) {
       twoFactorConfig.twoFactorTable = 'invect_two_factor';
     }
@@ -778,16 +778,16 @@ async function createInternalBetterAuth(
 
     const apiKeyConfig: Record<string, unknown> =
       typeof apiKeyOpt === 'object' ? { ...apiKeyOpt } : {};
-    // Default API key header to "x-invect-token" (overridable via options).
+    // Default API key header to "x-flowlib-token" (overridable via options).
     if (apiKeyConfig.apiKeyHeaders === undefined) {
-      apiKeyConfig.apiKeyHeaders = 'x-invect-token';
+      apiKeyConfig.apiKeyHeaders = 'x-flowlib-token';
     }
     // Ensure getSession() can resolve API keys to sessions.
     // Without this, auth.api.getSession() only checks cookies/tokens.
     if (apiKeyConfig.enableSessionForAPIKeys === undefined) {
       apiKeyConfig.enableSessionForAPIKeys = true;
     }
-    // Use invect-prefixed table name for the api-key table
+    // Use flowlib-prefixed table name for the api-key table
     if (apiKeyConfig.schema === undefined) {
       apiKeyConfig.schema = { apikey: { modelName: 'invect_apikey' } };
     }
@@ -805,17 +805,17 @@ async function createInternalBetterAuth(
     plugins: betterAuthPlugins,
     session,
     trustedOrigins,
-    // Map Better Auth model names to invect-prefixed table names.
+    // Map Better Auth model names to flowlib-prefixed table names.
     user: { modelName: 'invect_user' },
     account: { modelName: 'invect_account', ...passthrough.account },
     verification: { modelName: 'invect_verification' },
     // Spread optional passthrough fields
     ...(passthrough.socialProviders ? { socialProviders: passthrough.socialProviders } : {}),
     ...(passthrough.rateLimit ? { rateLimit: passthrough.rateLimit } : {}),
-    // Default cookie prefix to "invect" (cookies become invect.session_token).
+    // Default cookie prefix to "flowlib" (cookies become flowlib.session_token).
     // Users can override via betterAuthOptions.advanced.cookiePrefix.
     advanced: {
-      cookiePrefix: 'invect',
+      cookiePrefix: 'flowlib',
       ...passthrough.advanced,
     },
     ...(passthrough.databaseHooks ? { databaseHooks: passthrough.databaseHooks } : {}),
@@ -910,9 +910,9 @@ async function createMySQLPool(connectionString: string) {
  * @example
  * ```ts
  * // Simple: let the plugin manage Better Auth internally
- * import { authentication } from '@invect/user-auth';
+ * import { authentication } from '@flowlib/user-auth';
  *
- * app.use('/invect', createInvectRouter({
+ * app.use('/flowlib', createInvectRouter({
  *   databaseUrl: 'file:./dev.db',
  *   plugins: [authentication({
  *     globalAdmins: [{ email: 'admin@co.com', pw: 'secret' }],
@@ -924,7 +924,7 @@ async function createMySQLPool(connectionString: string) {
  * ```ts
  * // Advanced: provide your own better-auth instance
  * import { betterAuth } from 'better-auth';
- * import { authentication } from '@invect/user-auth';
+ * import { authentication } from '@flowlib/user-auth';
  *
  * const auth = betterAuth({
  *   database: { ... },
@@ -932,7 +932,7 @@ async function createMySQLPool(connectionString: string) {
  *   // ... your better-auth config
  * });
  *
- * app.use('/invect', createInvectRouter({
+ * app.use('/flowlib', createInvectRouter({
  *   databaseUrl: 'file:./dev.db',
  *   plugins: [authentication({ auth })],
  * }));
@@ -1142,8 +1142,8 @@ export function authentication(options: AuthenticationPluginOptions): InvectPlug
     // Also declare requiredTables for the startup existence check.
     requiredTables,
     setupInstructions:
-      'Run `npx invect-cli generate` to add the better-auth tables to your schema, ' +
-      'then `npx drizzle-kit push` (or `npx invect-cli migrate`) to apply.',
+      'Run `npx flowlib-cli generate` to add the better-auth tables to your schema, ' +
+      'then `npx drizzle-kit push` (or `npx flowlib-cli migrate`) to apply.',
 
     endpoints: [
       // ── Auth Info (specific routes must come BEFORE the catch-all proxy) ───

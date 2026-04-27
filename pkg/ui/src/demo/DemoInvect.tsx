@@ -6,8 +6,8 @@
  *
  * @example
  * ```tsx
- * import { DemoInvect } from '@invect/ui/demo';
- * import '@invect/ui/styles';
+ * import { DemoInvect } from '@flowlib/ui/demo';
+ * import '@flowlib/ui/styles';
  *
  * const demoData = {
  *   flows: [{ id: 'flow-1', name: 'My Flow', ... }],

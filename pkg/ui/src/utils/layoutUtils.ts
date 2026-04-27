@@ -5,7 +5,7 @@ import {
   applyElkLayout as applyElkLayoutFromPackage,
   applyInvectLayout as applyInvectLayoutFromPackage,
   type ElkLayoutNode,
-} from '@invect/layouts';
+} from '@flowlib/layouts';
 
 export interface Position {
   x: number;
@@ -13,7 +13,7 @@ export interface Position {
 }
 
 // Layout algorithm options
-export type LayoutAlgorithm = 'dagre' | 'elkjs' | 'invect';
+export type LayoutAlgorithm = 'dagre' | 'elkjs' | 'flowlib';
 
 export interface LayoutOptions {
   algorithm: LayoutAlgorithm;
@@ -119,7 +119,7 @@ const runLayout = async (
 ): Promise<{ nodes: Node[]; edges: Edge[] }> => {
   switch (algorithm) {
     case 'dagre': {
-      // Use shared layout utility from @invect/layouts
+      // Use shared layout utility from @flowlib/layouts
       const layoutedNodes = applyDagreLayoutFromPackage(nodes, edges, {
         direction,
         nodeSpacing: options?.nodeSpacing ?? defaultLayoutOptions.nodeSpacing,
@@ -156,7 +156,7 @@ const runLayout = async (
       }) as ElkLayoutNode[];
 
       // Use ElkJS layout with port/handle support for better edge routing
-      // Let the @invect/layouts package defaults handle spacing and wrapping
+      // Let the @flowlib/layouts package defaults handle spacing and wrapping
       const elkDirection =
         direction === 'LR'
           ? 'RIGHT'
@@ -184,7 +184,7 @@ const runLayout = async (
       });
       return { nodes: restored, edges };
     }
-    case 'invect': {
+    case 'flowlib': {
       const layoutedNodes = await applyInvectLayoutFromPackage(nodes, edges, {
         direction,
         nodeSpacing: options?.nodeSpacing ?? defaultLayoutOptions.nodeSpacing,

@@ -34,7 +34,7 @@ import {
   DEFAULT_TOKENS_PER_CHAR,
   DEFAULT_TOOL_TIMEOUT_MS,
   TOKENS_PER_CHAR_BY_PROVIDER,
-} from '@invect/action-kit';
+} from '@flowlib/action-kit';
 import { z } from 'zod/v4';
 import { executeActionAsTool } from '../action-executor';
 import { CORE_PROVIDER } from '../providers';

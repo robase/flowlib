@@ -25,4 +25,4 @@ export type {
   ReactFlowNode,
   ReactFlowEdge,
   AgentToolDefinition,
-} from '@invect/core/types';
+} from '@flowlib/core/types';

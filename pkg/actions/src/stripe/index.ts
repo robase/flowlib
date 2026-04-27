@@ -23,7 +23,7 @@ export { stripeGetBalanceAction } from './get-balance';
 
 // ── Bulk array ──────────────────────────────────────────────────────────
 
-import type { ActionDefinition } from '@invect/action-kit';
+import type { ActionDefinition } from '@flowlib/action-kit';
 
 import { stripeListCustomersAction } from './list-customers';
 import { stripeCreateCustomerAction } from './create-customer';

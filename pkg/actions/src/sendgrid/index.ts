@@ -19,7 +19,7 @@ export { sendgridGetStatsAction } from './get-stats';
 
 // ── Bulk array ──────────────────────────────────────────────────────────
 
-import type { ActionDefinition } from '@invect/action-kit';
+import type { ActionDefinition } from '@flowlib/action-kit';
 
 import { sendgridSendEmailAction } from './send-email';
 import { sendgridGetEmailActivityAction } from './get-email-activity';

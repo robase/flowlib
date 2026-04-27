@@ -18,7 +18,7 @@ export {
   code,
   edge,
   WaitTimeoutError,
-} from '@invect/primitives';
+} from '@flowlib/primitives';
 export type {
   PrimitiveFlowDefinition,
   PrimitiveNode,
@@ -26,4 +26,4 @@ export type {
   NodeContext,
   ParamValue,
   FlowRunResult,
-} from '@invect/primitives';
+} from '@flowlib/primitives';

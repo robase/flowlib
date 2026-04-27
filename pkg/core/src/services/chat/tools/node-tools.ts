@@ -43,8 +43,8 @@ const mapperSchema = z
 /**
  * Helper: Load the latest flow version's nodes and edges.
  */
-async function loadLatestDefinition(invect: InvectInstance, flowId: string) {
-  const version = await invect.versions.get(flowId, 'latest');
+async function loadLatestDefinition(flowlib: InvectInstance, flowId: string) {
+  const version = await flowlib.versions.get(flowId, 'latest');
   if (!version) {
     throw new Error('No flow version found — publish a version first');
   }
@@ -60,12 +60,12 @@ async function loadLatestDefinition(invect: InvectInstance, flowId: string) {
  * Helper: Save a mutated definition as a new flow version.
  */
 async function saveNewVersion(
-  invect: InvectInstance,
+  flowlib: InvectInstance,
   flowId: string,
   nodes: FlowNodeDefinitions[],
   edges: FlowEdge[],
 ) {
-  return invect.versions.create(flowId, {
+  return flowlib.versions.create(flowId, {
     invectDefinition: { nodes, edges },
   });
 }
@@ -148,7 +148,7 @@ export const addNodeTool: ChatToolDefinition = {
         onEmpty: 'error' | 'skip';
       };
     };
-    const invect = ctx.invect;
+    const flowlib = ctx.flowlib;
     const flowId = ctx.chatContext.flowId;
 
     if (!flowId) {
@@ -156,7 +156,7 @@ export const addNodeTool: ChatToolDefinition = {
     }
 
     try {
-      const availableNodes = invect.actions.getAvailableNodes();
+      const availableNodes = flowlib.actions.getAvailableNodes();
       const validAction = availableNodes.find((n) => n.type === actionId);
       if (!validAction) {
         const searchLower = actionId.toLowerCase();
@@ -174,7 +174,7 @@ export const addNodeTool: ChatToolDefinition = {
         };
       }
 
-      const { nodes, edges } = await loadLatestDefinition(invect, flowId);
+      const { nodes, edges } = await loadLatestDefinition(flowlib, flowId);
 
       const nodeId = `node_${genId()}`;
       const referenceId = labelToReferenceId(label);
@@ -220,7 +220,7 @@ export const addNodeTool: ChatToolDefinition = {
         });
       }
 
-      const version = await saveNewVersion(invect, flowId, nodes, edges);
+      const version = await saveNewVersion(flowlib, flowId, nodes, edges);
 
       return {
         success: true,
@@ -262,7 +262,7 @@ export const removeNodeTool: ChatToolDefinition = {
   }),
   async execute(params: unknown, ctx: ChatToolContext): Promise<ChatToolResult> {
     const { nodeId } = params as { nodeId: string };
-    const invect = ctx.invect;
+    const flowlib = ctx.flowlib;
     const flowId = ctx.chatContext.flowId;
 
     if (!flowId) {
@@ -270,7 +270,7 @@ export const removeNodeTool: ChatToolDefinition = {
     }
 
     try {
-      const { nodes, edges } = await loadLatestDefinition(invect, flowId);
+      const { nodes, edges } = await loadLatestDefinition(flowlib, flowId);
 
       const removedNode = findNodeByIdOrRef(nodes, nodeId);
       if (!removedNode) {
@@ -293,7 +293,7 @@ export const removeNodeTool: ChatToolDefinition = {
       const filteredEdges = edges.filter((e) => e.source !== resolvedId && e.target !== resolvedId);
       const edgesRemoved = removedEdgeCount - filteredEdges.length;
 
-      const version = await saveNewVersion(invect, flowId, nodes, filteredEdges);
+      const version = await saveNewVersion(flowlib, flowId, nodes, filteredEdges);
 
       return {
         success: true,
@@ -354,7 +354,7 @@ export const updateNodeConfigTool: ChatToolDefinition = {
         onEmpty: 'error' | 'skip';
       };
     };
-    const invect = ctx.invect;
+    const flowlib = ctx.flowlib;
     const flowId = ctx.chatContext.flowId;
 
     if (!flowId) {
@@ -362,7 +362,7 @@ export const updateNodeConfigTool: ChatToolDefinition = {
     }
 
     try {
-      const { nodes, edges } = await loadLatestDefinition(invect, flowId);
+      const { nodes, edges } = await loadLatestDefinition(flowlib, flowId);
 
       const node = findNodeByIdOrRef(nodes, nodeId);
       if (!node) {
@@ -394,7 +394,7 @@ export const updateNodeConfigTool: ChatToolDefinition = {
         node.referenceId = labelToReferenceId(label);
       }
 
-      const version = await saveNewVersion(invect, flowId, nodes, edges);
+      const version = await saveNewVersion(flowlib, flowId, nodes, edges);
 
       return {
         success: true,
@@ -442,7 +442,7 @@ export const connectNodesTool: ChatToolDefinition = {
       sourceHandle?: string;
       targetHandle?: string;
     };
-    const invect = ctx.invect;
+    const flowlib = ctx.flowlib;
     const flowId = ctx.chatContext.flowId;
 
     if (!flowId) {
@@ -450,7 +450,7 @@ export const connectNodesTool: ChatToolDefinition = {
     }
 
     try {
-      const { nodes, edges } = await loadLatestDefinition(invect, flowId);
+      const { nodes, edges } = await loadLatestDefinition(flowlib, flowId);
 
       // Validate both nodes exist (accept referenceId as well as node ID)
       const source = findNodeByIdOrRef(nodes, sourceNodeId);
@@ -498,7 +498,7 @@ export const connectNodesTool: ChatToolDefinition = {
         ...(targetHandle && { targetHandle }),
       });
 
-      const version = await saveNewVersion(invect, flowId, nodes, edges);
+      const version = await saveNewVersion(flowlib, flowId, nodes, edges);
 
       return {
         success: true,
@@ -550,7 +550,7 @@ export const updateSwitchCaseTool: ChatToolDefinition = {
       label?: string;
       expression?: string;
     };
-    const invect = ctx.invect;
+    const flowlib = ctx.flowlib;
     const flowId = ctx.chatContext.flowId;
 
     if (!flowId) {
@@ -564,7 +564,7 @@ export const updateSwitchCaseTool: ChatToolDefinition = {
     }
 
     try {
-      const { nodes, edges } = await loadLatestDefinition(invect, flowId);
+      const { nodes, edges } = await loadLatestDefinition(flowlib, flowId);
       const node = findNodeByIdOrRef(nodes, nodeId);
       if (!node) {
         return {
@@ -617,7 +617,7 @@ export const updateSwitchCaseTool: ChatToolDefinition = {
         }
       }
 
-      const version = await saveNewVersion(invect, flowId, nodes, edges);
+      const version = await saveNewVersion(flowlib, flowId, nodes, edges);
 
       return {
         success: true,

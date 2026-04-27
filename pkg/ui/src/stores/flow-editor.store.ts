@@ -5,7 +5,7 @@ import { useShallow } from 'zustand/shallow';
 import type { Node, Edge, NodeChange, EdgeChange } from '@xyflow/react';
 import { applyNodeChanges, applyEdgeChanges, addEdge, type Connection } from '@xyflow/react';
 import type { LayoutAlgorithm } from '~/utils/layoutUtils';
-import type { ReactFlowNodeData } from '@invect/core/types';
+import type { ReactFlowNodeData } from '@flowlib/core/types';
 import { computeSnapshot } from '~/utils/flowTransformations';
 
 export type LayoutDirection = 'TB' | 'LR' | 'BT' | 'RL';

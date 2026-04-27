@@ -1,5 +1,5 @@
 /**
- * Boot a real `@invect/express` server inside the extension process and
+ * Boot a real `@flowlib/express` server inside the extension process and
  * return the URL. Replaces the previous "headless InvectInstance" model
  * — now the embedded backend IS an HTTP backend, just one that happens
  * to be running on `127.0.0.1:<random>` inside this extension.
@@ -31,28 +31,28 @@ import type { RequestHandler } from 'express';
 
 import { getExtensionLogger } from '../util/logger';
 
-const SECRET_KEY = 'invect.embedded.encryptionKey';
+const SECRET_KEY = 'flowlib.embedded.encryptionKey';
 
 let initPromise: Promise<EmbeddedServer> | undefined;
 
 export interface EmbeddedServer {
-  /** Base URL of the in-process server, e.g. `http://127.0.0.1:54321/invect`. */
+  /** Base URL of the in-process server, e.g. `http://127.0.0.1:54321/flowlib`. */
   url: string;
   /** Underlying HTTP server — owned by this module; do not close directly. */
   server: Server;
   dbPath: string;
   /**
-   * The shared ExecutionEventBus singleton. Same instance the @invect/express
+   * The shared ExecutionEventBus singleton. Same instance the @flowlib/express
    * router uses for SSE; consumers in the extension host subscribe directly
    * (via `bus.subscribeFlow(flowId, cb)`) to push live run updates into
    * the sidebar without polling.
    */
-  bus: import('@invect/core').ExecutionEventBus;
+  bus: import('@flowlib/core').ExecutionEventBus;
 }
 
 export interface EmbeddedServerOptions {
   /**
-   * Optional middleware mounted UNDER `/invect` BEFORE the Invect
+   * Optional middleware mounted UNDER `/flowlib` BEFORE the Invect
    * router. The express JSON parser runs first so `req.body` is
    * populated. Used by `FileSync` to intercept canvas-driven flow
    * mutations and write them back to `.flow.ts` files.
@@ -83,7 +83,7 @@ async function init(
   // VSCode owns globalStorageUri — extension-private path, never user input.
   // eslint-disable-next-line security/detect-non-literal-fs-filename
   mkdirSync(dbDir, { recursive: true });
-  const dbPath = join(dbDir, 'invect.db');
+  const dbPath = join(dbDir, 'flowlib.db');
   logger.info('embedded server: bootstrapping', { dbPath });
 
   // Encryption key (auto-generate on first run).
@@ -101,7 +101,7 @@ async function init(
   // Build the Express app + Invect router.
   const expressMod = await import('express');
   const corsMod = await import('cors');
-  const { createInvectRouter } = await import('@invect/express');
+  const { createInvectRouter } = await import('@flowlib/express');
 
   const express = (expressMod as { default?: typeof import('express') }).default ?? expressMod;
   const cors = (corsMod as { default?: typeof import('cors') }).default ?? corsMod;
@@ -121,8 +121,8 @@ async function init(
   const exp = express as unknown as typeof import('express');
   app.use(exp.json({ limit: '10mb' }));
 
-  const { webhooks } = await import('@invect/webhooks');
-  const { mcp } = await import('@invect/mcp');
+  const { webhooks } = await import('@flowlib/webhooks');
+  const { mcp } = await import('@flowlib/mcp');
 
   const router = await createInvectRouter({
     database: { type: 'sqlite', connectionString: `file:${dbPath}`, driver: 'libsql' },
@@ -131,7 +131,7 @@ async function init(
     // validation / executions as MCP tools. Combined with the embedded
     // server's loopback URL, this gives Claude Code, Cursor, Claude
     // Desktop etc. an instant integration point — see the
-    // `invect.showMcpConfig` command for the user-facing config snippet.
+    // `flowlib.showMcpConfig` command for the user-facing config snippet.
     plugins: [webhooks(), mcp()],
     // Triggers can be edited and tested in the canvas, but cron must not fire
     // on its own — the embedded backend runs whenever the editor is open and
@@ -142,12 +142,12 @@ async function init(
   });
   // The router's createInvect() initialises the ExecutionEventBus
   // singleton; grab a reference now so consumers can subscribe.
-  const { getExecutionEventBus } = await import('@invect/core');
+  const { getExecutionEventBus } = await import('@flowlib/core');
   const bus = getExecutionEventBus();
   if (options.preRouterMiddleware) {
-    app.use('/invect', options.preRouterMiddleware);
+    app.use('/flowlib', options.preRouterMiddleware);
   }
-  app.use('/invect', router);
+  app.use('/flowlib', router);
 
   // Listen on a random free port on the loopback only — never expose
   // the embedded backend to other machines.
@@ -157,7 +157,7 @@ async function init(
     server.listen(0, '127.0.0.1', () => resolve());
   });
   const addr = server.address() as AddressInfo;
-  const url = `http://127.0.0.1:${addr.port}/invect`;
+  const url = `http://127.0.0.1:${addr.port}/flowlib`;
   logger.info('embedded server: ready', { url, dbPath, ms: Date.now() - t0 });
   return { url, server, dbPath, bus };
 }
@@ -166,10 +166,10 @@ async function runSchemaBootstrap(
   dbPath: string,
   logger: ReturnType<typeof getExtensionLogger>,
 ): Promise<void> {
-  const { mergeSchemas, generateSqliteRawSql } = await import('@invect/core');
+  const { mergeSchemas, generateSqliteRawSql } = await import('@flowlib/core');
   const { createClient } = await import('@libsql/client');
-  const { webhooks } = await import('@invect/webhooks');
-  const { mcp } = await import('@invect/mcp');
+  const { webhooks } = await import('@flowlib/webhooks');
+  const { mcp } = await import('@flowlib/mcp');
 
   // Plugin schemas extend the core schema. Each enabled plugin's
   // backend.schema (if any) gets merged in so its tables are bootstrapped

@@ -1,5 +1,5 @@
 import { useMemo, useCallback } from 'react';
-import type { ReactFlowNodeData } from '@invect/core/types';
+import type { ReactFlowNodeData } from '@flowlib/core/types';
 import {
   Dialog,
   DialogClose,

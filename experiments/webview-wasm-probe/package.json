@@ -1,5 +1,5 @@
 {
-  "name": "invect-webview-wasm-probe",
+  "name": "flowlib-webview-wasm-probe",
   "displayName": "Invect WASM Probe",
   "version": "0.0.1",
   "private": true,
@@ -7,7 +7,7 @@
   "categories": [
     "Other"
   ],
-  "publisher": "invect-internal",
+  "publisher": "flowlib-internal",
   "main": "./dist/extension.js",
   "scripts": {
     "build:extension": "esbuild src/extension.ts --bundle --outfile=dist/extension.js --external:vscode --format=cjs --platform=node --target=node18",

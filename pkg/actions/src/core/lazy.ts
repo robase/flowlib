@@ -9,7 +9,7 @@
  * backward compatibility — self-hosted backends should keep using that.
  */
 
-import type { LazyActionDefinition } from '@invect/action-kit';
+import type { LazyActionDefinition } from '@flowlib/action-kit';
 
 const coreProvider = { id: 'core' };
 

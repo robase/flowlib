@@ -8,7 +8,7 @@ export { salesforceCreateRecordAction } from './create-record';
 export { salesforceUpdateRecordAction } from './update-record';
 export { salesforceListObjectsAction } from './list-objects';
 
-import type { ActionDefinition } from '@invect/action-kit';
+import type { ActionDefinition } from '@flowlib/action-kit';
 import { salesforceQueryAction } from './query';
 import { salesforceGetRecordAction } from './get-record';
 import { salesforceCreateRecordAction } from './create-record';

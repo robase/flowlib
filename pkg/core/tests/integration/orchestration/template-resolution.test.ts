@@ -9,17 +9,17 @@ import { FlowRunStatus } from '../../../src';
 import type { InvectInstance } from '../../../src/api/types';
 import type { InvectDefinition } from '../../../src/services/flow-versions/schemas-fresh';
 import type { NodeOutput } from '../../../src/types/node-io-types';
-import { createTestInvect } from '../helpers/test-invect';
+import { createTestInvect } from '../helpers/test-flowlib';
 
 describe('Template Resolution', () => {
-  let invect: InvectInstance;
+  let flowlib: InvectInstance;
 
   beforeAll(async () => {
-    invect = await createTestInvect();
+    flowlib = await createTestInvect();
   });
 
   afterAll(async () => {
-    await invect.shutdown();
+    await flowlib.shutdown();
   });
 
   function getNodeOutput(result: { outputs?: Record<string, unknown> }, nodeId: string) {
@@ -40,9 +40,9 @@ describe('Template Resolution', () => {
   }
 
   async function runFlow(name: string, definition: InvectDefinition) {
-    const flow = await invect.flows.create({ name: `tmpl-${name}-${Date.now()}` });
-    await invect.versions.create(flow.id, { invectDefinition: definition });
-    return invect.runs.start(flow.id, {}, { useBatchProcessing: false });
+    const flow = await flowlib.flows.create({ name: `tmpl-${name}-${Date.now()}` });
+    await flowlib.versions.create(flow.id, { invectDefinition: definition });
+    return flowlib.runs.start(flow.id, {}, { useBatchProcessing: false });
   }
 
   it('should resolve nested object property access in templates', async () => {

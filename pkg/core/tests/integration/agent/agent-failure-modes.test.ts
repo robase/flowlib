@@ -22,7 +22,7 @@ import { FlowRunStatus } from '../../../src';
 import type { InvectInstance } from '../../../src/api/types';
 import type { InvectDefinition } from '../../../src/services/flow-versions/schemas-fresh';
 import type { AgentExecutionOutput } from '../../../src/types/agent-tool.types';
-import { createTestInvect } from '../helpers/test-invect';
+import { createTestInvect } from '../helpers/test-flowlib';
 
 // ---------------------------------------------------------------------------
 // MSW helpers
@@ -80,7 +80,7 @@ function toolCallResponse(
 // Shared fixtures
 // ---------------------------------------------------------------------------
 
-let invect: InvectInstance;
+let flowlib: InvectInstance;
 let credentialId: string;
 let openAiQueue: Array<Record<string, unknown> | (() => Response | Promise<Response>)> = [];
 let capturedOpenAiRequests: Array<Record<string, unknown>> = [];
@@ -110,8 +110,8 @@ const mswServer = setupServer(
 
 beforeAll(async () => {
   mswServer.listen({ onUnhandledRequest: 'bypass' });
-  invect = await createTestInvect();
-  const cred = await invect.credentials.create({
+  flowlib = await createTestInvect();
+  const cred = await flowlib.credentials.create({
     name: 'Test OpenAI',
     type: 'llm',
     authType: 'apiKey',
@@ -123,7 +123,7 @@ beforeAll(async () => {
 
 afterAll(async () => {
   mswServer.close();
-  await invect.shutdown();
+  await flowlib.shutdown();
 });
 
 beforeEach(() => {
@@ -140,9 +140,9 @@ afterEach(() => {
 // ---------------------------------------------------------------------------
 
 async function runFlow(definition: InvectDefinition, inputs: Record<string, unknown> = {}) {
-  const flow = await invect.flows.create({ name: `agent-fail-${Date.now()}-${Math.random()}` });
-  await invect.versions.create(flow.id, { invectDefinition: definition });
-  return invect.runs.start(flow.id, inputs, { useBatchProcessing: false });
+  const flow = await flowlib.flows.create({ name: `agent-fail-${Date.now()}-${Math.random()}` });
+  await flowlib.versions.create(flow.id, { invectDefinition: definition });
+  return flowlib.runs.start(flow.id, inputs, { useBatchProcessing: false });
 }
 
 function getAgentOutput(

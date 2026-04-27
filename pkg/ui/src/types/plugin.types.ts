@@ -9,7 +9,7 @@
 import type { ComponentType, ReactNode } from 'react';
 
 // ─────────────────────────────────────────────────────────────
-// Unified Plugin Definition (mirrors @invect/core InvectPluginDefinition)
+// Unified Plugin Definition (mirrors @flowlib/core InvectPluginDefinition)
 // ─────────────────────────────────────────────────────────────
 
 /**

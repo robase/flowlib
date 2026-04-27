@@ -7,7 +7,7 @@
  * @see https://resend.com/docs/api-reference/emails/retrieve-email
  */
 
-import { defineAction } from '@invect/action-kit';
+import { defineAction } from '@flowlib/action-kit';
 import { RESEND_PROVIDER } from '../providers';
 import { z } from 'zod/v4';
 
@@ -87,7 +87,7 @@ export const resendGetEmailAction = defineAction({
       const response = await fetch(`${RESEND_API_BASE}/emails/${encodeURIComponent(emailId)}`, {
         headers: {
           Authorization: `Bearer ${apiKey}`,
-          'User-Agent': 'invect/1.0',
+          'User-Agent': 'flowlib/1.0',
         },
       });
 

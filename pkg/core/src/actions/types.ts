@@ -1,10 +1,10 @@
 /**
- * Action Types — re-exported from `@invect/action-kit`.
+ * Action Types — re-exported from `@flowlib/action-kit`.
  *
  * This file exists so existing `src/actions/types` import paths inside
- * `@invect/core` keep resolving. All canonical definitions now live in the
- * standalone action-kit package so `@invect/actions` can consume them
- * without depending on `@invect/core`.
+ * `@flowlib/core` keep resolving. All canonical definitions now live in the
+ * standalone action-kit package so `@flowlib/actions` can consume them
+ * without depending on `@flowlib/core`.
  */
 
 export type {
@@ -25,4 +25,4 @@ export type {
   LoadOptionsResult,
   ActionCredentialsService,
   ActionAIClient,
-} from '@invect/action-kit';
+} from '@flowlib/action-kit';

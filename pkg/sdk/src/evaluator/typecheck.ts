@@ -18,8 +18,8 @@
  *   ```
  *
  * Implementation: synthesises a temp file inside `os.tmpdir()`, builds a
- * `ts.createProgram` with the workspace's `@invect/sdk`,
- * `@invect/action-kit`, and `@invect/actions` packages mapped in via
+ * `ts.createProgram` with the workspace's `@flowlib/sdk`,
+ * `@flowlib/action-kit`, and `@flowlib/actions` packages mapped in via
  * `compilerOptions.paths`, runs `getPreEmitDiagnostics`, filters down to
  * the user file, formats line/column/message tuples.
  *
@@ -47,7 +47,7 @@ export interface TypecheckDiagnostic {
 }
 
 export interface TypecheckOptions {
-  /** Override the SDK package specifier (defaults to `@invect/sdk`). */
+  /** Override the SDK package specifier (defaults to `@flowlib/sdk`). */
   sdkImportSpecifier?: string;
 }
 
@@ -69,22 +69,22 @@ export async function typecheckSdkSource(
   source: string,
   options: TypecheckOptions = {},
 ): Promise<TypecheckResult> {
-  const sdkSpecifier = options.sdkImportSpecifier ?? '@invect/sdk';
+  const sdkSpecifier = options.sdkImportSpecifier ?? '@flowlib/sdk';
 
   // Resolve workspace package locations from the perspective of this
-  // module. We map the bare specifier (e.g. `@invect/sdk`) plus every
-  // declared subpath (e.g. `@invect/sdk/actions`, `@invect/actions/gmail`).
+  // module. We map the bare specifier (e.g. `@flowlib/sdk`) plus every
+  // declared subpath (e.g. `@flowlib/sdk/actions`, `@flowlib/actions/gmail`).
   // Subpaths are resolved through `package.json` `exports` so the
   // typescript compiler lands on the .d.mts the bundler would have used.
   const req = createRequire(import.meta.url);
   const paths: Record<string, string[]> = {};
   await registerPackage(sdkSpecifier, req, paths);
-  await registerPackage('@invect/action-kit', req, paths);
-  await registerPackage('@invect/actions', req, paths);
+  await registerPackage('@flowlib/action-kit', req, paths);
+  await registerPackage('@flowlib/actions', req, paths);
 
   // Materialise the source to a temp file so the TS compiler has a stable
   // filename to attach diagnostics to.
-  const tmpDir = await mkdtemp(join(tmpdir(), 'invect-typecheck-'));
+  const tmpDir = await mkdtemp(join(tmpdir(), 'flowlib-typecheck-'));
   const tmpFile = join(tmpDir, 'flow.ts');
   // eslint-disable-next-line security/detect-non-literal-fs-filename
   await writeFile(tmpFile, source, 'utf-8');

@@ -3,9 +3,9 @@
 
 import { test, expect } from '../fixtures';
 
-/** Helper: navigate to /invect/credentials and wait for the page to load */
+/** Helper: navigate to /flowlib/credentials and wait for the page to load */
 async function goToCredentials(page: import('@playwright/test').Page) {
-  await page.goto('/invect/credentials');
+  await page.goto('/flowlib/credentials');
   await expect(page.getByRole('heading', { level: 1, name: 'Credentials' })).toBeVisible({
     timeout: 15_000,
   });
@@ -54,7 +54,7 @@ test.describe('Credential CRUD — Delete', () => {
     await cleanupCredentialByName(request, apiBase, credName);
     await createCredentialViaApi(request, apiBase, credName);
 
-    // 1. Navigate to /invect/credentials — 'Cred To Delete' appears in the list
+    // 1. Navigate to /flowlib/credentials — 'Cred To Delete' appears in the list
     await goToCredentials(page);
     await expect(page.getByText(credName)).toBeVisible({ timeout: 5_000 });
 

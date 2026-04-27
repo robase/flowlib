@@ -2,7 +2,7 @@
  * Parse a `.flow.ts` file into an `SdkFlowDefinition`.
  *
  * The TypeScript source is canonical — we evaluate it via
- * `@invect/sdk/evaluator` (which uses jiti to transpile + run the file
+ * `@flowlib/sdk/evaluator` (which uses jiti to transpile + run the file
  * and returns the value the module's `defineFlow(...)` call produced).
  * No JSON footer is read or written; removing a node in the TS source
  * means it's gone from the canvas as soon as the file parses.
@@ -12,7 +12,7 @@
  * prompting the user to trust the workspace.
  */
 
-import type { SdkFlowDefinition } from '@invect/sdk';
+import type { SdkFlowDefinition } from '@flowlib/sdk';
 
 export interface ParseSuccess {
   ok: true;
@@ -53,7 +53,7 @@ export async function parseFlowFile(src: string, opts: ParseOptions): Promise<Pa
   }
 
   try {
-    const { evaluateSdkSource } = await import('@invect/sdk/evaluator');
+    const { evaluateSdkSource } = await import('@flowlib/sdk/evaluator');
     const result = await evaluateSdkSource(src);
     if (!result.ok || !result.flow) {
       const first = result.errors?.[0];

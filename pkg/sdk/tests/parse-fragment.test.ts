@@ -52,8 +52,8 @@ describe('parseSDKText', () => {
   describe('full-file form (emitter output)', () => {
     it('unwraps `export const ... = defineFlow(...)` (emitter default)', () => {
       const source = `
-import { defineFlow, input, output } from '@invect/sdk';
-import { gmailSendMessageAction } from '@invect/actions/gmail';
+import { defineFlow, input, output } from '@flowlib/sdk';
+import { gmailSendMessageAction } from '@flowlib/actions/gmail';
 
 export const myFlow = defineFlow({
   name: 'My Flow',
@@ -74,7 +74,7 @@ export const myFlow = defineFlow({
 
     it('unwraps `export default defineFlow(...)`', () => {
       const source = `
-import { defineFlow, input } from '@invect/sdk';
+import { defineFlow, input } from '@flowlib/sdk';
 export default defineFlow({
   nodes: [input('q')],
   edges: [],
@@ -87,7 +87,7 @@ export default defineFlow({
 
     it('strips single-line + block comments', () => {
       const source = `
-import { defineFlow, input } from '@invect/sdk';
+import { defineFlow, input } from '@flowlib/sdk';
 export default defineFlow({
   // this is a comment
   /* block comment */

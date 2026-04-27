@@ -2,7 +2,7 @@
  * Webhook Signature Verification Service
  *
  * Validates HMAC signatures from webhook providers (GitHub, Slack, Stripe, Linear, etc.).
- * Moved from @invect/core to the webhooks plugin.
+ * Moved from @flowlib/core to the webhooks plugin.
  *
  * Implementation note: ported from `node:crypto.createHmac` to WebCrypto so this
  * runs unchanged on Cloudflare Workers, Deno, and Bun. WebCrypto's

@@ -12,7 +12,7 @@ import type {
   FlowRunHookContext,
   NodeExecutionHookContext,
 } from '../../../src/types/plugin.types';
-import { createTestInvect } from '../helpers/test-invect';
+import { createTestInvect } from '../helpers/test-flowlib';
 import type { InvectInstance } from '../../../src/api/types';
 
 /** Simple flow definition used across hook tests */
@@ -30,10 +30,10 @@ const simpleFlowDef = {
   edges: [] as Array<{ id: string; source: string; target: string }>,
 };
 
-async function createAndRunFlow(invect: InvectInstance) {
-  const flow = await invect.flows.create({ name: `hook-test-${Date.now()}` });
-  await invect.versions.create(flow.id, { invectDefinition: simpleFlowDef });
-  return invect.runs.start(flow.id, {}, { useBatchProcessing: false });
+async function createAndRunFlow(flowlib: InvectInstance) {
+  const flow = await flowlib.flows.create({ name: `hook-test-${Date.now()}` });
+  await flowlib.versions.create(flow.id, { invectDefinition: simpleFlowDef });
+  return flowlib.runs.start(flow.id, {}, { useBatchProcessing: false });
 }
 
 // ---------------------------------------------------------------------------
@@ -57,10 +57,10 @@ describe('Plugin Hooks — Flow Run Lifecycle', () => {
       },
     };
 
-    const invect = await createTestInvect({ plugins: [plugin] });
+    const flowlib = await createTestInvect({ plugins: [plugin] });
 
     try {
-      const result = await createAndRunFlow(invect);
+      const result = await createAndRunFlow(flowlib);
 
       expect(result.status).toBe(FlowRunStatus.SUCCESS);
       expect(beforeCalls.length).toBe(1);
@@ -68,7 +68,7 @@ describe('Plugin Hooks — Flow Run Lifecycle', () => {
       expect(beforeCalls[0].flowId).toBeTruthy();
       expect(afterCalls[0].flowId).toBeTruthy();
     } finally {
-      await invect.shutdown();
+      await flowlib.shutdown();
     }
   });
 
@@ -82,18 +82,18 @@ describe('Plugin Hooks — Flow Run Lifecycle', () => {
       },
     };
 
-    const invect = await createTestInvect({ plugins: [plugin] });
+    const flowlib = await createTestInvect({ plugins: [plugin] });
 
     try {
-      const flow = await invect.flows.create({ name: `cancel-test-${Date.now()}` });
-      await invect.versions.create(flow.id, { invectDefinition: simpleFlowDef });
-      const result = await invect.runs.start(flow.id, {}, { useBatchProcessing: false });
+      const flow = await flowlib.flows.create({ name: `cancel-test-${Date.now()}` });
+      await flowlib.versions.create(flow.id, { invectDefinition: simpleFlowDef });
+      const result = await flowlib.runs.start(flow.id, {}, { useBatchProcessing: false });
 
       // Flow should be failed when cancelled by plugin hook
       expect(result.status).toBe(FlowRunStatus.FAILED);
       expect(result.error).toContain('blocked by test');
     } finally {
-      await invect.shutdown();
+      await flowlib.shutdown();
     }
   });
 });
@@ -119,10 +119,10 @@ describe('Plugin Hooks — Node Execution Lifecycle', () => {
       },
     };
 
-    const invect = await createTestInvect({ plugins: [plugin] });
+    const flowlib = await createTestInvect({ plugins: [plugin] });
 
     try {
-      const result = await createAndRunFlow(invect);
+      const result = await createAndRunFlow(flowlib);
 
       expect(result.status).toBe(FlowRunStatus.SUCCESS);
       // At least one node should have triggered both hooks
@@ -130,7 +130,7 @@ describe('Plugin Hooks — Node Execution Lifecycle', () => {
       expect(afterCalls.length).toBeGreaterThanOrEqual(1);
       expect(beforeCalls[0].nodeId).toBeTruthy();
     } finally {
-      await invect.shutdown();
+      await flowlib.shutdown();
     }
   });
 });
@@ -167,17 +167,17 @@ describe('Plugin Hooks — Ordering', () => {
       },
     };
 
-    const invect = await createTestInvect({ plugins: [pluginA, pluginB] });
+    const flowlib = await createTestInvect({ plugins: [pluginA, pluginB] });
 
     try {
-      await createAndRunFlow(invect);
+      await createAndRunFlow(flowlib);
 
       // before hooks should fire in registration order
       expect(order.indexOf('A-before')).toBeLessThan(order.indexOf('B-before'));
       // after hooks should fire in registration order
       expect(order.indexOf('A-after')).toBeLessThan(order.indexOf('B-after'));
     } finally {
-      await invect.shutdown();
+      await flowlib.shutdown();
     }
   });
 });
@@ -197,12 +197,12 @@ describe('Plugin Hooks — Init & Shutdown', () => {
       },
     };
 
-    const invect = await createTestInvect({ plugins: [plugin] });
+    const flowlib = await createTestInvect({ plugins: [plugin] });
 
     try {
       expect(initSpy).toHaveBeenCalledOnce();
     } finally {
-      await invect.shutdown();
+      await flowlib.shutdown();
     }
   });
 
@@ -223,8 +223,8 @@ describe('Plugin Hooks — Init & Shutdown', () => {
       },
     };
 
-    const invect = await createTestInvect({ plugins: [pluginA, pluginB] });
-    await invect.shutdown();
+    const flowlib = await createTestInvect({ plugins: [pluginA, pluginB] });
+    await flowlib.shutdown();
 
     // Shutdown should be reverse order (B before A)
     expect(order).toEqual(['B', 'A']);

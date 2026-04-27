@@ -1,4 +1,4 @@
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@invect/ui';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@flowlib/ui';
 
 export function FormDialog({
   open,

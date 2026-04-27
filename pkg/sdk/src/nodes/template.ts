@@ -9,8 +9,8 @@
  *   - `template('ref', { template: '...' })` — positional form.
  */
 
-import { templateStringAction } from '@invect/actions/core';
-import type { NodeOptions, SdkFlowNode } from '@invect/action-kit';
+import { templateStringAction } from '@flowlib/actions/core';
+import type { NodeOptions, SdkFlowNode } from '@flowlib/action-kit';
 
 interface TemplateParams {
   template: string;

@@ -8,7 +8,7 @@ export { googleDocsInsertTextAction } from './insert-text';
 export { googleDocsReplaceTextAction } from './replace-text';
 export { googleDocsAppendTextAction } from './append-text';
 
-import type { ActionDefinition } from '@invect/action-kit';
+import type { ActionDefinition } from '@flowlib/action-kit';
 import { googleDocsCreateDocumentAction } from './create-document';
 import { googleDocsGetDocumentAction } from './get-document';
 import { googleDocsInsertTextAction } from './insert-text';

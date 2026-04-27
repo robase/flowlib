@@ -2,7 +2,7 @@
 /**
  * Builds the .vsix.
  *
- * The npm package name is `@invect/vscode` (scoped — required for the pnpm
+ * The npm package name is `@flowlib/vscode` (scoped — required for the pnpm
  * workspace dependency graph). vsce rejects scoped names in `package.json`,
  * so we temporarily swap the manifest to an unscoped variant for the
  * duration of `vsce package`, then restore the original. The original
@@ -18,8 +18,8 @@ const pkgRoot = resolve(here, '..');
 const manifestPath = resolve(pkgRoot, 'package.json');
 const backupPath = resolve(pkgRoot, 'package.json.vsce-backup');
 
-const PUBLISHED_NAME = 'invect-vscode';
-const VSIX_OUT = resolve(pkgRoot, 'invect-vscode.vsix');
+const PUBLISHED_NAME = 'flowlib-vscode';
+const VSIX_OUT = resolve(pkgRoot, 'flowlib-vscode.vsix');
 
 function restoreManifest() {
   if (existsSync(backupPath)) {

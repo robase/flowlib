@@ -18,7 +18,7 @@ export { gitlabCreateMergeRequestAction } from './create-merge-request';
 
 // ── Bulk array ──────────────────────────────────────────────────────────
 
-import type { ActionDefinition } from '@invect/action-kit';
+import type { ActionDefinition } from '@flowlib/action-kit';
 
 import { gitlabListProjectsAction } from './list-projects';
 import { gitlabListIssuesAction } from './list-issues';

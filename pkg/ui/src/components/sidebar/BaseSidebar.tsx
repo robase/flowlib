@@ -9,7 +9,7 @@ import {
   DropdownMenuTrigger,
 } from '../ui/dropdown-menu';
 import { Button } from '../ui/button';
-import type { FlowVersion } from '@invect/core/types';
+import type { FlowVersion } from '@flowlib/core/types';
 
 interface BaseSidebarProps {
   title?: string;

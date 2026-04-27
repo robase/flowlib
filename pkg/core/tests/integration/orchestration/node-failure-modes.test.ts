@@ -22,24 +22,24 @@ import { http, HttpResponse, delay } from 'msw';
 import { FlowRunStatus } from '../../../src';
 import type { InvectInstance } from '../../../src/api/types';
 import type { InvectDefinition } from '../../../src/services/flow-versions/schemas-fresh';
-import { createTestInvect } from '../helpers/test-invect';
+import { createTestInvect } from '../helpers/test-flowlib';
 
 // ---------------------------------------------------------------------------
 // Fixtures
 // ---------------------------------------------------------------------------
 
-let invect: InvectInstance;
+let flowlib: InvectInstance;
 
 const mswServer = setupServer();
 
 beforeAll(async () => {
   mswServer.listen({ onUnhandledRequest: 'bypass' });
-  invect = await createTestInvect();
+  flowlib = await createTestInvect();
 });
 
 afterAll(async () => {
   mswServer.close();
-  await invect.shutdown();
+  await flowlib.shutdown();
 });
 
 beforeEach(() => {
@@ -55,9 +55,9 @@ afterEach(() => {
 // ---------------------------------------------------------------------------
 
 async function runFlow(definition: InvectDefinition, inputs: Record<string, unknown> = {}) {
-  const flow = await invect.flows.create({ name: `node-fail-${Date.now()}-${Math.random()}` });
-  await invect.versions.create(flow.id, { invectDefinition: definition });
-  return invect.runs.start(flow.id, inputs, { useBatchProcessing: false });
+  const flow = await flowlib.flows.create({ name: `node-fail-${Date.now()}-${Math.random()}` });
+  await flowlib.versions.create(flow.id, { invectDefinition: definition });
+  return flowlib.runs.start(flow.id, inputs, { useBatchProcessing: false });
 }
 
 function getNodeOutput(result: { outputs?: Record<string, unknown> }, nodeId: string): unknown {

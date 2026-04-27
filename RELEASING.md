@@ -69,7 +69,7 @@ pnpm changeset
 
 This walks you through:
 
-1. **Which packages changed** — select the affected `@invect/*` packages
+1. **Which packages changed** — select the affected `@flowlib/*` packages
 2. **Semver bump** — `patch` (bug fix), `minor` (new feature), or `major` (breaking change)
 3. **Summary** — a short description that goes into the CHANGELOG
 
@@ -108,29 +108,29 @@ The release workflow detects there are no pending changesets (they were consumed
 
 1. **Builds** all packages
 2. **Publishes** changed packages to npm (`pnpm publish -r --access public`)
-3. **Tags** each published package (e.g., `@invect/core@0.1.0`)
+3. **Tags** each published package (e.g., `@flowlib/core@0.1.0`)
 4. **Creates GitHub releases** linking to the package CHANGELOG
 
 ## Published Packages
 
-All packages under `pkg/` are published to npm as `@invect/*`. Example apps and the root package are excluded.
+All packages under `pkg/` are published to npm as `@flowlib/*`. Example apps and the root package are excluded.
 
 | Package                         | npm Name                    |
 | ------------------------------- | --------------------------- |
-| `pkg/core`                      | `@invect/core`              |
-| `pkg/express`                   | `@invect/express`           |
-| `pkg/nestjs`                    | `@invect/nestjs`            |
-| `pkg/nextjs`                    | `@invect/nextjs`            |
-| `pkg/ui`                        | `@invect/ui`                |
-| `pkg/cli`                       | `@invect/cli`               |
-| `pkg/layouts`                   | `@invect/layouts`           |
-| `pkg/invect`                    | `invect-cli`                |
-| `pkg/plugins/auth`              | `@invect/user-auth`         |
-| `pkg/plugins/rbac`              | `@invect/rbac`              |
-| `pkg/plugins/webhooks`          | `@invect/webhooks`          |
-| `pkg/plugins/version-control`   | `@invect/version-control`   |
-| `pkg/plugins/cloudflare-agents` | `@invect/cloudflare-agents` |
-| `pkg/plugins/mcp`               | `@invect/mcp`               |
+| `pkg/core`                      | `@flowlib/core`              |
+| `pkg/express`                   | `@flowlib/express`           |
+| `pkg/nestjs`                    | `@flowlib/nestjs`            |
+| `pkg/nextjs`                    | `@flowlib/nextjs`            |
+| `pkg/ui`                        | `@flowlib/ui`                |
+| `pkg/cli`                       | `@flowlib/cli`               |
+| `pkg/layouts`                   | `@flowlib/layouts`           |
+| `pkg/flowlib`                    | `flowlib-cli`                |
+| `pkg/plugins/auth`              | `@flowlib/user-auth`         |
+| `pkg/plugins/rbac`              | `@flowlib/rbac`              |
+| `pkg/plugins/webhooks`          | `@flowlib/webhooks`          |
+| `pkg/plugins/version-control`   | `@flowlib/version-control`   |
+| `pkg/plugins/cloudflare-agents` | `@flowlib/cloudflare-agents` |
+| `pkg/plugins/mcp`               | `@flowlib/mcp`               |
 
 ## Configuration
 

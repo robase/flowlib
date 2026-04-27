@@ -7,7 +7,7 @@
  * source (branch wiring, step names, and metadata).
  */
 import { describe, it, expect } from 'vitest';
-import type { InvectDefinition } from '@invect/core/types';
+import type { InvectDefinition } from '@flowlib/core/types';
 import { compileFlow } from '../src/compiler/flow-compiler';
 
 const baseMeta = {

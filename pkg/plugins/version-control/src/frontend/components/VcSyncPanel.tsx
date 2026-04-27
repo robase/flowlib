@@ -30,7 +30,7 @@ import {
   useDisconnectSync,
 } from '../hooks/useFlowSync';
 import { ConnectFlowForm } from './ConnectFlowForm';
-import type { PanelTabProps } from '@invect/ui';
+import type { PanelTabProps } from '@flowlib/ui';
 import type { VcSyncStatus } from '../../shared/types';
 
 export function VcSyncPanel({ flowId }: PanelTabProps) {

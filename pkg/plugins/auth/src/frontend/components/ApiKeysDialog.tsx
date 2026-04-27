@@ -11,7 +11,7 @@
 
 import { useState, useCallback, type FormEvent } from 'react';
 import { Copy, Check, Trash2, Plus, Key, Loader2 } from 'lucide-react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@invect/ui';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@flowlib/ui';
 
 // ─────────────────────────────────────────────────────────────
 // Types

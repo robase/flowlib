@@ -2,7 +2,7 @@
  * Lazy descriptors for Slack actions. See `core/lazy.ts` for rationale.
  */
 
-import type { LazyActionDefinition } from '@invect/action-kit';
+import type { LazyActionDefinition } from '@flowlib/action-kit';
 
 const slackProvider = { id: 'slack' };
 

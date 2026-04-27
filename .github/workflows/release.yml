@@ -61,7 +61,7 @@ jobs:
             # Create GitHub release
             gh release create "$tag" \
               --title "$name@$version" \
-              --notes "See [CHANGELOG](https://github.com/robase/invect/blob/main/pkg/$(echo $name | sed 's/@invect\///')/CHANGELOG.md) for details." \
+              --notes "See [CHANGELOG](https://github.com/robase/flowlib/blob/main/pkg/$(echo $name | sed 's/@flowlib\///')/CHANGELOG.md) for details." \
               --latest=false \
               2>/dev/null || true
           done

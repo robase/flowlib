@@ -1,18 +1,18 @@
 /**
  * Invect configuration — used by the Express server and the Invect CLI.
  *
- * Run `npx invect-cli generate` to regenerate the Drizzle schema files
+ * Run `npx flowlib-cli generate` to regenerate the Drizzle schema files
  * whenever plugins are added or removed.
  */
 
-import { auth } from '@invect/user-auth';
-import { rbac } from '@invect/rbac';
-import { webhooks } from '@invect/webhooks';
-import { mcp } from '@invect/mcp';
-import { vercelWorkflowsPlugin } from '@invect/vercel-workflows';
-import { versionControl } from '@invect/version-control';
-import { githubProvider } from '@invect/version-control/providers/github';
-import { defineConfig } from '@invect/core';
+import { auth } from '@flowlib/user-auth';
+import { rbac } from '@flowlib/rbac';
+import { webhooks } from '@flowlib/webhooks';
+import { mcp } from '@flowlib/mcp';
+import { vercelWorkflowsPlugin } from '@flowlib/vercel-workflows';
+import { versionControl } from '@flowlib/version-control';
+import { githubProvider } from '@flowlib/version-control/providers/github';
+import { defineConfig } from '@flowlib/core';
 
 export const invectConfig = defineConfig({
   encryptionKey: process.env.INVECT_ENCRYPTION_KEY || 'change-me-in-production',
@@ -20,8 +20,8 @@ export const invectConfig = defineConfig({
     type: 'sqlite',
     connectionString: process.env.DB_FILE_NAME || 'file:./dev.db',
   },
-  apiPath: 'http://localhost:3000/invect',
-  frontendPath: '/invect',
+  apiPath: 'http://localhost:3000/flowlib',
+  frontendPath: '/flowlib',
   theme: 'dark',
   logging: {
     level: 'error',
@@ -92,7 +92,7 @@ export const invectConfig = defineConfig({
     auth({
       trustedOrigins: ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:3000'],
       betterAuthOptions: {
-        secret: process.env.BETTER_AUTH_SECRET || 'invect-dev-secret-do-not-use-in-production',
+        secret: process.env.BETTER_AUTH_SECRET || 'flowlib-dev-secret-do-not-use-in-production',
       },
       apiKey: true,
       globalAdmins:
@@ -108,7 +108,7 @@ export const invectConfig = defineConfig({
     }),
     rbac(),
     webhooks({
-      webhookBaseUrl: process.env.INVECT_WEBHOOK_BASE_URL || 'http://localhost:3000/invect',
+      webhookBaseUrl: process.env.INVECT_WEBHOOK_BASE_URL || 'http://localhost:3000/flowlib',
     }),
     versionControl({
       provider: githubProvider({
@@ -117,7 +117,7 @@ export const invectConfig = defineConfig({
           token: process.env.GITHUB_TOKEN || 'ghp_dummy_version_control_token_replace_me',
         },
       }),
-      repo: process.env.INVECT_VC_REPO || 'example/invect-flows',
+      repo: process.env.INVECT_VC_REPO || 'example/flowlib-flows',
       defaultBranch: 'main',
       path: 'flows/',
       mode: 'direct-commit',

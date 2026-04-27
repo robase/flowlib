@@ -2,14 +2,14 @@
  * Agent Tool Types for Frontend
  *
  * Types for displaying and managing agent tools in the UI.
- * These align with AgentToolDefinition from @invect/core.
+ * These align with AgentToolDefinition from @flowlib/core.
  */
 
 import type { AppendixPosition } from '../components/nodes/NodeAppendix';
 
 /**
  * Tool category for organization in UI
- * Matches AgentToolCategory from @invect/core
+ * Matches AgentToolCategory from @flowlib/core
  */
 export type ToolCategory = 'data' | 'web' | 'code' | 'utility' | 'custom';
 

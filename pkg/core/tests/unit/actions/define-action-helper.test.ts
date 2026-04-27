@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { z } from 'zod/v4';
-import { defineAction } from '@invect/action-kit';
-import type { ProviderDef } from '@invect/action-kit';
+import { defineAction } from '@flowlib/action-kit';
+import type { ProviderDef } from '@flowlib/action-kit';
 
 const TEST_PROVIDER: ProviderDef = {
   id: 'test',

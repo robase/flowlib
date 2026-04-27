@@ -9,7 +9,7 @@
  * aliases loop so the regression net grows with the surface.
  */
 import { describe, it, expect } from 'vitest';
-import type { PrimitiveFlowDefinition } from '@invect/primitives';
+import type { PrimitiveFlowDefinition } from '@flowlib/primitives';
 import { analyzeFlow } from '../src/compiler/control-flow';
 import { compile } from '../src/compiler/flow-compiler';
 

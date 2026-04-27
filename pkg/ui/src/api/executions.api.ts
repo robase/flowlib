@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import { useApiClient } from '../contexts/ApiContext';
 import { queryKeys, getErrorMessage } from './query-keys';
-import { type FlowRun, type FlowInputs } from '@invect/core/types';
+import { type FlowRun, type FlowInputs } from '@flowlib/core/types';
 
 // Execution Queries
 // NOTE: Real-time updates are provided by useFlowRunStream (SSE).

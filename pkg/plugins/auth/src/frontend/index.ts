@@ -1,8 +1,8 @@
 /**
- * @invect/user-auth/ui — Frontend Entry Point
+ * @flowlib/user-auth/ui — Frontend Entry Point
  *
  * Browser-safe entry point that exports the auth UI components.
- * Import via: `import { AuthProvider, useAuth } from '@invect/user-auth/ui'`
+ * Import via: `import { AuthProvider, useAuth } from '@flowlib/user-auth/ui'`
  *
  * No Node.js dependencies. No better-auth runtime imports.
  */

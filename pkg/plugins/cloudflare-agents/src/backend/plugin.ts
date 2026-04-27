@@ -1,11 +1,11 @@
 // ============================================================================
-// @invect/cloudflare-agents — backend plugin
+// @flowlib/cloudflare-agents — backend plugin
 //
 // Adds API endpoints to compile Invect flows into Cloudflare Agent/Workflow
 // projects. No database tables required — compilation is stateless.
 // ============================================================================
 
-import type { InvectPlugin, InvectPluginDefinition } from '@invect/core/types';
+import type { InvectPlugin, InvectPluginDefinition } from '@flowlib/core/types';
 import { compileFlow, scaffoldProject } from '../compiler/flow-compiler';
 import type { CompileFlowOptions, CompileTarget, ScaffoldOptions } from '../shared/types';
 
@@ -47,16 +47,16 @@ function _backendPlugin(options?: CloudflareAgentsPluginOptions): InvectPlugin {
             return { status: 400, body: { error: 'flowId is required' } };
           }
 
-          const invect = ctx.getInvect();
+          const flowlib = ctx.getInvect();
 
           // Fetch the flow
-          const flow = await invect.flows.get(flowId);
+          const flow = await flowlib.flows.get(flowId);
           if (!flow) {
             return { status: 404, body: { error: `Flow ${flowId} not found` } };
           }
 
           // Fetch the version
-          const flowVersion = await invect.versions.get(flowId, version ?? 'latest');
+          const flowVersion = await flowlib.versions.get(flowId, version ?? 'latest');
           if (!flowVersion || !flowVersion.invectDefinition) {
             return { status: 404, body: { error: `Flow version not found` } };
           }
@@ -86,14 +86,14 @@ function _backendPlugin(options?: CloudflareAgentsPluginOptions): InvectPlugin {
             return { status: 400, body: { error: 'flowId is required' } };
           }
 
-          const invect = ctx.getInvect();
+          const flowlib = ctx.getInvect();
 
-          const flow = await invect.flows.get(flowId);
+          const flow = await flowlib.flows.get(flowId);
           if (!flow) {
             return { status: 404, body: { error: `Flow ${flowId} not found` } };
           }
 
-          const flowVersion = await invect.versions.get(flowId, version ?? 'latest');
+          const flowVersion = await flowlib.versions.get(flowId, version ?? 'latest');
           if (!flowVersion || !flowVersion.invectDefinition) {
             return { status: 404, body: { error: `Flow version not found` } };
           }
@@ -139,14 +139,14 @@ function _backendPlugin(options?: CloudflareAgentsPluginOptions): InvectPlugin {
           const { flowId } = ctx.params;
           const target = (ctx.query.target ?? defaultTarget) as CompileTarget;
 
-          const invect = ctx.getInvect();
+          const flowlib = ctx.getInvect();
 
-          const flow = await invect.flows.get(flowId);
+          const flow = await flowlib.flows.get(flowId);
           if (!flow) {
             return { status: 404, body: { error: `Flow ${flowId} not found` } };
           }
 
-          const flowVersion = await invect.versions.get(flowId, 'latest');
+          const flowVersion = await flowlib.versions.get(flowId, 'latest');
           if (!flowVersion || !flowVersion.invectDefinition) {
             return { status: 404, body: { error: `Flow version not found` } };
           }

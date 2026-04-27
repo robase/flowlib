@@ -1,9 +1,9 @@
 /**
- * `invect.pullFromBackend` / `invect.pushToBackend` — file ↔ backend sync.
+ * `flowlib.pullFromBackend` / `flowlib.pushToBackend` — file ↔ backend sync.
  *
  * Pull flow:
  *   1. List backend flows; if no `flowId` arg passed, QuickPick.
- *   2. `getFlow(id)` → emit canonical `.flow.ts` source via `@invect/sdk`'s
+ *   2. `getFlow(id)` → emit canonical `.flow.ts` source via `@flowlib/sdk`'s
  *      `emitSdkSource({ includeJsonFooter: true, metadata: { id } })`.
  *   3. Write to `<workspace>/flows/<slug>.flow.ts`.
  *   4. Open the file (uses our `FlowEditorProvider` automatically).
@@ -16,7 +16,7 @@
  */
 
 import * as vscode from 'vscode';
-import { emitSdkSource } from '@invect/sdk';
+import { emitSdkSource } from '@flowlib/sdk';
 import type { Backend } from '../backend/Backend';
 import { parseFlowFile } from '../flow-file/parse';
 import { getExtensionLogger } from '../util/logger';
@@ -30,10 +30,10 @@ export interface SyncDeps {
 
 export function registerSyncCommands(deps: SyncDeps): vscode.Disposable[] {
   return [
-    vscode.commands.registerCommand('invect.pullFromBackend', (flowId?: string) =>
+    vscode.commands.registerCommand('flowlib.pullFromBackend', (flowId?: string) =>
       pull(deps, flowId),
     ),
-    vscode.commands.registerCommand('invect.pushToBackend', () => push(deps)),
+    vscode.commands.registerCommand('flowlib.pushToBackend', () => push(deps)),
   ];
 }
 
@@ -87,7 +87,7 @@ async function pull(deps: SyncDeps, presetFlowId?: string): Promise<void> {
   await vscode.workspace.fs.writeFile(target, new TextEncoder().encode(code));
 
   logger.info('pulled flow', { flowId, target: target.toString() });
-  await vscode.commands.executeCommand('vscode.openWith', target, 'invect.flowEditor');
+  await vscode.commands.executeCommand('vscode.openWith', target, 'flowlib.flowEditor');
   deps.onFlowsChanged?.();
 }
 

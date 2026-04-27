@@ -114,7 +114,7 @@ body,
  * default styling somewhere between FlowCanvas's wrapper chain and the
  * react-flow viewport. Forcing 100% here guarantees the chain holds even
  * if FlowCanvas wraps its viewport in additional layout layers we don't
- * control. `!important` because @invect/ui/styles ships its own rule for
+ * control. `!important` because @flowlib/ui/styles ships its own rule for
  * `.react-flow` and our specificity isn't enough otherwise.
  */
 .react-flow,
@@ -126,23 +126,23 @@ body,
 }
 
 /* Used by the parse-error / readonly-banner fallback states. */
-.invect-fallback {
+.flowlib-fallback {
   padding: 1rem;
   font-family: var(--vscode-font-family);
   color: var(--vscode-editor-foreground);
 }
-.invect-fallback h2 {
+.flowlib-fallback h2 {
   margin: 0 0 0.5rem;
   font-size: 14px;
   font-weight: 600;
 }
-.invect-fallback p {
+.flowlib-fallback p {
   margin: 0 0 0.5rem;
   font-size: 12px;
   opacity: 0.8;
   white-space: pre-wrap;
 }
-.invect-fallback button {
+.flowlib-fallback button {
   padding: 4px 10px;
   background: var(--vscode-button-background);
   color: var(--vscode-button-foreground);

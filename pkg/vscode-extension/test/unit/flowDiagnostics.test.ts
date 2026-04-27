@@ -24,7 +24,7 @@ suite('produceDiagnostics — parse failures', () => {
     });
     assert.equal(diags.length, 1);
     assert.equal(diags[0].severity, vscode.DiagnosticSeverity.Error);
-    assert.equal(diags[0].source, 'invect');
+    assert.equal(diags[0].source, 'flowlib');
     assert.equal(diags[0].code, 'parse-error');
     assert.match(diags[0].message, /Footer JSON parse error/);
   });
@@ -82,7 +82,7 @@ suite('produceDiagnostics — validation', () => {
       parseResult: { ok: true, source: 'footer', flow },
     });
     assert.equal(diags.length, 1);
-    assert.equal(diags[0].source, 'invect');
+    assert.equal(diags[0].source, 'flowlib');
     assert.equal(diags[0].code, 'flow-validation');
     assert.match(diags[0].message, /duplicate referenceId "dup"/);
   });

@@ -4,7 +4,7 @@ import { useExecuteFlowToNode } from '../../../../api/executions.api';
 import { useFlowActions } from '../../../../routes/flow-route-layout';
 import { extractOutputValue, stringifyJson } from '../utils';
 import type { UpstreamSlot, UpstreamSlotStatus } from '../types';
-import type { ReactFlowNodeData } from '@invect/core/types';
+import type { ReactFlowNodeData } from '@flowlib/core/types';
 import { useNodeRegistry } from '../../../../contexts/NodeRegistryContext';
 
 // Extended node data type that includes preview-related properties

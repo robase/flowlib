@@ -5,12 +5,12 @@
   </picture>
 </p>
 
-<h1 align="center">@invect/cli</h1>
+<h1 align="center">@flowlib/cli</h1>
 
 <p align="center">
   CLI for managing Invect projects.
   <br />
-  <a href="https://invect.dev/docs/cli"><strong>Docs</strong></a> · <a href="https://invect.dev/docs/quick-start"><strong>Quick Start</strong></a>
+  <a href="https://flowlib.dev/docs/cli"><strong>Docs</strong></a> · <a href="https://flowlib.dev/docs/quick-start"><strong>Quick Start</strong></a>
 </p>
 
 ---
@@ -20,55 +20,55 @@ Schema generation, database migrations, and project setup for Invect. Merges cor
 ## Install
 
 ```bash
-npm install -D @invect/cli
+npm install -D @flowlib/cli
 ```
 
 Or run directly:
 
 ```bash
-npx invect-cli <command>
+npx flowlib-cli <command>
 ```
 
 ## Commands
 
-### `invect-cli init`
+### `flowlib-cli init`
 
-Interactive setup wizard. Detects your framework, installs dependencies, creates `invect.config.ts`, generates schemas, and runs the initial migration.
+Interactive setup wizard. Detects your framework, installs dependencies, creates `flowlib.config.ts`, generates schemas, and runs the initial migration.
 
-### `invect-cli generate`
+### `flowlib-cli generate`
 
-Generates Drizzle schema files for all three database dialects from your core + plugin schemas. Reads `invect.config.ts` to discover plugins.
+Generates Drizzle schema files for all three database dialects from your core + plugin schemas. Reads `flowlib.config.ts` to discover plugins.
 
 ```bash
-npx invect-cli generate
+npx flowlib-cli generate
 ```
 
-### `invect-cli migrate`
+### `flowlib-cli migrate`
 
 Applies pending migrations or pushes the schema directly (dev mode).
 
 ```bash
-npx invect-cli migrate
+npx flowlib-cli migrate
 ```
 
-### `invect-cli info`
+### `flowlib-cli info`
 
 Displays diagnostic info — system, frameworks, databases, config, and plugins.
 
-### `invect-cli secret`
+### `flowlib-cli secret`
 
 Generates a cryptographically secure 32-byte base64 key for `INVECT_ENCRYPTION_KEY`.
 
 ```bash
-npx invect-cli secret
+npx flowlib-cli secret
 ```
 
 ## Configuration
 
-The CLI reads from `invect.config.ts` in your project root:
+The CLI reads from `flowlib.config.ts` in your project root:
 
 ```ts
-import { defineConfig } from '@invect/core';
+import { defineConfig } from '@flowlib/core';
 
 export default defineConfig({
   database: {

@@ -1,11 +1,11 @@
 'use client';
 
 import dynamic from 'next/dynamic';
-import '@invect/ui/styles';
-import { auth } from '@invect/user-auth';
-import { rbac } from '@invect/rbac';
+import '@flowlib/ui/styles';
+import { auth } from '@flowlib/user-auth';
+import { rbac } from '@flowlib/rbac';
 
-const Invect = dynamic(() => import('@invect/ui').then((m) => ({ default: m.Invect })), {
+const Invect = dynamic(() => import('@flowlib/ui').then((m) => ({ default: m.Invect })), {
   ssr: false,
   loading: () => <WorkflowsLoading />,
 });
@@ -26,7 +26,7 @@ export default function WorkflowsPage() {
     <div className="-m-6 h-screen">
       <Invect
         config={{
-          apiPath: '/api/invect',
+          apiPath: '/api/flowlib',
           frontendPath: '/dashboard/workflows',
           theme: 'light',
           plugins: [auth(), rbac()],

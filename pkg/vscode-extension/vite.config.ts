@@ -39,10 +39,10 @@ export default defineConfig({
     extensions: ['.ts', '.tsx', '.js', '.jsx'],
     // Force a single copy of React + react-router across the bundle. Without
     // this the workspace's hoisting can pull two Reacts (one for `react-dom`,
-    // one for `@invect/ui`) and the `$$typeof` symbol mismatch produces
+    // one for `@flowlib/ui`) and the `$$typeof` symbol mismatch produces
     // React error #31. Same problem for `react-router`: two copies → two
     // separate React contexts → our outer `<MemoryRouter>` is invisible to
-    // `@invect/ui`'s `useInRouterContext()`, so Invect falls back to
+    // `@flowlib/ui`'s `useInRouterContext()`, so Invect falls back to
     // BrowserRouter and reads `window.location` (which inside a webview is
     // garbage like `/index.html?id=...`).
     dedupe: [

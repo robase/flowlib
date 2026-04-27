@@ -6,11 +6,11 @@
  * of the Invect flow editor.
  *
  * Everything here MUST be browser-safe. No runtime code, no zod schemas,
- * no `@invect/core` runtime imports — see CLAUDE.md "Frontend/backend
+ * no `@flowlib/core` runtime imports — see CLAUDE.md "Frontend/backend
  * type separation".
  */
 
-import type { FlowRun, InvectDefinition, NodeExecution } from '@invect/core/types';
+import type { FlowRun, InvectDefinition, NodeExecution } from '@flowlib/core/types';
 import type { NodeDefinition } from '../types/node-definition.types';
 
 /**

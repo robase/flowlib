@@ -1,5 +1,5 @@
 /**
- * @invect/user-auth — Shared Types
+ * @flowlib/user-auth — Shared Types
  *
  * Serializable types shared between backend and frontend.
  * No runtime code, no React, no Node.js dependencies.

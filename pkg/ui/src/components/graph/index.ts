@@ -8,7 +8,7 @@ export { langflowColors, type NodeStatus } from './styleUtils';
 export type { BatchFlowEdgeData } from './BatchFlowEdge';
 
 // Import types from core
-import type { NodeExecutionStatus } from '@invect/core/types';
+import type { NodeExecutionStatus } from '@flowlib/core/types';
 
 // Types matching Invect's node structure, extending ReactFlow's expected types
 export interface BatchFlowNodeData extends Record<string, unknown> {

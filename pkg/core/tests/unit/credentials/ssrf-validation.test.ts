@@ -9,7 +9,7 @@ import { describe, it, expect } from 'vitest';
 import { isIP } from 'node:net';
 
 /**
- * Extracted SSRF validation logic — mirrors the checks in invect-router.ts.
+ * Extracted SSRF validation logic — mirrors the checks in flowlib-router.ts.
  * Returns true if the IP is in a private/internal range and should be blocked.
  */
 function isPrivateIP(ip: string): boolean {

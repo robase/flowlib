@@ -1,7 +1,7 @@
 /**
  * Structural interfaces for the flow graph types an action sees via
  * `ActionExecutionContext.flowRunState`. Concrete Zod-backed types in
- * `@invect/core` are structurally compatible.
+ * `@flowlib/core` are structurally compatible.
  */
 
 export interface FlowEdge {

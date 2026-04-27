@@ -18,7 +18,7 @@
  */
 import { strict as assert } from 'node:assert';
 import { FlowRunStatus } from '../../src';
-import { defineFlow, input, output, agent } from '@invect/sdk';
+import { defineFlow, input, output, agent } from '@flowlib/sdk';
 import type { InvectInstance } from '../../src/api/types';
 import { getOutputVariable, type AgentOutputLike, type FlowExample } from './example-types';
 
@@ -26,7 +26,7 @@ import { getOutputVariable, type AgentOutputLike, type FlowExample } from './exa
  * Ensure we have an AI credential for Agent node.
  */
 async function ensureAICredential(
-  invect: InvectInstance,
+  flowlib: InvectInstance,
 ): Promise<{ id: string; name: string; isOpenAI: boolean }> {
   const openaiKey = process.env.OPENAI_API_KEY;
   const anthropicKey = process.env.ANTHROPIC_API_KEY;
@@ -41,7 +41,7 @@ async function ensureAICredential(
   const apiKey = openaiKey || anthropicKey!;
   const providerName = isOpenAI ? 'openai' : 'anthropic';
 
-  const created = await invect.credentials.create({
+  const created = await flowlib.credentials.create({
     name: `E2E Simple Agent ${providerName.charAt(0).toUpperCase() + providerName.slice(1)} Credential`,
     type: 'http-api',
     authType: 'bearer',
@@ -111,18 +111,18 @@ export const simpleAgentFlowExample: FlowExample = {
   name: 'Simple Agent Flow - Math Calculator',
   description: 'Tests AI Agent node with math_eval tool to perform calculations',
 
-  async execute(invect: InvectInstance) {
-    const { id: credentialId, isOpenAI } = await ensureAICredential(invect);
+  async execute(flowlib: InvectInstance) {
+    const { id: credentialId, isOpenAI } = await ensureAICredential(flowlib);
 
     const definition = buildSimpleAgentFlowDefinition(credentialId, isOpenAI);
 
-    const flow = await invect.flows.create({
+    const flow = await flowlib.flows.create({
       name: 'E2E Simple Agent Flow',
     });
 
-    await invect.versions.create(flow.id, { invectDefinition: definition });
+    await flowlib.versions.create(flow.id, { invectDefinition: definition });
 
-    const result = await invect.runs.start(
+    const result = await flowlib.runs.start(
       flow.id,
       {},
       {
@@ -162,7 +162,7 @@ export const simpleAgentFlowExample: FlowExample = {
     }
 
     // Cleanup
-    await invect.credentials.delete(credentialId);
+    await flowlib.credentials.delete(credentialId);
 
     return result;
   },

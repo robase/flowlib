@@ -1,6 +1,6 @@
 // API client types for communicating with the Invect backend
 
-import type { FlowValidationResult } from '@invect/core/types';
+import type { FlowValidationResult } from '@flowlib/core/types';
 import type { NodeDefinition } from '../types/node-definition.types';
 
 // Re-export core types used throughout the API layer
@@ -27,7 +27,7 @@ export type {
   FlowInputs,
   ExecuteFlowOptions,
   UpdateFlowInput,
-} from '@invect/core/types';
+} from '@flowlib/core/types';
 
 export type { NodeDefinition };
 

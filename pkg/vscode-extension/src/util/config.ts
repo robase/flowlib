@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 
 /**
- * Typed wrapper around `vscode.workspace.getConfiguration('invect')`.
+ * Typed wrapper around `vscode.workspace.getConfiguration('flowlib')`.
  *
  * Other lanes (L5/L7/L8/L10/L11/L12) should consume `readConfig()` and
  * `onConfigChange()` rather than calling `getConfiguration().get<string>(...)`
@@ -10,12 +10,12 @@ import * as vscode from 'vscode';
  * every callsite stays correct.
  *
  * `scope` is a resource URI (typically the document being edited). Most
- * `invect.*` settings are declared `"scope": "resource"` so per-folder /
+ * `flowlib.*` settings are declared `"scope": "resource"` so per-folder /
  * per-workspace overrides actually apply.
  */
 export interface InvectConfig {
   /**
-   * Backend URL (e.g. `http://localhost:3000/invect`). Empty string means
+   * Backend URL (e.g. `http://localhost:3000/flowlib`). Empty string means
    * "work offline" — L10 surfaces this as the disconnected state in the
    * status bar. Always trimmed.
    */
@@ -56,7 +56,7 @@ const DEFAULTS = {
  * caches settings cheaply but consistency-within-an-operation matters more.
  */
 export function readConfig(scope?: vscode.Uri): InvectConfig {
-  const c = vscode.workspace.getConfiguration('invect', scope);
+  const c = vscode.workspace.getConfiguration('flowlib', scope);
   const rawUrl = c.get<string>('backendUrl', DEFAULTS.backendUrl);
   return {
     backendUrl: typeof rawUrl === 'string' ? rawUrl.trim() : DEFAULTS.backendUrl,
@@ -67,7 +67,7 @@ export function readConfig(scope?: vscode.Uri): InvectConfig {
 }
 
 /**
- * Subscribe to `invect.*` configuration changes. Filters by section so
+ * Subscribe to `flowlib.*` configuration changes. Filters by section so
  * callbacks don't fire on unrelated edits like a font-family change.
  *
  * Returns a `Disposable` that callers must add to their `ctx.subscriptions`
@@ -79,7 +79,7 @@ export function onConfigChange(
   scope?: vscode.Uri,
 ): vscode.Disposable {
   return vscode.workspace.onDidChangeConfiguration((e) => {
-    if (!e.affectsConfiguration('invect', scope)) {
+    if (!e.affectsConfiguration('flowlib', scope)) {
       return;
     }
     cb(readConfig(scope));
@@ -97,7 +97,7 @@ export function onConfigChange(
  *     behavior inside Electron.
  *
  * Accepts http and https only. Hostnames aren't validated beyond what
- * `URL` does — `http://localhost`, `http://192.168.1.5:3000`, `http://invect.dev`
+ * `URL` does — `http://localhost`, `http://192.168.1.5:3000`, `http://flowlib.dev`
  * are all fine.
  */
 export function isValidBackendUrl(url: string): { ok: true } | { ok: false; reason: string } {

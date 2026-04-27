@@ -1,5 +1,5 @@
 import { Injectable, Inject } from '@nestjs/common';
-import type { InvectInstance } from '@invect/core';
+import type { InvectInstance } from '@flowlib/core';
 
 @Injectable()
 export class InvectService {

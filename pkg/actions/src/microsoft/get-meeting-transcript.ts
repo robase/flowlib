@@ -10,7 +10,7 @@
  * Flow: list transcripts → pick one → fetch content as text/vtt → return.
  */
 
-import { defineAction } from '@invect/action-kit';
+import { defineAction } from '@flowlib/action-kit';
 import { MICROSOFT_PROVIDER } from '../providers';
 import { z } from 'zod/v4';
 

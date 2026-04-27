@@ -21,7 +21,7 @@
     "baseUrl": ".",
     "paths": {
       "~/*": ["./src/*"],
-      "@invect/types": ["../types/dist/index.d.ts"]
+      "@flowlib/types": ["../types/dist/index.d.ts"]
     }
   },
   "include": ["src/**/*", "src/.ui-v3"],

@@ -8,7 +8,7 @@ export { twitterGetUserTweetsAction } from './get-user-tweets';
 export { twitterSearchTweetsAction } from './search-tweets';
 export { twitterGetMeAction } from './get-me';
 
-import type { ActionDefinition } from '@invect/action-kit';
+import type { ActionDefinition } from '@flowlib/action-kit';
 import { twitterCreateTweetAction } from './create-tweet';
 import { twitterGetUserAction } from './get-user';
 import { twitterGetUserTweetsAction } from './get-user-tweets';

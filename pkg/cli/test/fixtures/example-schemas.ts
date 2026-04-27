@@ -8,11 +8,11 @@
  * (e.g., twoFactor, username, organization) to exercise the generator.
  */
 
-import type { InvectPluginSchema } from '@invect/core';
+import type { InvectPluginSchema } from '@flowlib/core';
 
 // =============================================================================
 // 0. User Auth — auth tables (user, session, account, verification)
-//    Mirrors the schema exported by @invect/user-auth's USER_AUTH_SCHEMA
+//    Mirrors the schema exported by @flowlib/user-auth's USER_AUTH_SCHEMA
 // =============================================================================
 
 export const authenticationSchema: InvectPluginSchema = {

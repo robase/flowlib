@@ -1,5 +1,5 @@
 import type { Node, Edge } from '@xyflow/react';
-import type { InvectDefinition, FlowEdge, MapperConfig } from '@invect/core/types';
+import type { InvectDefinition, FlowEdge, MapperConfig } from '@flowlib/core/types';
 
 type NodeData = Record<string, unknown> & {
   params?: Record<string, unknown>;

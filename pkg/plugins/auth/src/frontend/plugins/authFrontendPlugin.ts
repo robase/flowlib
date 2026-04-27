@@ -1,5 +1,5 @@
 /**
- * @invect/user-auth — Auth Frontend Plugin Definition
+ * @flowlib/user-auth — Auth Frontend Plugin Definition
  *
  * Registers the auth plugin's frontend contributions:
  * - App shell: AuthProvider + AuthGate (sign-in page when unauthenticated)
@@ -13,7 +13,7 @@ import { ProfilePage } from '../components/ProfilePage';
 import { UserManagementPage } from '../components/UserManagementPage';
 import { SidebarUserMenu } from '../components/SidebarUserMenu';
 import { AuthAppShell } from '../components/AuthAppShell';
-import type { InvectFrontendPlugin } from '@invect/ui';
+import type { InvectFrontendPlugin } from '@flowlib/ui';
 
 export const authFrontend: InvectFrontendPlugin = {
   id: 'user-auth',

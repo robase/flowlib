@@ -1,17 +1,17 @@
 /**
- * `npx invect-cli init` — Initialize Invect in your project
+ * `npx flowlib-cli init` — Initialize Invect in your project
  *
  * Interactive setup wizard that:
  *   1. Detects your framework (Express, NestJS, Next.js)
- *   2. Installs @invect/core + framework adapter
- *   3. Creates invect.config.ts
+ *   2. Installs @flowlib/core + framework adapter
+ *   3. Creates flowlib.config.ts
  *   4. Generates initial database schema files
  *   5. Creates a starter route handler
  *
  * Usage:
- *   npx invect-cli init
- *   npx invect-cli init --framework express
- *   npx invect-cli init --database sqlite
+ *   npx flowlib-cli init
+ *   npx flowlib-cli init --framework express
+ *   npx flowlib-cli init --database sqlite
  */
 
 import { Command } from 'commander';
@@ -72,21 +72,21 @@ export const FRAMEWORKS = [
     name: 'Express',
     id: 'express',
     dependency: 'express',
-    adapterPackage: '@invect/express',
+    adapterPackage: '@flowlib/express',
     configPaths: null,
   },
   {
     name: 'NestJS',
     id: 'nestjs',
     dependency: '@nestjs/core',
-    adapterPackage: '@invect/nestjs',
+    adapterPackage: '@flowlib/nestjs',
     configPaths: ['nest-cli.json'],
   },
   {
     name: 'Next.js',
     id: 'nextjs',
     dependency: 'next',
-    adapterPackage: '@invect/nextjs',
+    adapterPackage: '@flowlib/nextjs',
     configPaths: ['next.config.js', 'next.config.ts', 'next.config.mjs'],
   },
   {
@@ -375,15 +375,15 @@ export const initCommand = new Command('init')
       const depsToInstall: string[] = [];
       const devDepsToInstall: string[] = [];
 
-      if (!('@invect/core' in allDeps)) {
-        depsToInstall.push(getPreferredPackageSpec('@invect/core'));
+      if (!('@flowlib/core' in allDeps)) {
+        depsToInstall.push(getPreferredPackageSpec('@flowlib/core'));
       }
 
-      if (!('@invect/cli' in allDeps)) {
-        devDepsToInstall.push(getPreferredPackageSpec('@invect/cli'));
+      if (!('@flowlib/cli' in allDeps)) {
+        devDepsToInstall.push(getPreferredPackageSpec('@flowlib/cli'));
       }
 
-      // @invect/core ships postgres, better-sqlite3, mysql2, and @libsql/client
+      // @flowlib/core ships postgres, better-sqlite3, mysql2, and @libsql/client
       // as direct dependencies, so they're installed transitively.
       // Only install the driver explicitly if it's NOT a core dependency
       // (currently all supported drivers are, so this is a no-op — but future-proofs
@@ -417,8 +417,8 @@ export const initCommand = new Command('init')
 
       // Frontend package
       if (framework.id !== 'other') {
-        if (!('@invect/ui' in allDeps)) {
-          depsToInstall.push(getPreferredPackageSpec('@invect/ui'));
+        if (!('@flowlib/ui' in allDeps)) {
+          depsToInstall.push(getPreferredPackageSpec('@flowlib/ui'));
         }
       }
 
@@ -481,7 +481,7 @@ export const initCommand = new Command('init')
       step('Create Configuration');
 
       const configCode = generateConfigFile(framework, database);
-      const configPath = path.join(process.cwd(), 'invect.config.ts');
+      const configPath = path.join(process.cwd(), 'flowlib.config.ts');
 
       if (fs.existsSync(configPath)) {
         console.log(
@@ -589,13 +589,13 @@ export const initCommand = new Command('init')
           console.error(
             pc.yellow('  ⚠ Schema generation failed. You can run it manually later:') +
               '\n' +
-              pc.dim(`    npx invect-cli generate\n`),
+              pc.dim(`    npx flowlib-cli generate\n`),
           );
           debugError('Schema generation error', error);
         }
       } else {
         console.log(
-          pc.dim('  Skipped. Run ' + pc.cyan('npx invect-cli generate') + ' when ready.'),
+          pc.dim('  Skipped. Run ' + pc.cyan('npx flowlib-cli generate') + ' when ready.'),
         );
       }
 
@@ -614,7 +614,7 @@ export const initCommand = new Command('init')
 
       if (!shouldGenerate) {
         nextSteps.push(
-          `  ${n++}. Run ${pc.cyan('npx invect-cli generate')} to create schema files`,
+          `  ${n++}. Run ${pc.cyan('npx flowlib-cli generate')} to create schema files`,
         );
       }
 
@@ -630,18 +630,18 @@ export const initCommand = new Command('init')
 
       if (framework.id === 'express') {
         nextSteps.push(
-          `  ${n++}. Mount the router: ${pc.cyan("app.use('/invect', createInvectRouter(config))")}`,
+          `  ${n++}. Mount the router: ${pc.cyan("app.use('/flowlib', createInvectRouter(config))")}`,
         );
       } else if (framework.id === 'nextjs') {
-        const routeFile = 'app/api/invect/[...invect]/route.ts';
+        const routeFile = 'app/api/flowlib/[...flowlib]/route.ts';
         const configRelPath = path.relative(process.cwd(), configPath);
-        // Compute import path from route file to config (e.g. "../../../../invect.config")
+        // Compute import path from route file to config (e.g. "../../../../flowlib.config")
         const routeImportPath = path
           .relative(path.dirname(routeFile), configRelPath)
           .replace(/\.ts$/, '');
 
         const routeSnippet = [
-          `import { createInvectHandler } from '@invect/nextjs';`,
+          `import { createInvectHandler } from '@flowlib/nextjs';`,
           `import { config } from '${routeImportPath}';`,
           ``,
           `const handler = createInvectHandler(config);`,
@@ -658,9 +658,9 @@ export const initCommand = new Command('init')
         nextSteps.push(`  ${n++}. Create ${pc.cyan(routeFile)}:\n\n${routeSnippet}\n`);
 
         // Cron maintenance route for Vercel / serverless deployments
-        const cronRouteFile = 'app/api/invect/cron/route.ts';
+        const cronRouteFile = 'app/api/flowlib/cron/route.ts';
         const cronRouteSnippet = [
-          `import { createInvectCronHandler } from '@invect/nextjs';`,
+          `import { createInvectCronHandler } from '@flowlib/nextjs';`,
           `import { config } from '${routeImportPath}';`,
           ``,
           `export const GET = createInvectCronHandler(config);`,
@@ -670,7 +670,7 @@ export const initCommand = new Command('init')
 
         const vercelJsonSnippet = [
           `{`,
-          `  "crons": [{ "path": "/api/invect/cron", "schedule": "* * * * *" }]`,
+          `  "crons": [{ "path": "/api/flowlib/cron", "schedule": "* * * * *" }]`,
           `}`,
         ]
           .map((l) => `  ${pc.cyan(l)}`)
@@ -687,8 +687,8 @@ export const initCommand = new Command('init')
 
       // Frontend UI step
       if (framework.id === 'nextjs') {
-        const pageFile = 'app/invect/[[...slug]]/page.tsx';
-        // Compute relative import path from page file to invect.config
+        const pageFile = 'app/flowlib/[[...slug]]/page.tsx';
+        // Compute relative import path from page file to flowlib.config
         const configRelPath = path.relative(process.cwd(), configPath).replace(/\.ts$/, '');
         const pageImportPath = path
           .relative(path.dirname(pageFile), configRelPath)
@@ -698,11 +698,11 @@ export const initCommand = new Command('init')
           `'use client';`,
           ``,
           `import dynamic from 'next/dynamic';`,
-          `import '@invect/ui/styles';`,
+          `import '@flowlib/ui/styles';`,
           `import config from '${pageImportPath}';`,
           ``,
           `const Invect = dynamic(`,
-          `  () => import('@invect/ui').then((mod) => ({ default: mod.Invect })),`,
+          `  () => import('@flowlib/ui').then((mod) => ({ default: mod.Invect })),`,
           `  { ssr: false },`,
           `);`,
           ``,
@@ -716,7 +716,7 @@ export const initCommand = new Command('init')
         nextSteps.push(`  ${n++}. Create ${pc.cyan(pageFile)}:\n\n${pageSnippet}\n`);
       } else if (framework.id === 'express') {
         nextSteps.push(
-          `  ${n++}. Add the frontend — see ${pc.cyan('https://invect.dev/docs/frontend')}`,
+          `  ${n++}. Add the frontend — see ${pc.cyan('https://flowlib.dev/docs/frontend')}`,
         );
       }
 
@@ -826,12 +826,12 @@ export function generateConfigFile(framework: Framework, database: Database): st
     const driverLine = needsDriver ? `\n    driver: '${database.driver}',` : '';
     dbConfig = `  database: {
     type: 'postgresql',${driverLine}
-    connectionString: process.env.DATABASE_URL || 'postgresql://localhost:5432/invect',
+    connectionString: process.env.DATABASE_URL || 'postgresql://localhost:5432/flowlib',
   },`;
   } else {
     dbConfig = `  database: {
     type: 'mysql',
-    connectionString: process.env.DATABASE_URL || 'mysql://root@localhost:3306/invect',
+    connectionString: process.env.DATABASE_URL || 'mysql://root@localhost:3306/flowlib',
   },`;
   }
 
@@ -839,7 +839,7 @@ export function generateConfigFile(framework: Framework, database: Database): st
     ? `// import { ... } from '${framework.adapterPackage}';\n`
     : '';
 
-  const apiPath = framework.id === 'nextjs' ? '/api/invect' : '/invect';
+  const apiPath = framework.id === 'nextjs' ? '/api/flowlib' : '/flowlib';
 
   return `/**
  * Invect Configuration
@@ -847,15 +847,15 @@ export function generateConfigFile(framework: Framework, database: Database): st
  * This file is read by the Invect CLI for schema generation
  * and by your application at runtime.
  *
- * Docs: https://invect.dev/docs
+ * Docs: https://flowlib.dev/docs
  */
 
-import { defineConfig } from '@invect/core';
+import { defineConfig } from '@flowlib/core';
 ${adapterImport}
 export const config = defineConfig({
   encryptionKey: process.env.INVECT_ENCRYPTION_KEY,
 ${dbConfig}
-  frontendPath: '/invect',
+  frontendPath: '/flowlib',
   apiPath: '${apiPath}',
 
   // Plugins (each has backend + frontend parts)
@@ -913,10 +913,10 @@ export function generateDrizzleConfigFile(database: Database, schemaPath: string
     url: process.env.DATABASE_URL || './dev.db',
   },`,
     postgresql: `  dbCredentials: {
-    url: process.env.DATABASE_URL || 'postgresql://localhost:5432/invect',
+    url: process.env.DATABASE_URL || 'postgresql://localhost:5432/flowlib',
   },`,
     mysql: `  dbCredentials: {
-    url: process.env.DATABASE_URL || 'mysql://root@localhost:3306/invect',
+    url: process.env.DATABASE_URL || 'mysql://root@localhost:3306/flowlib',
   },`,
   };
 
@@ -949,7 +949,7 @@ export function getDefaultDrizzleSchemaPath(existingSchemaPath?: string | null):
 
 /** @internal — exported for testing */
 export function getPreferredPackageSpec(packageName: string, cwd = process.cwd()): string {
-  if (!packageName.startsWith('@invect/')) {
+  if (!packageName.startsWith('@flowlib/')) {
     return packageName;
   }
 

@@ -1,6 +1,6 @@
 /**
- * Re-exports the Action Registry from `@invect/actions`. Kept here so
- * existing `src/actions/action-registry` imports inside `@invect/core`
+ * Re-exports the Action Registry from `@flowlib/actions`. Kept here so
+ * existing `src/actions/action-registry` imports inside `@flowlib/core`
  * (including the `core/` actions that call `actionToNodeDefinition`)
  * continue to resolve.
  */
@@ -12,4 +12,4 @@ export {
   setGlobalActionRegistry,
   resetGlobalActionRegistry,
   actionToNodeDefinition,
-} from '@invect/actions/registry';
+} from '@flowlib/actions/registry';

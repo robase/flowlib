@@ -1,6 +1,6 @@
 /**
- * Re-exported from `@invect/action-kit`. Kept here so existing
- * `src/actions/define-action` imports inside `@invect/core` keep resolving.
+ * Re-exported from `@flowlib/action-kit`. Kept here so existing
+ * `src/actions/define-action` imports inside `@flowlib/core` keep resolving.
  */
 
-export { defineAction } from '@invect/action-kit';
+export { defineAction } from '@flowlib/action-kit';

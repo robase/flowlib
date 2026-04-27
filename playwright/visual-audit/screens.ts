@@ -426,7 +426,7 @@ export const SCREENS: ScreenDefinition[] = [
   {
     id: '29-webhooks-empty',
     description:
-      "Webhooks management page in empty state showing the 'No webhooks yet' message with a create button. Part of the @invect/webhooks plugin.",
+      "Webhooks management page in empty state showing the 'No webhooks yet' message with a create button. Part of the @flowlib/webhooks plugin.",
     tags: ['page', 'plugin', 'webhooks', 'empty-state'],
   },
   {
@@ -468,7 +468,7 @@ export const SCREENS: ScreenDefinition[] = [
   {
     id: '35-users-list',
     description:
-      'User management page from the @invect/user-auth plugin showing the admin user table with name, email, role dropdown, and action columns.',
+      'User management page from the @flowlib/user-auth plugin showing the admin user table with name, email, role dropdown, and action columns.',
     tags: ['page', 'plugin', 'auth', 'users'],
   },
   {
@@ -480,13 +480,13 @@ export const SCREENS: ScreenDefinition[] = [
   {
     id: '37-user-profile',
     description:
-      "Profile page from the @invect/user-auth plugin showing the current user's avatar, name, email, role badge, user ID, and sign out button.",
+      "Profile page from the @flowlib/user-auth plugin showing the current user's avatar, name, email, role badge, user ID, and sign out button.",
     tags: ['page', 'plugin', 'auth', 'profile'],
   },
   {
     id: '38-sidebar-user-menu',
     description:
-      'Sidebar footer showing the signed-in user avatar and name from the @invect/user-auth plugin, visible when sidebar is expanded.',
+      'Sidebar footer showing the signed-in user avatar and name from the @flowlib/user-auth plugin, visible when sidebar is expanded.',
     tags: ['navigation', 'plugin', 'auth', 'sidebar-footer'],
   },
 
@@ -494,7 +494,7 @@ export const SCREENS: ScreenDefinition[] = [
   {
     id: '39-access-control-tree',
     description:
-      "Access Control page from the @invect/rbac plugin showing the two-pane layout: left pane has a team/flow hierarchy tree with Engineering and Data Science teams, right pane shows the 'Select a team or flow' empty state.",
+      "Access Control page from the @flowlib/rbac plugin showing the two-pane layout: left pane has a team/flow hierarchy tree with Engineering and Data Science teams, right pane shows the 'Select a team or flow' empty state.",
     tags: ['page', 'plugin', 'rbac', 'access-control', 'tree'],
   },
   {
@@ -512,7 +512,7 @@ export const SCREENS: ScreenDefinition[] = [
   {
     id: '42-share-button-flow',
     description:
-      'Flow editor header showing the Share button contributed by the @invect/rbac plugin, alongside the standard flow name, run button, and version controls.',
+      'Flow editor header showing the Share button contributed by the @flowlib/rbac plugin, alongside the standard flow name, run button, and version controls.',
     tags: ['editor', 'plugin', 'rbac', 'share-button'],
   },
   {

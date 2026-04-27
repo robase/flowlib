@@ -1,6 +1,6 @@
 // spec: Cross-platform API parity — Express adapter
 //
-// Validates that the Express adapter (@invect/express) exposes the full
+// Validates that the Express adapter (@flowlib/express) exposes the full
 // Invect API contract.  Each worker gets its own isolated Express server
 // with a disposable SQLite database, so these tests run fully in parallel.
 

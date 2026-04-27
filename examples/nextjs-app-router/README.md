@@ -22,11 +22,11 @@ pnpm install
 pnpm dev
 ```
 
-Open [http://localhost:3002](http://localhost:3002) to see the app. The Invect UI is mounted at `/invect`.
+Open [http://localhost:3002](http://localhost:3002) to see the app. The Invect UI is mounted at `/flowlib`.
 
 ## Vercel Cron
 
-For production Vercel deployments, this example includes a dedicated Invect maintenance route at `/api/invect/cron` plus a `vercel.json` cron entry.
+For production Vercel deployments, this example includes a dedicated Invect maintenance route at `/api/flowlib/cron` plus a `vercel.json` cron entry.
 
 That single Invect cron is used to:
 

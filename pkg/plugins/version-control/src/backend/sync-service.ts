@@ -3,7 +3,7 @@
 // =============================================================================
 
 import type { GitProvider } from './git-provider';
-import type { PluginDatabaseApi } from '@invect/core';
+import type { PluginDatabaseApi } from '@flowlib/core';
 import type { VersionControlPluginOptions } from './types';
 import type {
   VcSyncConfig,
@@ -12,7 +12,7 @@ import type {
   VcSyncStatus,
   ConfigureSyncInput,
 } from '../shared/types';
-import { emitSdkSource } from '@invect/sdk';
+import { emitSdkSource } from '@flowlib/sdk';
 import { substituteCredentialEnvs } from './credential-env-substitution';
 
 interface FlowRow {
@@ -500,7 +500,7 @@ export class VcSyncService {
     identity?: string,
     openPr: boolean = true,
   ): Promise<VcSyncResult> {
-    const branchName = config.draftBranch ?? `invect/flow/${this.flowSlug(config.filePath)}`;
+    const branchName = config.draftBranch ?? `flowlib/flow/${this.flowSlug(config.filePath)}`;
 
     // Create branch if it doesn't exist
     const existing = await this.provider.getBranch(config.repo, branchName);
@@ -885,8 +885,8 @@ function mapHistoryRow(r: VcSyncHistoryRow): VcSyncHistoryRecord {
  */
 export function parseFlowTsContent(content: string): { nodes: unknown[]; edges: unknown[] } | null {
   // Strategy 1 (preferred): Look for the embedded JSON block comment.
-  // The serializer embeds `/* @invect-definition {...} */` for reliable round-tripping.
-  const jsonCommentMatch = content.match(/\/\*\s*@invect-definition\s+([\s\S]*?)\s*\*\//);
+  // The serializer embeds `/* @flowlib-definition {...} */` for reliable round-tripping.
+  const jsonCommentMatch = content.match(/\/\*\s*@flowlib-definition\s+([\s\S]*?)\s*\*\//);
   if (jsonCommentMatch) {
     try {
       return JSON.parse(jsonCommentMatch[1]);

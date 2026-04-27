@@ -24,7 +24,7 @@ export default async function Page(props: { params: Promise<{ slug?: string[] }>
         <LLMCopyButton markdownUrl={markdownUrl} />
         <ViewOptions
           markdownUrl={markdownUrl}
-          githubUrl={`https://github.com/robase/invect/blob/main/docs/content/docs/${page.path}`}
+          githubUrl={`https://github.com/robase/flowlib/blob/main/docs/content/docs/${page.path}`}
         />
       </div>
       <DocsBody>

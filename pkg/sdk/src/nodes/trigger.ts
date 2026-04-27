@@ -11,8 +11,8 @@
  *   - `trigger.manual('ref')` / `trigger.cron('ref', { expression })` — positional.
  */
 
-import { manualTriggerAction, cronTriggerAction } from '@invect/actions/triggers';
-import type { NodeOptions, SdkFlowNode } from '@invect/action-kit';
+import { manualTriggerAction, cronTriggerAction } from '@flowlib/actions/triggers';
+import type { NodeOptions, SdkFlowNode } from '@flowlib/action-kit';
 
 interface ManualParams {
   defaultInputs?: Record<string, unknown>;

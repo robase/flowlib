@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * @invect/cli — CLI for managing Invect projects
+ * @flowlib/cli — CLI for managing Invect projects
  *
  * Commands:
  *   init      — Initialize Invect in your project
@@ -11,12 +11,12 @@
  *   secret    — Generate a secure encryption key
  *
  * Usage:
- *   npx invect-cli init
- *   npx invect-cli generate
- *   npx invect-cli migrate
- *   npx invect-cli info
- *   npx invect-cli secret
- *   npx invect-cli mcp --url http://localhost:3000/invect --api-key YOUR_KEY
+ *   npx flowlib-cli init
+ *   npx flowlib-cli generate
+ *   npx flowlib-cli migrate
+ *   npx flowlib-cli info
+ *   npx flowlib-cli secret
+ *   npx flowlib-cli mcp --url http://localhost:3000/flowlib --api-key YOUR_KEY
  */
 
 import { createRequire } from 'node:module';
@@ -38,7 +38,7 @@ process.on('SIGINT', () => process.exit(0));
 process.on('SIGTERM', () => process.exit(0));
 
 async function main() {
-  const program = new Command('invect');
+  const program = new Command('flowlib');
 
   program
     .description('CLI for managing Invect workflow engine projects')

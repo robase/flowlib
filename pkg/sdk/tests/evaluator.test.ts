@@ -6,7 +6,7 @@ import { evaluateSdkSource } from '../src/evaluator';
 import { scanImports } from '../src/evaluator/import-scan';
 
 /**
- * The evaluator resolves `@invect/sdk` + friends via jiti's alias map, which
+ * The evaluator resolves `@flowlib/sdk` + friends via jiti's alias map, which
  * routes each package specifier to its `package.json` → `exports` →
  * `dist/index.mjs`. That means the dist must exist before tests run. In
  * normal dev flows `pnpm build` is the first step; this guard is belt-and-
@@ -15,32 +15,32 @@ import { scanImports } from '../src/evaluator/import-scan';
 beforeAll(() => {
   const sdkDist = path.resolve(__dirname, '..', 'dist', 'index.mjs');
   if (!fs.existsSync(sdkDist)) {
-    execSync('pnpm --filter @invect/sdk build', { stdio: 'inherit' });
+    execSync('pnpm --filter @flowlib/sdk build', { stdio: 'inherit' });
   }
 });
 
 describe('scanImports', () => {
   describe('allowlist', () => {
-    it('accepts @invect/sdk imports', () => {
-      const { errors } = scanImports(`import { defineFlow, input } from '@invect/sdk';`);
+    it('accepts @flowlib/sdk imports', () => {
+      const { errors } = scanImports(`import { defineFlow, input } from '@flowlib/sdk';`);
       expect(errors).toEqual([]);
     });
 
-    it('accepts @invect/actions/<provider> subpaths', () => {
+    it('accepts @flowlib/actions/<provider> subpaths', () => {
       const { errors } = scanImports(
-        `import { gmailSendMessageAction } from '@invect/actions/gmail';`,
+        `import { gmailSendMessageAction } from '@flowlib/actions/gmail';`,
       );
       expect(errors).toEqual([]);
     });
 
-    it('accepts @invect/action-kit', () => {
-      const { errors } = scanImports(`import { defineAction } from '@invect/action-kit';`);
+    it('accepts @flowlib/action-kit', () => {
+      const { errors } = scanImports(`import { defineAction } from '@flowlib/action-kit';`);
       expect(errors).toEqual([]);
     });
 
     it('accepts caller-registered additional imports', () => {
-      const { errors } = scanImports(`import { myAction } from '@acme/invect-actions';`, [
-        '@acme/invect-actions',
+      const { errors } = scanImports(`import { myAction } from '@acme/flowlib-actions';`, [
+        '@acme/flowlib-actions',
       ]);
       expect(errors).toEqual([]);
     });
@@ -88,7 +88,7 @@ describe('scanImports', () => {
 
     it('includes line numbers in errors', () => {
       const src = `
-import { defineFlow } from '@invect/sdk';
+import { defineFlow } from '@flowlib/sdk';
 import fs from 'node:fs';
       `;
       const { errors } = scanImports(src);
@@ -99,14 +99,14 @@ import fs from 'node:fs';
   describe('mixed imports', () => {
     it('accepts allowed, rejects forbidden — returns only the forbidden as errors', () => {
       const src = `
-import { defineFlow, input } from '@invect/sdk';
-import { gmailSendMessageAction } from '@invect/actions/gmail';
+import { defineFlow, input } from '@flowlib/sdk';
+import { gmailSendMessageAction } from '@flowlib/actions/gmail';
 import fs from 'node:fs';
       `;
       const { errors, allowedImports } = scanImports(src);
       expect(errors).toHaveLength(1);
       expect(errors[0].specifier).toBe('node:fs');
-      expect(allowedImports.sort()).toEqual(['@invect/actions/gmail', '@invect/sdk']);
+      expect(allowedImports.sort()).toEqual(['@flowlib/actions/gmail', '@flowlib/sdk']);
     });
   });
 });
@@ -115,7 +115,7 @@ describe('evaluateSdkSource', () => {
   describe('security: import scan runs first', () => {
     it('rejects a source with forbidden imports before evaluating', async () => {
       const src = `
-import { defineFlow, input } from '@invect/sdk';
+import { defineFlow, input } from '@flowlib/sdk';
 import fs from 'node:fs';
 export default defineFlow({ nodes: [input('q')], edges: [] });
       `;
@@ -127,7 +127,7 @@ export default defineFlow({ nodes: [input('q')], edges: [] });
 
     it('rejects dynamic import before evaluating', async () => {
       const src = `
-import { defineFlow, input } from '@invect/sdk';
+import { defineFlow, input } from '@flowlib/sdk';
 const _fs = await import('node:fs');
 export default defineFlow({ nodes: [input('q')], edges: [] });
       `;
@@ -140,7 +140,7 @@ export default defineFlow({ nodes: [input('q')], edges: [] });
   describe('evaluation', () => {
     it('evaluates a minimal flow', async () => {
       const src = `
-import { defineFlow, input, output } from '@invect/sdk';
+import { defineFlow, input, output } from '@flowlib/sdk';
 export default defineFlow({
   nodes: [input('query'), output('result', { value: 'hello' })],
   edges: [{ from: 'query', to: 'result' }],
@@ -158,7 +158,7 @@ export default defineFlow({
 
     it('preserves function-valued params (arrow bodies) for the transform step', async () => {
       const src = `
-import { defineFlow, input, code } from '@invect/sdk';
+import { defineFlow, input, code } from '@flowlib/sdk';
 export default defineFlow({
   nodes: [
     input('x'),
@@ -175,7 +175,7 @@ export default defineFlow({
 
     it('preserves metadata', async () => {
       const src = `
-import { defineFlow, input } from '@invect/sdk';
+import { defineFlow, input } from '@flowlib/sdk';
 export default defineFlow({
   name: 'My Flow',
   description: 'A test flow',
@@ -195,7 +195,7 @@ export default defineFlow({
 
     it('rejects sources without a default export', async () => {
       const src = `
-import { defineFlow, input } from '@invect/sdk';
+import { defineFlow, input } from '@flowlib/sdk';
 const notDefault = defineFlow({ nodes: [input('x')], edges: [] });
       `;
       const { ok, errors } = await evaluateSdkSource(src);
@@ -213,7 +213,7 @@ const notDefault = defineFlow({ nodes: [input('x')], edges: [] });
     it('returns eval-failed on runtime errors inside defineFlow', async () => {
       // defineFlow rejects duplicate referenceIds — this surfaces as eval-failed.
       const src = `
-import { defineFlow, input } from '@invect/sdk';
+import { defineFlow, input } from '@flowlib/sdk';
 export default defineFlow({
   nodes: [input('q'), input('q')],
   edges: [],
@@ -227,7 +227,7 @@ export default defineFlow({
 
     it('respects timeout for evaluation', async () => {
       const src = `
-import { defineFlow, input } from '@invect/sdk';
+import { defineFlow, input } from '@flowlib/sdk';
 // Force a long synchronous hang isn't feasible here without extra primitives,
 // so just use a Promise to simulate an await that never resolves.
 await new Promise(() => {});
@@ -242,12 +242,12 @@ export default defineFlow({ nodes: [input('x')], edges: [] });
   });
 
   describe('integration with provider actions', () => {
-    it('evaluates a source that imports from @invect/actions/gmail', async () => {
+    it('evaluates a source that imports from @flowlib/actions/gmail', async () => {
       // Note: this imports a real package from the workspace. The action
       // callable has a strict Zod schema, so we pass valid params.
       const src = `
-import { defineFlow, input } from '@invect/sdk';
-import { gmailSendMessageAction } from '@invect/actions/gmail';
+import { defineFlow, input } from '@flowlib/sdk';
+import { gmailSendMessageAction } from '@flowlib/actions/gmail';
 export default defineFlow({
   nodes: [
     input('event'),

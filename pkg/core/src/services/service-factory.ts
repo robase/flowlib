@@ -174,7 +174,7 @@ export class ServiceFactory {
       // PR 5/14: when the host has supplied a `BatchPollerAdapter` override
       // (typical for serverless / edge runtimes that drive scheduling
       // externally — e.g. Cloudflare Cron Triggers calling
-      // `invect.maintenance.pollBatchJobs()`), suppress the in-process
+      // `flowlib.maintenance.pollBatchJobs()`), suppress the in-process
       // `setInterval` loops in the orchestration service. The `runMaintenance`
       // / `maintenance.*` entry points still work in this mode.
       const externalScheduler = !!(this.config.services as { batchPoller?: unknown } | undefined)
@@ -234,7 +234,7 @@ export class ServiceFactory {
         flowsService,
         flowVersionsService,
         (this.actionRegistryRef as import('src/actions').ActionRegistry) ?? null,
-        null, // invect instance wired post-init via chatStreamService.setInvectInstance()
+        null, // flowlib instance wired post-init via chatStreamService.setInvectInstance()
       );
 
       // 6e. Wire execution event bus to services that write state.

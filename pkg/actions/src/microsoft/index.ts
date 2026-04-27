@@ -10,7 +10,7 @@ export { microsoftGetMessageAction } from './get-message';
 export { microsoftListOnlineMeetingsAction } from './list-online-meetings';
 export { microsoftGetMeetingTranscriptAction } from './get-meeting-transcript';
 
-import type { ActionDefinition } from '@invect/action-kit';
+import type { ActionDefinition } from '@flowlib/action-kit';
 import { microsoftListCalendarsAction } from './list-calendars';
 import { microsoftListCalendarEventsAction } from './list-calendar-events';
 import { microsoftGetCalendarEventAction } from './get-calendar-event';

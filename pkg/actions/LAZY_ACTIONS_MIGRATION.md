@@ -26,13 +26,13 @@ static imports of the provider's action modules):
 
 ```ts
 // Pulls only the descriptors — provider SDKs load on-demand via `import()`.
-import { lazyGmailActions } from '@invect/actions/gmail/lazy';
-import { lazyGithubActions } from '@invect/actions/github/lazy';
+import { lazyGmailActions } from '@flowlib/actions/gmail/lazy';
+import { lazyGithubActions } from '@flowlib/actions/github/lazy';
 
 registry.registerLazy([...lazyGmailActions, ...lazyGithubActions]);
 ```
 
-Importing from `@invect/actions` directly will pull both eager and lazy
+Importing from `@flowlib/actions` directly will pull both eager and lazy
 exports through one chunk; bundlers with strict tree-shaking can still
 drop the eager arrays, but the per-provider `*/lazy` subpaths guarantee
 the smallest cold-start.

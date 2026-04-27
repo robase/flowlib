@@ -1,12 +1,12 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import '@invect/ui/styles';
+import '@flowlib/ui/styles';
 
 type DemoInvectType = React.ComponentType<{ data: unknown; useMemoryRouter?: boolean }>;
 type DemoData = unknown;
 
-const DISMISSED_KEY = 'invect-demo-modal-dismissed';
+const DISMISSED_KEY = 'flowlib-demo-modal-dismissed';
 
 /* -------------------------------------------------------------------------- */
 /*  Info Modal                                                                 */
@@ -128,7 +128,7 @@ export function DemoPage() {
 
   useEffect(() => {
     let cancelled = false;
-    import('@invect/ui/demo').then((mod) => {
+    import('@flowlib/ui/demo').then((mod) => {
       if (cancelled) return;
       setDemoInvect(() => mod.DemoInvect as unknown as DemoInvectType);
       setData(mod.sampleDemoData);
@@ -228,7 +228,7 @@ export function DemoPage() {
 
         {/* Center: Star on GitHub */}
         <a
-          href="https://github.com/robase/invect"
+          href="https://github.com/robase/flowlib"
           target="_blank"
           rel="noopener noreferrer"
           style={{

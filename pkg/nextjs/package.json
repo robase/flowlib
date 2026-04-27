@@ -1,23 +1,23 @@
 {
-  "name": "@invect/nextjs",
+  "name": "@flowlib/nextjs",
   "version": "0.0.12",
   "description": "Next.js integration for Invect",
   "keywords": [
     "api",
     "automation",
-    "invect",
+    "flowlib",
     "nextjs",
     "workflow"
   ],
-  "homepage": "https://invect.dev",
+  "homepage": "https://flowlib.dev",
   "bugs": {
-    "url": "https://github.com/robase/invect/issues"
+    "url": "https://github.com/robase/flowlib/issues"
   },
   "license": "MIT",
-  "author": "robase <team@invect.dev>",
+  "author": "robase <team@flowlib.dev>",
   "repository": {
     "type": "git",
-    "url": "https://github.com/robase/invect.git",
+    "url": "https://github.com/robase/flowlib.git",
     "directory": "pkg/nextjs"
   },
   "files": [
@@ -47,7 +47,7 @@
     "test": "echo \"No tests configured\""
   },
   "dependencies": {
-    "@invect/core": "workspace:*",
+    "@flowlib/core": "workspace:*",
     "zod": "^3.22.0"
   },
   "devDependencies": {

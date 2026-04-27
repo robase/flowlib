@@ -8,7 +8,7 @@ export { shopifyListOrdersAction } from './list-orders';
 export { shopifyListCustomersAction } from './list-customers';
 export { shopifyCreateProductAction } from './create-product';
 
-import type { ActionDefinition } from '@invect/action-kit';
+import type { ActionDefinition } from '@flowlib/action-kit';
 import { shopifyListProductsAction } from './list-products';
 import { shopifyGetProductAction } from './get-product';
 import { shopifyListOrdersAction } from './list-orders';

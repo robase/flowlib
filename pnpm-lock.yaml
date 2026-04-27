@@ -28,7 +28,7 @@ importers:
       '@anthropic-ai/sdk':
         specifier: ^0.56.0
         version: 0.56.0
-      '@invect/cli':
+      '@flowlib/cli':
         specifier: link:pkg/cli
         version: link:pkg/cli
       '@nestjs/platform-express':
@@ -185,10 +185,10 @@ importers:
 
   docs:
     dependencies:
-      '@invect/core':
+      '@flowlib/core':
         specifier: workspace:*
         version: link:../pkg/core
-      '@invect/ui':
+      '@flowlib/ui':
         specifier: workspace:*
         version: link:../pkg/ui
       '@radix-ui/react-dialog':
@@ -294,28 +294,28 @@ importers:
 
   examples/express-drizzle:
     dependencies:
-      '@invect/core':
+      '@flowlib/core':
         specifier: workspace:*
         version: link:../../pkg/core
-      '@invect/express':
+      '@flowlib/express':
         specifier: workspace:*
         version: link:../../pkg/express
-      '@invect/mcp':
+      '@flowlib/mcp':
         specifier: workspace:*
         version: link:../../pkg/plugins/mcp
-      '@invect/rbac':
+      '@flowlib/rbac':
         specifier: workspace:*
         version: link:../../pkg/plugins/rbac
-      '@invect/user-auth':
+      '@flowlib/user-auth':
         specifier: workspace:*
         version: link:../../pkg/plugins/auth
-      '@invect/vercel-workflows':
+      '@flowlib/vercel-workflows':
         specifier: workspace:*
         version: link:../../pkg/plugins/vercel-workflows
-      '@invect/version-control':
+      '@flowlib/version-control':
         specifier: workspace:*
         version: link:../../pkg/plugins/version-control
-      '@invect/webhooks':
+      '@flowlib/webhooks':
         specifier: workspace:*
         version: link:../../pkg/plugins/webhooks
       '@types/cors':
@@ -364,10 +364,10 @@ importers:
 
   examples/flow-canvas-playground:
     dependencies:
-      '@invect/core':
+      '@flowlib/core':
         specifier: workspace:*
         version: link:../../pkg/core
-      '@invect/ui':
+      '@flowlib/ui':
         specifier: workspace:*
         version: link:../../pkg/ui
       '@tanstack/react-query':
@@ -404,13 +404,13 @@ importers:
 
   examples/nest-prisma:
     dependencies:
-      '@invect/cli':
+      '@flowlib/cli':
         specifier: workspace:*
         version: link:../../pkg/cli
-      '@invect/core':
+      '@flowlib/core':
         specifier: workspace:*
         version: link:../../pkg/core
-      '@invect/nestjs':
+      '@flowlib/nestjs':
         specifier: workspace:*
         version: link:../../pkg/nestjs
       '@nestjs/common':
@@ -504,13 +504,13 @@ importers:
 
   examples/nextjs-app-router:
     dependencies:
-      '@invect/core':
+      '@flowlib/core':
         specifier: workspace:*
         version: link:../../pkg/core
-      '@invect/nextjs':
+      '@flowlib/nextjs':
         specifier: workspace:*
         version: link:../../pkg/nextjs
-      '@invect/ui':
+      '@flowlib/ui':
         specifier: workspace:*
         version: link:../../pkg/ui
       '@tailwindcss/postcss':
@@ -532,7 +532,7 @@ importers:
         specifier: ^4.1.12
         version: 4.2.1
     devDependencies:
-      '@invect/cli':
+      '@flowlib/cli':
         specifier: workspace:*
         version: link:../../pkg/cli
       '@types/node':
@@ -556,19 +556,19 @@ importers:
 
   examples/nextjs-drizzle-auth-rbac:
     dependencies:
-      '@invect/core':
+      '@flowlib/core':
         specifier: workspace:*
         version: link:../../pkg/core
-      '@invect/nextjs':
+      '@flowlib/nextjs':
         specifier: workspace:*
         version: link:../../pkg/nextjs
-      '@invect/rbac':
+      '@flowlib/rbac':
         specifier: workspace:*
         version: link:../../pkg/plugins/rbac
-      '@invect/ui':
+      '@flowlib/ui':
         specifier: workspace:*
         version: link:../../pkg/ui
-      '@invect/user-auth':
+      '@flowlib/user-auth':
         specifier: workspace:*
         version: link:../../pkg/plugins/auth
       '@tailwindcss/postcss':
@@ -602,7 +602,7 @@ importers:
         specifier: ^4.1.12
         version: 4.2.1
     devDependencies:
-      '@invect/cli':
+      '@flowlib/cli':
         specifier: workspace:*
         version: link:../../pkg/cli
       '@playwright/test':
@@ -632,31 +632,31 @@ importers:
 
   examples/vite-react-frontend:
     dependencies:
-      '@invect/action-kit':
+      '@flowlib/action-kit':
         specifier: workspace:*
         version: link:../../pkg/action-kit
-      '@invect/mcp':
+      '@flowlib/mcp':
         specifier: workspace:*
         version: link:../../pkg/plugins/mcp
-      '@invect/rbac':
+      '@flowlib/rbac':
         specifier: workspace:*
         version: link:../../pkg/plugins/rbac
-      '@invect/sdk':
+      '@flowlib/sdk':
         specifier: workspace:*
         version: link:../../pkg/sdk
-      '@invect/ui':
+      '@flowlib/ui':
         specifier: workspace:*
         version: link:../../pkg/ui
-      '@invect/user-auth':
+      '@flowlib/user-auth':
         specifier: workspace:*
         version: link:../../pkg/plugins/auth
-      '@invect/vercel-workflows':
+      '@flowlib/vercel-workflows':
         specifier: workspace:*
         version: link:../../pkg/plugins/vercel-workflows
-      '@invect/version-control':
+      '@flowlib/version-control':
         specifier: workspace:*
         version: link:../../pkg/plugins/version-control
-      '@invect/webhooks':
+      '@flowlib/webhooks':
         specifier: workspace:*
         version: link:../../pkg/plugins/webhooks
       '@tanstack/react-query':
@@ -729,7 +729,7 @@ importers:
 
   experiments/embedded-backend-probe:
     dependencies:
-      '@invect/core':
+      '@flowlib/core':
         specifier: workspace:*
         version: link:../../pkg/core
       '@libsql/client':
@@ -773,7 +773,7 @@ importers:
 
   pkg/actions:
     dependencies:
-      '@invect/action-kit':
+      '@flowlib/action-kit':
         specifier: workspace:*
         version: link:../action-kit
       zod:
@@ -792,7 +792,7 @@ importers:
 
   pkg/cli:
     dependencies:
-      '@invect/core':
+      '@flowlib/core':
         specifier: workspace:*
         version: link:../core
       '@mrleebo/prisma-ast':
@@ -827,7 +827,7 @@ importers:
         specifier: ^4.1.4
         version: 4.1.4(@opentelemetry/api@1.9.1)(@types/node@24.12.0)(@vitest/coverage-v8@4.1.4)(@vitest/ui@4.1.4)(msw@2.12.10(@types/node@24.12.0)(typescript@5.9.3))(vite@8.0.8(@types/node@24.12.0)(esbuild@0.27.3)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.3))
     optionalDependencies:
-      '@invect/mcp':
+      '@flowlib/mcp':
         specifier: workspace:*
         version: link:../plugins/mcp
       '@modelcontextprotocol/sdk':
@@ -839,16 +839,16 @@ importers:
       '@anthropic-ai/sdk':
         specifier: ^0.57.0
         version: 0.57.0
-      '@invect/action-kit':
+      '@flowlib/action-kit':
         specifier: workspace:*
         version: link:../action-kit
-      '@invect/actions':
+      '@flowlib/actions':
         specifier: workspace:*
         version: link:../actions
-      '@invect/layouts':
+      '@flowlib/layouts':
         specifier: workspace:*
         version: link:../layouts
-      '@invect/sdk':
+      '@flowlib/sdk':
         specifier: workspace:*
         version: link:../sdk
       '@secure-exec/core':
@@ -928,7 +928,7 @@ importers:
 
   pkg/express:
     dependencies:
-      '@invect/core':
+      '@flowlib/core':
         specifier: workspace:*
         version: link:../core
       cors:
@@ -957,9 +957,9 @@ importers:
         specifier: ^4.1.4
         version: 4.1.4(@opentelemetry/api@1.9.1)(@types/node@20.19.37)(@vitest/coverage-v8@4.1.4)(@vitest/ui@4.1.4)(msw@2.12.10(@types/node@20.19.37)(typescript@5.9.3))(vite@8.0.8(@types/node@20.19.37)(esbuild@0.27.3)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.3))
 
-  pkg/invect:
+  pkg/flowlib:
     dependencies:
-      '@invect/cli':
+      '@flowlib/cli':
         specifier: workspace:*
         version: link:../cli
 
@@ -984,7 +984,7 @@ importers:
 
   pkg/nestjs:
     dependencies:
-      '@invect/core':
+      '@flowlib/core':
         specifier: workspace:*
         version: link:../core
       '@nestjs/common':
@@ -1039,7 +1039,7 @@ importers:
 
   pkg/nextjs:
     dependencies:
-      '@invect/core':
+      '@flowlib/core':
         specifier: workspace:*
         version: link:../core
       next:
@@ -1064,7 +1064,7 @@ importers:
       '@better-auth/api-key':
         specifier: ^1.6.0
         version: 1.6.0(ac46b8f7c808f646203ed913315633fd)
-      '@invect/core':
+      '@flowlib/core':
         specifier: workspace:*
         version: link:../../core
       better-auth:
@@ -1080,7 +1080,7 @@ importers:
         specifier: '>=7.0.0'
         version: 7.13.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
     devDependencies:
-      '@invect/ui':
+      '@flowlib/ui':
         specifier: workspace:*
         version: link:../../ui
       '@tanstack/react-query':
@@ -1116,10 +1116,10 @@ importers:
 
   pkg/plugins/cloudflare-agents:
     dependencies:
-      '@invect/core':
+      '@flowlib/core':
         specifier: workspace:*
         version: link:../../core
-      '@invect/primitives':
+      '@flowlib/primitives':
         specifier: workspace:*
         version: link:../../primitives
     devDependencies:
@@ -1135,10 +1135,10 @@ importers:
 
   pkg/plugins/mcp:
     dependencies:
-      '@invect/core':
+      '@flowlib/core':
         specifier: workspace:*
         version: link:../../core
-      '@invect/sdk':
+      '@flowlib/sdk':
         specifier: workspace:*
         version: link:../../sdk
       '@modelcontextprotocol/sdk':
@@ -1163,7 +1163,7 @@ importers:
 
   pkg/plugins/rbac:
     dependencies:
-      '@invect/core':
+      '@flowlib/core':
         specifier: workspace:*
         version: link:../../core
       clsx:
@@ -1173,10 +1173,10 @@ importers:
         specifier: '>=2.0.0'
         version: 3.5.0
     devDependencies:
-      '@invect/ui':
+      '@flowlib/ui':
         specifier: workspace:*
         version: link:../../ui
-      '@invect/user-auth':
+      '@flowlib/user-auth':
         specifier: workspace:*
         version: link:../auth
       '@tanstack/react-query':
@@ -1215,26 +1215,26 @@ importers:
 
   pkg/plugins/vercel-workflows:
     dependencies:
-      '@invect/action-kit':
+      '@flowlib/action-kit':
         specifier: workspace:*
         version: link:../../action-kit
-      '@invect/actions':
+      '@flowlib/actions':
         specifier: workspace:*
         version: link:../../actions
-      '@invect/core':
+      '@flowlib/core':
         specifier: workspace:*
         version: link:../../core
-      '@invect/primitives':
+      '@flowlib/primitives':
         specifier: workspace:*
         version: link:../../primitives
-      '@invect/sdk':
+      '@flowlib/sdk':
         specifier: workspace:*
         version: link:../../sdk
       workflow:
         specifier: '*'
         version: 4.2.4(@nestjs/common@11.1.19(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.19)(@opentelemetry/api@1.9.1)(@swc/cli@0.7.10(@swc/core@1.15.3)(chokidar@4.0.3))(@swc/core@1.15.3)(magicast@0.5.2)(next@16.2.3(@opentelemetry/api@1.9.1)(@playwright/test@1.58.2)(react-dom@19.2.4(react@18.3.1))(react@18.3.1))(typescript@5.9.3)
     devDependencies:
-      '@invect/ui':
+      '@flowlib/ui':
         specifier: workspace:*
         version: link:../../ui
       '@types/react':
@@ -1258,17 +1258,17 @@ importers:
 
   pkg/plugins/version-control:
     dependencies:
-      '@invect/core':
+      '@flowlib/core':
         specifier: workspace:*
         version: link:../../core
-      '@invect/sdk':
+      '@flowlib/sdk':
         specifier: workspace:*
         version: link:../../sdk
       zod:
         specifier: ^3.25.0
         version: 3.25.76
     devDependencies:
-      '@invect/ui':
+      '@flowlib/ui':
         specifier: workspace:*
         version: link:../../ui
       '@tanstack/react-query':
@@ -1301,7 +1301,7 @@ importers:
 
   pkg/plugins/webhooks:
     dependencies:
-      '@invect/core':
+      '@flowlib/core':
         specifier: workspace:*
         version: link:../../core
       react:
@@ -1314,7 +1314,7 @@ importers:
         specifier: '>=7.0.0'
         version: 7.13.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
     devDependencies:
-      '@invect/ui':
+      '@flowlib/ui':
         specifier: workspace:*
         version: link:../../ui
       '@tanstack/react-query':
@@ -1341,13 +1341,13 @@ importers:
 
   pkg/primitives:
     dependencies:
-      '@invect/action-kit':
+      '@flowlib/action-kit':
         specifier: workspace:*
         version: link:../action-kit
-      '@invect/actions':
+      '@flowlib/actions':
         specifier: workspace:*
         version: link:../actions
-      '@invect/core':
+      '@flowlib/core':
         specifier: workspace:*
         version: link:../core
       zod:
@@ -1366,10 +1366,10 @@ importers:
 
   pkg/sdk:
     dependencies:
-      '@invect/action-kit':
+      '@flowlib/action-kit':
         specifier: workspace:*
         version: link:../action-kit
-      '@invect/actions':
+      '@flowlib/actions':
         specifier: workspace:*
         version: link:../actions
       jiti:
@@ -1424,10 +1424,10 @@ importers:
       '@fsegurai/codemirror-theme-vscode-light':
         specifier: ^6.2.4
         version: 6.2.4(@codemirror/language@6.12.2)(@codemirror/state@6.5.4)(@codemirror/view@6.39.16)(@lezer/highlight@1.2.3)
-      '@invect/layouts':
+      '@flowlib/layouts':
         specifier: workspace:*
         version: link:../layouts
-      '@invect/sdk':
+      '@flowlib/sdk':
         specifier: workspace:*
         version: link:../sdk
       '@lezer/highlight':
@@ -1530,7 +1530,7 @@ importers:
         specifier: ^5.0.9
         version: 5.0.11(@types/react@18.3.7)(immer@11.1.4)(react@19.2.4)(use-sync-external-store@1.6.0(react@19.2.4))
     devDependencies:
-      '@invect/core':
+      '@flowlib/core':
         specifier: workspace:*
         version: link:../core
       '@tailwindcss/postcss':
@@ -1578,25 +1578,25 @@ importers:
 
   pkg/vscode-extension:
     dependencies:
-      '@invect/action-kit':
+      '@flowlib/action-kit':
         specifier: workspace:*
         version: link:../action-kit
-      '@invect/core':
+      '@flowlib/core':
         specifier: workspace:*
         version: link:../core
-      '@invect/express':
+      '@flowlib/express':
         specifier: workspace:*
         version: link:../express
-      '@invect/mcp':
+      '@flowlib/mcp':
         specifier: workspace:*
         version: link:../plugins/mcp
-      '@invect/sdk':
+      '@flowlib/sdk':
         specifier: workspace:*
         version: link:../sdk
-      '@invect/ui':
+      '@flowlib/ui':
         specifier: workspace:*
         version: link:../ui
-      '@invect/webhooks':
+      '@flowlib/webhooks':
         specifier: workspace:*
         version: link:../plugins/webhooks
       '@libsql/client':
@@ -1624,7 +1624,7 @@ importers:
         specifier: ^7.13.1
         version: 7.13.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
     devDependencies:
-      '@invect/actions':
+      '@flowlib/actions':
         specifier: workspace:*
         version: link:../actions
       '@types/cors':

@@ -385,7 +385,7 @@ describe('Full pipeline: emit → parse → transform → merge', () => {
 
   describe('provider actions', () => {
     // Note: full provider-action round-trip requires the jiti-based evaluator
-    // (to resolve `@invect/actions/<provider>` imports). See
+    // (to resolve `@flowlib/actions/<provider>` imports). See
     // `tests/evaluator.test.ts` for those tests — `parseSDKText` only knows
     // about the core SDK helpers.
     it('emits correct imports for provider actions (emit-only, not parse)', () => {
@@ -408,9 +408,9 @@ describe('Full pipeline: emit → parse → transform → merge', () => {
       };
 
       const { code, actionImports } = emitSdkSource(prior);
-      expect(code).toContain(`import { gmailSendMessageAction } from "@invect/actions/gmail"`);
+      expect(code).toContain(`import { gmailSendMessageAction } from "@flowlib/actions/gmail"`);
       expect(code).toContain(`notify: gmailSendMessageAction({`);
-      expect(actionImports['@invect/actions/gmail']).toEqual(['gmailSendMessageAction']);
+      expect(actionImports['@flowlib/actions/gmail']).toEqual(['gmailSendMessageAction']);
     });
   });
 });

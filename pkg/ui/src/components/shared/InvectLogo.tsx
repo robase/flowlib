@@ -3,7 +3,7 @@
 import { memo } from 'react';
 import { cn } from '../../lib/utils';
 import { useOptionalTheme } from '../../contexts/ThemeProvider';
-import { INVECT_ICON_DARK_SVG, INVECT_ICON_LIGHT_SVG } from '../../assets/invect-branding';
+import { INVECT_ICON_DARK_SVG, INVECT_ICON_LIGHT_SVG } from '../../assets/flowlib-branding';
 
 export interface InvectLogoProps {
   className?: string;

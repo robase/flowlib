@@ -3,7 +3,7 @@
  *
  * Generic types for node inputs and outputs. The `OutputVariable`,
  * `OutputVariables`, `StructuredOutput`, and `NodeOutput` types are
- * now canonicalised in `@invect/action-kit`; this file re-exports them
+ * now canonicalised in `@flowlib/action-kit`; this file re-exports them
  * and keeps the local `NodeInputMapping*` schema + input-data aliases.
  */
 
@@ -32,7 +32,7 @@ export type NodeIncomingDataObject = Record<string, unknown>;
 export type NodeInputData = Record<string, unknown>;
 
 // =============================================================================
-// OUTPUT TYPES — canonical in @invect/action-kit
+// OUTPUT TYPES — canonical in @flowlib/action-kit
 // =============================================================================
 
 export type {
@@ -40,9 +40,9 @@ export type {
   OutputVariables,
   StructuredOutput,
   NodeOutput,
-} from '@invect/action-kit';
+} from '@flowlib/action-kit';
 
-import type { NodeOutput } from '@invect/action-kit';
+import type { NodeOutput } from '@flowlib/action-kit';
 
 /**
  * Union kept as an alias for backwards compatibility — it is simply

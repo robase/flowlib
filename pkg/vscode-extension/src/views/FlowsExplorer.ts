@@ -77,14 +77,14 @@ export class FlowsExplorerProvider implements vscode.TreeDataProvider<FlowsExplo
       const tree = new vscode.TreeItem(item.label, vscode.TreeItemCollapsibleState.Collapsed);
       tree.description = item.description;
       tree.iconPath = new vscode.ThemeIcon('symbol-event');
-      tree.contextValue = 'invect.flow';
+      tree.contextValue = 'flowlib.flow';
       tree.id = item.flowId; // stable id so TreeView can `.reveal(item)` later
       if (item.fileUri) {
         tree.resourceUri = vscode.Uri.parse(item.fileUri);
         // Custom command opens the file AND expands the row to show
         // its runs. Plain `vscode.openWith` would only do half the job.
         tree.command = {
-          command: 'invect.openFlow',
+          command: 'flowlib.openFlow',
           title: 'Open flow',
           arguments: [item],
         };
@@ -95,9 +95,9 @@ export class FlowsExplorerProvider implements vscode.TreeDataProvider<FlowsExplo
       const tree = new vscode.TreeItem(item.label, vscode.TreeItemCollapsibleState.None);
       tree.description = item.description;
       tree.iconPath = new vscode.ThemeIcon(STATUS_ICONS[item.status] ?? 'question');
-      tree.contextValue = 'invect.run';
+      tree.contextValue = 'flowlib.run';
       tree.command = {
-        command: 'invect.viewRun',
+        command: 'flowlib.viewRun',
         title: 'View run',
         arguments: [item.runId, item.fileUri ?? item.flowId, item.flowVersion],
       };
@@ -113,7 +113,7 @@ export class FlowsExplorerProvider implements vscode.TreeDataProvider<FlowsExplo
       const tree = new vscode.TreeItem(item.label, vscode.TreeItemCollapsibleState.None);
       tree.description = item.description;
       tree.iconPath = new vscode.ThemeIcon('plug');
-      tree.command = { command: 'invect.connect', title: 'Connect…' };
+      tree.command = { command: 'flowlib.connect', title: 'Connect…' };
       return tree;
     }
     // error

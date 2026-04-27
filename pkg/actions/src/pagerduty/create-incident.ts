@@ -8,7 +8,7 @@
  * @see https://developer.pagerduty.com/api-reference/a7d81b0e9200f-create-an-incident
  */
 
-import { defineAction } from '@invect/action-kit';
+import { defineAction } from '@flowlib/action-kit';
 import { PAGERDUTY_PROVIDER } from '../providers';
 import { z } from 'zod/v4';
 

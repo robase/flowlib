@@ -17,7 +17,7 @@ export interface ApiProviderProps {
 
 export const ApiProvider: React.FC<ApiProviderProps> = ({
   children,
-  baseURL = 'http://localhost:3000/invect',
+  baseURL = 'http://localhost:3000/flowlib',
   apiClient: externalClient,
 }) => {
   const internalClient = useMemo(() => new ApiClient(baseURL), [baseURL]);

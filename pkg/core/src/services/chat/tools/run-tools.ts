@@ -24,10 +24,10 @@ export const getFlowRunTool: ChatToolDefinition = {
   }),
   async execute(params: unknown, ctx: ChatToolContext): Promise<ChatToolResult> {
     const { flowRunId } = params as { flowRunId: string };
-    const invect = ctx.invect;
+    const flowlib = ctx.flowlib;
 
     try {
-      const run = await invect.runs.get(flowRunId);
+      const run = await flowlib.runs.get(flowRunId);
       if (!run) {
         return { success: false, error: `Flow run "${flowRunId}" not found` };
       }
@@ -71,10 +71,10 @@ export const getNodeExecutionResultsTool: ChatToolDefinition = {
   }),
   async execute(params: unknown, ctx: ChatToolContext): Promise<ChatToolResult> {
     const { flowRunId } = params as { flowRunId: string };
-    const invect = ctx.invect;
+    const flowlib = ctx.flowlib;
 
     try {
-      const executionsResult = await invect.runs.getNodeExecutions(flowRunId);
+      const executionsResult = await flowlib.runs.getNodeExecutions(flowRunId);
 
       // Return a compact view — full outputs can be huge
       const traces = await Promise.all(
@@ -101,7 +101,7 @@ export const getNodeExecutionResultsTool: ChatToolDefinition = {
           // For agent nodes, fetch tool execution details per iteration
           if (ex.nodeType === 'core.agent') {
             try {
-              const toolExecs = await invect.runs.getToolExecutionsByNodeExecutionId(ex.id);
+              const toolExecs = await flowlib.runs.getToolExecutionsByNodeExecutionId(ex.id);
               if (toolExecs.length > 0) {
                 // Group by iteration for clarity
                 const byIteration = new Map<number, typeof toolExecs>();
@@ -180,7 +180,7 @@ export const listFlowRunsTool: ChatToolDefinition = {
   }),
   async execute(params: unknown, ctx: ChatToolContext): Promise<ChatToolResult> {
     const { limit } = params as { limit?: number };
-    const invect = ctx.invect;
+    const flowlib = ctx.flowlib;
     const flowId = ctx.chatContext.flowId;
 
     if (!flowId) {
@@ -188,7 +188,7 @@ export const listFlowRunsTool: ChatToolDefinition = {
     }
 
     try {
-      const result = await invect.runs.listByFlowId(flowId);
+      const result = await flowlib.runs.listByFlowId(flowId);
       const runs = result.data;
       const limited = runs.slice(0, limit ?? 10);
 

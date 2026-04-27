@@ -22,7 +22,7 @@ import type {
   NodeCategory,
   AgentToolDefinition,
   AgentToolCategory,
-} from '@invect/action-kit';
+} from '@flowlib/action-kit';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // REGISTRY
@@ -163,8 +163,8 @@ export class ActionRegistry {
   async executeAction(
     actionId: string,
     params: unknown,
-    context: import('@invect/action-kit').ActionExecutionContext,
-  ): Promise<import('@invect/action-kit').ActionResult> {
+    context: import('@flowlib/action-kit').ActionExecutionContext,
+  ): Promise<import('@flowlib/action-kit').ActionResult> {
     const action = await this.loadAction(actionId);
     if (!action) {
       throw new Error(`Unknown action '${actionId}'`);

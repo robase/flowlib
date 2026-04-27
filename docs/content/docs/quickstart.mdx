@@ -10,50 +10,50 @@ import { Callout } from 'fumadocs-ui/components/callout';
 Run the CLI inside an existing Express, NestJS, or Next.js project:
 
 ```bash
-npx invect-cli init
+npx flowlib-cli init
 ```
 
 The wizard will:
 
 1. Detect your framework and database driver
-2. Install `@invect/core`, `@invect/ui`, and the framework adapter
-3. Generate `invect.config.ts` and an encryption key
+2. Install `@flowlib/core`, `@flowlib/ui`, and the framework adapter
+3. Generate `flowlib.config.ts` and an encryption key
 4. Create database schema files and run the initial migration
 
 <Callout type="info">
-  Skip prompts with flags: `npx invect-cli init --framework express --database sqlite`
+  Skip prompts with flags: `npx flowlib-cli init --framework express --database sqlite`
 </Callout>
 
 ## Start the server
 
-The CLI installs everything, but you still need to mount the router. Here's the minimal Express setup — the config is imported from the generated `invect.config.ts`:
+The CLI installs everything, but you still need to mount the router. Here's the minimal Express setup — the config is imported from the generated `flowlib.config.ts`:
 
 ```ts title="index.ts"
 import express from 'express';
-import { createInvectRouter } from '@invect/express';
-import { invectConfig } from './invect.config';
+import { createInvectRouter } from '@flowlib/express';
+import { invectConfig } from './flowlib.config';
 
 const app = express();
 app.use(express.json());
-app.use('/invect', await createInvectRouter(invectConfig));
+app.use('/flowlib', await createInvectRouter(invectConfig));
 
-app.listen(3000, () => console.log('http://localhost:3000/invect'));
+app.listen(3000, () => console.log('http://localhost:3000/flowlib'));
 ```
 
 For NestJS or Next.js mounting patterns, see [Installation](/docs/installation).
 
 ## Open the dashboard
 
-Start your server and visit `http://localhost:3000/invect`. You should see the Invect dashboard where you can create and run flows.
+Start your server and visit `http://localhost:3000/flowlib`. You should see the Invect dashboard where you can create and run flows.
 
 ## Add the visual editor (optional)
 
-If your frontend is a separate React app, install `@invect/ui` and mount the editor:
+If your frontend is a separate React app, install `@flowlib/ui` and mount the editor:
 
 ```tsx title="App.tsx"
-import { Invect } from '@invect/ui';
-import '@invect/ui/styles';
-import { invectConfig } from '../invect.config';
+import { Invect } from '@flowlib/ui';
+import '@flowlib/ui/styles';
+import { invectConfig } from '../flowlib.config';
 
 function App() {
   return <Invect config={invectConfig} />;

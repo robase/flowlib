@@ -10,9 +10,9 @@ const rootDir = path.resolve(__dirname, '../../..');
 const sharedOrigin = new URL(process.env.NEXTJS_URL ?? 'http://localhost:43002').origin;
 
 export const test = createSqliteBrowserIsolationTest({
-  apiPrefix: '/api/invect',
-  dbFilePrefix: 'invect-nextjs-frontend',
-  readyPath: '/api/invect/credentials',
+  apiPrefix: '/api/flowlib',
+  dbFilePrefix: 'flowlib-nextjs-frontend',
+  readyPath: '/api/flowlib/credentials',
   serverCwd: rootDir,
   serverScript: path.join(rootDir, 'playwright/tests/platform/test-server-nextjs.ts'),
   sharedOrigin,

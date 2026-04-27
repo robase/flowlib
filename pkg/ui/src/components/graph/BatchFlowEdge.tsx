@@ -295,7 +295,7 @@ BatchFlowEdge.displayName = 'BatchFlowEdge';
 
 // Predefined edge types matching Invect's patterns
 const _edgeTypes = {
-  // invect: BatchFlowEdge,
+  // flowlib: BatchFlowEdge,
   default: BatchFlowEdge,
 };
 

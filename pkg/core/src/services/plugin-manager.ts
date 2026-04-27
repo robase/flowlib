@@ -249,7 +249,7 @@ export class PluginManager implements PluginHookRunner {
       status: 'SUCCESS' | 'FAILED' | 'SKIPPED';
       output?: unknown;
       error?: string;
-      errorDetails?: import('@invect/action-kit').NodeErrorDetails;
+      errorDetails?: import('@flowlib/action-kit').NodeErrorDetails;
       duration?: number;
     },
   ): Promise<{ output?: unknown }> {

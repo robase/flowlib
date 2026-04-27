@@ -94,7 +94,7 @@ Each state gets a **full viewport** screenshot (1280×720). Modals and panels al
 
 | #   | State                         | Actions                   | Tags                              |
 | --- | ----------------------------- | ------------------------- | --------------------------------- |
-| 01  | Dashboard — sidebar collapsed | Navigate to `/invect`     | `page`, `dashboard`, `navigation` |
+| 01  | Dashboard — sidebar collapsed | Navigate to `/flowlib`     | `page`, `dashboard`, `navigation` |
 | 02  | Dashboard — sidebar expanded  | Click sidebar toggle      | `page`, `dashboard`, `navigation` |
 | 03  | Executions page               | Navigate via sidebar link | `page`, `executions`              |
 | 04  | Credentials page              | Navigate via sidebar link | `page`, `credentials`             |
@@ -137,7 +137,7 @@ This audit is intentionally desktop-only. Capture targets should reflect the pri
     "id": "01-dashboard-collapsed",
     "filename": "01-dashboard-collapsed.png",
     "description": "Dashboard page with sidebar in default collapsed (icon-only) state. Shows flow cards, stats section, and navigation icons.",
-    "url": "/invect",
+    "url": "/flowlib",
     "tags": ["page", "dashboard", "navigation"],
     "viewport": { "width": 1280, "height": 720 },
     "focusCrop": null
@@ -147,7 +147,7 @@ This audit is intentionally desktop-only. Capture targets should reflect the pri
     "filename": "09-input-config-panel.png",
     "focusCrop": "09-input-config-panel-focus.png",
     "description": "Node configuration panel for an Input node, opened via double-click. Shows parameter fields, input/output preview panels.",
-    "url": "/invect/flow/<flowId>",
+    "url": "/flowlib/flow/<flowId>",
     "tags": ["editor", "config-panel", "input-node"],
     "viewport": { "width": 1280, "height": 720 }
   }
@@ -164,7 +164,7 @@ This audit is intentionally desktop-only. Capture targets should reflect the pri
 2. If only `OPENAI_API_KEY` → use **GPT-4o** via the OpenAI SDK.
 3. If neither → exit with a message pointing to the env vars.
 
-No new dependencies — both SDKs are already in the project's dependency tree via `@invect/core`.
+No new dependencies — both SDKs are already in the project's dependency tree via `@flowlib/core`.
 
 ### Analysis Strategy
 

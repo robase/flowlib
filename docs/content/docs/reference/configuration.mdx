@@ -1,17 +1,17 @@
 ---
 title: Configuration
-description: All options for invect.config.ts.
+description: All options for flowlib.config.ts.
 ---
 
-The configuration object is passed to `createInvectRouter()` (Express), `InvectModule.forRoot()` (NestJS), or `createInvectHandler()` (Next.js). It is also read directly by `<Invect config={...} />` on the frontend for fields like `apiPath`, `frontendPath`, `theme`, and `plugins`. Use `defineConfig()` from `@invect/core` for type inference.
+The configuration object is passed to `createInvectRouter()` (Express), `InvectModule.forRoot()` (NestJS), or `createInvectHandler()` (Next.js). It is also read directly by `<Invect config={...} />` on the frontend for fields like `apiPath`, `frontendPath`, `theme`, and `plugins`. Use `defineConfig()` from `@flowlib/core` for type inference.
 
-```ts title="invect.config.ts"
-import { defineConfig } from '@invect/core';
+```ts title="flowlib.config.ts"
+import { defineConfig } from '@flowlib/core';
 
 export const invectConfig = defineConfig({
   database: { ... },
-  apiPath: '/api/invect',   // backend mount path
-  frontendPath: '/invect',  // where <Invect> is mounted in the frontend router
+  apiPath: '/api/flowlib',   // backend mount path
+  frontendPath: '/flowlib',  // where <Invect> is mounted in the frontend router
   theme: 'light',           // 'light' | 'dark' | 'system'
   logging: { ... },
   execution: { ... },
@@ -88,7 +88,7 @@ plugins: [
     /* ... */
   }),
   rbac(),
-  webhooks({ webhookBaseUrl: 'https://api.myapp.com/invect' }),
+  webhooks({ webhookBaseUrl: 'https://api.myapp.com/flowlib' }),
 ];
 ```
 
@@ -114,11 +114,11 @@ Array of credentials to seed on startup. Matched by name — existing credential
 
 ## `apiPath` (optional)
 
-The URL path where the Invect API is mounted (e.g. `'/api/invect'` or `'http://localhost:3000/invect'`). Read by `<Invect>` on the frontend to know where to send API requests.
+The URL path where the Invect API is mounted (e.g. `'/api/flowlib'` or `'http://localhost:3000/flowlib'`). Read by `<Invect>` on the frontend to know where to send API requests.
 
 ## `frontendPath` (optional)
 
-The URL path where `<Invect>` is mounted in the frontend router (e.g. `'/invect'`). Used for internal navigation and the OAuth callback route (`<frontendPath>/oauth/callback`).
+The URL path where `<Invect>` is mounted in the frontend router (e.g. `'/flowlib'`). Used for internal navigation and the OAuth callback route (`<frontendPath>/oauth/callback`).
 
 ## `theme` (optional)
 
@@ -130,18 +130,18 @@ Custom logger instance. Must implement `info`, `debug`, `warn`, `error` methods.
 
 ## Full example
 
-```ts title="invect.config.ts"
-import { defineConfig } from '@invect/core';
-import { auth } from '@invect/user-auth';
-import { rbac } from '@invect/rbac';
+```ts title="flowlib.config.ts"
+import { defineConfig } from '@flowlib/core';
+import { auth } from '@flowlib/user-auth';
+import { rbac } from '@flowlib/rbac';
 
 export const invectConfig = defineConfig({
   database: {
     type: 'postgresql',
     connectionString: process.env.DATABASE_URL,
   },
-  apiPath: '/api/invect',
-  frontendPath: '/invect',
+  apiPath: '/api/flowlib',
+  frontendPath: '/flowlib',
   theme: 'light',
   logging: {
     level: 'info',

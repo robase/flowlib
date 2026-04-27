@@ -7,7 +7,7 @@ export { teamsListTeamsAction } from './list-teams';
 export { teamsListChannelsAction } from './list-channels';
 export { teamsListChannelMessagesAction } from './list-channel-messages';
 
-import type { ActionDefinition } from '@invect/action-kit';
+import type { ActionDefinition } from '@flowlib/action-kit';
 import { teamsSendMessageAction } from './send-message';
 import { teamsListTeamsAction } from './list-teams';
 import { teamsListChannelsAction } from './list-channels';

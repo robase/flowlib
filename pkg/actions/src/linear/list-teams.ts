@@ -6,7 +6,7 @@
  * Requires a Linear OAuth2 credential with read scope.
  */
 
-import { defineAction } from '@invect/action-kit';
+import { defineAction } from '@flowlib/action-kit';
 import { LINEAR_PROVIDER } from '../providers';
 import { z } from 'zod/v4';
 

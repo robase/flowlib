@@ -21,7 +21,7 @@ import {
   AuthEvent,
   DEFAULT_ROLE_PERMISSIONS,
 } from '../../types/auth.types';
-import type { Logger } from '../../schemas/invect-config';
+import type { Logger } from '../../schemas/flowlib-config';
 
 /**
  * Options for creating the AuthorizationService

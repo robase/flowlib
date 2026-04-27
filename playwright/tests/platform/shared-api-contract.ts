@@ -10,7 +10,7 @@ import { expect, type APIRequestContext } from '@playwright/test';
 /**
  * Run the full Invect API contract against the given base URL.
  * The caller is responsible for providing a `request` fixture and the
- * correct `apiBase` (e.g. "http://localhost:3000/invect").
+ * correct `apiBase` (e.g. "http://localhost:3000/flowlib").
  */
 export async function runApiContract(request: APIRequestContext, apiBase: string) {
   // -------------------------------------------------------------------

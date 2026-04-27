@@ -1,9 +1,9 @@
 'use client';
 
 import dynamic from 'next/dynamic';
-import '@invect/ui/styles';
+import '@flowlib/ui/styles';
 
-const Invect = dynamic(() => import('@invect/ui').then((mod) => ({ default: mod.Invect })), {
+const Invect = dynamic(() => import('@flowlib/ui').then((mod) => ({ default: mod.Invect })), {
   ssr: false,
 });
 
@@ -12,8 +12,8 @@ export default function InvectPage() {
     <div className="w-full h-full">
       <Invect
         config={{
-          apiPath: '/api/invect',
-          frontendPath: '/invect',
+          apiPath: '/api/flowlib',
+          frontendPath: '/flowlib',
         }}
       />
     </div>

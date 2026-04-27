@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { devtools } from 'zustand/middleware';
-import type { FlowRunResult } from '@invect/core/types';
+import type { FlowRunResult } from '@flowlib/core/types';
 import { parseJson, stringifyJson } from './utils';
 
 /**

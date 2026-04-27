@@ -1,4 +1,4 @@
-# @invect/ui
+# @flowlib/ui
 
 ## 0.0.12
 
@@ -7,8 +7,8 @@
 - Pre release
 
 - Updated dependencies []:
-  - @invect/layouts@0.0.12
-  - @invect/sdk@0.0.2
+  - @flowlib/layouts@0.0.12
+  - @flowlib/sdk@0.0.2
 
 ## 0.0.11
 
@@ -17,7 +17,7 @@
 - debug nextjs
 
 - Updated dependencies []:
-  - @invect/layouts@0.0.11
+  - @flowlib/layouts@0.0.11
 
 ## 0.0.10
 
@@ -26,7 +26,7 @@
 - fix db tables
 
 - Updated dependencies []:
-  - @invect/layouts@0.0.10
+  - @flowlib/layouts@0.0.10
 
 ## 0.0.9
 
@@ -35,7 +35,7 @@
 - audit packages
 
 - Updated dependencies []:
-  - @invect/layouts@0.0.9
+  - @flowlib/layouts@0.0.9
 
 ## 0.0.8
 
@@ -44,7 +44,7 @@
 - fix frontend api
 
 - Updated dependencies []:
-  - @invect/layouts@0.0.8
+  - @flowlib/layouts@0.0.8
 
 ## 0.0.7
 
@@ -53,7 +53,7 @@
 - fix dynamic imports
 
 - Updated dependencies []:
-  - @invect/layouts@0.0.7
+  - @flowlib/layouts@0.0.7
 
 ## 0.0.6
 
@@ -62,7 +62,7 @@
 - secure-exec -> quickjs revert
 
 - Updated dependencies []:
-  - @invect/layouts@0.0.6
+  - @flowlib/layouts@0.0.6
 
 ## 0.0.5
 
@@ -71,7 +71,7 @@
 -
 
 - Updated dependencies []:
-  - @invect/layouts@0.0.5
+  - @flowlib/layouts@0.0.5
 
 ## 0.0.4
 
@@ -80,8 +80,8 @@
 - fix: nextjs imports
 
 - Updated dependencies []:
-  - @invect/core@0.0.4
-  - @invect/layouts@0.0.4
+  - @flowlib/core@0.0.4
+  - @flowlib/layouts@0.0.4
 
 ## 0.0.3
 
@@ -90,8 +90,8 @@
 - fix core exports issue
 
 - Updated dependencies []:
-  - @invect/core@0.0.3
-  - @invect/layouts@0.0.3
+  - @flowlib/core@0.0.3
+  - @flowlib/layouts@0.0.3
 
 ## 0.0.2
 
@@ -100,5 +100,5 @@
 - fix cli commands, replace quickjs wasm with secure-exec
 
 - Updated dependencies []:
-  - @invect/core@0.0.2
-  - @invect/layouts@0.0.2
+  - @flowlib/core@0.0.2
+  - @flowlib/layouts@0.0.2

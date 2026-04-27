@@ -1,10 +1,10 @@
 /**
- * `@invect/sdk` — the unified authoring SDK for Invect flows.
+ * `@flowlib/sdk` — the unified authoring SDK for Invect flows.
  *
  * Single entry point for authoring `.flow.ts` files, consuming DB-emitted
  * source, and anywhere else flows are expressed as TypeScript. Replaces the
- * split between `@invect/core/sdk` and the authoring surface of
- * `@invect/primitives` (which becomes a runtime-only package).
+ * split between `@flowlib/core/sdk` and the authoring surface of
+ * `@flowlib/primitives` (which becomes a runtime-only package).
  *
  * Type-safe end-to-end:
  *   - Action params are split into Zod input (caller-facing — defaults are
@@ -12,12 +12,12 @@
  *   - Edge `from`/`to` narrow against `keyof N` when using the named-record
  *     form; `handle` narrows against the source action's declared output
  *     handles. Self-loops blocked.
- *   - Per-action `*Params` interfaces (codegen at `@invect/sdk/actions`)
+ *   - Per-action `*Params` interfaces (codegen at `@flowlib/sdk/actions`)
  *     carry per-field JSDoc lifted from `params.fields[].description`.
  *
  * Use the **named-record form** (preferred):
  *   ```ts
- *   import { defineFlow, input, code, output } from '@invect/sdk';
+ *   import { defineFlow, input, code, output } from '@flowlib/sdk';
  *
  *   export default defineFlow({
  *     nodes: {
@@ -35,9 +35,9 @@
  * The legacy array form (`nodes: [helper('ref', ...)]`) still works — both
  * forms type-check and produce the same runtime output.
  *
- * For non-core actions, prefer the namespaced wrappers from `@invect/sdk/actions`:
+ * For non-core actions, prefer the namespaced wrappers from `@flowlib/sdk/actions`:
  *   ```ts
- *   import { gmail, slack } from '@invect/sdk/actions';
+ *   import { gmail, slack } from '@flowlib/sdk/actions';
  *   defineFlow({
  *     nodes: {
  *       notify: gmail.sendMessage({ credentialId, to, subject, body }),
@@ -46,7 +46,7 @@
  *   });
  *   ```
  *
- * Custom actions authored via `@invect/action-kit`'s `defineAction()` are
+ * Custom actions authored via `@flowlib/action-kit`'s `defineAction()` are
  * callable directly — no codegen step, no separate import path:
  *   ```ts
  *   import { mySlackDigest } from './my-actions';
@@ -77,7 +77,7 @@ export { trigger } from './nodes/trigger';
 export { node } from './nodes/generic';
 
 // Re-export the canonical shapes so authors can type their own utilities
-// without reaching into `@invect/action-kit` directly.
+// without reaching into `@flowlib/action-kit` directly.
 export type {
   SdkFlowNode,
   SdkFlowDefinition,
@@ -92,8 +92,8 @@ export type {
 
 // `defineAction` itself (so users can author custom actions from the same
 // import root they author flows from).
-export { defineAction } from '@invect/action-kit';
-export type { ActionDefinition, ActionHelper } from '@invect/action-kit';
+export { defineAction } from '@flowlib/action-kit';
+export type { ActionDefinition, ActionHelper } from '@flowlib/action-kit';
 
 // Emitter — DB definition → TS source. Single source of truth for every
 // surface that renders a flow as code (FlowCodePanel, copy-paste, Vercel
@@ -115,7 +115,7 @@ export type { MergeInput, MergeOptions } from './merge';
 
 // Browser-safe fragment parser — for clipboard paste in the flow editor and
 // light server-side round-trip checks where jiti eval is unnecessary. The
-// Node-only evaluator at `@invect/sdk/evaluator` is the preferred path for
+// Node-only evaluator at `@flowlib/sdk/evaluator` is the preferred path for
 // LLM-generated source or anywhere an import allowlist is required.
 export { parseSDKText } from './parse-fragment';
 export type { ParsedFragment } from './parse-fragment';

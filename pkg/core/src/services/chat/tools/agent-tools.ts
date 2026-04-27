@@ -11,7 +11,7 @@
  */
 
 import { z } from 'zod/v4';
-import { newToolInstanceId } from '@invect/action-kit';
+import { newToolInstanceId } from '@flowlib/action-kit';
 import type { ChatToolDefinition, ChatToolContext, ChatToolResult } from '../chat-types';
 import type { InvectInstance } from 'src/api/types';
 import type { AddedToolInstance } from 'src/types/agent-tool.types';
@@ -20,8 +20,8 @@ import type { FlowNodeDefinitions, FlowEdge } from 'src/services/flow-versions/s
 /**
  * Helper: Load the latest flow version's nodes and edges.
  */
-async function loadLatestDefinition(invect: InvectInstance, flowId: string) {
-  const version = await invect.versions.get(flowId, 'latest');
+async function loadLatestDefinition(flowlib: InvectInstance, flowId: string) {
+  const version = await flowlib.versions.get(flowId, 'latest');
   if (!version) {
     throw new Error('No flow version found — publish a version first');
   }
@@ -37,12 +37,12 @@ async function loadLatestDefinition(invect: InvectInstance, flowId: string) {
  * Helper: Save a mutated definition as a new flow version.
  */
 async function saveNewVersion(
-  invect: InvectInstance,
+  flowlib: InvectInstance,
   flowId: string,
   nodes: FlowNodeDefinitions[],
   edges: FlowEdge[],
 ) {
-  return invect.versions.create(flowId, {
+  return flowlib.versions.create(flowId, {
     invectDefinition: { nodes, edges },
   });
 }
@@ -105,10 +105,10 @@ export const listAgentToolsTool: ChatToolDefinition = {
   }),
   async execute(params: unknown, ctx: ChatToolContext): Promise<ChatToolResult> {
     const { search, limit } = params as { search?: string; limit?: number };
-    const invect = ctx.invect;
+    const flowlib = ctx.flowlib;
 
     try {
-      const allTools = invect.agent.getTools();
+      const allTools = flowlib.agent.getTools();
       let tools = allTools;
 
       if (search) {
@@ -178,10 +178,10 @@ export const getToolDetailsTool: ChatToolDefinition = {
   }),
   async execute(params: unknown, ctx: ChatToolContext): Promise<ChatToolResult> {
     const { toolId } = params as { toolId: string };
-    const invect = ctx.invect;
+    const flowlib = ctx.flowlib;
 
     try {
-      const allTools = invect.agent.getTools();
+      const allTools = flowlib.agent.getTools();
       const tool = allTools.find((t) => t.id === toolId);
 
       if (!tool) {
@@ -248,7 +248,7 @@ export const getAgentNodeToolsTool: ChatToolDefinition = {
   }),
   async execute(params: unknown, ctx: ChatToolContext): Promise<ChatToolResult> {
     const { nodeId } = params as { nodeId: string };
-    const invect = ctx.invect;
+    const flowlib = ctx.flowlib;
     const flowId = ctx.chatContext.flowId;
 
     if (!flowId) {
@@ -256,7 +256,7 @@ export const getAgentNodeToolsTool: ChatToolDefinition = {
     }
 
     try {
-      const { nodes } = await loadLatestDefinition(invect, flowId);
+      const { nodes } = await loadLatestDefinition(flowlib, flowId);
       const agentResult = unwrapAgentNode(findAgentNode(nodes, nodeId));
       if (!agentResult.node) {
         return agentResult.errorResult;
@@ -338,7 +338,7 @@ export const addToolToAgentTool: ChatToolDefinition = {
       params: Record<string, unknown>;
       aiChosenParams?: string[];
     };
-    const invect = ctx.invect;
+    const flowlib = ctx.flowlib;
     const flowId = ctx.chatContext.flowId;
 
     if (!flowId) {
@@ -347,7 +347,7 @@ export const addToolToAgentTool: ChatToolDefinition = {
 
     try {
       // Validate the tool ID exists
-      const allTools = invect.agent.getTools();
+      const allTools = flowlib.agent.getTools();
       const baseTool = allTools.find((t) => t.id === toolId);
       if (!baseTool) {
         const similar = allTools
@@ -364,7 +364,7 @@ export const addToolToAgentTool: ChatToolDefinition = {
         };
       }
 
-      const { nodes, edges } = await loadLatestDefinition(invect, flowId);
+      const { nodes, edges } = await loadLatestDefinition(flowlib, flowId);
       const agentResult = unwrapAgentNode(findAgentNode(nodes, nodeId));
       if (!agentResult.node) {
         return agentResult.errorResult;
@@ -415,7 +415,7 @@ export const addToolToAgentTool: ChatToolDefinition = {
       existingTools.push(toolInstance);
       node.params.addedTools = existingTools;
 
-      const version = await saveNewVersion(invect, flowId, nodes, edges);
+      const version = await saveNewVersion(flowlib, flowId, nodes, edges);
 
       return {
         success: true,
@@ -467,7 +467,7 @@ export const removeToolFromAgentTool: ChatToolDefinition = {
       instanceId?: string;
       toolId?: string;
     };
-    const invect = ctx.invect;
+    const flowlib = ctx.flowlib;
     const flowId = ctx.chatContext.flowId;
 
     if (!flowId) {
@@ -481,7 +481,7 @@ export const removeToolFromAgentTool: ChatToolDefinition = {
     }
 
     try {
-      const { nodes, edges } = await loadLatestDefinition(invect, flowId);
+      const { nodes, edges } = await loadLatestDefinition(flowlib, flowId);
       const agentResult = unwrapAgentNode(findAgentNode(nodes, nodeId));
       if (!agentResult.node) {
         return agentResult.errorResult;
@@ -514,7 +514,7 @@ export const removeToolFromAgentTool: ChatToolDefinition = {
         node.params.addedTools = addedTools;
       }
 
-      const version = await saveNewVersion(invect, flowId, nodes, edges);
+      const version = await saveNewVersion(flowlib, flowId, nodes, edges);
 
       return {
         success: true,
@@ -584,7 +584,7 @@ export const updateAgentToolTool: ChatToolDefinition = {
       params?: Record<string, unknown>;
       aiChosenParams?: string[];
     };
-    const invect = ctx.invect;
+    const flowlib = ctx.flowlib;
     const flowId = ctx.chatContext.flowId;
 
     if (!flowId) {
@@ -598,7 +598,7 @@ export const updateAgentToolTool: ChatToolDefinition = {
     }
 
     try {
-      const { nodes, edges } = await loadLatestDefinition(invect, flowId);
+      const { nodes, edges } = await loadLatestDefinition(flowlib, flowId);
       const agentResult = unwrapAgentNode(findAgentNode(nodes, nodeId));
       if (!agentResult.node) {
         return agentResult.errorResult;
@@ -658,7 +658,7 @@ export const updateAgentToolTool: ChatToolDefinition = {
         node.params.addedTools = addedTools;
       }
 
-      const version = await saveNewVersion(invect, flowId, nodes, edges);
+      const version = await saveNewVersion(flowlib, flowId, nodes, edges);
 
       return {
         success: true,
@@ -719,7 +719,7 @@ export const configureAgentTool: ChatToolDefinition = {
       nodeId: string;
       [key: string]: unknown;
     };
-    const invect = ctx.invect;
+    const flowlib = ctx.flowlib;
     const flowId = ctx.chatContext.flowId;
 
     if (!flowId) {
@@ -736,7 +736,7 @@ export const configureAgentTool: ChatToolDefinition = {
     }
 
     try {
-      const { nodes, edges } = await loadLatestDefinition(invect, flowId);
+      const { nodes, edges } = await loadLatestDefinition(flowlib, flowId);
       const agentResult = unwrapAgentNode(findAgentNode(nodes, nodeId));
       if (!agentResult.node) {
         return agentResult.errorResult;
@@ -749,7 +749,7 @@ export const configureAgentTool: ChatToolDefinition = {
       // Validate credentialId exists before saving
       if (definedUpdates.credentialId) {
         try {
-          await invect.credentials.get(definedUpdates.credentialId as string);
+          await flowlib.credentials.get(definedUpdates.credentialId as string);
         } catch {
           return {
             success: false,
@@ -767,7 +767,7 @@ export const configureAgentTool: ChatToolDefinition = {
           (definedUpdates.credentialId as string) ?? (existingParams.credentialId as string);
         if (credId) {
           try {
-            const cred = await invect.credentials.get(credId);
+            const cred = await flowlib.credentials.get(credId);
             const provider = cred?.config?.provider as string | undefined;
             if (provider) {
               const providerLower = provider.toLowerCase();
@@ -797,7 +797,7 @@ export const configureAgentTool: ChatToolDefinition = {
         ...definedUpdates,
       };
 
-      const version = await saveNewVersion(invect, flowId, nodes, edges);
+      const version = await saveNewVersion(flowlib, flowId, nodes, edges);
 
       return {
         success: true,
@@ -849,7 +849,7 @@ export const copyAgentToolsTool: ChatToolDefinition = {
       sourceFlowId?: string;
       targetFlowId?: string;
     };
-    const invect = ctx.invect;
+    const flowlib = ctx.flowlib;
     const currentFlowId = ctx.chatContext.flowId;
 
     const srcFlowId = sourceFlowId ?? currentFlowId;
@@ -864,7 +864,7 @@ export const copyAgentToolsTool: ChatToolDefinition = {
 
     try {
       // Load source flow and find agent node
-      const srcDef = await loadLatestDefinition(invect, srcFlowId);
+      const srcDef = await loadLatestDefinition(flowlib, srcFlowId);
       const srcResult = unwrapAgentNode(findAgentNode(srcDef.nodes, sourceNodeId));
       if (!srcResult.node) {
         return srcResult.errorResult;
@@ -878,7 +878,7 @@ export const copyAgentToolsTool: ChatToolDefinition = {
 
       // Load target flow (may be the same flow)
       const tgtDef =
-        tgtFlowId === srcFlowId ? srcDef : await loadLatestDefinition(invect, tgtFlowId);
+        tgtFlowId === srcFlowId ? srcDef : await loadLatestDefinition(flowlib, tgtFlowId);
       const tgtResult = unwrapAgentNode(findAgentNode(tgtDef.nodes, targetNodeId));
       if (!tgtResult.node) {
         return tgtResult.errorResult;
@@ -897,7 +897,7 @@ export const copyAgentToolsTool: ChatToolDefinition = {
         addedTools: [...existingTools, ...clonedTools],
       };
 
-      const version = await saveNewVersion(invect, tgtFlowId, tgtDef.nodes, tgtDef.edges);
+      const version = await saveNewVersion(flowlib, tgtFlowId, tgtDef.nodes, tgtDef.edges);
 
       return {
         success: true,

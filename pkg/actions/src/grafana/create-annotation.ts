@@ -6,7 +6,7 @@
  * or other events. Requires a Grafana service account token.
  */
 
-import { defineAction } from '@invect/action-kit';
+import { defineAction } from '@flowlib/action-kit';
 import { GRAFANA_PROVIDER } from '../providers';
 import { z } from 'zod/v4';
 

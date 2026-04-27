@@ -14,7 +14,7 @@ import { relations, sql } from 'drizzle-orm';
 import { JSONValue } from '.';
 import { InvectDefinitionRuntime } from 'src/services/flow-versions/schemas-fresh';
 import { randomUUID } from 'crypto';
-import type { NodeErrorDetails } from '@invect/action-kit';
+import type { NodeErrorDetails } from '@flowlib/action-kit';
 
 // =============================================================================
 // Tables

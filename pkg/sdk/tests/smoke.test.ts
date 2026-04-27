@@ -13,7 +13,7 @@ import {
   edge,
   FlowValidationError,
 } from '../src';
-import type { ProviderDef } from '@invect/action-kit';
+import type { ProviderDef } from '@flowlib/action-kit';
 
 const TEST_PROVIDER: ProviderDef = {
   id: 'test',
@@ -23,7 +23,7 @@ const TEST_PROVIDER: ProviderDef = {
   nodeCategory: 'Custom',
 };
 
-describe('@invect/sdk', () => {
+describe('@flowlib/sdk', () => {
   describe('core helpers', () => {
     it('input() produces a valid SdkFlowNode', () => {
       const node = input('query');

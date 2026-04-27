@@ -1,6 +1,6 @@
 /**
  * Webhook Dedup Service — prevents duplicate webhook events.
- * Moved from @invect/core to the webhooks plugin.
+ * Moved from @flowlib/core to the webhooks plugin.
  */
 
 export interface WebhookDedupOptions {

@@ -5,7 +5,7 @@
 
 import { Globe } from 'lucide-react';
 import { WebhooksPage } from '../components/WebhooksPage';
-import type { InvectFrontendPlugin } from '@invect/ui';
+import type { InvectFrontendPlugin } from '@flowlib/ui';
 
 export const webhooksFrontend: InvectFrontendPlugin = {
   id: 'webhooks',

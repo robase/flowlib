@@ -8,7 +8,7 @@ export { onedriveSearchAction } from './search';
 export { onedriveCreateFolderAction } from './create-folder';
 export { onedriveDeleteItemAction } from './delete-item';
 
-import type { ActionDefinition } from '@invect/action-kit';
+import type { ActionDefinition } from '@flowlib/action-kit';
 import { onedriveListFilesAction } from './list-files';
 import { onedriveGetItemAction } from './get-item';
 import { onedriveSearchAction } from './search';

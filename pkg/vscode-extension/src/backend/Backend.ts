@@ -3,7 +3,7 @@
  * Invect backend, regardless of where the backend lives.
  *
  * Three implementations satisfy this interface:
- *   - `InProcessBackend`  — embedded `@invect/core` against a local SQLite
+ *   - `InProcessBackend`  — embedded `@flowlib/core` against a local SQLite
  *                            file at `globalStorageUri` (Phase 2.5 default).
  *   - `HttpBackend`       — `fetch`-based client for both local-spawned
  *                            (Docker, `pnpm dev`) and remote backends.
@@ -26,7 +26,7 @@ export interface FlowSummary {
   updatedAt?: string;
   /**
    * Set by file-backed backends (embedded mode). When present, the explorer
-   * opens this URI directly instead of going through `invect.pullFromBackend`.
+   * opens this URI directly instead of going through `flowlib.pullFromBackend`.
    */
   fileUri?: string;
   [key: string]: unknown;
@@ -87,7 +87,7 @@ export interface Backend {
   /** Cheap connectivity / readiness probe. */
   healthCheck(): Promise<{ ok: boolean }>;
 
-  /** Action catalogue — same shape as `@invect/ui/flow-canvas` ActionMetadata. */
+  /** Action catalogue — same shape as `@flowlib/ui/flow-canvas` ActionMetadata. */
   listActions(): Promise<unknown[]>;
 
   listFlows(): Promise<FlowSummary[]>;

@@ -1,7 +1,7 @@
 /**
  * Info Command Tests
  *
- * Tests the utility functions used by `npx invect-cli info`:
+ * Tests the utility functions used by `npx flowlib-cli info`:
  * - detectPackageManager()  — lock file detection
  * - detectFrameworks()      — package.json dependency scanning
  * - detectDatabaseTools()   — database package detection

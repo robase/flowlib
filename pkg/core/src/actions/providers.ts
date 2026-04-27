@@ -1,9 +1,9 @@
 /**
- * Re-exports provider definitions from `@invect/actions`.
+ * Re-exports provider definitions from `@flowlib/actions`.
  *
  * Uses explicit named re-exports so tsdown emits value exports in the
  * declaration bundle (a bare `export *` collapses to a type-only namespace
- * alias and the providers would lose their value binding in `@invect/core`'s
+ * alias and the providers would lose their value binding in `@flowlib/core`'s
  * public dist).
  */
 
@@ -49,4 +49,4 @@ export {
   NOTION_PROVIDER,
   CLOUDWATCH_PROVIDER,
   PAGERDUTY_PROVIDER,
-} from '@invect/actions/providers';
+} from '@flowlib/actions/providers';

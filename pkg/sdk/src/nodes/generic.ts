@@ -14,7 +14,7 @@
  *   - `node('ref', 'action.id', { ... })` — positional form.
  */
 
-import type { NodeOptions, SdkFlowNode } from '@invect/action-kit';
+import type { NodeOptions, SdkFlowNode } from '@flowlib/action-kit';
 
 export function node<TParams extends Record<string, unknown>>(
   type: string,

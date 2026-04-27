@@ -2,7 +2,7 @@
 //
 // This is a typical multi-tenant SaaS application schema.
 // Invect tables are NOT included here — they will be added
-// via `npx invect-cli generate --adapter prisma` during setup.
+// via `npx flowlib-cli generate --adapter prisma` during setup.
 
 generator client {
   provider = "prisma-client-js"

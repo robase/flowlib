@@ -33,7 +33,7 @@ interface ServerOptions {
   script: string;
   /** DB file prefix used in os.tmpdir() */
   dbFilePrefix: string;
-  /** Path prefix where the Invect API is mounted (e.g. "/invect") */
+  /** Path prefix where the Invect API is mounted (e.g. "/flowlib") */
   apiPrefix: string;
   /** Readiness probe path (must return 200 when ready) */
   readyPath: string;
@@ -75,25 +75,25 @@ function createServerTest(opts: ServerOptions) {
 /** Express adapter tests — each worker gets its own Express server */
 export const expressTest = createServerTest({
   script: 'test-server.ts',
-  dbFilePrefix: 'invect-pw-express',
-  apiPrefix: '/invect',
-  readyPath: '/invect/flows/list',
+  dbFilePrefix: 'flowlib-pw-express',
+  apiPrefix: '/flowlib',
+  readyPath: '/flowlib/flows/list',
 });
 
 /** NestJS adapter tests — each worker gets its own NestJS server */
 export const nestjsTest = createServerTest({
   script: 'test-server-nestjs.ts',
-  dbFilePrefix: 'invect-pw-nestjs',
-  apiPrefix: '/invect',
-  readyPath: '/invect/flows/list',
+  dbFilePrefix: 'flowlib-pw-nestjs',
+  apiPrefix: '/flowlib',
+  readyPath: '/flowlib/flows/list',
 });
 
 /** Next.js adapter tests — each worker gets its own lightweight handler server */
 export const nextjsTest = createServerTest({
   script: 'test-server-nextjs.ts',
-  dbFilePrefix: 'invect-pw-nextjs',
-  apiPrefix: '/api/invect',
-  readyPath: '/api/invect/credentials',
+  dbFilePrefix: 'flowlib-pw-nextjs',
+  apiPrefix: '/api/flowlib',
+  readyPath: '/api/flowlib/credentials',
 });
 
 /** Backward compat: default export is the Express test */

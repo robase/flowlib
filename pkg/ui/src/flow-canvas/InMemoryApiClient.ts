@@ -31,7 +31,7 @@ import type {
   NodeExecution,
   PaginatedResponse,
   ReactFlowData,
-} from '@invect/core/types';
+} from '@flowlib/core/types';
 import { ApiClient } from '../api/client';
 import type {
   Credential,

@@ -1,5 +1,5 @@
 import * as assert from 'node:assert';
-import type { ActionMetadata } from '@invect/ui/flow-canvas';
+import type { ActionMetadata } from '@flowlib/ui/flow-canvas';
 import { ActionCatalogue } from '../../src/backend/actionCatalogue';
 
 suite('actionCatalogue — resolver', () => {

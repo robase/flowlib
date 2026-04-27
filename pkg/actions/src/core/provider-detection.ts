@@ -1,4 +1,4 @@
-import { BatchProvider } from '@invect/action-kit';
+import { BatchProvider } from '@flowlib/action-kit';
 
 interface ProviderMatchConfig {
   provider: BatchProvider;

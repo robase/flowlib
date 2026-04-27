@@ -5,7 +5,7 @@
  * Requires a Trello OAuth2 credential with an API key and access token.
  */
 
-import { defineAction } from '@invect/action-kit';
+import { defineAction } from '@flowlib/action-kit';
 import { TRELLO_PROVIDER } from '../providers';
 import { z } from 'zod/v4';
 

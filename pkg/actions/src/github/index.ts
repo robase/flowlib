@@ -47,7 +47,7 @@ export { lazyGithubActions } from './lazy';
 
 // ── Bulk array ──────────────────────────────────────────────────────────
 
-import type { ActionDefinition } from '@invect/action-kit';
+import type { ActionDefinition } from '@flowlib/action-kit';
 
 import { githubListReposAction } from './list-repos';
 import { githubGetRepoAction } from './get-repo';

@@ -1,5 +1,5 @@
 /**
- * @invect/layouts
+ * @flowlib/layouts
  *
  * Shared layout utilities for Invect graph positioning.
  * Framework-agnostic layout algorithms used by both core services and frontend.
@@ -25,4 +25,4 @@ export {
 export { applyElkLayout, enrichNodesWithHandles, type ElkJsLayoutOptions } from './elk';
 
 // Re-export Invect-specific layout
-export { applyInvectLayout, type InvectLayoutOptions } from './invect';
+export { applyInvectLayout, type InvectLayoutOptions } from './flowlib';

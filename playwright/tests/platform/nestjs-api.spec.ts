@@ -1,6 +1,6 @@
 // spec: Cross-platform API parity — NestJS adapter
 //
-// Validates that the NestJS adapter (@invect/nestjs) exposes the full
+// Validates that the NestJS adapter (@flowlib/nestjs) exposes the full
 // Invect API contract.  Each worker gets its own isolated NestJS server
 // with a disposable SQLite database, so these tests run fully in parallel.
 

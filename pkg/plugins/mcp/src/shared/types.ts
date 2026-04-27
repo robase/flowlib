@@ -1,5 +1,5 @@
 /**
- * @invect/mcp — Shared types
+ * @flowlib/mcp — Shared types
  */
 
 /** Configuration for the MCP plugin */

@@ -104,7 +104,7 @@ test.describe('Build a Complex Flow — End-to-End User Journey', () => {
     await cleanupFlowByName(apiBase, request, FLOW_NAME);
 
     // Navigate to the dashboard
-    await page.goto('/invect');
+    await page.goto('/flowlib');
     await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible({
       timeout: 15_000,
     });
@@ -118,7 +118,7 @@ test.describe('Build a Complex Flow — End-to-End User Journey', () => {
 
     // Canvas should appear
     await expect(page.locator('.react-flow')).toBeVisible({ timeout: 15_000 });
-    await expect(page).toHaveURL(/\/invect\/flow\//, { timeout: 10_000 });
+    await expect(page).toHaveURL(/\/flowlib\/flow\//, { timeout: 10_000 });
 
     // Extract the flow ID from URL
     const url = page.url();
@@ -143,7 +143,7 @@ test.describe('Build a Complex Flow — End-to-End User Journey', () => {
   test('Phase 2 — add nodes from the palette to build the flow', async ({ page }) => {
     // Navigate directly to the flow
     expect(flowId).toBeTruthy();
-    await page.goto(`/invect/flow/${flowId}`);
+    await page.goto(`/flowlib/flow/${flowId}`);
     await expect(page.locator('.react-flow')).toBeVisible({ timeout: 15_000 });
 
     // Open the node sidebar if not already open
@@ -161,7 +161,7 @@ test.describe('Build a Complex Flow — End-to-End User Journey', () => {
 
     // Verify the palette shows provider groups
     const categoryButtons = page.getByRole('button', {
-      name: /triggers|invect core|http/i,
+      name: /triggers|flowlib core|http/i,
     });
     await expect(categoryButtons.first()).toBeVisible({ timeout: 5_000 });
 
@@ -249,7 +249,7 @@ test.describe('Build a Complex Flow — End-to-End User Journey', () => {
 
   test('Phase 3 — configure the Input node with default data', async ({ page }) => {
     expect(flowId).toBeTruthy();
-    await page.goto(`/invect/flow/${flowId}`);
+    await page.goto(`/flowlib/flow/${flowId}`);
     await expect(page.locator('.react-flow')).toBeVisible({ timeout: 15_000 });
 
     // Double-click the Input node to open config panel
@@ -308,7 +308,7 @@ test.describe('Build a Complex Flow — End-to-End User Journey', () => {
 
   test('Phase 3b — configure the JavaScript node with a transformation', async ({ page }) => {
     expect(flowId).toBeTruthy();
-    await page.goto(`/invect/flow/${flowId}`);
+    await page.goto(`/flowlib/flow/${flowId}`);
     await expect(page.locator('.react-flow')).toBeVisible({ timeout: 15_000 });
 
     // Open JavaScript node
@@ -358,7 +358,7 @@ test.describe('Build a Complex Flow — End-to-End User Journey', () => {
     await cleanupCredentialByName(request, apiBase, CRED_NAME);
 
     // Navigate to the credentials page via sidebar
-    await page.goto('/invect/credentials');
+    await page.goto('/flowlib/credentials');
     await expect(page.getByRole('heading', { level: 1, name: 'Credentials' })).toBeVisible({
       timeout: 15_000,
     });
@@ -523,7 +523,7 @@ test.describe('Build a Complex Flow — End-to-End User Journey', () => {
     expect(resp.ok(), 'Version creation should succeed').toBeTruthy();
 
     // Navigate to the flow editor
-    await page.goto(`/invect/flow/${flowId}`);
+    await page.goto(`/flowlib/flow/${flowId}`);
     await expect(page.locator('.react-flow')).toBeVisible({ timeout: 15_000 });
 
     // Verify the right number of nodes rendered
@@ -562,7 +562,7 @@ test.describe('Build a Complex Flow — End-to-End User Journey', () => {
     getOutputPanelText,
   }) => {
     expect(flowId).toBeTruthy();
-    await page.goto(`/invect/flow/${flowId}`);
+    await page.goto(`/flowlib/flow/${flowId}`);
     await expect(page.locator('.react-flow')).toBeVisible({ timeout: 15_000 });
 
     // Open the Customer Data (input) node
@@ -606,7 +606,7 @@ test.describe('Build a Complex Flow — End-to-End User Journey', () => {
     getOutputPanelText,
   }) => {
     expect(flowId).toBeTruthy();
-    await page.goto(`/invect/flow/${flowId}`);
+    await page.goto(`/flowlib/flow/${flowId}`);
     await expect(page.locator('.react-flow')).toBeVisible({ timeout: 15_000 });
 
     // Open the Transform Data node
@@ -659,7 +659,7 @@ test.describe('Build a Complex Flow — End-to-End User Journey', () => {
     getOutputPanelText,
   }) => {
     expect(flowId).toBeTruthy();
-    await page.goto(`/invect/flow/${flowId}`);
+    await page.goto(`/flowlib/flow/${flowId}`);
     await expect(page.locator('.react-flow')).toBeVisible({ timeout: 15_000 });
 
     // Open the Gold Check (if/else) node
@@ -701,7 +701,7 @@ test.describe('Build a Complex Flow — End-to-End User Journey', () => {
     getOutputPanelText,
   }) => {
     expect(flowId).toBeTruthy();
-    await page.goto(`/invect/flow/${flowId}`);
+    await page.goto(`/flowlib/flow/${flowId}`);
     await expect(page.locator('.react-flow')).toBeVisible({ timeout: 15_000 });
 
     // Open the Transform Data (JQ) node
@@ -792,7 +792,7 @@ test.describe('Build a Complex Flow — End-to-End User Journey', () => {
 
   test('Phase 8 — save the flow and verify persistence', async ({ page, request, apiBase }) => {
     expect(flowId).toBeTruthy();
-    await page.goto(`/invect/flow/${flowId}`);
+    await page.goto(`/flowlib/flow/${flowId}`);
     await expect(page.locator('.react-flow')).toBeVisible({ timeout: 15_000 });
 
     // Dirty the editor by dragging a node. ReactFlow needs multiple pointer
@@ -855,7 +855,7 @@ test.describe('Build a Complex Flow — End-to-End User Journey', () => {
 
   test('Phase 9 — run the full flow and verify execution', async ({ page, request, apiBase }) => {
     expect(flowId).toBeTruthy();
-    await page.goto(`/invect/flow/${flowId}`);
+    await page.goto(`/flowlib/flow/${flowId}`);
     await expect(page.locator('.react-flow')).toBeVisible({ timeout: 15_000 });
 
     // Click the "Run" button in the header
@@ -904,7 +904,7 @@ test.describe('Build a Complex Flow — End-to-End User Journey', () => {
     expect(flowId).toBeTruthy();
 
     // Start at the flow editor
-    await page.goto(`/invect/flow/${flowId}`);
+    await page.goto(`/flowlib/flow/${flowId}`);
     await expect(page.locator('.react-flow')).toBeVisible({ timeout: 15_000 });
 
     // Switch to Runs view using the mode switcher
@@ -948,7 +948,7 @@ test.describe('Build a Complex Flow — End-to-End User Journey', () => {
     page,
   }) => {
     // Navigate to dashboard
-    await page.goto('/invect');
+    await page.goto('/flowlib');
     await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible({
       timeout: 15_000,
     });
@@ -989,7 +989,7 @@ test.describe('Build a Complex Flow — End-to-End User Journey', () => {
 
   test('Phase 12 — verify flow appears on dashboard and can be re-opened', async ({ page }) => {
     // Navigate to dashboard
-    await page.goto('/invect');
+    await page.goto('/flowlib');
     await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible({
       timeout: 15_000,
     });
@@ -1029,7 +1029,7 @@ test.describe('Build a Complex Flow — End-to-End User Journey', () => {
     } else {
       // The flow was created but may have a default name — check by ID
       if (flowId) {
-        await page.goto(`/invect/flow/${flowId}`);
+        await page.goto(`/flowlib/flow/${flowId}`);
         await expect(page.locator('.react-flow')).toBeVisible({ timeout: 15_000 });
       }
     }
@@ -1046,7 +1046,7 @@ test.describe('Build a Complex Flow — End-to-End User Journey', () => {
     getOutputPanelText,
   }) => {
     expect(flowId).toBeTruthy();
-    await page.goto(`/invect/flow/${flowId}`);
+    await page.goto(`/flowlib/flow/${flowId}`);
     await expect(page.locator('.react-flow')).toBeVisible({ timeout: 15_000 });
 
     // Open the Gold Message template node
@@ -1101,7 +1101,7 @@ test.describe('Build a Complex Flow — End-to-End User Journey', () => {
 
   test('Phase 14 — use keyboard shortcut Cmd+S to save', async ({ page }) => {
     expect(flowId).toBeTruthy();
-    await page.goto(`/invect/flow/${flowId}`);
+    await page.goto(`/flowlib/flow/${flowId}`);
     await expect(page.locator('.react-flow')).toBeVisible({ timeout: 15_000 });
 
     // Dirty the editor by dragging a node with multiple pointer events.

@@ -7,7 +7,7 @@
 export { manualTriggerAction } from './manual';
 export { cronTriggerAction } from './cron';
 
-import type { ActionDefinition } from '@invect/action-kit';
+import type { ActionDefinition } from '@flowlib/action-kit';
 import { manualTriggerAction } from './manual';
 import { cronTriggerAction } from './cron';
 

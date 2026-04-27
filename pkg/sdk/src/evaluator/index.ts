@@ -5,7 +5,7 @@
  * TS transpilation + ES module loading. Enforces an import allowlist via
  * static pre-scan so malicious / careless source can't reach Node builtins.
  *
- * Subpath-exported at `@invect/sdk/evaluator` — the main `@invect/sdk` entry
+ * Subpath-exported at `@flowlib/sdk/evaluator` — the main `@flowlib/sdk` entry
  * stays browser-safe.
  *
  * Intended callers:
@@ -161,7 +161,7 @@ class EvalTimeoutError extends Error {
 async function evaluateViaJiti(source: string, options: EvaluatorOptions): Promise<unknown> {
   const timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
 
-  // Build a path alias map so the evaluated source's `import '@invect/sdk'`
+  // Build a path alias map so the evaluated source's `import '@flowlib/sdk'`
   // resolves to the known location regardless of where the temp file lives.
   // Without this, Node's module resolution walks up from the temp file's
   // directory — which is typically in `os.tmpdir()` and has no access to the
@@ -180,7 +180,7 @@ async function evaluateViaJiti(source: string, options: EvaluatorOptions): Promi
   const fs = await import('node:fs/promises');
   const os = await import('node:os');
   const path = await import('node:path');
-  const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'invect-eval-'));
+  const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'flowlib-eval-'));
   const tmpFile = path.join(tmpDir, 'flow.ts');
   await fs.writeFile(tmpFile, source, 'utf-8');
 
@@ -216,41 +216,41 @@ function buildPackageAliases(options: EvaluatorOptions): Record<string, string> 
   };
 
   // Core SDK root.
-  const sdkSpecifier = options.sdkImportSpecifier ?? '@invect/sdk';
+  const sdkSpecifier = options.sdkImportSpecifier ?? '@flowlib/sdk';
   const sdkRoot = tryResolvePackageRoot(sdkSpecifier);
   if (sdkRoot) {
     aliases[sdkSpecifier] = sdkRoot;
   }
 
   // action-kit
-  const kitRoot = tryResolvePackageRoot('@invect/action-kit');
+  const kitRoot = tryResolvePackageRoot('@flowlib/action-kit');
   if (kitRoot) {
-    aliases['@invect/action-kit'] = kitRoot;
+    aliases['@flowlib/action-kit'] = kitRoot;
   }
 
   // actions — the bare specifier + EVERY subpath the package exports.
   // jiti's alias map is exact-match: when source has `import x from
-  // '@invect/actions/triggers'`, jiti looks up that exact key in the
+  // '@flowlib/actions/triggers'`, jiti looks up that exact key in the
   // alias map. Without an entry it falls back to filesystem resolution
   // from the temp eval dir, which has no node_modules and no awareness
   // of the package's `exports` field — so the subpath import errors
   // out (`Cannot find module .../triggers`).
   //
   // Read the package.json's `exports` map and add an alias per subpath.
-  // For each subpath, use `require.resolve('@invect/actions/<sub>')` so
+  // For each subpath, use `require.resolve('@flowlib/actions/<sub>')` so
   // Node respects the conditions (import / require / types) and lands
   // on the right built file.
-  const actionsRoot = tryResolvePackageRoot('@invect/actions');
+  const actionsRoot = tryResolvePackageRoot('@flowlib/actions');
   if (actionsRoot) {
-    aliases['@invect/actions'] = actionsRoot;
-    addSubpathAliases('@invect/actions', actionsRoot, req, aliases);
+    aliases['@flowlib/actions'] = actionsRoot;
+    addSubpathAliases('@flowlib/actions', actionsRoot, req, aliases);
   }
   // Same treatment for the other packages — they may grow subpaths later.
   if (sdkRoot) {
     addSubpathAliases(sdkSpecifier, sdkRoot, req, aliases);
   }
   if (kitRoot) {
-    addSubpathAliases('@invect/action-kit', kitRoot, req, aliases);
+    addSubpathAliases('@flowlib/action-kit', kitRoot, req, aliases);
   }
 
   return aliases;

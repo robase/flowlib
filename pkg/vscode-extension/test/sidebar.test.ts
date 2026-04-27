@@ -5,8 +5,8 @@
  *
  * We don't drive the actual UI clicks — VSCode doesn't expose a
  * synthetic "click this tree item" API. Instead we exercise the same
- * commands the click handlers fire (`invect.openFlow`,
- * `invect.viewRun`, `invect.openCredentials`, etc.) and assert their
+ * commands the click handlers fire (`flowlib.openFlow`,
+ * `flowlib.viewRun`, `flowlib.openCredentials`, etc.) and assert their
  * effects.
  */
 
@@ -15,8 +15,8 @@ import * as vscode from 'vscode';
 
 async function activate(): Promise<void> {
   const ext =
-    vscode.extensions.getExtension('invect.@invect/vscode') ??
-    vscode.extensions.getExtension('invect.vscode');
+    vscode.extensions.getExtension('flowlib.@flowlib/vscode') ??
+    vscode.extensions.getExtension('flowlib.vscode');
   if (!ext) {
     throw new Error('extension not found');
   }
@@ -31,37 +31,37 @@ suite('Sidebar views + commands', () => {
   test('all expected commands are registered', async () => {
     const commands = await vscode.commands.getCommands(true);
     const expected = [
-      'invect.refreshFlows',
-      'invect.openFlow',
-      'invect.viewRun',
-      'invect.openCredentials',
-      'invect.openWebhooks',
-      'invect.editAsCode',
-      'invect.editVisually',
-      'invect.connect',
-      'invect.disconnect',
-      'invect.newFlow',
+      'flowlib.refreshFlows',
+      'flowlib.openFlow',
+      'flowlib.viewRun',
+      'flowlib.openCredentials',
+      'flowlib.openWebhooks',
+      'flowlib.editAsCode',
+      'flowlib.editVisually',
+      'flowlib.connect',
+      'flowlib.disconnect',
+      'flowlib.newFlow',
     ];
     for (const cmd of expected) {
       assert.ok(commands.includes(cmd), `missing command: ${cmd}`);
     }
   });
 
-  test('invect.openCredentials opens an Invect webview tab', async () => {
+  test('flowlib.openCredentials opens an Invect webview tab', async () => {
     await closeAllEditors();
-    await vscode.commands.executeCommand('invect.openCredentials');
+    await vscode.commands.executeCommand('flowlib.openCredentials');
     await waitFor(() => findInvectPanel('Invect: Credentials') !== undefined, 5000);
     assert.ok(findInvectPanel('Invect: Credentials'), 'credentials panel did not open');
   });
 
-  test('invect.openWebhooks opens an Invect webview tab', async () => {
+  test('flowlib.openWebhooks opens an Invect webview tab', async () => {
     await closeAllEditors();
-    await vscode.commands.executeCommand('invect.openWebhooks');
+    await vscode.commands.executeCommand('flowlib.openWebhooks');
     await waitFor(() => findInvectPanel('Invect: Webhooks') !== undefined, 5000);
     assert.ok(findInvectPanel('Invect: Webhooks'), 'webhooks panel did not open');
   });
 
-  test('invect.openFlow opens the .flow.ts custom editor', async () => {
+  test('flowlib.openFlow opens the .flow.ts custom editor', async () => {
     await closeAllEditors();
     const folder = vscode.workspace.workspaceFolders?.[0];
     if (!folder) {
@@ -71,7 +71,7 @@ suite('Sidebar views + commands', () => {
 
     // Mirror the shape FlowsExplorer produces — that's what the command
     // handler accepts.
-    await vscode.commands.executeCommand('invect.openFlow', {
+    await vscode.commands.executeCommand('flowlib.openFlow', {
       kind: 'flow',
       flowId: fileUri.toString(),
       fileUri: fileUri.toString(),
@@ -80,7 +80,7 @@ suite('Sidebar views + commands', () => {
     await waitFor(() => {
       const tab = findTabByUri(fileUri);
       const input = tab?.input as { viewType?: string } | undefined;
-      return input?.viewType === 'invect.flowEditor';
+      return input?.viewType === 'flowlib.flowEditor';
     }, 5000);
   });
 });

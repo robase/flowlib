@@ -7,7 +7,7 @@ import { DatabaseError } from '../types/common/errors.types';
 import { FlowEdge, FlowNodeDefinitions } from './flow-versions/schemas-fresh';
 import type { NodeOutput, NodeInputData } from '../types/node-io-types';
 import { getGlobalActionRegistry } from '../actions/action-registry';
-import { applyElkLayout } from '@invect/layouts';
+import { applyElkLayout } from '@flowlib/layouts';
 import { FlowsService } from './flows/flows.service';
 import { FlowVersionsService } from './flow-versions/flow-versions.service';
 import { FlowRunsService } from './flow-runs/flow-runs.service';
@@ -354,7 +354,7 @@ export class ReactFlowRendererService {
       // Compute per-node height: switch nodes grow taller with more outputs
       let nodeHeight = 60;
       // Matches both DB-origin `core.switch` and SDK-origin `primitives.switch`.
-      // See `@invect/primitives`' SWITCH_TYPES for the canonical alias set.
+      // See `@flowlib/primitives`' SWITCH_TYPES for the canonical alias set.
       if (
         (node.type === 'core.switch' || node.type === 'primitives.switch') &&
         node.params &&

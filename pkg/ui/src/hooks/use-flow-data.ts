@@ -8,7 +8,7 @@ import {
   type EdgeChange,
 } from '@xyflow/react';
 import { useFlowReactFlowData } from '../api/flows.api';
-import { type ReactFlowData } from '@invect/core/types';
+import { type ReactFlowData } from '@flowlib/core/types';
 
 // Hook that uses the backend React Flow renderer service
 export function useFlowData(

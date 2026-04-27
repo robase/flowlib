@@ -2,7 +2,7 @@
 import 'dotenv/config';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { Invect, type InvectDefinition } from '@invect/core';
+import { Invect, type InvectDefinition } from '@flowlib/core';
 
 const currentDir = path.dirname(fileURLToPath(import.meta.url));
 const sqlitePath = path.resolve(currentDir, '../dev.db');
@@ -2110,7 +2110,7 @@ async function runAllSeeds() {
   console.log(`📂 Database: ${sqlitePath}\n`);
 
   // Initialize Invect
-  const invect = new Invect({
+  const flowlib = new Invect({
     encryptionKey: process.env.INVECT_ENCRYPTION_KEY || 'dGVzdC1lbmNyeXB0aW9uLWtleS0xMjM0NTY3ODkw',
     database: {
       type: 'sqlite',
@@ -2121,22 +2121,22 @@ async function runAllSeeds() {
 
   try {
     console.log('⚙️  Initializing Invect...');
-    await invect.initialize();
+    await flowlib.initialize();
     console.log('✅ Invect initialized\n');
 
     const seededFlows: string[] = [];
     const seededCredentials: string[] = [];
 
     const recreateFlow = async (name: string, invectDefinition: InvectDefinition) => {
-      const { data: existingFlows } = await invect.listFlows();
+      const { data: existingFlows } = await flowlib.listFlows();
       const matchingFlows = existingFlows.filter((flow) => flow.name === name);
 
       for (const flow of matchingFlows) {
-        await invect.deleteFlow(flow.id);
+        await flowlib.deleteFlow(flow.id);
       }
 
-      const createdFlow = await invect.createFlow({ name, isActive: false });
-      await invect.createFlowVersion(createdFlow.id, { invectDefinition });
+      const createdFlow = await flowlib.createFlow({ name, isActive: false });
+      await flowlib.createFlowVersion(createdFlow.id, { invectDefinition });
       seededFlows.push(`  ✓ ${createdFlow.name} (${createdFlow.id})`);
       return createdFlow;
     };
@@ -2235,11 +2235,11 @@ async function runAllSeeds() {
     seededFlows.forEach((f) => console.log(f));
 
     // Cleanup
-    await invect.shutdown();
+    await flowlib.shutdown();
     process.exit(0);
   } catch (error) {
     console.error('\n💥 Seed process failed:', error);
-    await invect.shutdown();
+    await flowlib.shutdown();
     process.exit(1);
   }
 }

@@ -25,7 +25,7 @@ export default function Home() {
         </p>
         <p className="mt-2">
           Auth is handled by <strong>better-auth</strong>, and the{' '}
-          <strong>@invect/user-auth</strong> + <strong>@invect/rbac</strong> plugins provide
+          <strong>@flowlib/user-auth</strong> + <strong>@flowlib/rbac</strong> plugins provide
           integrated authentication and role-based access control.
         </p>
       </div>

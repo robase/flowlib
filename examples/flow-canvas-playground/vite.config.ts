@@ -22,15 +22,15 @@ export default defineConfig({
       // Resolve the flow-canvas subpath directly to the source so we
       // exercise the decoupled entry, not a stale pre-built bundle.
       {
-        find: /^@invect\/ui\/flow-canvas$/,
+        find: /^@flowlib\/ui\/flow-canvas$/,
         replacement: pkg('ui/src/flow-canvas/index.ts'),
       },
       {
-        find: /^@invect\/ui\/styles$/,
+        find: /^@flowlib\/ui\/styles$/,
         replacement: pkg('ui/dist/index.css'),
       },
-      { find: /^@invect\/ui$/, replacement: pkg('ui/src/index.ts') },
-      { find: /^@invect\/action-kit$/, replacement: pkg('action-kit/src/index.ts') },
+      { find: /^@flowlib\/ui$/, replacement: pkg('ui/src/index.ts') },
+      { find: /^@flowlib\/action-kit$/, replacement: pkg('action-kit/src/index.ts') },
     ],
   },
   server: {

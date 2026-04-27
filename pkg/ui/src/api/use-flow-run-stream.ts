@@ -15,7 +15,7 @@ import type {
   FlowRun,
   NodeExecution,
   PaginatedResponse,
-} from '@invect/core/types';
+} from '@flowlib/core/types';
 
 /**
  * Subscribe to real-time execution events for a flow run.

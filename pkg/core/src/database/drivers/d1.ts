@@ -20,7 +20,7 @@ import type { Logger } from 'src/schemas';
  *
  * Mirrors the runtime contract exposed by `@cloudflare/workers-types`'
  * `D1Database`. We keep this structural rather than importing the workers
- * types directly so `@invect/core` can be type-checked in environments
+ * types directly so `@flowlib/core` can be type-checked in environments
  * (Node-only repos) that haven't installed `@cloudflare/workers-types`.
  *
  * In Workers code, this interface is structurally compatible with the real

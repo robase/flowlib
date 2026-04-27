@@ -5,7 +5,7 @@
  * Supports OAuth2 Bearer token or API key (Basic) authentication.
  */
 
-import { defineAction } from '@invect/action-kit';
+import { defineAction } from '@flowlib/action-kit';
 import { FRESHDESK_PROVIDER } from '../providers';
 import { z } from 'zod/v4';
 

@@ -8,7 +8,7 @@
  *      with the parser's error message. If the parser handed us a `line`
  *      number (the evaluator does for jiti errors), we anchor to that line.
  *
- *   2. **Validation failures** — `FlowValidationError` from `@invect/sdk`'s
+ *   2. **Validation failures** — `FlowValidationError` from `@flowlib/sdk`'s
  *      `defineFlow`. The validator throws on the first problem rather than
  *      collecting, so we get one diagnostic per parse cycle. We try to map
  *      the message back to a node `referenceId` and underline the matching
@@ -22,8 +22,8 @@
  */
 
 import * as vscode from 'vscode';
-import type { SdkFlowDefinition } from '@invect/sdk';
-import { defineFlow, FlowValidationError } from '@invect/sdk';
+import type { SdkFlowDefinition } from '@flowlib/sdk';
+import { defineFlow, FlowValidationError } from '@flowlib/sdk';
 
 export interface ParseSuccess {
   ok: true;
@@ -53,7 +53,7 @@ function parseFailureDiagnostic(failure: ParseFailure): vscode.Diagnostic {
   const line = Math.max(0, (failure.line ?? 1) - 1);
   const range = new vscode.Range(line, 0, line, Number.MAX_SAFE_INTEGER);
   const d = new vscode.Diagnostic(range, failure.error, vscode.DiagnosticSeverity.Error);
-  d.source = 'invect';
+  d.source = 'flowlib';
   d.code = 'parse-error';
   return d;
 }
@@ -79,7 +79,7 @@ function validateAndMap(doc: vscode.TextDocument, flow: SdkFlowDefinition): vsco
 function validationDiagnostic(doc: vscode.TextDocument, message: string): vscode.Diagnostic {
   const range = locateValidationRange(doc, message);
   const d = new vscode.Diagnostic(range, message, vscode.DiagnosticSeverity.Error);
-  d.source = 'invect';
+  d.source = 'flowlib';
   d.code = 'flow-validation';
   return d;
 }

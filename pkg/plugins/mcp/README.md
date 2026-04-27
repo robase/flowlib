@@ -5,12 +5,12 @@
   </picture>
 </p>
 
-<h1 align="center">@invect/mcp</h1>
+<h1 align="center">@flowlib/mcp</h1>
 
 <p align="center">
   Model Context Protocol server for Invect.
   <br />
-  <a href="https://invect.dev/docs/plugins"><strong>Docs</strong></a>
+  <a href="https://flowlib.dev/docs/plugins"><strong>Docs</strong></a>
 </p>
 
 ---
@@ -20,7 +20,7 @@ Exposes Invect flow building, editing, execution, and debugging as MCP tools. Wo
 ## Install
 
 ```bash
-pnpm add @invect/mcp
+pnpm add @flowlib/mcp
 ```
 
 ## Backend Plugin
@@ -28,7 +28,7 @@ pnpm add @invect/mcp
 Add the MCP plugin to enable the Streamable HTTP transport endpoint:
 
 ```ts
-import { mcp } from '@invect/mcp';
+import { mcp } from '@flowlib/mcp';
 
 const invectRouter = await createInvectRouter({
   database: { type: 'sqlite', connectionString: 'file:./dev.db' },
@@ -36,7 +36,7 @@ const invectRouter = await createInvectRouter({
   plugins: [mcp()],
 });
 
-app.use('/invect', invectRouter);
+app.use('/flowlib', invectRouter);
 ```
 
 ### Options
@@ -57,7 +57,7 @@ mcp({
 For AI coding agents that use stdio transport (Claude Desktop, VS Code Copilot), run the MCP server as a standalone process:
 
 ```bash
-npx invect-mcp --url http://localhost:3000/invect --api-key YOUR_KEY
+npx flowlib-mcp --url http://localhost:3000/flowlib --api-key YOUR_KEY
 ```
 
 ### Claude Desktop Configuration
@@ -65,9 +65,9 @@ npx invect-mcp --url http://localhost:3000/invect --api-key YOUR_KEY
 ```json
 {
   "mcpServers": {
-    "invect": {
+    "flowlib": {
       "command": "npx",
-      "args": ["invect-mcp", "--url", "http://localhost:3000/invect"]
+      "args": ["flowlib-mcp", "--url", "http://localhost:3000/flowlib"]
     }
   }
 }
@@ -89,9 +89,9 @@ npx invect-mcp --url http://localhost:3000/invect --api-key YOUR_KEY
 
 | Entry Point         | Content                     |
 | ------------------- | --------------------------- |
-| `@invect/mcp`       | Backend plugin (Node.js)    |
-| `@invect/mcp/types` | Shared types                |
-| `invect-mcp` (bin)  | Standalone stdio MCP server |
+| `@flowlib/mcp`       | Backend plugin (Node.js)    |
+| `@flowlib/mcp/types` | Shared types                |
+| `flowlib-mcp` (bin)  | Standalone stdio MCP server |
 
 ## License
 

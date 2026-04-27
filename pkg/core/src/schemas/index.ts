@@ -4,4 +4,4 @@ export * from './pagination-sort-filter';
 // Execution schemas
 export * as flow from './flow';
 
-export * from './invect-config';
+export * from './flowlib-config';

@@ -4,7 +4,7 @@ import { memo } from 'react';
 import { Handle, Position, type NodeProps } from '@xyflow/react';
 import { Card } from '../ui/card';
 import { useNodeRegistry } from '../../contexts/NodeRegistryContext';
-import { NodeExecutionStatus } from '@invect/core/types';
+import { NodeExecutionStatus } from '@flowlib/core/types';
 import type { NodeDefinition, NodeHandleDefinition } from '../../types/node-definition.types';
 import { cn } from '../../lib/utils';
 import { Loader2 } from 'lucide-react';

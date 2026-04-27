@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { ChevronRight, Plus, Trash2, Users } from 'lucide-react';
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@invect/ui';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@flowlib/ui';
 import {
   useAddTeamMember,
   useDeleteTeam,

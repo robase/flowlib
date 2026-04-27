@@ -5,7 +5,7 @@
  * These are intentionally minimal — only the methods an action's
  * `loadOptions.handler` or `onConfigUpdate` actually call appear here.
  * Concrete implementations (CredentialsService, BaseAIClient) live in
- * `@invect/core` and satisfy these structurally.
+ * `@flowlib/core` and satisfy these structurally.
  */
 
 import type { ActionCredential } from './action-credential';

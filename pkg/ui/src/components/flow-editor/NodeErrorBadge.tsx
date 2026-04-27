@@ -1,4 +1,4 @@
-import type { NodeErrorDetails, NodeErrorCode } from '@invect/core/types';
+import type { NodeErrorDetails, NodeErrorCode } from '@flowlib/core/types';
 
 /**
  * Small status pill that surfaces a classified node-execution failure.

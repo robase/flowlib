@@ -7,7 +7,7 @@
 
 import { useState, type FC, type RefObject } from 'react';
 import { Check } from 'lucide-react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@invect/ui';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@flowlib/ui';
 import { useCreateWebhookTrigger } from '../hooks/useWebhookQueries';
 import { CopyableField } from './CopyableField';
 import type { CreateWebhookTriggerInput } from '../../shared/types';

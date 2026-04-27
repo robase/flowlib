@@ -31,7 +31,7 @@ import type { ChatToolkit } from './chat-toolkit';
 import type { FlowContextData } from './system-prompt';
 import { buildSystemPrompt } from './system-prompt';
 import type { ActionRegistry } from 'src/actions';
-import { classifyError } from '@invect/action-kit';
+import { classifyError } from '@flowlib/action-kit';
 
 /**
  * Dependencies injected into the session from the ChatStreamService.
@@ -43,7 +43,7 @@ export interface ChatStreamSessionDeps {
   adapter: ProviderAdapter;
   identity?: InvectIdentity;
   /** The Invect core instance */
-  invect: InvectInstance;
+  flowlib: InvectInstance;
   /** Action registry for provider summary in system prompt */
   actionRegistry: ActionRegistry | null;
 }
@@ -305,7 +305,7 @@ export class ChatStreamSession {
           // source-editing tools can enforce the read-before-edit invariant
           // and emit structured failure telemetry.
           const toolCtx: ChatToolContext = {
-            invect: this.deps.invect,
+            flowlib: this.deps.flowlib,
             identity: this.deps.identity,
             chatContext: context,
             readState: this.readState,

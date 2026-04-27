@@ -3,12 +3,12 @@ const nextConfig = {
   eslint: { ignoreDuringBuilds: true },
   typescript: { ignoreBuildErrors: true },
   transpilePackages: [
-    '@invect/core',
-    '@invect/sdk',
-    '@invect/ui',
-    '@invect/nextjs',
-    '@invect/user-auth',
-    '@invect/rbac',
+    '@flowlib/core',
+    '@flowlib/sdk',
+    '@flowlib/ui',
+    '@flowlib/nextjs',
+    '@flowlib/user-auth',
+    '@flowlib/rbac',
   ],
   serverExternalPackages: ['pg', 'better-auth', 'drizzle-orm'],
   webpack: (config, { isServer }) => {

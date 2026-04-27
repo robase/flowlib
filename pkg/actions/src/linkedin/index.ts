@@ -16,7 +16,7 @@ export { linkedinGetCompanyAction } from './get-company';
 
 // ── Bulk array ──────────────────────────────────────────────────────────
 
-import type { ActionDefinition } from '@invect/action-kit';
+import type { ActionDefinition } from '@flowlib/action-kit';
 
 import { linkedinGetProfileAction } from './get-profile';
 import { linkedinCreatePostAction } from './create-post';

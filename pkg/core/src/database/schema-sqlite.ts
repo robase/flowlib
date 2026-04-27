@@ -6,7 +6,7 @@ import { FlowRunStatus, NodeExecutionStatus } from 'src/types/base';
 import { BatchStatus, BatchProvider } from 'src/services/ai/base-client';
 import { InvectDefinitionRuntime } from 'src/services/flow-versions/schemas-fresh';
 import { randomUUID } from 'crypto';
-import type { NodeErrorDetails } from '@invect/action-kit';
+import type { NodeErrorDetails } from '@flowlib/action-kit';
 
 // =============================================================================
 // Tables

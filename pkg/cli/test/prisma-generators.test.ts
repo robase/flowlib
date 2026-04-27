@@ -33,7 +33,7 @@ import {
 let tmpDir: string;
 
 beforeEach(() => {
-  tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'invect-prisma-test-'));
+  tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'flowlib-prisma-test-'));
 });
 
 afterEach(() => {

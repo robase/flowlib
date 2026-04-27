@@ -6,13 +6,13 @@
  * structured flow definition — nodes + edges + metadata. Input sources
  * typically look like:
  *
- *   import { defineFlow, input, code, output } from '@invect/sdk';
- *   import { gmailSendMessageAction } from '@invect/actions/gmail';
+ *   import { defineFlow, input, code, output } from '@flowlib/sdk';
+ *   import { gmailSendMessageAction } from '@flowlib/actions/gmail';
  *
  *   export default defineFlow({ nodes: [...], edges: [...] });
  *
- * The evaluator enforces a module-import allowlist — `@invect/sdk` (and
- * subpaths), `@invect/action-kit`, and `@invect/actions/*`. Any extra
+ * The evaluator enforces a module-import allowlist — `@flowlib/sdk` (and
+ * subpaths), `@flowlib/action-kit`, and `@flowlib/actions/*`. Any extra
  * specifiers the caller wants to permit can be added via
  * `additionalAllowedImports`; those modules must resolve via normal Node
  * module resolution from the evaluator's cwd or node_modules tree.
@@ -39,9 +39,9 @@ export interface EvaluatorOptions {
   timeoutMs?: number;
 
   /**
-   * Optional import specifier that resolves the `@invect/sdk` itself. Tests
+   * Optional import specifier that resolves the `@flowlib/sdk` itself. Tests
    * pin this to the live workspace path; production callers should leave it
-   * unset (defaults to `@invect/sdk`).
+   * unset (defaults to `@flowlib/sdk`).
    */
   sdkImportSpecifier?: string;
 }

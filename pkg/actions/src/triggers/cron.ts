@@ -8,7 +8,7 @@
  * so downstream nodes can access metadata like `{{ cron_trigger.scheduledTime }}`.
  */
 
-import { defineAction } from '@invect/action-kit';
+import { defineAction } from '@flowlib/action-kit';
 import { TRIGGERS_PROVIDER } from '../providers';
 import { z } from 'zod/v4';
 

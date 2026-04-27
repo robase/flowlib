@@ -7,28 +7,28 @@
  */
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import type { InvectInstance } from '../../../src/api/types';
-import { createTestInvect } from '../helpers/test-invect';
+import { createTestInvect } from '../helpers/test-flowlib';
 
 describe('Action Registry', () => {
-  let invect: InvectInstance;
+  let flowlib: InvectInstance;
 
   beforeAll(async () => {
-    invect = await createTestInvect();
+    flowlib = await createTestInvect();
   });
 
   afterAll(async () => {
-    await invect.shutdown();
+    await flowlib.shutdown();
   });
 
   it('should register all built-in actions during initialization', async () => {
-    const tools = await invect.agent.getTools();
+    const tools = await flowlib.agent.getTools();
 
     // There should be a significant number of registered tools
     expect(tools.length).toBeGreaterThan(10);
   });
 
   it('should include core actions exposed as agent tools (javascript)', async () => {
-    const tools = await invect.agent.getTools();
+    const tools = await flowlib.agent.getTools();
     const ids = tools.map((t) => t.id);
 
     // Only core.javascript is exposed as an agent tool; the other core actions
@@ -38,7 +38,7 @@ describe('Action Registry', () => {
   });
 
   it('should include provider actions (http, gmail, slack, github)', async () => {
-    const tools = await invect.agent.getTools();
+    const tools = await flowlib.agent.getTools();
     const ids = tools.map((t) => t.id);
 
     expect(ids.some((id) => id.startsWith('http.'))).toBe(true);
@@ -48,7 +48,7 @@ describe('Action Registry', () => {
   });
 
   it('should produce valid agent tool definitions with id, name, and inputSchema', async () => {
-    const tools = await invect.agent.getTools();
+    const tools = await flowlib.agent.getTools();
 
     for (const tool of tools) {
       expect(tool.id).toBeTruthy();
@@ -60,7 +60,7 @@ describe('Action Registry', () => {
   });
 
   it('should include standalone tools (math_eval)', async () => {
-    const tools = await invect.agent.getTools();
+    const tools = await flowlib.agent.getTools();
     const ids = tools.map((t) => t.id);
 
     expect(ids).toContain('math_eval');

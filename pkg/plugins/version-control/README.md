@@ -5,12 +5,12 @@
   </picture>
 </p>
 
-<h1 align="center">@invect/version-control</h1>
+<h1 align="center">@flowlib/version-control</h1>
 
 <p align="center">
   Version control plugin for Invect.
   <br />
-  <a href="https://invect.dev/docs/plugins"><strong>Docs</strong></a>
+  <a href="https://flowlib.dev/docs/plugins"><strong>Docs</strong></a>
 </p>
 
 ---
@@ -20,14 +20,14 @@ Sync Invect flows to GitHub (and other Git providers) as readable `.flow.ts` Typ
 ## Install
 
 ```bash
-pnpm add @invect/version-control
+pnpm add @flowlib/version-control
 ```
 
 ## Backend
 
 ```ts
-import { versionControl } from '@invect/version-control';
-import { githubProvider } from '@invect/version-control/providers/github';
+import { versionControl } from '@flowlib/version-control';
+import { githubProvider } from '@flowlib/version-control/providers/github';
 
 const invectRouter = await createInvectRouter({
   database: { type: 'sqlite', connectionString: 'file:./dev.db' },
@@ -40,7 +40,7 @@ const invectRouter = await createInvectRouter({
   ],
 });
 
-app.use('/invect', invectRouter);
+app.use('/flowlib', invectRouter);
 ```
 
 ### Options
@@ -69,9 +69,9 @@ versionControl({
 
 | Entry Point                                | Content                  |
 | ------------------------------------------ | ------------------------ |
-| `@invect/version-control`                  | Backend plugin (Node.js) |
-| `@invect/version-control/providers/github` | GitHub provider          |
-| `@invect/version-control/types`            | Shared types             |
+| `@flowlib/version-control`                  | Backend plugin (Node.js) |
+| `@flowlib/version-control/providers/github` | GitHub provider          |
+| `@flowlib/version-control/types`            | Shared types             |
 
 ## License
 

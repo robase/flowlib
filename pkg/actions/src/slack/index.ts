@@ -5,7 +5,7 @@
 export { slackSendMessageAction } from './send-message';
 export { slackListChannelsAction } from './list-channels';
 
-import type { ActionDefinition } from '@invect/action-kit';
+import type { ActionDefinition } from '@flowlib/action-kit';
 import { slackSendMessageAction } from './send-message';
 import { slackListChannelsAction } from './list-channels';
 

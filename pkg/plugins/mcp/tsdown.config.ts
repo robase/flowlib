@@ -14,8 +14,8 @@ export default defineConfig({
   clean: true,
   deps: {
     neverBundle: [
-      '@invect/core',
-      '@invect/sdk',
+      '@flowlib/core',
+      '@flowlib/sdk',
       '@modelcontextprotocol/sdk',
       '@modelcontextprotocol/sdk/server/mcp.js',
       '@modelcontextprotocol/sdk/server/stdio.js',

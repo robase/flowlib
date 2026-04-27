@@ -36,13 +36,13 @@ import { AppSideMenu } from './components/side-menu/side-menu';
  * used on the backend — the frontend reads only the fields it needs.
  *
  * When using the `browser` export condition on plugin packages, imports like
- * `import { auth } from '@invect/user-auth'` resolve to a lightweight
+ * `import { auth } from '@flowlib/user-auth'` resolve to a lightweight
  * frontend-only entry, so no server code is bundled.
  */
 export interface InvectConfig {
-  /** Base URL for the Invect API (e.g. `/api/invect`). @default 'http://localhost:3000/invect' */
+  /** Base URL for the Invect API (e.g. `/api/flowlib`). @default 'http://localhost:3000/flowlib' */
   apiPath?: string;
-  /** Base path where the Invect UI is mounted in the browser. @default '/invect' */
+  /** Base path where the Invect UI is mounted in the browser. @default '/flowlib' */
   frontendPath?: string;
   /** UI theme mode. @default 'dark' */
   theme?: 'light' | 'dark' | 'system';
@@ -60,7 +60,7 @@ export interface InvectProps {
    *
    * @example
    * ```tsx
-   * import config from '../invect.config';
+   * import config from '../flowlib.config';
    * <Invect config={config} />
    * ```
    */
@@ -182,7 +182,7 @@ const InvectLayout = React.memo(
     }
 
     return (
-      <ThemeProvider defaultTheme={theme} storageKey="invect-ui-theme">
+      <ThemeProvider defaultTheme={theme} storageKey="flowlib-ui-theme">
         {content}
       </ThemeProvider>
     );
@@ -280,9 +280,9 @@ InvectRoutes.displayName = 'InvectRoutes';
  *
  * @example
  * ```tsx
- * import { Invect } from '@invect/ui';
- * import config from '../invect.config';
- * import '@invect/ui/styles';
+ * import { Invect } from '@flowlib/ui';
+ * import config from '../flowlib.config';
+ * import '@flowlib/ui/styles';
  *
  * export default function App() {
  *   return <Invect config={config} />;
@@ -291,8 +291,8 @@ InvectRoutes.displayName = 'InvectRoutes';
  */
 export const Invect = React.memo(
   ({ config, reactQueryClient, useMemoryRouter = false, apiClient }: InvectProps) => {
-    const apiBaseUrl = (config.apiPath as string | undefined) ?? 'http://localhost:3000/invect';
-    const basePath = (config.frontendPath as string | undefined) ?? '/invect';
+    const apiBaseUrl = (config.apiPath as string | undefined) ?? 'http://localhost:3000/flowlib';
+    const basePath = (config.frontendPath as string | undefined) ?? '/flowlib';
     const theme = (config.theme as 'light' | 'dark' | 'system' | undefined) ?? 'dark';
 
     const resolvedPlugins = React.useMemo(

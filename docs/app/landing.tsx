@@ -302,7 +302,7 @@ export default function LandingPage() {
         <nav>
           <div className="container">
             <a href="#" className="logo">
-              invect
+              flowlib
             </a>
             <ul className="nav-links">
               <li>
@@ -318,7 +318,7 @@ export default function LandingPage() {
                 <Link href="/demo">Demo</Link>
               </li>
               <li>
-                <a href="https://github.com/robase/invect" className="btn-nav">
+                <a href="https://github.com/robase/flowlib" className="btn-nav">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z" />
                   </svg>
@@ -360,7 +360,7 @@ export default function LandingPage() {
               <div
                 className="install-bar"
                 onClick={(e) => {
-                  navigator.clipboard.writeText('npx invect-cli init');
+                  navigator.clipboard.writeText('npx flowlib-cli init');
                   const el = (e.currentTarget as HTMLElement).querySelector('.copy-label');
                   if (el) {
                     el.textContent = 'Copied!';
@@ -372,7 +372,7 @@ export default function LandingPage() {
               >
                 <code>
                   <span className="install-muted">$</span> <span className="install-cmd">npx</span>{' '}
-                  <span className="install-pkg">invect-cli</span> init
+                  <span className="install-pkg">flowlib-cli</span> init
                 </code>
                 <span className="copy-label copy-icon">
                   <svg
@@ -408,7 +408,7 @@ export default function LandingPage() {
                   </svg>
                   Get Started
                 </Link>
-                <a href="https://github.com/robase/invect" className="btn-secondary">
+                <a href="https://github.com/robase/flowlib" className="btn-secondary">
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z" />
                   </svg>
@@ -466,7 +466,7 @@ export default function LandingPage() {
                   <pre
                     dangerouslySetInnerHTML={{
                       __html: `<span class="comment">// Your existing Express app</span>
-<span class="keyword">import</span> { <span class="type">createInvectRouter</span> } <span class="keyword">from</span> <span class="string">'@invect/express'</span>;
+<span class="keyword">import</span> { <span class="type">createInvectRouter</span> } <span class="keyword">from</span> <span class="string">'@flowlib/express'</span>;
 
 <span class="comment">// Mount alongside your existing routes</span>
 app.<span class="func">use</span>(<span class="string">'/api'</span>, yourRouter);
@@ -641,7 +641,7 @@ app.<span class="func">use</span>(<span class="string">'/workflows'</span>, <spa
                   </div>
                   <pre
                     dangerouslySetInnerHTML={{
-                      __html: `<span class="keyword">import</span> { <span class="type">defineFlow</span>, <span class="type">input</span>, <span class="type">model</span>, <span class="type">output</span> } <span class="keyword">from</span> <span class="string">'@invect/core/sdk'</span>;
+                      __html: `<span class="keyword">import</span> { <span class="type">defineFlow</span>, <span class="type">input</span>, <span class="type">model</span>, <span class="type">output</span> } <span class="keyword">from</span> <span class="string">'@flowlib/core/sdk'</span>;
 
 <span class="keyword">export</span> <span class="keyword">default</span> <span class="func">defineFlow</span>({
   <span class="type">name</span>: <span class="string">'Support triage'</span>,
@@ -823,7 +823,7 @@ app.<span class="func">use</span>(<span class="string">'/workflows'</span>, <spa
                   </svg>
                   Read the Docs
                 </Link>
-                <a href="https://github.com/robase/invect" className="btn-secondary">
+                <a href="https://github.com/robase/flowlib" className="btn-secondary">
                   <svg
                     width="18"
                     height="18"
@@ -852,7 +852,7 @@ app.<span class="func">use</span>(<span class="string">'/workflows'</span>, <spa
                 <Link href="/docs">Documentation</Link>
               </li>
               <li>
-                <a href="https://github.com/robase/invect">GitHub</a>
+                <a href="https://github.com/robase/flowlib">GitHub</a>
               </li>
               <li>
                 <a href="https://www.npmjs.com/search?q=%40invect">npm</a>
@@ -1026,10 +1026,10 @@ const landingStyles = `
   .landing .compare-label { font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--text-muted); margin-bottom: 8px; }
   .landing .compare-row { display: flex; justify-content: space-between; padding: 6px 0; font-size: 13px; color: var(--text); border-bottom: 1px solid color-mix(in srgb, var(--border) 50%, transparent); }
   .landing .compare-cost { color: var(--text-muted); font-size: 12px; }
-  .landing .compare-group.is-invect { background: color-mix(in srgb, var(--accent) 8%, transparent); border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent); border-radius: 8px; padding: 16px; }
-  .landing .compare-group.is-invect .compare-label { color: var(--accent-bright); }
-  .landing .compare-invect code { display: block; font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 6px; }
-  .landing .compare-invect p { font-size: 13px; color: var(--text-muted); line-height: 1.5; margin: 0; }
+  .landing .compare-group.is-flowlib { background: color-mix(in srgb, var(--accent) 8%, transparent); border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent); border-radius: 8px; padding: 16px; }
+  .landing .compare-group.is-flowlib .compare-label { color: var(--accent-bright); }
+  .landing .compare-flowlib code { display: block; font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 6px; }
+  .landing .compare-flowlib p { font-size: 13px; color: var(--text-muted); line-height: 1.5; margin: 0; }
 
   /* Frameworks */
   .landing .frameworks { padding: 80px 0; text-align: center; border-top: 1px solid var(--border); }

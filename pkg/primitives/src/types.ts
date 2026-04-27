@@ -2,7 +2,7 @@ import type {
   ActionDefinition,
   ActionExecutionContext,
   JsExpressionEvaluator,
-} from '@invect/action-kit';
+} from '@flowlib/action-kit';
 
 export type { ActionDefinition };
 
@@ -111,7 +111,7 @@ export interface FlowRunnerConfig {
   // Omit for in-memory (non-durable) execution.
   adapter?: DurabilityAdapter;
 
-  // Extra actions to register beyond the defaults (all @invect/core builtins).
+  // Extra actions to register beyond the defaults (all @flowlib/core builtins).
   // Use this to supply third-party or custom ActionDefinition instances.
   actions?: ActionDefinition[];
 

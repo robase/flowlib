@@ -50,7 +50,7 @@ export type { Model } from './services/ai/base-client';
 
 export type { PaginatedResponse, QueryOptions } from './schemas/pagination-sort-filter';
 
-export type { InvectConfig } from './schemas/invect-config';
+export type { InvectConfig } from './schemas/flowlib-config';
 
 // Plugin system types (safe for frontend — no runtime imports)
 export type {
@@ -111,10 +111,10 @@ export type {
 
 export type { NodeExecutionResult as ExecutionResult } from './types/node-execution.types';
 
-// Error classification — safe type-only re-exports from @invect/action-kit.
+// Error classification — safe type-only re-exports from @flowlib/action-kit.
 // The runtime `classifyError` function lives in action-kit; frontend only
 // needs the typed discriminant.
-export type { NodeErrorCode, NodeErrorDetails } from '@invect/action-kit';
+export type { NodeErrorCode, NodeErrorDetails } from '@flowlib/action-kit';
 
 // Agent tool types
 export type {
@@ -166,7 +166,7 @@ export type {
 } from './database/schema-sqlite';
 
 // Dashboard stats type (pure interface — safe for frontend)
-export type { DashboardStats } from './invect-core';
+export type { DashboardStats } from './flowlib-core';
 
 // InvectInstance type (the new namespaced API surface)
 export type { InvectInstance } from './api/types';

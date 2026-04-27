@@ -1,24 +1,24 @@
 {
-  "name": "@invect/user-auth",
+  "name": "@flowlib/user-auth",
   "version": "0.0.12",
   "description": "Better Auth plugin for Invect — adds user authentication, session management, identity resolution, and auth UI components",
   "keywords": [
     "auth",
     "authentication",
     "better-auth",
-    "invect",
+    "flowlib",
     "plugin",
     "workflow"
   ],
-  "homepage": "https://invect.dev",
+  "homepage": "https://flowlib.dev",
   "bugs": {
-    "url": "https://github.com/robase/invect/issues"
+    "url": "https://github.com/robase/flowlib/issues"
   },
   "license": "MIT",
-  "author": "robase <team@invect.dev>",
+  "author": "robase <team@flowlib.dev>",
   "repository": {
     "type": "git",
-    "url": "https://github.com/robase/invect.git",
+    "url": "https://github.com/robase/flowlib.git",
     "directory": "pkg/plugins/auth"
   },
   "files": [
@@ -66,12 +66,12 @@
   },
   "dependencies": {
     "@better-auth/api-key": "^1.6.0",
-    "@invect/core": "workspace:*",
+    "@flowlib/core": "workspace:*",
     "better-auth": "^1.6.0",
     "kysely": "^0.28.14"
   },
   "devDependencies": {
-    "@invect/ui": "workspace:*",
+    "@flowlib/ui": "workspace:*",
     "@tanstack/react-query": "^5.0.0",
     "@types/node": "^20.11.20",
     "@types/react": "18.3.7",
@@ -84,7 +84,7 @@
     "vitest": "^4.1.4"
   },
   "peerDependencies": {
-    "@invect/ui": ">=0.0.12",
+    "@flowlib/ui": ">=0.0.12",
     "@tanstack/react-query": ">=5.0.0",
     "better-sqlite3": ">=9.0.0",
     "react": ">=18.0.0",
@@ -107,7 +107,7 @@
     "@tanstack/react-query": {
       "optional": true
     },
-    "@invect/ui": {
+    "@flowlib/ui": {
       "optional": true
     }
   }

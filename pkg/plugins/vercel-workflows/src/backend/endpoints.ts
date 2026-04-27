@@ -1,5 +1,5 @@
 /**
- * Backend endpoints for `@invect/vercel-workflows`.
+ * Backend endpoints for `@flowlib/vercel-workflows`.
  *
  * The Deploy button in the flow editor calls these routes to fetch the two
  * pieces of source the user copy-pastes into their Next.js app:
@@ -12,8 +12,8 @@
  *
  * No state is persisted — compilation is deterministic from the flow version.
  */
-import type { InvectPlugin, InvectDefinition, FlowNodeDefinitions } from '@invect/core';
-import { emitSdkSource } from '@invect/sdk';
+import type { InvectPlugin, InvectDefinition, FlowNodeDefinitions } from '@flowlib/core';
+import { emitSdkSource } from '@flowlib/sdk';
 import { compile } from '../compiler/flow-compiler';
 
 const OUTPUT_TYPES = new Set(['core.output', 'primitives.output']);
@@ -136,14 +136,14 @@ export function buildBackendPlugin(options: VercelWorkflowsBackendOptions = {}):
             return { status: 400, body: { error: 'flowId is required' } };
           }
 
-          const invect = ctx.getInvect();
-          const flow = await invect.flows.get(flowId);
+          const flowlib = ctx.getInvect();
+          const flow = await flowlib.flows.get(flowId);
           if (!flow) {
             return { status: 404, body: { error: `Flow ${flowId} not found` } };
           }
 
           const version = ctx.query.version ?? 'latest';
-          const flowVersion = await invect.versions.get(flowId, version);
+          const flowVersion = await flowlib.versions.get(flowId, version);
           if (!flowVersion?.invectDefinition) {
             return { status: 404, body: { error: `Flow version not found` } };
           }

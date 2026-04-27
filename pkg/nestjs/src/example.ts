@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { InvectModule } from '@invect/nestjs';
+import { InvectModule } from '@flowlib/nestjs';
 
 /**
  * Example usage of InvectModule in a NestJS application

@@ -13,7 +13,7 @@ import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
 import { mkdtempSync, rmSync } from 'fs';
 import { tmpdir } from 'os';
 import { dirname, join, resolve } from 'path';
-import { createInvect } from '../../../src/api/create-invect';
+import { createInvect } from '../../../src/api/create-flowlib';
 import type { InvectInstance } from '../../../src/api/types';
 import type { InvectPlugin } from '../../../src/types/plugin.types';
 
@@ -37,7 +37,7 @@ export async function createTestInvect(opts?: {
   process.env.INVECT_ENCRYPTION_KEY = randomBytes(32).toString('base64');
 
   // Create a temporary SQLite file for this test instance
-  const tmpDir = mkdtempSync(join(tmpdir(), 'invect-test-'));
+  const tmpDir = mkdtempSync(join(tmpdir(), 'flowlib-test-'));
   const dbPath = join(tmpDir, 'test.db');
 
   // Run Drizzle migrations to create all tables
@@ -47,7 +47,7 @@ export async function createTestInvect(opts?: {
   migrate(db, { migrationsFolder: MIGRATIONS_FOLDER });
   sqlite.close();
 
-  const invect = await createInvect({
+  const flowlib = await createInvect({
     encryptionKey: 'dGVzdC1lbmNyeXB0aW9uLWtleS0xMjM0NTY3ODkw',
     database: {
       type: 'sqlite',
@@ -60,8 +60,8 @@ export async function createTestInvect(opts?: {
   });
 
   // Attach cleanup to shutdown so temp files are removed
-  const originalShutdown = invect.shutdown.bind(invect);
-  invect.shutdown = async () => {
+  const originalShutdown = flowlib.shutdown.bind(flowlib);
+  flowlib.shutdown = async () => {
     await originalShutdown();
     try {
       rmSync(tmpDir, { recursive: true, force: true });
@@ -70,5 +70,5 @@ export async function createTestInvect(opts?: {
     }
   };
 
-  return invect;
+  return flowlib;
 }

@@ -1,11 +1,11 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import '@invect/ui/styles';
+import '@flowlib/ui/styles';
 
 /**
  * Lazy-loaded FlowViewer demo for the landing page.
- * Dynamically imports @invect/ui/demo to avoid SSR issues
+ * Dynamically imports @flowlib/ui/demo to avoid SSR issues
  * and keep the initial page bundle small.
  * CSS is a static import (Next.js requires this for CSS processing).
  */
@@ -31,7 +31,7 @@ export default function LandingDemo() {
   useEffect(() => {
     let cancelled = false;
 
-    import('@invect/ui/demo')
+    import('@flowlib/ui/demo')
       .then((mod) => {
         if (cancelled) {
           return;

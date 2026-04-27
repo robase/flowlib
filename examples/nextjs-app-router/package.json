@@ -1,5 +1,5 @@
 {
-  "name": "invect-nextjs-example",
+  "name": "flowlib-nextjs-example",
   "version": "0.0.1",
   "private": true,
   "type": "module",
@@ -13,9 +13,9 @@
     "test": "echo \"No tests configured\""
   },
   "dependencies": {
-    "@invect/core": "workspace:*",
-    "@invect/nextjs": "workspace:*",
-    "@invect/ui": "workspace:*",
+    "@flowlib/core": "workspace:*",
+    "@flowlib/nextjs": "workspace:*",
+    "@flowlib/ui": "workspace:*",
     "@tailwindcss/postcss": "^4.1.12",
     "autoprefixer": "^10.4.21",
     "next": "^15.5.15",
@@ -24,7 +24,7 @@
     "tailwindcss": "^4.1.12"
   },
   "devDependencies": {
-    "@invect/cli": "workspace:*",
+    "@flowlib/cli": "workspace:*",
     "@types/node": "^20",
     "@types/react": "^18.3.7",
     "@types/react-dom": "^18.3.7",

@@ -2,7 +2,7 @@
 // Version Control Plugin — Database Schema (abstract, dialect-agnostic)
 // =============================================================================
 
-import type { InvectPluginSchema } from '@invect/core';
+import type { InvectPluginSchema } from '@flowlib/core';
 
 const SYNC_MODES = ['direct-commit', 'pr-per-save', 'pr-per-publish'] as const;
 const SYNC_DIRECTIONS = ['push', 'pull', 'bidirectional'] as const;

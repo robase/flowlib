@@ -13,7 +13,7 @@
  *      file content as a new version so the canvas opens with the
  *      latest definition.
  *   3. Sending the webview an `init` payload with the server URL and
- *      the deep-link path `/invect/flow/<dbId>`.
+ *      the deep-link path `/flowlib/flow/<dbId>`.
  *
  * Theme + workspace-trust transitions are still forwarded.
  */
@@ -64,7 +64,7 @@ export interface FlowEditorProviderDeps {
 }
 
 export class FlowEditorProvider implements vscode.CustomTextEditorProvider {
-  static readonly viewType = 'invect.flowEditor';
+  static readonly viewType = 'flowlib.flowEditor';
   /** Active panels keyed by `document.uri.toString()`. */
   private static readonly panels = new Map<string, vscode.WebviewPanel>();
 
@@ -144,7 +144,7 @@ export class FlowEditorProvider implements vscode.CustomTextEditorProvider {
           post({
             type: 'init',
             apiUrl,
-            initialPath: existingId ? `/invect/flow/${encodeURIComponent(existingId)}` : undefined,
+            initialPath: existingId ? `/flowlib/flow/${encodeURIComponent(existingId)}` : undefined,
             theme: resolveTheme(),
             parseError: parsed.error,
           });
@@ -154,7 +154,7 @@ export class FlowEditorProvider implements vscode.CustomTextEditorProvider {
         post({
           type: 'init',
           apiUrl,
-          initialPath: `/invect/flow/${encodeURIComponent(dbFlowId)}`,
+          initialPath: `/flowlib/flow/${encodeURIComponent(dbFlowId)}`,
           theme: resolveTheme(),
         });
         // The DB row exists now (ensureFlowForFile created it if needed),

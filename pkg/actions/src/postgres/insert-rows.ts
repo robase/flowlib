@@ -5,7 +5,7 @@
  * table. Returns the inserted rows (via RETURNING *).
  */
 
-import { defineAction } from '@invect/action-kit';
+import { defineAction } from '@flowlib/action-kit';
 import { POSTGRES_PROVIDER } from '../providers';
 import { z } from 'zod/v4';
 import pgLib from 'postgres';

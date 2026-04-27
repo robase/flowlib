@@ -14,22 +14,22 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { FlowRunStatus } from '../../../src';
 import type { InvectInstance } from '../../../src/api/types';
 import type { InvectDefinition } from '../../../src/services/flow-versions/schemas-fresh';
-import { createTestInvect } from '../helpers/test-invect';
+import { createTestInvect } from '../helpers/test-flowlib';
 
-let invect: InvectInstance;
+let flowlib: InvectInstance;
 
 beforeAll(async () => {
-  invect = await createTestInvect();
+  flowlib = await createTestInvect();
 });
 
 afterAll(async () => {
-  await invect.shutdown();
+  await flowlib.shutdown();
 });
 
 async function runFlow(definition: InvectDefinition, inputs: Record<string, unknown> = {}) {
-  const flow = await invect.flows.create({ name: `mapper-${Date.now()}-${Math.random()}` });
-  await invect.versions.create(flow.id, { invectDefinition: definition });
-  return invect.runs.start(flow.id, inputs, { useBatchProcessing: false });
+  const flow = await flowlib.flows.create({ name: `mapper-${Date.now()}-${Math.random()}` });
+  await flowlib.versions.create(flow.id, { invectDefinition: definition });
+  return flowlib.runs.start(flow.id, inputs, { useBatchProcessing: false });
 }
 
 /**

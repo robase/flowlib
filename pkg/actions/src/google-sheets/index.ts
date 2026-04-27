@@ -8,7 +8,7 @@ export { googleSheetsAppendValuesAction } from './append-values';
 export { googleSheetsClearValuesAction } from './clear-values';
 export { googleSheetsCreateSpreadsheetAction } from './create-spreadsheet';
 
-import type { ActionDefinition } from '@invect/action-kit';
+import type { ActionDefinition } from '@flowlib/action-kit';
 import { googleSheetsGetValuesAction } from './get-values';
 import { googleSheetsUpdateValuesAction } from './update-values';
 import { googleSheetsAppendValuesAction } from './append-values';

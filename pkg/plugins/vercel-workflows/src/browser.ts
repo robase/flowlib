@@ -1,5 +1,5 @@
 /**
- * @invect/vercel-workflows — Browser Entry Point
+ * @flowlib/vercel-workflows — Browser Entry Point
  *
  * Resolved via the `browser` condition in package.json exports.
  * Returns only the frontend plugin — no server-side code is bundled.

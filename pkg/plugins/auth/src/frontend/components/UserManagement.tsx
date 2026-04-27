@@ -34,7 +34,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@invect/ui';
+} from '@flowlib/ui';
 import { useAuth } from '../providers/AuthProvider';
 import {
   AUTH_ADMIN_ROLE,

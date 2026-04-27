@@ -6,7 +6,7 @@
  * Requires a Dropbox OAuth2 credential with files.metadata.read scope.
  */
 
-import { defineAction } from '@invect/action-kit';
+import { defineAction } from '@flowlib/action-kit';
 import { DROPBOX_PROVIDER } from '../providers';
 import { z } from 'zod/v4';
 

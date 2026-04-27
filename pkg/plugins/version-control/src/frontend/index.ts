@@ -1,14 +1,14 @@
 /**
- * @invect/version-control/ui — Frontend Plugin Entry Point
+ * @flowlib/version-control/ui — Frontend Plugin Entry Point
  *
  * Browser-safe entry point that exports the Version Control frontend plugin.
- * Import via: `import { vcFrontendPlugin } from '@invect/version-control/ui'`
+ * Import via: `import { vcFrontendPlugin } from '@flowlib/version-control/ui'`
  */
 
 import { GitBranch } from 'lucide-react';
 import { VcSyncPanel } from './components/VcSyncPanel';
 import { VcHeaderButton } from './components/VcHeaderButton';
-import type { InvectFrontendPlugin } from '@invect/ui';
+import type { InvectFrontendPlugin } from '@flowlib/ui';
 
 // ─────────────────────────────────────────────────────────────────────
 // Version Control Frontend Plugin Definition

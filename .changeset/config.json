@@ -1,6 +1,6 @@
 {
   "$schema": "https://unpkg.com/@changesets/config@3.1.3/schema.json",
-  "changelog": ["@changesets/changelog-github", { "repo": "robase/invect" }],
+  "changelog": ["@changesets/changelog-github", { "repo": "robase/flowlib" }],
   "commit": false,
   "fixed": [],
   "linked": [],
@@ -8,9 +8,9 @@
   "baseBranch": "main",
   "updateInternalDependencies": "patch",
   "ignore": [
-    "invect-express-simple",
+    "flowlib-express-simple",
     "nest-prisma",
-    "invect-nextjs-example",
+    "flowlib-nextjs-example",
     "acme-dashboard",
     "flow-executor"
   ]

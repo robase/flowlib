@@ -572,7 +572,7 @@ export const useChatStore = create<ChatStore>()(
           }),
       })),
       {
-        name: 'invect-chat-settings',
+        name: 'flowlib-chat-settings',
         partialize: (state) => ({
           settings: state.settings,
           activeSessionsByFlow: state.activeSessionsByFlow,

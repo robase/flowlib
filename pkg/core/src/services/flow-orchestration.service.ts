@@ -61,7 +61,7 @@ export class FlowOrchestrationService {
       staleRunCheckIntervalMs?: number;
       /**
        * When true, in-process maintenance timers are skipped and the host
-       * is responsible for invoking `invect.maintenance.detectStaleRuns()`
+       * is responsible for invoking `flowlib.maintenance.detectStaleRuns()`
        * + `pollBatchJobs()` from an external scheduler (Cloudflare Cron
        * Triggers, Vercel Cron, etc.). PR 5/14.
        */
@@ -182,7 +182,7 @@ export class FlowOrchestrationService {
    *
    * No-op when `executionConfig.externalScheduler === true` (PR 5/14):
    * the host drives stale-run detection via
-   * `invect.maintenance.detectStaleRuns()` from an external cron tick.
+   * `flowlib.maintenance.detectStaleRuns()` from an external cron tick.
    */
   private startStaleRunDetector(): void {
     if (this.staleRunCheckInterval) {
@@ -679,7 +679,7 @@ export class FlowOrchestrationService {
    *
    * No-op when `executionConfig.externalScheduler === true` (PR 5/14):
    * the host drives batch resumption via
-   * `invect.maintenance.pollBatchJobs()` from an external cron tick.
+   * `flowlib.maintenance.pollBatchJobs()` from an external cron tick.
    */
   async startFlowResumptionPolling(intervalMs: number = 30000): Promise<void> {
     if (this.isPollingActive) {

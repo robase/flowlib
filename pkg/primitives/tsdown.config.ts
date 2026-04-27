@@ -10,7 +10,7 @@ export default defineConfig({
   sourcemap: true,
   clean: true,
   deps: {
-    neverBundle: ['@invect/core', 'zod'],
+    neverBundle: ['@flowlib/core', 'zod'],
   },
   outExtensions({ format }) {
     return {

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { emitSdkSource } from '@invect/sdk';
+import { emitSdkSource } from '@flowlib/sdk';
 import {
   substituteCredentialEnvs,
   defaultDeriveEnvName,
@@ -87,7 +87,7 @@ agent("a1", {
   describe('JSON footer preservation', () => {
     it('leaves the footer verbatim — raw ids stay for authoritative pull', () => {
       const human = `model("m", { credentialId: "cred_openai_abc", model: "x", prompt: "y" });\n\n`;
-      const footer = `/* @invect-definition\n{"nodes":[{"params":{"credentialId":"cred_openai_abc"}}]}\n*/\n`;
+      const footer = `/* @flowlib-definition\n{"nodes":[{"params":{"credentialId":"cred_openai_abc"}}]}\n*/\n`;
       const source = human + footer;
 
       const result = substituteCredentialEnvs(source);
@@ -143,7 +143,7 @@ describe('integration: emit + substitute (the sync plugin path)', () => {
     const final = substituteCredentialEnvs(code);
 
     // Split on the footer marker so we can assert on each side independently.
-    const [human, footer] = final.split('/* @invect-definition');
+    const [human, footer] = final.split('/* @flowlib-definition');
     expect(human).toContain(`credentialId: "{{env.OPENAI_ABC_CREDENTIAL}}"`);
     expect(human).not.toContain(`"cred_openai_abc"`);
     // Footer keeps the raw id.

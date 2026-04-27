@@ -5,12 +5,12 @@
   </picture>
 </p>
 
-<h1 align="center">@invect/webhooks</h1>
+<h1 align="center">@flowlib/webhooks</h1>
 
 <p align="center">
   Webhook trigger plugin for Invect.
   <br />
-  <a href="https://invect.dev/docs/plugins"><strong>Docs</strong></a>
+  <a href="https://flowlib.dev/docs/plugins"><strong>Docs</strong></a>
 </p>
 
 ---
@@ -20,13 +20,13 @@ Adds webhook management, ingestion, signature verification, and rate limiting to
 ## Install
 
 ```bash
-pnpm add @invect/webhooks
+pnpm add @flowlib/webhooks
 ```
 
 ## Backend
 
 ```ts
-import { webhooks } from '@invect/webhooks';
+import { webhooks } from '@flowlib/webhooks';
 
 const invectRouter = await createInvectRouter({
   database: { type: 'sqlite', connectionString: 'file:./dev.db' },
@@ -34,14 +34,14 @@ const invectRouter = await createInvectRouter({
   plugins: [webhooks()],
 });
 
-app.use('/invect', invectRouter);
+app.use('/flowlib', invectRouter);
 ```
 
 ### Options
 
 ```ts
 webhooks({
-  webhookBaseUrl: 'https://example.com/api/invect', // Base URL for webhook endpoints
+  webhookBaseUrl: 'https://example.com/api/flowlib', // Base URL for webhook endpoints
   rateLimitMaxRequests: 60, // Max requests per window (default: 60)
   rateLimitWindowMs: 60_000, // Rate limit window in ms (default: 60s)
   dedupTtlMs: 86_400_000, // Deduplication TTL in ms (default: 24h)
@@ -51,10 +51,10 @@ webhooks({
 ## Frontend
 
 ```tsx
-import { Invect } from '@invect/ui';
-import { webhooksFrontend } from '@invect/webhooks/ui';
+import { Invect } from '@flowlib/ui';
+import { webhooksFrontend } from '@flowlib/webhooks/ui';
 
-<Invect apiBaseUrl="/api/invect" plugins={[webhooksFrontend]} />;
+<Invect apiBaseUrl="/api/flowlib" plugins={[webhooksFrontend]} />;
 ```
 
 The plugin adds a Webhooks page to the sidebar for managing webhook triggers.
@@ -70,9 +70,9 @@ The plugin adds a Webhooks page to the sidebar for managing webhook triggers.
 
 | Entry Point              | Content                                              |
 | ------------------------ | ---------------------------------------------------- |
-| `@invect/webhooks`       | Backend plugin (Node.js)                             |
-| `@invect/webhooks/ui`    | Frontend plugin — `webhooksFrontend`, `WebhooksPage` |
-| `@invect/webhooks/types` | Shared types                                         |
+| `@flowlib/webhooks`       | Backend plugin (Node.js)                             |
+| `@flowlib/webhooks/ui`    | Frontend plugin — `webhooksFrontend`, `WebhooksPage` |
+| `@flowlib/webhooks/types` | Shared types                                         |
 
 ## License
 

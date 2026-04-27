@@ -2,12 +2,12 @@ import 'dotenv/config';
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
-import { InvectModule } from '@invect/nestjs';
+import { InvectModule } from '@flowlib/nestjs';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 
 const DATABASE_URL =
-  process.env.DATABASE_URL || 'postgresql://invect:invect@localhost:5433/acme_saas';
+  process.env.DATABASE_URL || 'postgresql://flowlib:flowlib@localhost:5433/acme_saas';
 
 @Module({
   imports: [

@@ -21,7 +21,7 @@ export { grafanaCreateAnnotationAction } from './create-annotation';
 
 // ── Bulk array ──────────────────────────────────────────────────────────
 
-import type { ActionDefinition } from '@invect/action-kit';
+import type { ActionDefinition } from '@flowlib/action-kit';
 
 import { grafanaListDashboardsAction } from './list-dashboards';
 import { grafanaGetDashboardAction } from './get-dashboard';

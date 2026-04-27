@@ -3,7 +3,7 @@
  *
  * Two sources:
  *   - **static** — `webview/static-action-catalogue.json`, generated at build
- *     time from `@invect/actions` (see `scripts/build-action-catalogue.ts`).
+ *     time from `@flowlib/actions` (see `scripts/build-action-catalogue.ts`).
  *     Imported as a JSON module so it inlines into the host bundle (and the
  *     webview bundle) without any runtime fetch.
  *   - **live** — set by L10's `BackendClient` after a successful `GET /actions`
@@ -15,8 +15,8 @@
  * the next time a webview is opened or refreshed.
  */
 
-import type { ActionMetadata } from '@invect/ui/flow-canvas';
-// JSON module — bundlers inline this. Don't import @invect/actions here:
+import type { ActionMetadata } from '@flowlib/ui/flow-canvas';
+// JSON module — bundlers inline this. Don't import @flowlib/actions here:
 // that pulls Node-only deps the webview can't tolerate.
 import staticCatalogue from '../../webview/static-action-catalogue.json';
 

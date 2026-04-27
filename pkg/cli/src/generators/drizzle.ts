@@ -10,7 +10,7 @@
  *   2. Map abstract fields → dialect-specific Drizzle column code
  *   3. Return { code, fileName }
  *
- * Generates a single `invect.schema.ts` file for the user's selected dialect.
+ * Generates a single `flowlib.schema.ts` file for the user's selected dialect.
  */
 
 import { existsSync, readFileSync } from 'node:fs';
@@ -22,9 +22,9 @@ export const generateDrizzleSchema: SchemaGenerator = async ({
   dialect,
   transforms,
 }) => {
-  // Dynamically import @invect/core to avoid bundling it
+  // Dynamically import @flowlib/core to avoid bundling it
   const { mergeSchemas, generateSqliteSchema, generatePostgresSchema, generateMysqlSchema } =
-    await import('@invect/core');
+    await import('@flowlib/core');
 
   // Merge core + plugin schemas (with optional transforms)
   // oxlint-disable-next-line typescript/no-explicit-any -- plugins/transforms types from dynamic import don't match exactly
@@ -44,7 +44,7 @@ export const generateDrizzleSchema: SchemaGenerator = async ({
 
   const code = generator(mergedSchema);
 
-  const fileName = file || './db/invect.schema.ts';
+  const fileName = file || './db/flowlib.schema.ts';
 
   // Check if the file already exists with the same content
   if (existsSync(fileName)) {
@@ -60,8 +60,8 @@ export const generateDrizzleSchema: SchemaGenerator = async ({
 /**
  * Generate a single Drizzle schema file for the given dialect.
  *
- * This is the main entry point used by `npx invect-cli generate`.
- * Returns a single result for the specified dialect as `invect.schema.ts`.
+ * This is the main entry point used by `npx flowlib-cli generate`.
+ * Returns a single result for the specified dialect as `flowlib.schema.ts`.
  */
 export async function generateAllDrizzleSchemas(options: {
   plugins: Array<{ id: string; schema?: Record<string, unknown>; [key: string]: unknown }>;
@@ -80,7 +80,7 @@ export async function generateAllDrizzleSchemas(options: {
     pluginsWithSchema: number;
   };
 }> {
-  const { mergeSchemas, CORE_SCHEMA } = await import('@invect/core');
+  const { mergeSchemas, CORE_SCHEMA } = await import('@flowlib/core');
 
   // oxlint-disable-next-line typescript/no-explicit-any -- plugins/transforms types from dynamic import don't match exactly
   const mergedSchema = mergeSchemas(options.plugins as any, options.transforms as any);
@@ -88,7 +88,7 @@ export async function generateAllDrizzleSchemas(options: {
   const pluginsWithSchema = options.plugins.filter((p) => p.schema).length;
 
   const { generateSqliteSchema, generatePostgresSchema, generateMysqlSchema } =
-    await import('@invect/core');
+    await import('@flowlib/core');
 
   const dir = options.outputDir || './db';
 
@@ -105,7 +105,7 @@ export async function generateAllDrizzleSchemas(options: {
     );
   }
 
-  const fileName = `${dir}/invect.schema.ts`;
+  const fileName = `${dir}/flowlib.schema.ts`;
   const code = generate(mergedSchema);
   const exists = existsSync(fileName);
 
@@ -165,7 +165,7 @@ export async function generateAppendSchema(options: {
     generateSqliteSchemaAppend,
     generatePostgresSchemaAppend,
     generateMysqlSchemaAppend,
-  } = await import('@invect/core');
+  } = await import('@flowlib/core');
 
   // oxlint-disable-next-line typescript/no-explicit-any -- plugins/transforms types from dynamic import don't match exactly
   const mergedSchema = mergeSchemas(options.plugins as any, options.transforms as any);

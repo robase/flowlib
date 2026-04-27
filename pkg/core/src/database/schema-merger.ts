@@ -401,7 +401,7 @@ function toSnakeCaseLocal(str: string): string {
 }
 
 // =============================================================================
-// Diff Utilities (for `npx invect-cli generate --diff` preview)
+// Diff Utilities (for `npx flowlib-cli generate --diff` preview)
 // =============================================================================
 
 export interface SchemaDiff {

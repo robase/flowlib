@@ -12,7 +12,7 @@ export default defineConfig({
   unbundle: true,
   deps: {
     neverBundle: [
-      '@invect/core',
+      '@flowlib/core',
       '@nestjs/common',
       '@nestjs/core',
       '@nestjs/schedule',

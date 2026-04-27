@@ -6,7 +6,7 @@
  * the credential config.
  */
 
-import { defineAction } from '@invect/action-kit';
+import { defineAction } from '@flowlib/action-kit';
 import { MIXPANEL_PROVIDER } from '../providers';
 import { z } from 'zod/v4';
 import { randomUUID } from 'node:crypto';

@@ -1,6 +1,6 @@
 /**
  * Core node helpers — ergonomic wrappers over the action callables in
- * `@invect/actions/core`.
+ * `@flowlib/actions/core`.
  *
  * The underlying actions (exported as callable `ActionHelper`s from
  * `defineAction`) have strict signatures inferred from their Zod schemas.
@@ -21,7 +21,7 @@
  * Each wrapper delegates to the real action helper, producing the same
  * `SdkFlowNode` shape and threading `NodeOptions` through untouched.
  *
- * The callable actions themselves remain exported (see `@invect/actions/core`)
+ * The callable actions themselves remain exported (see `@flowlib/actions/core`)
  * for authors who want full Zod-strict typing.
  */
 
@@ -33,8 +33,8 @@ import {
   switchAction,
   modelAction,
   agentAction,
-} from '@invect/actions/core';
-import type { NodeOptions, SdkFlowNode } from '@invect/action-kit';
+} from '@flowlib/actions/core';
+import type { NodeOptions, SdkFlowNode } from '@flowlib/action-kit';
 import type { ToolInstance } from '../tool';
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -188,7 +188,7 @@ export function code(
   return javascriptAction(referenceId, { code: params.code as string }, options);
 }
 
-/** Alias matching the `javascript()` name used in `@invect/core/sdk`. */
+/** Alias matching the `javascript()` name used in `@flowlib/core/sdk`. */
 export const javascript = code;
 
 // ═══════════════════════════════════════════════════════════════════════════

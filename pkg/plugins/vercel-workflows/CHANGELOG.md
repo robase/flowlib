@@ -1,4 +1,4 @@
-# @invect/vercel-workflows
+# @flowlib/vercel-workflows
 
 ## 0.1.1
 
@@ -7,8 +7,8 @@
 - Pre release
 
 - Updated dependencies []:
-  - @invect/action-kit@0.0.2
-  - @invect/actions@0.0.2
-  - @invect/core@0.0.12
-  - @invect/primitives@0.1.1
-  - @invect/ui@0.0.12
+  - @flowlib/action-kit@0.0.2
+  - @flowlib/actions@0.0.2
+  - @flowlib/core@0.0.12
+  - @flowlib/primitives@0.1.1
+  - @flowlib/ui@0.0.12

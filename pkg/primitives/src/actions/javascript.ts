@@ -1,4 +1,4 @@
-import { defineAction } from '@invect/action-kit';
+import { defineAction } from '@flowlib/action-kit';
 import { z } from 'zod/v4';
 
 const PROVIDER = {

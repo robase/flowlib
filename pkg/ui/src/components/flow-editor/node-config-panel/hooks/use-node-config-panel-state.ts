@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import type { Node, Edge } from '@xyflow/react';
 import { parseJson, stringifyJson } from '../utils';
 import { useFlowEditorStore } from '../../flow-editor.store';
-import type { ReactFlowNodeData } from '@invect/core/types';
+import type { ReactFlowNodeData } from '@flowlib/core/types';
 
 /**
  * Generate a slug from a label string (snake_case, alphanumeric only)

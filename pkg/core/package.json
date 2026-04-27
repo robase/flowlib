@@ -1,23 +1,23 @@
 {
-  "name": "@invect/core",
+  "name": "@flowlib/core",
   "version": "0.0.12",
   "description": "Framework-agnostic core package for Invect workflow execution engine",
   "keywords": [
     "automation",
     "core",
     "framework-agnostic",
-    "invect",
+    "flowlib",
     "workflow"
   ],
-  "homepage": "https://invect.dev",
+  "homepage": "https://flowlib.dev",
   "bugs": {
-    "url": "https://github.com/robase/invect/issues"
+    "url": "https://github.com/robase/flowlib/issues"
   },
   "license": "MIT",
-  "author": "robase <team@invect.dev>",
+  "author": "robase <team@flowlib.dev>",
   "repository": {
     "type": "git",
-    "url": "https://github.com/robase/invect.git",
+    "url": "https://github.com/robase/flowlib.git",
     "directory": "pkg/core"
   },
   "files": [
@@ -86,10 +86,10 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.57.0",
-    "@invect/action-kit": "workspace:*",
-    "@invect/actions": "workspace:*",
-    "@invect/layouts": "workspace:*",
-    "@invect/sdk": "workspace:*",
+    "@flowlib/action-kit": "workspace:*",
+    "@flowlib/actions": "workspace:*",
+    "@flowlib/layouts": "workspace:*",
+    "@flowlib/sdk": "workspace:*",
     "@secure-exec/core": "^0.1.0",
     "@secure-exec/node": "^0.1.0",
     "croner": "^10.0.1",

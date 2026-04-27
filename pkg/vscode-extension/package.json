@@ -1,5 +1,5 @@
 {
-  "name": "@invect/vscode",
+  "name": "@flowlib/vscode",
   "displayName": "Invect",
   "version": "0.0.1",
   "private": true,
@@ -10,22 +10,22 @@
   ],
   "keywords": [
     "flow",
-    "invect",
+    "flowlib",
     "visual-editor",
     "workflow"
   ],
-  "homepage": "https://invect.dev",
+  "homepage": "https://flowlib.dev",
   "bugs": {
-    "url": "https://github.com/robase/invect/issues"
+    "url": "https://github.com/robase/flowlib/issues"
   },
   "license": "MIT",
-  "author": "robase <team@invect.dev>",
+  "author": "robase <team@flowlib.dev>",
   "repository": {
     "type": "git",
-    "url": "https://github.com/robase/invect.git",
+    "url": "https://github.com/robase/flowlib.git",
     "directory": "pkg/vscode-extension"
   },
-  "publisher": "invect",
+  "publisher": "flowlib",
   "main": "./dist/extension.js",
   "scripts": {
     "build": "pnpm catalogue:build && pnpm build:extension && pnpm build:webview",
@@ -43,13 +43,13 @@
     "package": "pnpm build && node scripts/package.mjs"
   },
   "dependencies": {
-    "@invect/action-kit": "workspace:*",
-    "@invect/core": "workspace:*",
-    "@invect/express": "workspace:*",
-    "@invect/mcp": "workspace:*",
-    "@invect/sdk": "workspace:*",
-    "@invect/ui": "workspace:*",
-    "@invect/webhooks": "workspace:*",
+    "@flowlib/action-kit": "workspace:*",
+    "@flowlib/core": "workspace:*",
+    "@flowlib/express": "workspace:*",
+    "@flowlib/mcp": "workspace:*",
+    "@flowlib/sdk": "workspace:*",
+    "@flowlib/ui": "workspace:*",
+    "@flowlib/webhooks": "workspace:*",
     "@libsql/client": "^0.17.2",
     "@tanstack/react-query": "^5.62.0",
     "cors": "^2.8.5",
@@ -60,7 +60,7 @@
     "react-router": "^7.13.1"
   },
   "devDependencies": {
-    "@invect/actions": "workspace:*",
+    "@flowlib/actions": "workspace:*",
     "@types/cors": "^2.8.17",
     "@types/express": "^5.0.0",
     "@types/mocha": "^10.0.10",
@@ -83,80 +83,80 @@
   "contributes": {
     "commands": [
       {
-        "command": "invect.hello",
+        "command": "flowlib.hello",
         "title": "Invect: Hello",
         "category": "Invect"
       },
       {
-        "command": "invect.showLogs",
+        "command": "flowlib.showLogs",
         "title": "Invect: Show Logs",
         "category": "Invect"
       },
       {
-        "command": "invect.trustWorkspace",
+        "command": "flowlib.trustWorkspace",
         "title": "Invect: Trust Workspace",
         "category": "Invect"
       },
       {
-        "command": "invect.connect",
+        "command": "flowlib.connect",
         "title": "Invect: Connect to Backend",
         "category": "Invect"
       },
       {
-        "command": "invect.disconnect",
+        "command": "flowlib.disconnect",
         "title": "Invect: Disconnect",
         "category": "Invect"
       },
       {
-        "command": "invect.refreshFlows",
+        "command": "flowlib.refreshFlows",
         "title": "Invect: Refresh Flows",
         "category": "Invect",
         "icon": "$(refresh)"
       },
       {
-        "command": "invect.pullFromBackend",
+        "command": "flowlib.pullFromBackend",
         "title": "Invect: Pull Flow from Backend",
         "category": "Invect"
       },
       {
-        "command": "invect.pushToBackend",
+        "command": "flowlib.pushToBackend",
         "title": "Invect: Push Flow to Backend",
         "category": "Invect"
       },
       {
-        "command": "invect.newFlow",
+        "command": "flowlib.newFlow",
         "title": "Invect: New Flow",
         "category": "Invect"
       },
       {
-        "command": "invect.openCredentials",
+        "command": "flowlib.openCredentials",
         "title": "Invect: Open Credentials",
         "category": "Invect"
       },
       {
-        "command": "invect.openWebhooks",
+        "command": "flowlib.openWebhooks",
         "title": "Invect: Open Webhooks",
         "category": "Invect"
       },
       {
-        "command": "invect.viewRun",
+        "command": "flowlib.viewRun",
         "title": "Invect: View Run",
         "category": "Invect"
       },
       {
-        "command": "invect.editAsCode",
+        "command": "flowlib.editAsCode",
         "title": "Invect: Edit as Code",
         "category": "Invect",
         "icon": "$(code)"
       },
       {
-        "command": "invect.editVisually",
+        "command": "flowlib.editVisually",
         "title": "Invect: Edit Visually",
         "category": "Invect",
         "icon": "$(symbol-event)"
       },
       {
-        "command": "invect.showMcpConfig",
+        "command": "flowlib.showMcpConfig",
         "title": "Invect: Show MCP Config (Claude Code, Cursor, Claude Desktop)",
         "category": "Invect",
         "icon": "$(plug)"
@@ -165,28 +165,28 @@
     "viewsContainers": {
       "activitybar": [
         {
-          "id": "invect",
+          "id": "flowlib",
           "title": "Invect",
-          "icon": "resources/invect.svg"
+          "icon": "resources/flowlib.svg"
         }
       ]
     },
     "views": {
-      "invect": [
+      "flowlib": [
         {
-          "id": "invect.backends",
+          "id": "flowlib.backends",
           "name": "Backends"
         },
         {
-          "id": "invect.flows",
+          "id": "flowlib.flows",
           "name": "Flows"
         },
         {
-          "id": "invect.credentials",
+          "id": "flowlib.credentials",
           "name": "Credentials"
         },
         {
-          "id": "invect.webhooks",
+          "id": "flowlib.webhooks",
           "name": "Webhooks"
         }
       ]
@@ -194,19 +194,19 @@
     "menus": {
       "view/title": [
         {
-          "command": "invect.refreshFlows",
-          "when": "view == invect.flows",
+          "command": "flowlib.refreshFlows",
+          "when": "view == flowlib.flows",
           "group": "navigation"
         }
       ],
       "editor/title": [
         {
-          "command": "invect.editAsCode",
-          "when": "activeCustomEditorId == 'invect.flowEditor'",
+          "command": "flowlib.editAsCode",
+          "when": "activeCustomEditorId == 'flowlib.flowEditor'",
           "group": "navigation"
         },
         {
-          "command": "invect.editVisually",
+          "command": "flowlib.editVisually",
           "when": "resourceFilename =~ /\\.flow\\.ts$/ && !activeCustomEditorId",
           "group": "navigation"
         }
@@ -214,7 +214,7 @@
     },
     "customEditors": [
       {
-        "viewType": "invect.flowEditor",
+        "viewType": "flowlib.flowEditor",
         "displayName": "Invect Flow Editor",
         "selector": [
           {
@@ -233,7 +233,7 @@
         "toolReferenceName": "invectListFlows",
         "icon": "$(list-tree)",
         "tags": [
-          "invect"
+          "flowlib"
         ],
         "inputSchema": {
           "type": "object",
@@ -249,7 +249,7 @@
         "toolReferenceName": "invectGetFlow",
         "icon": "$(symbol-event)",
         "tags": [
-          "invect"
+          "flowlib"
         ],
         "inputSchema": {
           "type": "object",
@@ -273,7 +273,7 @@
         "toolReferenceName": "invectValidateFlow",
         "icon": "$(check)",
         "tags": [
-          "invect"
+          "flowlib"
         ],
         "inputSchema": {
           "type": "object",
@@ -297,7 +297,7 @@
         "toolReferenceName": "invectRunFlow",
         "icon": "$(play)",
         "tags": [
-          "invect"
+          "flowlib"
         ],
         "inputSchema": {
           "type": "object",
@@ -326,7 +326,7 @@
         "toolReferenceName": "invectListRuns",
         "icon": "$(history)",
         "tags": [
-          "invect"
+          "flowlib"
         ],
         "inputSchema": {
           "type": "object",
@@ -350,7 +350,7 @@
         "toolReferenceName": "invectGetRun",
         "icon": "$(debug)",
         "tags": [
-          "invect"
+          "flowlib"
         ],
         "inputSchema": {
           "type": "object",
@@ -374,7 +374,7 @@
         "toolReferenceName": "invectListActions",
         "icon": "$(extensions)",
         "tags": [
-          "invect"
+          "flowlib"
         ],
         "inputSchema": {
           "type": "object",
@@ -386,15 +386,15 @@
     "configuration": {
       "title": "Invect",
       "properties": {
-        "invect.backendUrl": {
+        "flowlib.backendUrl": {
           "type": "string",
           "default": "",
           "scope": "resource",
           "pattern": "^(https?://.*)?$",
           "patternErrorMessage": "Backend URL must start with http:// or https://",
-          "description": "URL of the Invect backend (e.g. http://localhost:3000/invect). Leave empty to work offline."
+          "description": "URL of the Invect backend (e.g. http://localhost:3000/flowlib). Leave empty to work offline."
         },
-        "invect.autoSaveDebounceMs": {
+        "flowlib.autoSaveDebounceMs": {
           "type": "number",
           "default": 400,
           "minimum": 0,
@@ -402,13 +402,13 @@
           "scope": "resource",
           "description": "Debounce window (ms) before propagating webview edits to the underlying .flow.ts document."
         },
-        "invect.diagnostics.enabled": {
+        "flowlib.diagnostics.enabled": {
           "type": "boolean",
           "default": true,
           "scope": "resource",
           "description": "Surface flow validation errors as editor diagnostics."
         },
-        "invect.formatOnSave": {
+        "flowlib.formatOnSave": {
           "type": "boolean",
           "default": false,
           "scope": "resource",

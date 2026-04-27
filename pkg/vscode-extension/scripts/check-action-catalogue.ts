@@ -9,8 +9,8 @@
 import { readFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { actionToNodeDefinition, allProviderActions } from '@invect/actions';
-import type { NodeDefinition } from '@invect/ui/flow-canvas';
+import { actionToNodeDefinition, allProviderActions } from '@flowlib/actions';
+import type { NodeDefinition } from '@flowlib/ui/flow-canvas';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -38,7 +38,7 @@ function main(): void {
     console.error('Run `pnpm catalogue:build` and commit the result.');
     process.exit(1);
   }
-  console.log('[catalogue:check] OK — catalogue matches @invect/actions');
+  console.log('[catalogue:check] OK — catalogue matches @flowlib/actions');
 }
 
 main();

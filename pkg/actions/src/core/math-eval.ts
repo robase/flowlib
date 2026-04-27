@@ -9,7 +9,7 @@
  * flows, agent tool references, and tests continue to resolve.
  */
 
-import { defineAction } from '@invect/action-kit';
+import { defineAction } from '@flowlib/action-kit';
 import { CORE_PROVIDER } from '../providers';
 import { z } from 'zod/v4';
 

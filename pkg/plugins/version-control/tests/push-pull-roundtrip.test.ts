@@ -15,7 +15,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { emitSdkSource } from '@invect/sdk';
+import { emitSdkSource } from '@flowlib/sdk';
 import { parseFlowTsContent } from '../src/backend/sync-service';
 
 describe('Sync plugin push/pull round-trip', () => {
@@ -78,8 +78,8 @@ describe('Sync plugin push/pull round-trip', () => {
       });
 
       // Pretend someone hand-edited the TS section and broke the syntax.
-      const bodySection = code.split('/* @invect-definition')[0];
-      const footerSection = '/* @invect-definition' + code.split('/* @invect-definition')[1];
+      const bodySection = code.split('/* @flowlib-definition')[0];
+      const footerSection = '/* @flowlib-definition' + code.split('/* @flowlib-definition')[1];
       const corrupted = bodySection.replace('input("x")', '{{{ BAD SYNTAX }}}') + footerSection;
 
       const parsed = parseFlowTsContent(corrupted);
@@ -203,7 +203,7 @@ describe('Sync plugin push/pull round-trip', () => {
     it('parses the TS body via the AST/object-literal fallback', () => {
       // Simulate a hand-authored `.flow.ts` without the JSON footer.
       const source = `
-import { defineFlow, input, output } from '@invect/core/sdk';
+import { defineFlow, input, output } from '@flowlib/core/sdk';
 
 export default defineFlow({
   name: 'Hand-authored',

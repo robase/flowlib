@@ -2,15 +2,15 @@
  * Invect configuration — shared between the Next.js API handler and the
  * `<Invect>` frontend component. Read by the CLI for schema generation.
  *
- * Backend: import { invectConfig } from '@/invect.config'
- * Frontend: import config from './invect.config' (Vite/Next.js browser condition
+ * Backend: import { invectConfig } from '@/flowlib.config'
+ * Frontend: import config from './flowlib.config' (Vite/Next.js browser condition
  *           strips server-only plugin code automatically)
- * CLI: npx invect-cli generate --config invect.config.ts
+ * CLI: npx flowlib-cli generate --config flowlib.config.ts
  */
 
-import { auth } from '@invect/user-auth';
-import { rbac } from '@invect/rbac';
-import { defineConfig } from '@invect/core';
+import { auth } from '@flowlib/user-auth';
+import { rbac } from '@flowlib/rbac';
+import { defineConfig } from '@flowlib/core';
 
 const invectConfig = defineConfig({
   encryptionKey: process.env.INVECT_ENCRYPTION_KEY || 'change-me-in-production',
@@ -20,7 +20,7 @@ const invectConfig = defineConfig({
     type: 'postgresql',
     name: 'Acme Dashboard DB',
   },
-  apiPath: '/api/invect',
+  apiPath: '/api/flowlib',
   frontendPath: '/dashboard/workflows',
   theme: 'light',
   logging: {

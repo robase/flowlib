@@ -6,7 +6,7 @@ import { useUpdateFlow } from '../api/flows.api';
 import { ReactFlowProvider } from '@xyflow/react';
 import { useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from '../api/query-keys';
-import type { ReactFlowData } from '@invect/core/types';
+import type { ReactFlowData } from '@flowlib/core/types';
 
 interface FlowRouteLayoutProps {
   basePath?: string;

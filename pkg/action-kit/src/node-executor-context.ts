@@ -3,7 +3,7 @@
  *
  * This is the minimum surface the executor needs when running an
  * `ActionDefinition` as a flow node (i.e. called from a flow run
- * coordinator). `@invect/core`'s concrete `NodeExecutionContext` is
+ * coordinator). `@flowlib/core`'s concrete `NodeExecutionContext` is
  * structurally compatible with this shape.
  */
 

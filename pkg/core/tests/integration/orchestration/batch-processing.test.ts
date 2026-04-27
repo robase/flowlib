@@ -19,7 +19,7 @@ import { http, HttpResponse } from 'msw';
 import { FlowRunStatus } from '../../../src';
 import type { InvectInstance } from '../../../src/api/types';
 import type { InvectDefinition } from '../../../src/services/flow-versions/schemas-fresh';
-import { createTestInvect } from '../helpers/test-invect';
+import { createTestInvect } from '../helpers/test-flowlib';
 
 // ---------------------------------------------------------------------------
 // OpenAI batch-API fixtures
@@ -99,13 +99,13 @@ const mswServer = setupServer(
 // Shared fixtures
 // ---------------------------------------------------------------------------
 
-let invect: InvectInstance;
+let flowlib: InvectInstance;
 let credentialId: string;
 
 beforeAll(async () => {
   mswServer.listen({ onUnhandledRequest: 'bypass' });
-  invect = await createTestInvect();
-  const cred = await invect.credentials.create({
+  flowlib = await createTestInvect();
+  const cred = await flowlib.credentials.create({
     name: 'Test OpenAI Batch',
     type: 'llm',
     authType: 'apiKey',
@@ -117,7 +117,7 @@ beforeAll(async () => {
 
 afterAll(async () => {
   mswServer.close();
-  await invect.shutdown();
+  await flowlib.shutdown();
 });
 
 beforeEach(() => {
@@ -136,8 +136,8 @@ afterEach(() => {
 // ---------------------------------------------------------------------------
 
 async function createFlow(definition: InvectDefinition) {
-  const flow = await invect.flows.create({ name: `batch-${Date.now()}-${Math.random()}` });
-  await invect.versions.create(flow.id, { invectDefinition: definition });
+  const flow = await flowlib.flows.create({ name: `batch-${Date.now()}-${Math.random()}` });
+  await flowlib.versions.create(flow.id, { invectDefinition: definition });
   return flow;
 }
 
@@ -202,7 +202,7 @@ describe('Batch processing lifecycle', () => {
       edges: [],
     });
 
-    const result = await invect.runs.start(flow.id, {}, { useBatchProcessing: true });
+    const result = await flowlib.runs.start(flow.id, {}, { useBatchProcessing: true });
 
     // Flow should pause — the model node is waiting for the batch.
     expect(result.status).toBe(FlowRunStatus.PAUSED_FOR_BATCH);
@@ -236,7 +236,7 @@ describe('Batch processing lifecycle', () => {
       edges: [{ id: 'e1', source: 'model', target: 'after' }],
     });
 
-    const paused = await invect.runs.start(flow.id, {}, { useBatchProcessing: true });
+    const paused = await flowlib.runs.start(flow.id, {}, { useBatchProcessing: true });
     expect(paused.status).toBe(FlowRunStatus.PAUSED_FOR_BATCH);
 
     // Downstream should not have run yet.
@@ -253,13 +253,13 @@ describe('Batch processing lifecycle', () => {
     };
 
     // One maintenance pass polls + resumes.
-    await invect.runMaintenance();
+    await flowlib.runMaintenance();
 
-    const finalRun = await invect.runs.get(paused.flowRunId);
+    const finalRun = await flowlib.runs.get(paused.flowRunId);
     expect(finalRun.status).toBe(FlowRunStatus.SUCCESS);
 
     // The batch result should flow through to the template_string node.
-    const tracesPage = await invect.runs.getNodeExecutions(paused.flowRunId);
+    const tracesPage = await flowlib.runs.getNodeExecutions(paused.flowRunId);
     const afterTrace = tracesPage.data.find((t) => t.nodeId === 'after');
     expect(afterTrace?.status).toBe('SUCCESS');
     const afterValue = (
@@ -274,7 +274,7 @@ describe('Batch processing lifecycle', () => {
       edges: [],
     });
 
-    const paused = await invect.runs.start(flow.id, {}, { useBatchProcessing: true });
+    const paused = await flowlib.runs.start(flow.id, {}, { useBatchProcessing: true });
     expect(paused.status).toBe(FlowRunStatus.PAUSED_FOR_BATCH);
 
     // Simulate a batch failure: completed status but every request failed and
@@ -300,9 +300,9 @@ describe('Batch processing lifecycle', () => {
       }),
     );
 
-    await invect.runMaintenance();
+    await flowlib.runMaintenance();
 
-    const finalRun = await invect.runs.get(paused.flowRunId);
+    const finalRun = await flowlib.runs.get(paused.flowRunId);
     expect(finalRun.status).toBe(FlowRunStatus.FAILED);
   });
 
@@ -322,7 +322,7 @@ describe('Batch processing lifecycle', () => {
       edges: [],
     });
 
-    const result = await invect.runs.start(flow.id, {}, { useBatchProcessing: true });
+    const result = await flowlib.runs.start(flow.id, {}, { useBatchProcessing: true });
 
     expect(result.status).toBe(FlowRunStatus.FAILED);
     // No batch create should have happened — submission aborted at upload.

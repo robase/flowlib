@@ -12,9 +12,9 @@
  */
 
 import type { Edge, Node } from '@xyflow/react';
-import type { InvectDefinition, ReactFlowData } from '@invect/core/types';
-import { NodeExecutionStatus } from '@invect/core/types';
-import type { ReactFlowNodeData } from '@invect/core/types';
+import type { InvectDefinition, ReactFlowData } from '@flowlib/core/types';
+import { NodeExecutionStatus } from '@flowlib/core/types';
+import type { ReactFlowNodeData } from '@flowlib/core/types';
 import type { ActionMetadata, NodeRunStatus } from './types';
 
 const MAX_REFERENCE_ID_LENGTH = 22;

@@ -22,7 +22,7 @@ import { AddressInfo } from 'node:net';
 import { FlowRunStatus } from '../../../src';
 import type { InvectInstance } from '../../../src/api/types';
 import type { InvectDefinition } from '../../../src/services/flow-versions/schemas-fresh';
-import { createTestInvect } from '../helpers/test-invect';
+import { createTestInvect } from '../helpers/test-flowlib';
 
 // ---------------------------------------------------------------------------
 // Response factories
@@ -221,7 +221,7 @@ function handleRequest(req: IncomingMessage, res: ServerResponse) {
 // Shared fixtures
 // ---------------------------------------------------------------------------
 
-let invect: InvectInstance;
+let flowlib: InvectInstance;
 let credentialId: string;
 
 const originalOpenAIBaseUrl = process.env.OPENAI_BASE_URL;
@@ -236,8 +236,8 @@ beforeAll(async () => {
   // the credential → adapter factory chain.
   process.env.OPENAI_BASE_URL = serverBaseUrl;
 
-  invect = await createTestInvect();
-  const cred = await invect.credentials.create({
+  flowlib = await createTestInvect();
+  const cred = await flowlib.credentials.create({
     name: 'Test OpenAI Rate-Limit',
     type: 'llm',
     authType: 'apiKey',
@@ -251,7 +251,7 @@ afterAll(async () => {
   await new Promise<void>((resolve, reject) =>
     server.close((err) => (err ? reject(err) : resolve())),
   );
-  await invect.shutdown();
+  await flowlib.shutdown();
   if (originalOpenAIBaseUrl === undefined) {
     delete process.env.OPENAI_BASE_URL;
   } else {
@@ -273,9 +273,9 @@ afterEach(() => {
 // ---------------------------------------------------------------------------
 
 async function runFlow(definition: InvectDefinition) {
-  const flow = await invect.flows.create({ name: `ratelimit-${Date.now()}-${Math.random()}` });
-  await invect.versions.create(flow.id, { invectDefinition: definition });
-  return invect.runs.start(flow.id, {}, { useBatchProcessing: false });
+  const flow = await flowlib.flows.create({ name: `ratelimit-${Date.now()}-${Math.random()}` });
+  await flowlib.versions.create(flow.id, { invectDefinition: definition });
+  return flowlib.runs.start(flow.id, {}, { useBatchProcessing: false });
 }
 
 function modelNode(overrides: Record<string, unknown> = {}): InvectDefinition['nodes'][number] {
