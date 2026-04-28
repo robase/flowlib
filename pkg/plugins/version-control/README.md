@@ -67,8 +67,8 @@ versionControl({
 
 ## Exports
 
-| Entry Point                                | Content                  |
-| ------------------------------------------ | ------------------------ |
+| Entry Point                                 | Content                  |
+| ------------------------------------------- | ------------------------ |
 | `@flowlib/version-control`                  | Backend plugin (Node.js) |
 | `@flowlib/version-control/providers/github` | GitHub provider          |
 | `@flowlib/version-control/types`            | Shared types             |

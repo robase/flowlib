@@ -84,8 +84,8 @@ export default () => <Flowlib apiBaseUrl="http://localhost:3000/flowlib" />;
 
 ## Packages
 
-| Package                                                      | Description                                                     |
-| ------------------------------------------------------------ | --------------------------------------------------------------- |
+| Package                                                       | Description                                                     |
+| ------------------------------------------------------------- | --------------------------------------------------------------- |
 | [`@flowlib/core`](pkg/core)                                   | Framework-agnostic engine — flows, execution, actions, database |
 | [`@flowlib/express`](pkg/express)                             | Express router adapter                                          |
 | [`@flowlib/nestjs`](pkg/nestjs)                               | NestJS module adapter                                           |

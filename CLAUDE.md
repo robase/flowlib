@@ -65,13 +65,13 @@ examples/
 
 #### Example project details
 
-| Example                    | Framework    | Database                    | Adapter                         | Purpose                                                                                                                                                                                                                     |
-| -------------------------- | ------------ | --------------------------- | ------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `express-drizzle`          | Express      | SQLite (`./dev.db`)         | `@flowlib/express`               | Primary backend dev server. Paired with `vite-react-frontend` for fullstack dev. Uses `nodemon` for hot-reload. Depends on most plugins (auth, rbac, webhooks, mcp, vercel-workflows, version-control) for breadth testing. |
-| `vite-react-frontend`      | Vite + React | N/A (frontend only)         | `@flowlib/ui`                    | Standalone React frontend. Connects to Express backend on port 3000. Dev server on port 5173.                                                                                                                               |
-| `nest-prisma`              | NestJS       | SQLite (`./prisma/dev.db`)  | `@flowlib/nestjs`                | NestJS adapter example. Uses Prisma ORM (not Drizzle). Jest test framework.                                                                                                                                                 |
-| `nextjs-app-router`        | Next.js 15   | SQLite (internal)           | `@flowlib/nextjs` + `@flowlib/ui` | Mounts Flowlib UI at `/flowlib` route.                                                                                                                                                                                        |
-| `nextjs-drizzle-auth-rbac` | Next.js 15   | PostgreSQL (Docker Compose) | `@flowlib/nextjs` + `@flowlib/ui` | Full-featured with `@flowlib/user-auth` + `@flowlib/rbac`. Uses `pg` + Drizzle.                                                                                                                                               |
+| Example                    | Framework    | Database                    | Adapter                           | Purpose                                                                                                                                                                                                                     |
+| -------------------------- | ------------ | --------------------------- | --------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `express-drizzle`          | Express      | SQLite (`./dev.db`)         | `@flowlib/express`                | Primary backend dev server. Paired with `vite-react-frontend` for fullstack dev. Uses `nodemon` for hot-reload. Depends on most plugins (auth, rbac, webhooks, mcp, vercel-workflows, version-control) for breadth testing. |
+| `vite-react-frontend`      | Vite + React | N/A (frontend only)         | `@flowlib/ui`                     | Standalone React frontend. Connects to Express backend on port 3000. Dev server on port 5173.                                                                                                                               |
+| `nest-prisma`              | NestJS       | SQLite (`./prisma/dev.db`)  | `@flowlib/nestjs`                 | NestJS adapter example. Uses Prisma ORM (not Drizzle). Jest test framework.                                                                                                                                                 |
+| `nextjs-app-router`        | Next.js 15   | SQLite (internal)           | `@flowlib/nextjs` + `@flowlib/ui` | Mounts Flowlib UI at `/flowlib` route.                                                                                                                                                                                      |
+| `nextjs-drizzle-auth-rbac` | Next.js 15   | PostgreSQL (Docker Compose) | `@flowlib/nextjs` + `@flowlib/ui` | Full-featured with `@flowlib/user-auth` + `@flowlib/rbac`. Uses `pg` + Drizzle.                                                                                                                                             |
 
 The **primary development workflow** is `express-drizzle` + `vite-react-frontend` together (`pnpm dev:fullstack`). The Next.js examples are self-contained alternatives.
 
@@ -1156,14 +1156,14 @@ npx drizzle-kit push      # push schema to the database
 
 ### Commands
 
-| Command                   | Description                                                                                                                        |
-| ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| Command                    | Description                                                                                                                         |
+| -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
 | `npx flowlib-cli init`     | Interactive setup wizard — detects framework, installs deps, creates `flowlib.config.ts`, generates schemas, runs initial migration |
-| `npx flowlib-cli generate` | Generates Drizzle schema files (all 3 dialects) from core + plugin schemas; optionally chains to migration                         |
-| `npx flowlib-cli migrate`  | Applies pending migrations via `drizzle-kit migrate` or pushes directly with `drizzle-kit push` (dev mode)                         |
-| `npx flowlib-cli info`     | Diagnostic info — system, frameworks, databases, config, plugins                                                                   |
+| `npx flowlib-cli generate` | Generates Drizzle schema files (all 3 dialects) from core + plugin schemas; optionally chains to migration                          |
+| `npx flowlib-cli migrate`  | Applies pending migrations via `drizzle-kit migrate` or pushes directly with `drizzle-kit push` (dev mode)                          |
+| `npx flowlib-cli info`     | Diagnostic info — system, frameworks, databases, config, plugins                                                                    |
 | `npx flowlib-cli secret`   | Cryptographically secure 32-byte base64 key for `FLOWLIB_ENCRYPTION_KEY`                                                            |
-| `npx flowlib-cli mcp`      | Launches stdio MCP server for IDE/Claude integration (`--url`, `--api-key`, `--print-config`)                                      |
+| `npx flowlib-cli mcp`      | Launches stdio MCP server for IDE/Claude integration (`--url`, `--api-key`, `--print-config`)                                       |
 
 ### Config shape
 

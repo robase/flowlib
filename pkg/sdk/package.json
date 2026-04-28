@@ -3,8 +3,8 @@
   "version": "0.0.2",
   "description": "Unified authoring SDK for Flowlib flows — defineFlow, core node helpers, and the canonical serializer",
   "keywords": [
-    "flows",
     "flowlib",
+    "flows",
     "sdk"
   ],
   "homepage": "https://flowlib.dev",

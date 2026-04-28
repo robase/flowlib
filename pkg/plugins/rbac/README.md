@@ -54,8 +54,8 @@ The plugin contributes sidebar items, an access management page, a flow-level ac
 
 ## Exports
 
-| Entry Point          | Content                                                                               |
-| -------------------- | ------------------------------------------------------------------------------------- |
+| Entry Point           | Content                                                                               |
+| --------------------- | ------------------------------------------------------------------------------------- |
 | `@flowlib/rbac`       | Backend plugin (Node.js)                                                              |
 | `@flowlib/rbac/ui`    | Frontend plugin — `rbacFrontend`, `RbacProvider`, `ShareFlowModal`, `FlowAccessPanel` |
 | `@flowlib/rbac/types` | Shared types — `FlowAccessRecord`, `FlowAccessPermission`, etc.                       |

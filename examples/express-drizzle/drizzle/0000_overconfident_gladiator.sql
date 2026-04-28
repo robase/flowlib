@@ -1,4 +1,4 @@
-CREATE TABLE `invect_account` (
+CREATE TABLE `flowlib_account` (
 	`id` text PRIMARY KEY NOT NULL,
 	`account_id` text NOT NULL,
 	`provider_id` text NOT NULL,
@@ -12,10 +12,10 @@ CREATE TABLE `invect_account` (
 	`password` text,
 	`created_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL,
 	`updated_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL,
-	FOREIGN KEY (`user_id`) REFERENCES `invect_user`(`id`) ON UPDATE no action ON DELETE cascade
+	FOREIGN KEY (`user_id`) REFERENCES `flowlib_user`(`id`) ON UPDATE no action ON DELETE cascade
 );
 --> statement-breakpoint
-CREATE TABLE `invect_action_traces` (
+CREATE TABLE `flowlib_action_traces` (
 	`id` text PRIMARY KEY NOT NULL,
 	`flow_run_id` text NOT NULL,
 	`parent_node_execution_id` text,
@@ -32,11 +32,11 @@ CREATE TABLE `invect_action_traces` (
 	`completed_at` text,
 	`duration` integer,
 	`retry_count` integer DEFAULT 0 NOT NULL,
-	FOREIGN KEY (`flow_run_id`) REFERENCES `invect_flow_executions`(`id`) ON UPDATE no action ON DELETE cascade,
-	FOREIGN KEY (`parent_node_execution_id`) REFERENCES `invect_action_traces`(`id`) ON UPDATE no action ON DELETE cascade
+	FOREIGN KEY (`flow_run_id`) REFERENCES `flowlib_flow_executions`(`id`) ON UPDATE no action ON DELETE cascade,
+	FOREIGN KEY (`parent_node_execution_id`) REFERENCES `flowlib_action_traces`(`id`) ON UPDATE no action ON DELETE cascade
 );
 --> statement-breakpoint
-CREATE TABLE `invect_apikey` (
+CREATE TABLE `flowlib_apikey` (
 	`id` text PRIMARY KEY NOT NULL,
 	`config_id` text DEFAULT 'default' NOT NULL,
 	`name` text,
@@ -61,7 +61,7 @@ CREATE TABLE `invect_apikey` (
 	`metadata` text
 );
 --> statement-breakpoint
-CREATE TABLE `invect_batch_jobs` (
+CREATE TABLE `flowlib_batch_jobs` (
 	`id` text PRIMARY KEY NOT NULL,
 	`flow_run_id` text NOT NULL,
 	`node_id` text NOT NULL,
@@ -75,20 +75,20 @@ CREATE TABLE `invect_batch_jobs` (
 	`completed_at` text,
 	`created_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL,
 	`updated_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL,
-	FOREIGN KEY (`flow_run_id`) REFERENCES `invect_flow_executions`(`id`) ON UPDATE no action ON DELETE cascade
+	FOREIGN KEY (`flow_run_id`) REFERENCES `flowlib_flow_executions`(`id`) ON UPDATE no action ON DELETE cascade
 );
 --> statement-breakpoint
-CREATE TABLE `invect_chat_messages` (
+CREATE TABLE `flowlib_chat_messages` (
 	`id` text PRIMARY KEY NOT NULL,
 	`flow_id` text NOT NULL,
 	`role` text NOT NULL,
 	`content` text DEFAULT '' NOT NULL,
 	`tool_meta` text,
 	`created_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL,
-	FOREIGN KEY (`flow_id`) REFERENCES `invect_flows`(`id`) ON UPDATE no action ON DELETE cascade
+	FOREIGN KEY (`flow_id`) REFERENCES `flowlib_flows`(`id`) ON UPDATE no action ON DELETE cascade
 );
 --> statement-breakpoint
-CREATE TABLE `invect_credentials` (
+CREATE TABLE `flowlib_credentials` (
 	`id` text PRIMARY KEY NOT NULL,
 	`name` text NOT NULL,
 	`type` text NOT NULL,
@@ -105,7 +105,7 @@ CREATE TABLE `invect_credentials` (
 	`updated_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL
 );
 --> statement-breakpoint
-CREATE TABLE `invect_flow_access` (
+CREATE TABLE `flowlib_flow_access` (
 	`id` text PRIMARY KEY NOT NULL,
 	`flow_id` text NOT NULL,
 	`user_id` text,
@@ -114,10 +114,10 @@ CREATE TABLE `invect_flow_access` (
 	`granted_by` text,
 	`granted_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL,
 	`expires_at` text,
-	FOREIGN KEY (`flow_id`) REFERENCES `invect_flows`(`id`) ON UPDATE no action ON DELETE cascade
+	FOREIGN KEY (`flow_id`) REFERENCES `flowlib_flows`(`id`) ON UPDATE no action ON DELETE cascade
 );
 --> statement-breakpoint
-CREATE TABLE `invect_flow_executions` (
+CREATE TABLE `flowlib_flow_executions` (
 	`id` text PRIMARY KEY NOT NULL,
 	`flow_id` text NOT NULL,
 	`flow_version` integer NOT NULL,
@@ -135,10 +135,10 @@ CREATE TABLE `invect_flow_executions` (
 	`trigger_data` text,
 	`last_heartbeat_at` text,
 	`node_outputs` text,
-	FOREIGN KEY (`flow_id`) REFERENCES `invect_flows`(`id`) ON UPDATE no action ON DELETE cascade
+	FOREIGN KEY (`flow_id`) REFERENCES `flowlib_flows`(`id`) ON UPDATE no action ON DELETE cascade
 );
 --> statement-breakpoint
-CREATE TABLE `invect_flow_triggers` (
+CREATE TABLE `flowlib_flow_triggers` (
 	`id` text PRIMARY KEY NOT NULL,
 	`flow_id` text NOT NULL,
 	`node_id` text NOT NULL,
@@ -151,21 +151,21 @@ CREATE TABLE `invect_flow_triggers` (
 	`last_triggered_at` text,
 	`created_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL,
 	`updated_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL,
-	FOREIGN KEY (`flow_id`) REFERENCES `invect_flows`(`id`) ON UPDATE no action ON DELETE cascade
+	FOREIGN KEY (`flow_id`) REFERENCES `flowlib_flows`(`id`) ON UPDATE no action ON DELETE cascade
 );
 --> statement-breakpoint
-CREATE UNIQUE INDEX `invect_flow_triggers_webhook_path_unique` ON `invect_flow_triggers` (`webhook_path`);--> statement-breakpoint
-CREATE TABLE `invect_flow_versions` (
+CREATE UNIQUE INDEX `flowlib_flow_triggers_webhook_path_unique` ON `flowlib_flow_triggers` (`webhook_path`);--> statement-breakpoint
+CREATE TABLE `flowlib_flow_versions` (
 	`flow_id` text NOT NULL,
 	`version` integer NOT NULL,
-	`invect_definition` text NOT NULL,
+	`flowlib_definition` text NOT NULL,
 	`created_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL,
 	`created_by` text,
 	PRIMARY KEY(`version`, `flow_id`),
-	FOREIGN KEY (`flow_id`) REFERENCES `invect_flows`(`id`) ON UPDATE no action ON DELETE cascade
+	FOREIGN KEY (`flow_id`) REFERENCES `flowlib_flows`(`id`) ON UPDATE no action ON DELETE cascade
 );
 --> statement-breakpoint
-CREATE TABLE `invect_flows` (
+CREATE TABLE `flowlib_flows` (
 	`id` text PRIMARY KEY NOT NULL,
 	`name` text NOT NULL,
 	`description` text,
@@ -175,10 +175,10 @@ CREATE TABLE `invect_flows` (
 	`created_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL,
 	`updated_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL,
 	`scope_id` text,
-	FOREIGN KEY (`scope_id`) REFERENCES `invect_rbac_teams`(`id`) ON UPDATE no action ON DELETE set null
+	FOREIGN KEY (`scope_id`) REFERENCES `flowlib_rbac_teams`(`id`) ON UPDATE no action ON DELETE set null
 );
 --> statement-breakpoint
-CREATE TABLE `invect_rbac_scope_access` (
+CREATE TABLE `flowlib_rbac_scope_access` (
 	`id` text PRIMARY KEY NOT NULL,
 	`scope_id` text NOT NULL,
 	`user_id` text,
@@ -186,19 +186,19 @@ CREATE TABLE `invect_rbac_scope_access` (
 	`permission` text DEFAULT 'viewer' NOT NULL,
 	`granted_by` text,
 	`granted_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL,
-	FOREIGN KEY (`scope_id`) REFERENCES `invect_rbac_teams`(`id`) ON UPDATE no action ON DELETE cascade
+	FOREIGN KEY (`scope_id`) REFERENCES `flowlib_rbac_teams`(`id`) ON UPDATE no action ON DELETE cascade
 );
 --> statement-breakpoint
-CREATE TABLE `invect_rbac_team_members` (
+CREATE TABLE `flowlib_rbac_team_members` (
 	`id` text PRIMARY KEY NOT NULL,
 	`team_id` text NOT NULL,
 	`user_id` text NOT NULL,
 	`created_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL,
-	FOREIGN KEY (`team_id`) REFERENCES `invect_rbac_teams`(`id`) ON UPDATE no action ON DELETE cascade,
-	FOREIGN KEY (`user_id`) REFERENCES `invect_user`(`id`) ON UPDATE no action ON DELETE cascade
+	FOREIGN KEY (`team_id`) REFERENCES `flowlib_rbac_teams`(`id`) ON UPDATE no action ON DELETE cascade,
+	FOREIGN KEY (`user_id`) REFERENCES `flowlib_user`(`id`) ON UPDATE no action ON DELETE cascade
 );
 --> statement-breakpoint
-CREATE TABLE `invect_rbac_teams` (
+CREATE TABLE `flowlib_rbac_teams` (
 	`id` text PRIMARY KEY NOT NULL,
 	`name` text NOT NULL,
 	`description` text,
@@ -206,11 +206,11 @@ CREATE TABLE `invect_rbac_teams` (
 	`created_by` text,
 	`created_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL,
 	`updated_at` text,
-	FOREIGN KEY (`parent_id`) REFERENCES `invect_rbac_teams`(`id`) ON UPDATE no action ON DELETE set null,
-	FOREIGN KEY (`created_by`) REFERENCES `invect_user`(`id`) ON UPDATE no action ON DELETE no action
+	FOREIGN KEY (`parent_id`) REFERENCES `flowlib_rbac_teams`(`id`) ON UPDATE no action ON DELETE set null,
+	FOREIGN KEY (`created_by`) REFERENCES `flowlib_user`(`id`) ON UPDATE no action ON DELETE no action
 );
 --> statement-breakpoint
-CREATE TABLE `invect_session` (
+CREATE TABLE `flowlib_session` (
 	`id` text PRIMARY KEY NOT NULL,
 	`expires_at` text NOT NULL,
 	`token` text NOT NULL,
@@ -220,20 +220,20 @@ CREATE TABLE `invect_session` (
 	`user_agent` text,
 	`impersonated_by` text,
 	`user_id` text NOT NULL,
-	FOREIGN KEY (`user_id`) REFERENCES `invect_user`(`id`) ON UPDATE no action ON DELETE cascade
+	FOREIGN KEY (`user_id`) REFERENCES `flowlib_user`(`id`) ON UPDATE no action ON DELETE cascade
 );
 --> statement-breakpoint
-CREATE UNIQUE INDEX `invect_session_token_unique` ON `invect_session` (`token`);--> statement-breakpoint
-CREATE TABLE `invect_two_factor` (
+CREATE UNIQUE INDEX `flowlib_session_token_unique` ON `flowlib_session` (`token`);--> statement-breakpoint
+CREATE TABLE `flowlib_two_factor` (
 	`id` text PRIMARY KEY NOT NULL,
 	`user_id` text NOT NULL,
 	`secret` text NOT NULL,
 	`backup_codes` text NOT NULL,
 	`verified` integer DEFAULT false,
-	FOREIGN KEY (`user_id`) REFERENCES `invect_user`(`id`) ON UPDATE no action ON DELETE cascade
+	FOREIGN KEY (`user_id`) REFERENCES `flowlib_user`(`id`) ON UPDATE no action ON DELETE cascade
 );
 --> statement-breakpoint
-CREATE TABLE `invect_user` (
+CREATE TABLE `flowlib_user` (
 	`id` text PRIMARY KEY NOT NULL,
 	`name` text NOT NULL,
 	`email` text NOT NULL,
@@ -248,8 +248,8 @@ CREATE TABLE `invect_user` (
 	`updated_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL
 );
 --> statement-breakpoint
-CREATE UNIQUE INDEX `invect_user_email_unique` ON `invect_user` (`email`);--> statement-breakpoint
-CREATE TABLE `invect_vc_sync_config` (
+CREATE UNIQUE INDEX `flowlib_user_email_unique` ON `flowlib_user` (`email`);--> statement-breakpoint
+CREATE TABLE `flowlib_vc_sync_config` (
 	`id` text PRIMARY KEY NOT NULL,
 	`flow_id` text NOT NULL,
 	`provider` text NOT NULL,
@@ -267,11 +267,11 @@ CREATE TABLE `invect_vc_sync_config` (
 	`enabled` integer DEFAULT true NOT NULL,
 	`created_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL,
 	`updated_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL,
-	FOREIGN KEY (`flow_id`) REFERENCES `invect_flows`(`id`) ON UPDATE no action ON DELETE cascade
+	FOREIGN KEY (`flow_id`) REFERENCES `flowlib_flows`(`id`) ON UPDATE no action ON DELETE cascade
 );
 --> statement-breakpoint
-CREATE UNIQUE INDEX `invect_vc_sync_config_flow_id_unique` ON `invect_vc_sync_config` (`flow_id`);--> statement-breakpoint
-CREATE TABLE `invect_vc_sync_history` (
+CREATE UNIQUE INDEX `flowlib_vc_sync_config_flow_id_unique` ON `flowlib_vc_sync_config` (`flow_id`);--> statement-breakpoint
+CREATE TABLE `flowlib_vc_sync_history` (
 	`id` text PRIMARY KEY NOT NULL,
 	`flow_id` text NOT NULL,
 	`action` text NOT NULL,
@@ -281,10 +281,10 @@ CREATE TABLE `invect_vc_sync_history` (
 	`message` text,
 	`created_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL,
 	`created_by` text,
-	FOREIGN KEY (`flow_id`) REFERENCES `invect_flows`(`id`) ON UPDATE no action ON DELETE cascade
+	FOREIGN KEY (`flow_id`) REFERENCES `flowlib_flows`(`id`) ON UPDATE no action ON DELETE cascade
 );
 --> statement-breakpoint
-CREATE TABLE `invect_verification` (
+CREATE TABLE `flowlib_verification` (
 	`id` text PRIMARY KEY NOT NULL,
 	`identifier` text NOT NULL,
 	`value` text NOT NULL,
@@ -293,7 +293,7 @@ CREATE TABLE `invect_verification` (
 	`updated_at` text
 );
 --> statement-breakpoint
-CREATE TABLE `invect_webhook_triggers` (
+CREATE TABLE `flowlib_webhook_triggers` (
 	`id` text PRIMARY KEY NOT NULL,
 	`name` text NOT NULL,
 	`description` text,
@@ -312,7 +312,7 @@ CREATE TABLE `invect_webhook_triggers` (
 	`trigger_count` integer DEFAULT 0 NOT NULL,
 	`created_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL,
 	`updated_at` text DEFAULT CURRENT_TIMESTAMP NOT NULL,
-	FOREIGN KEY (`flow_id`) REFERENCES `invect_flows`(`id`) ON UPDATE no action ON DELETE no action
+	FOREIGN KEY (`flow_id`) REFERENCES `flowlib_flows`(`id`) ON UPDATE no action ON DELETE no action
 );
 --> statement-breakpoint
-CREATE UNIQUE INDEX `invect_webhook_triggers_webhook_path_unique` ON `invect_webhook_triggers` (`webhook_path`);
+CREATE UNIQUE INDEX `flowlib_webhook_triggers_webhook_path_unique` ON `flowlib_webhook_triggers` (`webhook_path`);

@@ -306,9 +306,10 @@ function _vcBackendPlugin(options: Omit<VersionControlPluginOptions, 'frontend'>
       flow_id: string;
       draft_branch: string | null;
       repo: string;
-    }>('SELECT flow_id, draft_branch, repo FROM flowlib_vc_sync_config WHERE active_pr_number = ?', [
-      prNumber,
-    ]);
+    }>(
+      'SELECT flow_id, draft_branch, repo FROM flowlib_vc_sync_config WHERE active_pr_number = ?',
+      [prNumber],
+    );
 
     for (const row of rows) {
       // Try to clean up the draft branch before clearing the reference

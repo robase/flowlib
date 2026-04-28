@@ -5,8 +5,8 @@
   "keywords": [
     "automation",
     "core",
-    "framework-agnostic",
     "flowlib",
+    "framework-agnostic",
     "workflow"
   ],
   "homepage": "https://flowlib.dev",

@@ -144,7 +144,9 @@ export async function createFlowlibRouter(config: FlowlibConfig): Promise<Router
         identity: null as FlowlibIdentity | null,
       };
 
-      const hookResult = await flowlib.plugins.getHookRunner().runOnRequest(webRequest, hookContext);
+      const hookResult = await flowlib.plugins
+        .getHookRunner()
+        .runOnRequest(webRequest, hookContext);
       if (hookResult.intercepted && hookResult.response) {
         const arrayBuf = await hookResult.response.arrayBuffer();
         res.status(hookResult.response.status);
@@ -1529,7 +1531,8 @@ export async function createFlowlibRouter(config: FlowlibConfig): Promise<Router
 
     // Resolve identity for RBAC (from middleware)
     const identity =
-      (req as Request & { __flowlibIdentity?: FlowlibIdentity | null }).__flowlibIdentity ?? undefined;
+      (req as Request & { __flowlibIdentity?: FlowlibIdentity | null }).__flowlibIdentity ??
+      undefined;
 
     try {
       const stream = await flowlib.chat.createStream({

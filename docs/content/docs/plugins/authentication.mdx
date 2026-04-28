@@ -88,19 +88,19 @@ npx flowlib-cli migrate --push
 
 ### Options
 
-| Option              | Type                                | Required | Default             | Description                                                                                                    |
-| ------------------- | ----------------------------------- | -------- | ------------------- | -------------------------------------------------------------------------------------------------------------- |
-| `auth`              | `BetterAuthInstance`                | No       | —                   | Your own Better Auth instance. If omitted, one is created internally.                                          |
-| `betterAuthOptions` | `BetterAuthPassthroughOptions`      | No       | —                   | Options passed to the internal Better Auth instance (ignored when `auth` is provided).                         |
-| `globalAdmins`      | `BetterAuthGlobalAdmin[]`           | No       | `[]`                | Admin accounts to seed on startup.                                                                             |
-| `database`          | `unknown`                           | No       | —                   | Database for the internal Better Auth instance. Uses Flowlib's DB when omitted.                                 |
-| `baseURL`           | `string`                            | No       | auto-detected       | Base URL for auth server (cookies, CSRF). Falls back to `BETTER_AUTH_URL` env var.                             |
-| `trustedOrigins`    | `string[] \| (req) => string[]`     | No       | localhost + baseURL | Origins trusted for CORS / cookie sharing.                                                                     |
-| `publicPaths`       | `string[]`                          | No       | `[]`                | Paths accessible without a valid session (auth proxy routes are always public).                                |
-| `mapUser`           | `(user, session) => FlowlibIdentity` | No       | default mapping     | Custom function to map Better Auth users to Flowlib identities.                                                 |
-| `mapRole`           | `(role) => FlowlibRole`              | No       | default mapping     | Custom function to map Better Auth role strings to Flowlib roles.                                               |
-| `apiKey`            | `boolean \| ApiKeyPluginOptions`    | No       | `false`             | Enable the [Better Auth API Key plugin](https://better-auth.com/docs/plugins/api-key) for programmatic access. |
-| `frontend`          | `unknown`                           | No       | —                   | Deprecated. The auth plugin registers its UI automatically.                                                    |
+| Option              | Type                                 | Required | Default             | Description                                                                                                    |
+| ------------------- | ------------------------------------ | -------- | ------------------- | -------------------------------------------------------------------------------------------------------------- |
+| `auth`              | `BetterAuthInstance`                 | No       | —                   | Your own Better Auth instance. If omitted, one is created internally.                                          |
+| `betterAuthOptions` | `BetterAuthPassthroughOptions`       | No       | —                   | Options passed to the internal Better Auth instance (ignored when `auth` is provided).                         |
+| `globalAdmins`      | `BetterAuthGlobalAdmin[]`            | No       | `[]`                | Admin accounts to seed on startup.                                                                             |
+| `database`          | `unknown`                            | No       | —                   | Database for the internal Better Auth instance. Uses Flowlib's DB when omitted.                                |
+| `baseURL`           | `string`                             | No       | auto-detected       | Base URL for auth server (cookies, CSRF). Falls back to `BETTER_AUTH_URL` env var.                             |
+| `trustedOrigins`    | `string[] \| (req) => string[]`      | No       | localhost + baseURL | Origins trusted for CORS / cookie sharing.                                                                     |
+| `publicPaths`       | `string[]`                           | No       | `[]`                | Paths accessible without a valid session (auth proxy routes are always public).                                |
+| `mapUser`           | `(user, session) => FlowlibIdentity` | No       | default mapping     | Custom function to map Better Auth users to Flowlib identities.                                                |
+| `mapRole`           | `(role) => FlowlibRole`              | No       | default mapping     | Custom function to map Better Auth role strings to Flowlib roles.                                              |
+| `apiKey`            | `boolean \| ApiKeyPluginOptions`     | No       | `false`             | Enable the [Better Auth API Key plugin](https://better-auth.com/docs/plugins/api-key) for programmatic access. |
+| `frontend`          | `unknown`                            | No       | —                   | Deprecated. The auth plugin registers its UI automatically.                                                    |
 
 ## What it does
 
@@ -159,8 +159,8 @@ export default function App() {
 
 ## Environment variables
 
-| Variable                | Required | Description                          |
-| ----------------------- | -------- | ------------------------------------ |
-| `BETTER_AUTH_SECRET`    | Yes      | Session encryption secret            |
+| Variable                 | Required | Description                          |
+| ------------------------ | -------- | ------------------------------------ |
+| `BETTER_AUTH_SECRET`     | Yes      | Session encryption secret            |
 | `FLOWLIB_ADMIN_EMAIL`    | No       | Alternative to `globalAdmins` config |
 | `FLOWLIB_ADMIN_PASSWORD` | No       | Alternative to `globalAdmins` config |

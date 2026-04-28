@@ -24,6 +24,7 @@ import type {
 // =============================================================================
 
 type FlowAccessPermission = string;
+type NodeErrorDetails = string;
 
 export const user = sqliteTable('flowlib_user', {
   id: text('id').primaryKey().notNull(),
@@ -344,7 +345,7 @@ export const actionTraces = sqliteTable('flowlib_action_traces', {
     .default(NodeExecutionStatus.PENDING),
   inputs: text('inputs', { mode: 'json' }).$type<JSONValue>().notNull(),
   outputs: text('outputs', { mode: 'json' }).$type<JSONValue>(),
-  error: text('error'),
+  error: text('error', { mode: 'json' }).$type<NodeErrorDetails>(),
   startedAt: text('started_at')
     .notNull()
     .default(sql`CURRENT_TIMESTAMP`),

@@ -115,8 +115,8 @@ The release workflow detects there are no pending changesets (they were consumed
 
 All packages under `pkg/` are published to npm as `@flowlib/*`. Example apps and the root package are excluded.
 
-| Package                         | npm Name                    |
-| ------------------------------- | --------------------------- |
+| Package                         | npm Name                     |
+| ------------------------------- | ---------------------------- |
 | `pkg/core`                      | `@flowlib/core`              |
 | `pkg/express`                   | `@flowlib/express`           |
 | `pkg/nestjs`                    | `@flowlib/nestjs`            |
@@ -124,7 +124,7 @@ All packages under `pkg/` are published to npm as `@flowlib/*`. Example apps and
 | `pkg/ui`                        | `@flowlib/ui`                |
 | `pkg/cli`                       | `@flowlib/cli`               |
 | `pkg/layouts`                   | `@flowlib/layouts`           |
-| `pkg/flowlib`                    | `flowlib-cli`                |
+| `pkg/flowlib`                   | `flowlib-cli`                |
 | `pkg/plugins/auth`              | `@flowlib/user-auth`         |
 | `pkg/plugins/rbac`              | `@flowlib/rbac`              |
 | `pkg/plugins/webhooks`          | `@flowlib/webhooks`          |

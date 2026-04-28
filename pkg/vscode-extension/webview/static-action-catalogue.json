@@ -28,15 +28,9 @@
         "label": "Asana Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "asana"
-        ],
-        "requiredScopes": [
-          "tasks:write"
-        ]
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["asana"],
+        "requiredScopes": ["tasks:write"]
       },
       {
         "name": "projectGid",
@@ -79,12 +73,7 @@
       }
     ],
     "defaultParams": {},
-    "searchTerms": [
-      "asana",
-      "tasks",
-      "create",
-      "project-management"
-    ]
+    "searchTerms": ["asana", "tasks", "create", "project-management"]
   },
   {
     "type": "asana.get_task",
@@ -115,15 +104,9 @@
         "label": "Asana Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "asana"
-        ],
-        "requiredScopes": [
-          "tasks:read"
-        ]
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["asana"],
+        "requiredScopes": ["tasks:read"]
       },
       {
         "name": "taskGid",
@@ -135,12 +118,7 @@
       }
     ],
     "defaultParams": {},
-    "searchTerms": [
-      "asana",
-      "tasks",
-      "get",
-      "project-management"
-    ]
+    "searchTerms": ["asana", "tasks", "get", "project-management"]
   },
   {
     "type": "asana.list_projects",
@@ -171,12 +149,8 @@
         "label": "Asana Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "asana"
-        ]
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["asana"]
       },
       {
         "name": "workspaceGid",
@@ -198,12 +172,7 @@
     "defaultParams": {
       "limit": 50
     },
-    "searchTerms": [
-      "asana",
-      "projects",
-      "list",
-      "project-management"
-    ]
+    "searchTerms": ["asana", "projects", "list", "project-management"]
   },
   {
     "type": "asana.list_tasks",
@@ -234,12 +203,8 @@
         "label": "Asana Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "asana"
-        ]
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["asana"]
       },
       {
         "name": "projectGid",
@@ -261,12 +226,7 @@
     "defaultParams": {
       "limit": 50
     },
-    "searchTerms": [
-      "asana",
-      "tasks",
-      "list",
-      "project-management"
-    ]
+    "searchTerms": ["asana", "tasks", "list", "project-management"]
   },
   {
     "type": "asana.list_workspaces",
@@ -297,21 +257,12 @@
         "label": "Asana Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "asana"
-        ]
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["asana"]
       }
     ],
     "defaultParams": {},
-    "searchTerms": [
-      "asana",
-      "workspaces",
-      "list",
-      "project-management"
-    ]
+    "searchTerms": ["asana", "workspaces", "list", "project-management"]
   },
   {
     "type": "asana.update_task",
@@ -342,15 +293,9 @@
         "label": "Asana Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "asana"
-        ],
-        "requiredScopes": [
-          "tasks:write"
-        ]
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["asana"],
+        "requiredScopes": ["tasks:write"]
       },
       {
         "name": "taskGid",
@@ -399,12 +344,7 @@
       }
     ],
     "defaultParams": {},
-    "searchTerms": [
-      "asana",
-      "tasks",
-      "update",
-      "project-management"
-    ]
+    "searchTerms": ["asana", "tasks", "update", "project-management"]
   },
   {
     "type": "cloudwatch.get_query_results",
@@ -435,9 +375,7 @@
         "label": "CloudWatch Logs Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "api_key"
-        ]
+        "credentialTypes": ["api_key"]
       },
       {
         "name": "region",
@@ -497,9 +435,7 @@
         "label": "CloudWatch Logs Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "api_key"
-        ]
+        "credentialTypes": ["api_key"]
       },
       {
         "name": "region",
@@ -593,9 +529,7 @@
         "label": "Flowlib Core Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "llm"
-        ]
+        "credentialTypes": ["llm"]
       },
       {
         "name": "model",
@@ -709,16 +643,7 @@
       "enableParallelTools": true,
       "useBatchProcessing": false
     },
-    "searchTerms": [
-      "ai",
-      "agent",
-      "llm",
-      "tools",
-      "gpt",
-      "claude",
-      "openai",
-      "anthropic"
-    ]
+    "searchTerms": ["ai", "agent", "llm", "tools", "gpt", "claude", "openai", "anthropic"]
   },
   {
     "type": "core.if_else",
@@ -813,13 +738,7 @@
       }
     ],
     "defaultParams": {},
-    "searchTerms": [
-      "input",
-      "entry",
-      "variable",
-      "flow",
-      "seed"
-    ]
+    "searchTerms": ["input", "entry", "variable", "flow", "seed"]
   },
   {
     "type": "core.javascript",
@@ -897,9 +816,7 @@
         "label": "Flowlib Core Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "llm"
-        ]
+        "credentialTypes": ["llm"]
       },
       {
         "name": "model",
@@ -909,9 +826,7 @@
         "placeholder": "Select a credential first",
         "required": true,
         "loadOptions": {
-          "dependsOn": [
-            "credentialId"
-          ]
+          "dependsOn": ["credentialId"]
         }
       },
       {
@@ -1030,14 +945,7 @@
     "defaultParams": {
       "outputName": "result"
     },
-    "searchTerms": [
-      "output",
-      "return",
-      "result",
-      "end",
-      "response",
-      "data"
-    ]
+    "searchTerms": ["output", "return", "result", "end", "response", "data"]
   },
   {
     "type": "core.switch",
@@ -1100,15 +1008,7 @@
     "defaultParams": {
       "matchMode": "first"
     },
-    "searchTerms": [
-      "switch",
-      "branch",
-      "condition",
-      "route",
-      "case",
-      "multi",
-      "conditional"
-    ]
+    "searchTerms": ["switch", "branch", "condition", "route", "case", "multi", "conditional"]
   },
   {
     "type": "core.template_string",
@@ -1184,15 +1084,9 @@
         "label": "Dropbox Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "dropbox"
-        ],
-        "requiredScopes": [
-          "files.content.write"
-        ]
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["dropbox"],
+        "requiredScopes": ["files.content.write"]
       },
       {
         "name": "path",
@@ -1214,13 +1108,7 @@
     "defaultParams": {
       "autorename": false
     },
-    "searchTerms": [
-      "dropbox",
-      "storage",
-      "folders",
-      "create",
-      "oauth2"
-    ]
+    "searchTerms": ["dropbox", "storage", "folders", "create", "oauth2"]
   },
   {
     "type": "dropbox.delete",
@@ -1251,15 +1139,9 @@
         "label": "Dropbox Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "dropbox"
-        ],
-        "requiredScopes": [
-          "files.content.write"
-        ]
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["dropbox"],
+        "requiredScopes": ["files.content.write"]
       },
       {
         "name": "path",
@@ -1271,13 +1153,7 @@
       }
     ],
     "defaultParams": {},
-    "searchTerms": [
-      "dropbox",
-      "storage",
-      "files",
-      "delete",
-      "oauth2"
-    ]
+    "searchTerms": ["dropbox", "storage", "files", "delete", "oauth2"]
   },
   {
     "type": "dropbox.get_metadata",
@@ -1308,15 +1184,9 @@
         "label": "Dropbox Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "dropbox"
-        ],
-        "requiredScopes": [
-          "files.metadata.read"
-        ]
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["dropbox"],
+        "requiredScopes": ["files.metadata.read"]
       },
       {
         "name": "path",
@@ -1328,13 +1198,7 @@
       }
     ],
     "defaultParams": {},
-    "searchTerms": [
-      "dropbox",
-      "storage",
-      "files",
-      "metadata",
-      "oauth2"
-    ]
+    "searchTerms": ["dropbox", "storage", "files", "metadata", "oauth2"]
   },
   {
     "type": "dropbox.list_folder",
@@ -1365,15 +1229,9 @@
         "label": "Dropbox Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "dropbox"
-        ],
-        "requiredScopes": [
-          "files.metadata.read"
-        ]
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["dropbox"],
+        "requiredScopes": ["files.metadata.read"]
       },
       {
         "name": "path",
@@ -1405,14 +1263,7 @@
       "limit": 100,
       "recursive": false
     },
-    "searchTerms": [
-      "dropbox",
-      "storage",
-      "files",
-      "folders",
-      "list",
-      "oauth2"
-    ]
+    "searchTerms": ["dropbox", "storage", "files", "folders", "list", "oauth2"]
   },
   {
     "type": "dropbox.search",
@@ -1443,15 +1294,9 @@
         "label": "Dropbox Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "dropbox"
-        ],
-        "requiredScopes": [
-          "files.metadata.read"
-        ]
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["dropbox"],
+        "requiredScopes": ["files.metadata.read"]
       },
       {
         "name": "query",
@@ -1473,13 +1318,7 @@
     "defaultParams": {
       "maxResults": 25
     },
-    "searchTerms": [
-      "dropbox",
-      "storage",
-      "files",
-      "search",
-      "oauth2"
-    ]
+    "searchTerms": ["dropbox", "storage", "files", "search", "oauth2"]
   },
   {
     "type": "facebook.create_page_post",
@@ -1510,17 +1349,9 @@
         "label": "Facebook Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "facebook"
-        ],
-        "requiredScopes": [
-          "pages_manage_posts",
-          "pages_read_engagement",
-          "pages_show_list"
-        ]
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["facebook"],
+        "requiredScopes": ["pages_manage_posts", "pages_read_engagement", "pages_show_list"]
       },
       {
         "name": "pageId",
@@ -1548,14 +1379,7 @@
       }
     ],
     "defaultParams": {},
-    "searchTerms": [
-      "facebook",
-      "page",
-      "post",
-      "create",
-      "publish",
-      "oauth2"
-    ]
+    "searchTerms": ["facebook", "page", "post", "create", "publish", "oauth2"]
   },
   {
     "type": "facebook.get_me",
@@ -1586,25 +1410,13 @@
         "label": "Facebook Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "facebook"
-        ],
-        "requiredScopes": [
-          "public_profile",
-          "email"
-        ]
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["facebook"],
+        "requiredScopes": ["public_profile", "email"]
       }
     ],
     "defaultParams": {},
-    "searchTerms": [
-      "facebook",
-      "profile",
-      "user",
-      "oauth2"
-    ]
+    "searchTerms": ["facebook", "profile", "user", "oauth2"]
   },
   {
     "type": "facebook.get_page_posts",
@@ -1635,16 +1447,9 @@
         "label": "Facebook Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "facebook"
-        ],
-        "requiredScopes": [
-          "pages_read_engagement",
-          "pages_read_user_content"
-        ]
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["facebook"],
+        "requiredScopes": ["pages_read_engagement", "pages_read_user_content"]
       },
       {
         "name": "pageId",
@@ -1666,14 +1471,7 @@
     "defaultParams": {
       "limit": 25
     },
-    "searchTerms": [
-      "facebook",
-      "page",
-      "posts",
-      "feed",
-      "engagement",
-      "oauth2"
-    ]
+    "searchTerms": ["facebook", "page", "posts", "feed", "engagement", "oauth2"]
   },
   {
     "type": "facebook.list_pages",
@@ -1704,24 +1502,13 @@
         "label": "Facebook Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "facebook"
-        ],
-        "requiredScopes": [
-          "pages_show_list"
-        ]
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["facebook"],
+        "requiredScopes": ["pages_show_list"]
       }
     ],
     "defaultParams": {},
-    "searchTerms": [
-      "facebook",
-      "pages",
-      "list",
-      "oauth2"
-    ]
+    "searchTerms": ["facebook", "pages", "list", "oauth2"]
   },
   {
     "type": "freshdesk.create_ticket",
@@ -1752,12 +1539,8 @@
         "label": "Freshdesk Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "freshdesk"
-        ]
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["freshdesk"]
       },
       {
         "name": "domain",
@@ -1886,14 +1669,7 @@
       "priority": 1,
       "status": 2
     },
-    "searchTerms": [
-      "freshdesk",
-      "support",
-      "ticket",
-      "helpdesk",
-      "create",
-      "oauth2"
-    ]
+    "searchTerms": ["freshdesk", "support", "ticket", "helpdesk", "create", "oauth2"]
   },
   {
     "type": "freshdesk.get_ticket",
@@ -1924,12 +1700,8 @@
         "label": "Freshdesk Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "freshdesk"
-        ]
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["freshdesk"]
       },
       {
         "name": "domain",
@@ -1957,14 +1729,7 @@
       }
     ],
     "defaultParams": {},
-    "searchTerms": [
-      "freshdesk",
-      "support",
-      "ticket",
-      "helpdesk",
-      "get",
-      "oauth2"
-    ]
+    "searchTerms": ["freshdesk", "support", "ticket", "helpdesk", "get", "oauth2"]
   },
   {
     "type": "freshdesk.list_contacts",
@@ -1995,12 +1760,8 @@
         "label": "Freshdesk Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "freshdesk"
-        ]
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["freshdesk"]
       },
       {
         "name": "domain",
@@ -2087,14 +1848,7 @@
       "perPage": 30,
       "page": 1
     },
-    "searchTerms": [
-      "freshdesk",
-      "support",
-      "contacts",
-      "helpdesk",
-      "list",
-      "oauth2"
-    ]
+    "searchTerms": ["freshdesk", "support", "contacts", "helpdesk", "list", "oauth2"]
   },
   {
     "type": "freshdesk.list_tickets",
@@ -2125,12 +1879,8 @@
         "label": "Freshdesk Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "freshdesk"
-        ]
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["freshdesk"]
       },
       {
         "name": "domain",
@@ -2251,14 +2001,7 @@
       "perPage": 30,
       "page": 1
     },
-    "searchTerms": [
-      "freshdesk",
-      "support",
-      "tickets",
-      "helpdesk",
-      "list",
-      "oauth2"
-    ]
+    "searchTerms": ["freshdesk", "support", "tickets", "helpdesk", "list", "oauth2"]
   },
   {
     "type": "freshdesk.update_ticket",
@@ -2289,12 +2032,8 @@
         "label": "Freshdesk Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "freshdesk"
-        ]
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["freshdesk"]
       },
       {
         "name": "domain",
@@ -2408,14 +2147,7 @@
       }
     ],
     "defaultParams": {},
-    "searchTerms": [
-      "freshdesk",
-      "support",
-      "ticket",
-      "helpdesk",
-      "update",
-      "oauth2"
-    ]
+    "searchTerms": ["freshdesk", "support", "ticket", "helpdesk", "update", "oauth2"]
   },
   {
     "type": "github.add_issue_comment",
@@ -2446,15 +2178,9 @@
         "label": "GitHub Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "github"
-        ],
-        "requiredScopes": [
-          "repo"
-        ]
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["github"],
+        "requiredScopes": ["repo"]
       },
       {
         "name": "owner",
@@ -2489,13 +2215,7 @@
       }
     ],
     "defaultParams": {},
-    "searchTerms": [
-      "github",
-      "issue",
-      "comment",
-      "development",
-      "oauth2"
-    ]
+    "searchTerms": ["github", "issue", "comment", "development", "oauth2"]
   },
   {
     "type": "github.create_branch",
@@ -2526,15 +2246,9 @@
         "label": "GitHub Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "github"
-        ],
-        "requiredScopes": [
-          "repo"
-        ]
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["github"],
+        "requiredScopes": ["repo"]
       },
       {
         "name": "owner",
@@ -2577,14 +2291,7 @@
       }
     ],
     "defaultParams": {},
-    "searchTerms": [
-      "github",
-      "branch",
-      "create",
-      "git",
-      "development",
-      "oauth2"
-    ]
+    "searchTerms": ["github", "branch", "create", "git", "development", "oauth2"]
   },
   {
     "type": "github.create_issue",
@@ -2615,15 +2322,9 @@
         "label": "GitHub Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "github"
-        ],
-        "requiredScopes": [
-          "repo"
-        ]
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["github"],
+        "requiredScopes": ["repo"]
       },
       {
         "name": "owner",
@@ -2684,14 +2385,7 @@
       "labels": [],
       "assignees": []
     },
-    "searchTerms": [
-      "github",
-      "issue",
-      "bug",
-      "development",
-      "project-management",
-      "oauth2"
-    ]
+    "searchTerms": ["github", "issue", "bug", "development", "project-management", "oauth2"]
   },
   {
     "type": "github.create_or_update_file",
@@ -2722,15 +2416,9 @@
         "label": "GitHub Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "github"
-        ],
-        "requiredScopes": [
-          "repo"
-        ]
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["github"],
+        "requiredScopes": ["repo"]
       },
       {
         "name": "owner",
@@ -2805,15 +2493,7 @@
       }
     ],
     "defaultParams": {},
-    "searchTerms": [
-      "github",
-      "file",
-      "create",
-      "update",
-      "commit",
-      "development",
-      "oauth2"
-    ]
+    "searchTerms": ["github", "file", "create", "update", "commit", "development", "oauth2"]
   },
   {
     "type": "github.create_pull_request",
@@ -2844,15 +2524,9 @@
         "label": "GitHub Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "github"
-        ],
-        "requiredScopes": [
-          "repo"
-        ]
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["github"],
+        "requiredScopes": ["repo"]
       },
       {
         "name": "owner",
@@ -2922,14 +2596,7 @@
       "draft": false,
       "maintainerCanModify": true
     },
-    "searchTerms": [
-      "github",
-      "pull-request",
-      "pr",
-      "create",
-      "development",
-      "oauth2"
-    ]
+    "searchTerms": ["github", "pull-request", "pr", "create", "development", "oauth2"]
   },
   {
     "type": "github.create_release",
@@ -2960,15 +2627,9 @@
         "label": "GitHub Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "github"
-        ],
-        "requiredScopes": [
-          "repo"
-        ]
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["github"],
+        "requiredScopes": ["repo"]
       },
       {
         "name": "owner",
@@ -3046,14 +2707,7 @@
       "prerelease": false,
       "generateReleaseNotes": false
     },
-    "searchTerms": [
-      "github",
-      "release",
-      "create",
-      "tag",
-      "development",
-      "oauth2"
-    ]
+    "searchTerms": ["github", "release", "create", "tag", "development", "oauth2"]
   },
   {
     "type": "github.get_file_content",
@@ -3084,15 +2738,9 @@
         "label": "GitHub Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "github"
-        ],
-        "requiredScopes": [
-          "repo"
-        ]
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["github"],
+        "requiredScopes": ["repo"]
       },
       {
         "name": "owner",
@@ -3127,14 +2775,7 @@
       }
     ],
     "defaultParams": {},
-    "searchTerms": [
-      "github",
-      "file",
-      "content",
-      "read",
-      "development",
-      "oauth2"
-    ]
+    "searchTerms": ["github", "file", "content", "read", "development", "oauth2"]
   },
   {
     "type": "github.get_issue",
@@ -3165,15 +2806,9 @@
         "label": "GitHub Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "github"
-        ],
-        "requiredScopes": [
-          "repo"
-        ]
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["github"],
+        "requiredScopes": ["repo"]
       },
       {
         "name": "owner",
@@ -3201,13 +2836,7 @@
       }
     ],
     "defaultParams": {},
-    "searchTerms": [
-      "github",
-      "issue",
-      "get",
-      "development",
-      "oauth2"
-    ]
+    "searchTerms": ["github", "issue", "get", "development", "oauth2"]
   },
   {
     "type": "github.get_pull_request",
@@ -3238,15 +2867,9 @@
         "label": "GitHub Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "github"
-        ],
-        "requiredScopes": [
-          "repo"
-        ]
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["github"],
+        "requiredScopes": ["repo"]
       },
       {
         "name": "owner",
@@ -3273,14 +2896,7 @@
       }
     ],
     "defaultParams": {},
-    "searchTerms": [
-      "github",
-      "pull-request",
-      "pr",
-      "get",
-      "development",
-      "oauth2"
-    ]
+    "searchTerms": ["github", "pull-request", "pr", "get", "development", "oauth2"]
   },
   {
     "type": "github.get_repo",
@@ -3311,15 +2927,9 @@
         "label": "GitHub Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "github"
-        ],
-        "requiredScopes": [
-          "repo"
-        ]
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["github"],
+        "requiredScopes": ["repo"]
       },
       {
         "name": "owner",
@@ -3339,13 +2949,7 @@
       }
     ],
     "defaultParams": {},
-    "searchTerms": [
-      "github",
-      "repository",
-      "get",
-      "development",
-      "oauth2"
-    ]
+    "searchTerms": ["github", "repository", "get", "development", "oauth2"]
   },
   {
     "type": "github.list_branches",
@@ -3376,15 +2980,9 @@
         "label": "GitHub Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "github"
-        ],
-        "requiredScopes": [
-          "repo"
-        ]
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["github"],
+        "requiredScopes": ["repo"]
       },
       {
         "name": "owner",
@@ -3421,13 +3019,7 @@
     "defaultParams": {
       "perPage": 30
     },
-    "searchTerms": [
-      "github",
-      "branch",
-      "list",
-      "development",
-      "oauth2"
-    ]
+    "searchTerms": ["github", "branch", "list", "development", "oauth2"]
   },
   {
     "type": "github.list_commits",
@@ -3458,15 +3050,9 @@
         "label": "GitHub Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "github"
-        ],
-        "requiredScopes": [
-          "repo"
-        ]
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["github"],
+        "requiredScopes": ["repo"]
       },
       {
         "name": "owner",
@@ -3535,14 +3121,7 @@
     "defaultParams": {
       "perPage": 30
     },
-    "searchTerms": [
-      "github",
-      "commit",
-      "list",
-      "history",
-      "development",
-      "oauth2"
-    ]
+    "searchTerms": ["github", "commit", "list", "history", "development", "oauth2"]
   },
   {
     "type": "github.list_issue_comments",
@@ -3573,15 +3152,9 @@
         "label": "GitHub Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "github"
-        ],
-        "requiredScopes": [
-          "repo"
-        ]
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["github"],
+        "requiredScopes": ["repo"]
       },
       {
         "name": "owner",
@@ -3618,14 +3191,7 @@
     "defaultParams": {
       "perPage": 30
     },
-    "searchTerms": [
-      "github",
-      "issue",
-      "comment",
-      "list",
-      "development",
-      "oauth2"
-    ]
+    "searchTerms": ["github", "issue", "comment", "list", "development", "oauth2"]
   },
   {
     "type": "github.list_issues",
@@ -3656,15 +3222,9 @@
         "label": "GitHub Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "github"
-        ],
-        "requiredScopes": [
-          "repo"
-        ]
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["github"],
+        "requiredScopes": ["repo"]
       },
       {
         "name": "owner",
@@ -3774,13 +3334,7 @@
       "direction": "desc",
       "perPage": 30
     },
-    "searchTerms": [
-      "github",
-      "issue",
-      "list",
-      "development",
-      "oauth2"
-    ]
+    "searchTerms": ["github", "issue", "list", "development", "oauth2"]
   },
   {
     "type": "github.list_pull_requests",
@@ -3811,15 +3365,9 @@
         "label": "GitHub Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "github"
-        ],
-        "requiredScopes": [
-          "repo"
-        ]
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["github"],
+        "requiredScopes": ["repo"]
       },
       {
         "name": "owner",
@@ -3933,14 +3481,7 @@
       "direction": "desc",
       "perPage": 30
     },
-    "searchTerms": [
-      "github",
-      "pull-request",
-      "pr",
-      "list",
-      "development",
-      "oauth2"
-    ]
+    "searchTerms": ["github", "pull-request", "pr", "list", "development", "oauth2"]
   },
   {
     "type": "github.list_releases",
@@ -3971,15 +3512,9 @@
         "label": "GitHub Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "github"
-        ],
-        "requiredScopes": [
-          "repo"
-        ]
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["github"],
+        "requiredScopes": ["repo"]
       },
       {
         "name": "owner",
@@ -4009,14 +3544,7 @@
     "defaultParams": {
       "perPage": 30
     },
-    "searchTerms": [
-      "github",
-      "release",
-      "list",
-      "tag",
-      "development",
-      "oauth2"
-    ]
+    "searchTerms": ["github", "release", "list", "tag", "development", "oauth2"]
   },
   {
     "type": "github.list_repos",
@@ -4047,15 +3575,9 @@
         "label": "GitHub Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "github"
-        ],
-        "requiredScopes": [
-          "repo"
-        ]
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["github"],
+        "requiredScopes": ["repo"]
       },
       {
         "name": "org",
@@ -4145,13 +3667,7 @@
       "direction": "desc",
       "perPage": 30
     },
-    "searchTerms": [
-      "github",
-      "repository",
-      "list",
-      "development",
-      "oauth2"
-    ]
+    "searchTerms": ["github", "repository", "list", "development", "oauth2"]
   },
   {
     "type": "github.merge_pull_request",
@@ -4182,15 +3698,9 @@
         "label": "GitHub Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "github"
-        ],
-        "requiredScopes": [
-          "repo"
-        ]
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["github"],
+        "requiredScopes": ["repo"]
       },
       {
         "name": "owner",
@@ -4264,14 +3774,7 @@
     "defaultParams": {
       "mergeMethod": "merge"
     },
-    "searchTerms": [
-      "github",
-      "pull-request",
-      "pr",
-      "merge",
-      "development",
-      "oauth2"
-    ]
+    "searchTerms": ["github", "pull-request", "pr", "merge", "development", "oauth2"]
   },
   {
     "type": "github.search_issues",
@@ -4302,15 +3805,9 @@
         "label": "GitHub Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "github"
-        ],
-        "requiredScopes": [
-          "repo"
-        ]
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["github"],
+        "requiredScopes": ["repo"]
       },
       {
         "name": "query",
@@ -4382,14 +3879,7 @@
       "order": "desc",
       "perPage": 30
     },
-    "searchTerms": [
-      "github",
-      "search",
-      "issue",
-      "pull-request",
-      "development",
-      "oauth2"
-    ]
+    "searchTerms": ["github", "search", "issue", "pull-request", "development", "oauth2"]
   },
   {
     "type": "github.update_issue",
@@ -4420,15 +3910,9 @@
         "label": "GitHub Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "github"
-        ],
-        "requiredScopes": [
-          "repo"
-        ]
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["github"],
+        "requiredScopes": ["repo"]
       },
       {
         "name": "owner",
@@ -4527,14 +4011,7 @@
       }
     ],
     "defaultParams": {},
-    "searchTerms": [
-      "github",
-      "issue",
-      "update",
-      "edit",
-      "development",
-      "oauth2"
-    ]
+    "searchTerms": ["github", "issue", "update", "edit", "development", "oauth2"]
   },
   {
     "type": "gitlab.create_issue",
@@ -4565,12 +4042,8 @@
         "label": "GitLab Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "gitlab"
-        ]
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["gitlab"]
       },
       {
         "name": "baseUrl",
@@ -4617,14 +4090,7 @@
     "defaultParams": {
       "baseUrl": "https://gitlab.com"
     },
-    "searchTerms": [
-      "gitlab",
-      "issue",
-      "bug",
-      "development",
-      "project-management",
-      "oauth2"
-    ]
+    "searchTerms": ["gitlab", "issue", "bug", "development", "project-management", "oauth2"]
   },
   {
     "type": "gitlab.create_merge_request",
@@ -4655,12 +4121,8 @@
         "label": "GitLab Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "gitlab"
-        ]
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["gitlab"]
       },
       {
         "name": "baseUrl",
@@ -4717,13 +4179,7 @@
       "baseUrl": "https://gitlab.com",
       "targetBranch": "main"
     },
-    "searchTerms": [
-      "gitlab",
-      "merge-request",
-      "pull-request",
-      "development",
-      "oauth2"
-    ]
+    "searchTerms": ["gitlab", "merge-request", "pull-request", "development", "oauth2"]
   },
   {
     "type": "gitlab.list_issues",
@@ -4754,12 +4210,8 @@
         "label": "GitLab Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "gitlab"
-        ]
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["gitlab"]
       },
       {
         "name": "baseUrl",
@@ -4814,13 +4266,7 @@
       "state": "opened",
       "perPage": 20
     },
-    "searchTerms": [
-      "gitlab",
-      "issues",
-      "development",
-      "project-management",
-      "oauth2"
-    ]
+    "searchTerms": ["gitlab", "issues", "development", "project-management", "oauth2"]
   },
   {
     "type": "gitlab.list_merge_requests",
@@ -4851,12 +4297,8 @@
         "label": "GitLab Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "gitlab"
-        ]
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["gitlab"]
       },
       {
         "name": "baseUrl",
@@ -4915,13 +4357,7 @@
       "state": "opened",
       "perPage": 20
     },
-    "searchTerms": [
-      "gitlab",
-      "merge-request",
-      "pull-request",
-      "development",
-      "oauth2"
-    ]
+    "searchTerms": ["gitlab", "merge-request", "pull-request", "development", "oauth2"]
   },
   {
     "type": "gitlab.list_projects",
@@ -4952,12 +4388,8 @@
         "label": "GitLab Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "gitlab"
-        ]
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["gitlab"]
       },
       {
         "name": "baseUrl",
@@ -4982,13 +4414,7 @@
       "baseUrl": "https://gitlab.com",
       "perPage": 20
     },
-    "searchTerms": [
-      "gitlab",
-      "projects",
-      "repositories",
-      "development",
-      "oauth2"
-    ]
+    "searchTerms": ["gitlab", "projects", "repositories", "development", "oauth2"]
   },
   {
     "type": "gmail.create_draft",
@@ -5019,12 +4445,8 @@
         "label": "Gmail Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "google"
-        ],
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["google"],
         "requiredScopes": [
           "https://www.googleapis.com/auth/gmail.readonly",
           "https://www.googleapis.com/auth/gmail.compose",
@@ -5137,12 +4559,8 @@
         "label": "Gmail Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "google"
-        ],
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["google"],
         "requiredScopes": [
           "https://www.googleapis.com/auth/gmail.readonly",
           "https://www.googleapis.com/auth/gmail.compose",
@@ -5225,12 +4643,8 @@
         "label": "Gmail Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "google"
-        ],
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["google"],
         "requiredScopes": [
           "https://www.googleapis.com/auth/gmail.readonly",
           "https://www.googleapis.com/auth/gmail.compose",
@@ -5315,12 +4729,8 @@
         "label": "Gmail Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "google"
-        ],
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["google"],
         "requiredScopes": [
           "https://www.googleapis.com/auth/gmail.readonly",
           "https://www.googleapis.com/auth/gmail.compose",
@@ -5398,12 +4808,8 @@
         "label": "Gmail Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "google"
-        ],
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["google"],
         "requiredScopes": [
           "https://www.googleapis.com/auth/gmail.readonly",
           "https://www.googleapis.com/auth/gmail.compose",
@@ -5518,26 +4924,13 @@
         "label": "Google Analytics Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "google"
-        ],
-        "requiredScopes": [
-          "https://www.googleapis.com/auth/analytics.readonly"
-        ]
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["google"],
+        "requiredScopes": ["https://www.googleapis.com/auth/analytics.readonly"]
       }
     ],
     "defaultParams": {},
-    "searchTerms": [
-      "google",
-      "analytics",
-      "ga4",
-      "properties",
-      "accounts",
-      "oauth2"
-    ]
+    "searchTerms": ["google", "analytics", "ga4", "properties", "accounts", "oauth2"]
   },
   {
     "type": "google_analytics.run_realtime_report",
@@ -5568,15 +4961,9 @@
         "label": "Google Analytics Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "google"
-        ],
-        "requiredScopes": [
-          "https://www.googleapis.com/auth/analytics.readonly"
-        ]
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["google"],
+        "requiredScopes": ["https://www.googleapis.com/auth/analytics.readonly"]
       },
       {
         "name": "propertyId",
@@ -5614,14 +5001,7 @@
     "defaultParams": {
       "limit": 100
     },
-    "searchTerms": [
-      "google",
-      "analytics",
-      "ga4",
-      "realtime",
-      "live",
-      "oauth2"
-    ]
+    "searchTerms": ["google", "analytics", "ga4", "realtime", "live", "oauth2"]
   },
   {
     "type": "google_analytics.run_report",
@@ -5652,15 +5032,9 @@
         "label": "Google Analytics Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "google"
-        ],
-        "requiredScopes": [
-          "https://www.googleapis.com/auth/analytics.readonly"
-        ]
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["google"],
+        "requiredScopes": ["https://www.googleapis.com/auth/analytics.readonly"]
       },
       {
         "name": "propertyId",
@@ -5714,14 +5088,7 @@
     "defaultParams": {
       "limit": 100
     },
-    "searchTerms": [
-      "google",
-      "analytics",
-      "ga4",
-      "report",
-      "metrics",
-      "oauth2"
-    ]
+    "searchTerms": ["google", "analytics", "ga4", "report", "metrics", "oauth2"]
   },
   {
     "type": "google_calendar.create_event",
@@ -5752,12 +5119,8 @@
         "label": "Google Calendar Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "google"
-        ],
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["google"],
         "requiredScopes": [
           "https://www.googleapis.com/auth/calendar",
           "https://www.googleapis.com/auth/calendar.events"
@@ -5896,15 +5259,7 @@
       "sendUpdates": "none",
       "visibility": "default"
     },
-    "searchTerms": [
-      "google",
-      "calendar",
-      "event",
-      "create",
-      "schedule",
-      "meeting",
-      "oauth2"
-    ]
+    "searchTerms": ["google", "calendar", "event", "create", "schedule", "meeting", "oauth2"]
   },
   {
     "type": "google_calendar.delete_event",
@@ -5935,12 +5290,8 @@
         "label": "Google Calendar Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "google"
-        ],
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["google"],
         "requiredScopes": [
           "https://www.googleapis.com/auth/calendar",
           "https://www.googleapis.com/auth/calendar.events"
@@ -5988,14 +5339,7 @@
       "calendarId": "primary",
       "sendUpdates": "none"
     },
-    "searchTerms": [
-      "google",
-      "calendar",
-      "event",
-      "delete",
-      "cancel",
-      "oauth2"
-    ]
+    "searchTerms": ["google", "calendar", "event", "delete", "cancel", "oauth2"]
   },
   {
     "type": "google_calendar.get_event",
@@ -6026,12 +5370,8 @@
         "label": "Google Calendar Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "google"
-        ],
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["google"],
         "requiredScopes": [
           "https://www.googleapis.com/auth/calendar",
           "https://www.googleapis.com/auth/calendar.events"
@@ -6056,14 +5396,7 @@
     "defaultParams": {
       "calendarId": "primary"
     },
-    "searchTerms": [
-      "google",
-      "calendar",
-      "event",
-      "get",
-      "read",
-      "oauth2"
-    ]
+    "searchTerms": ["google", "calendar", "event", "get", "read", "oauth2"]
   },
   {
     "type": "google_calendar.list_events",
@@ -6094,12 +5427,8 @@
         "label": "Google Calendar Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "google"
-        ],
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["google"],
         "requiredScopes": [
           "https://www.googleapis.com/auth/calendar",
           "https://www.googleapis.com/auth/calendar.events"
@@ -6174,14 +5503,7 @@
       "singleEvents": true,
       "orderBy": "startTime"
     },
-    "searchTerms": [
-      "google",
-      "calendar",
-      "events",
-      "list",
-      "schedule",
-      "oauth2"
-    ]
+    "searchTerms": ["google", "calendar", "events", "list", "schedule", "oauth2"]
   },
   {
     "type": "google_calendar.query_freebusy",
@@ -6212,15 +5534,9 @@
         "label": "Google Calendar Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "google"
-        ],
-        "requiredScopes": [
-          "https://www.googleapis.com/auth/calendar.readonly"
-        ]
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["google"],
+        "requiredScopes": ["https://www.googleapis.com/auth/calendar.readonly"]
       },
       {
         "name": "timeMin",
@@ -6244,9 +5560,7 @@
         "type": "json",
         "description": "JSON array of calendar IDs to check",
         "placeholder": "[\"primary\", \"team@example.com\"]",
-        "defaultValue": [
-          "primary"
-        ],
+        "defaultValue": ["primary"],
         "extended": true
       },
       {
@@ -6259,19 +5573,10 @@
       }
     ],
     "defaultParams": {
-      "calendarIds": [
-        "primary"
-      ],
+      "calendarIds": ["primary"],
       "timeZone": "UTC"
     },
-    "searchTerms": [
-      "google",
-      "calendar",
-      "freebusy",
-      "availability",
-      "schedule",
-      "oauth2"
-    ]
+    "searchTerms": ["google", "calendar", "freebusy", "availability", "schedule", "oauth2"]
   },
   {
     "type": "google_calendar.update_event",
@@ -6302,12 +5607,8 @@
         "label": "Google Calendar Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "google"
-        ],
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["google"],
         "requiredScopes": [
           "https://www.googleapis.com/auth/calendar",
           "https://www.googleapis.com/auth/calendar.events"
@@ -6406,14 +5707,7 @@
       "calendarId": "primary",
       "sendUpdates": "none"
     },
-    "searchTerms": [
-      "google",
-      "calendar",
-      "event",
-      "update",
-      "edit",
-      "oauth2"
-    ]
+    "searchTerms": ["google", "calendar", "event", "update", "edit", "oauth2"]
   },
   {
     "type": "google_docs.append_text",
@@ -6444,12 +5738,8 @@
         "label": "Google Docs Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "google"
-        ],
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["google"],
         "requiredScopes": [
           "https://www.googleapis.com/auth/documents",
           "https://www.googleapis.com/auth/drive.file"
@@ -6473,15 +5763,7 @@
       }
     ],
     "defaultParams": {},
-    "searchTerms": [
-      "google",
-      "docs",
-      "document",
-      "append",
-      "text",
-      "write",
-      "oauth2"
-    ]
+    "searchTerms": ["google", "docs", "document", "append", "text", "write", "oauth2"]
   },
   {
     "type": "google_docs.create_document",
@@ -6512,12 +5794,8 @@
         "label": "Google Docs Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "google"
-        ],
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["google"],
         "requiredScopes": [
           "https://www.googleapis.com/auth/documents",
           "https://www.googleapis.com/auth/drive.file"
@@ -6540,13 +5818,7 @@
       }
     ],
     "defaultParams": {},
-    "searchTerms": [
-      "google",
-      "docs",
-      "document",
-      "create",
-      "oauth2"
-    ]
+    "searchTerms": ["google", "docs", "document", "create", "oauth2"]
   },
   {
     "type": "google_docs.get_document",
@@ -6577,12 +5849,8 @@
         "label": "Google Docs Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "google"
-        ],
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["google"],
         "requiredScopes": [
           "https://www.googleapis.com/auth/documents.readonly",
           "https://www.googleapis.com/auth/drive.file"
@@ -6598,13 +5866,7 @@
       }
     ],
     "defaultParams": {},
-    "searchTerms": [
-      "google",
-      "docs",
-      "document",
-      "read",
-      "oauth2"
-    ]
+    "searchTerms": ["google", "docs", "document", "read", "oauth2"]
   },
   {
     "type": "google_docs.insert_text",
@@ -6635,12 +5897,8 @@
         "label": "Google Docs Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "google"
-        ],
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["google"],
         "requiredScopes": [
           "https://www.googleapis.com/auth/documents",
           "https://www.googleapis.com/auth/drive.file"
@@ -6674,15 +5932,7 @@
     "defaultParams": {
       "index": 1
     },
-    "searchTerms": [
-      "google",
-      "docs",
-      "document",
-      "insert",
-      "text",
-      "write",
-      "oauth2"
-    ]
+    "searchTerms": ["google", "docs", "document", "insert", "text", "write", "oauth2"]
   },
   {
     "type": "google_docs.replace_text",
@@ -6713,12 +5963,8 @@
         "label": "Google Docs Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "google"
-        ],
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["google"],
         "requiredScopes": [
           "https://www.googleapis.com/auth/documents",
           "https://www.googleapis.com/auth/drive.file"
@@ -6760,15 +6006,7 @@
     "defaultParams": {
       "matchCase": false
     },
-    "searchTerms": [
-      "google",
-      "docs",
-      "document",
-      "replace",
-      "find",
-      "text",
-      "oauth2"
-    ]
+    "searchTerms": ["google", "docs", "document", "replace", "find", "text", "oauth2"]
   },
   {
     "type": "google_drive.create_file",
@@ -6799,12 +6037,8 @@
         "label": "Google Drive Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "google"
-        ],
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["google"],
         "requiredScopes": [
           "https://www.googleapis.com/auth/drive",
           "https://www.googleapis.com/auth/drive.file",
@@ -6853,14 +6087,7 @@
     "defaultParams": {
       "mimeType": "text/plain"
     },
-    "searchTerms": [
-      "google",
-      "drive",
-      "file",
-      "create",
-      "upload",
-      "oauth2"
-    ]
+    "searchTerms": ["google", "drive", "file", "create", "upload", "oauth2"]
   },
   {
     "type": "google_drive.create_folder",
@@ -6891,12 +6118,8 @@
         "label": "Google Drive Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "google"
-        ],
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["google"],
         "requiredScopes": [
           "https://www.googleapis.com/auth/drive",
           "https://www.googleapis.com/auth/drive.file",
@@ -6928,13 +6151,7 @@
       }
     ],
     "defaultParams": {},
-    "searchTerms": [
-      "google",
-      "drive",
-      "folder",
-      "create",
-      "oauth2"
-    ]
+    "searchTerms": ["google", "drive", "folder", "create", "oauth2"]
   },
   {
     "type": "google_drive.delete_file",
@@ -6965,12 +6182,8 @@
         "label": "Google Drive Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "google"
-        ],
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["google"],
         "requiredScopes": [
           "https://www.googleapis.com/auth/drive",
           "https://www.googleapis.com/auth/drive.file",
@@ -6986,13 +6199,7 @@
       }
     ],
     "defaultParams": {},
-    "searchTerms": [
-      "google",
-      "drive",
-      "file",
-      "delete",
-      "oauth2"
-    ]
+    "searchTerms": ["google", "drive", "file", "delete", "oauth2"]
   },
   {
     "type": "google_drive.get_file",
@@ -7023,12 +6230,8 @@
         "label": "Google Drive Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "google"
-        ],
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["google"],
         "requiredScopes": [
           "https://www.googleapis.com/auth/drive",
           "https://www.googleapis.com/auth/drive.file",
@@ -7044,14 +6247,7 @@
       }
     ],
     "defaultParams": {},
-    "searchTerms": [
-      "google",
-      "drive",
-      "file",
-      "get",
-      "metadata",
-      "oauth2"
-    ]
+    "searchTerms": ["google", "drive", "file", "get", "metadata", "oauth2"]
   },
   {
     "type": "google_drive.list_files",
@@ -7082,12 +6278,8 @@
         "label": "Google Drive Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "google"
-        ],
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["google"],
         "requiredScopes": [
           "https://www.googleapis.com/auth/drive",
           "https://www.googleapis.com/auth/drive.file",
@@ -7139,14 +6331,7 @@
       "orderBy": "modifiedTime desc",
       "fields": "files(id,name,mimeType,size,modifiedTime,webViewLink,parents)"
     },
-    "searchTerms": [
-      "google",
-      "drive",
-      "files",
-      "list",
-      "search",
-      "oauth2"
-    ]
+    "searchTerms": ["google", "drive", "files", "list", "search", "oauth2"]
   },
   {
     "type": "google_drive.search_files",
@@ -7177,12 +6362,8 @@
         "label": "Google Drive Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "google"
-        ],
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["google"],
         "requiredScopes": [
           "https://www.googleapis.com/auth/drive",
           "https://www.googleapis.com/auth/drive.file",
@@ -7218,14 +6399,7 @@
       "maxResults": 20,
       "supportsAllDrives": false
     },
-    "searchTerms": [
-      "google",
-      "drive",
-      "search",
-      "files",
-      "find",
-      "oauth2"
-    ]
+    "searchTerms": ["google", "drive", "search", "files", "find", "oauth2"]
   },
   {
     "type": "google_drive.share_file",
@@ -7256,12 +6430,8 @@
         "label": "Google Drive Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "google"
-        ],
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["google"],
         "requiredScopes": [
           "https://www.googleapis.com/auth/drive",
           "https://www.googleapis.com/auth/drive.file",
@@ -7352,13 +6522,7 @@
     "defaultParams": {
       "sendNotificationEmail": true
     },
-    "searchTerms": [
-      "google",
-      "drive",
-      "share",
-      "permissions",
-      "oauth2"
-    ]
+    "searchTerms": ["google", "drive", "share", "permissions", "oauth2"]
   },
   {
     "type": "google_sheets.append_values",
@@ -7389,12 +6553,8 @@
         "label": "Google Sheets Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "google"
-        ],
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["google"],
         "requiredScopes": [
           "https://www.googleapis.com/auth/spreadsheets",
           "https://www.googleapis.com/auth/drive.file"
@@ -7464,15 +6624,7 @@
       "valueInputOption": "USER_ENTERED",
       "insertDataOption": "INSERT_ROWS"
     },
-    "searchTerms": [
-      "google",
-      "sheets",
-      "spreadsheet",
-      "append",
-      "write",
-      "values",
-      "oauth2"
-    ]
+    "searchTerms": ["google", "sheets", "spreadsheet", "append", "write", "values", "oauth2"]
   },
   {
     "type": "google_sheets.clear_values",
@@ -7503,12 +6655,8 @@
         "label": "Google Sheets Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "google"
-        ],
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["google"],
         "requiredScopes": [
           "https://www.googleapis.com/auth/spreadsheets",
           "https://www.googleapis.com/auth/drive.file"
@@ -7532,14 +6680,7 @@
       }
     ],
     "defaultParams": {},
-    "searchTerms": [
-      "google",
-      "sheets",
-      "spreadsheet",
-      "clear",
-      "delete",
-      "oauth2"
-    ]
+    "searchTerms": ["google", "sheets", "spreadsheet", "clear", "delete", "oauth2"]
   },
   {
     "type": "google_sheets.create_spreadsheet",
@@ -7570,12 +6711,8 @@
         "label": "Google Sheets Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "google"
-        ],
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["google"],
         "requiredScopes": [
           "https://www.googleapis.com/auth/spreadsheets",
           "https://www.googleapis.com/auth/drive.file"
@@ -7602,13 +6739,7 @@
     "defaultParams": {
       "sheetTitles": []
     },
-    "searchTerms": [
-      "google",
-      "sheets",
-      "spreadsheet",
-      "create",
-      "oauth2"
-    ]
+    "searchTerms": ["google", "sheets", "spreadsheet", "create", "oauth2"]
   },
   {
     "type": "google_sheets.get_values",
@@ -7639,12 +6770,8 @@
         "label": "Google Sheets Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "google"
-        ],
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["google"],
         "requiredScopes": [
           "https://www.googleapis.com/auth/spreadsheets",
           "https://www.googleapis.com/auth/drive.file"
@@ -7711,14 +6838,7 @@
       "majorDimension": "ROWS",
       "valueRenderOption": "FORMATTED_VALUE"
     },
-    "searchTerms": [
-      "google",
-      "sheets",
-      "spreadsheet",
-      "read",
-      "values",
-      "oauth2"
-    ]
+    "searchTerms": ["google", "sheets", "spreadsheet", "read", "values", "oauth2"]
   },
   {
     "type": "google_sheets.update_values",
@@ -7749,12 +6869,8 @@
         "label": "Google Sheets Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "google"
-        ],
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["google"],
         "requiredScopes": [
           "https://www.googleapis.com/auth/spreadsheets",
           "https://www.googleapis.com/auth/drive.file"
@@ -7806,15 +6922,7 @@
     "defaultParams": {
       "valueInputOption": "USER_ENTERED"
     },
-    "searchTerms": [
-      "google",
-      "sheets",
-      "spreadsheet",
-      "write",
-      "update",
-      "values",
-      "oauth2"
-    ]
+    "searchTerms": ["google", "sheets", "spreadsheet", "write", "update", "values", "oauth2"]
   },
   {
     "type": "grafana.create_annotation",
@@ -7845,9 +6953,7 @@
         "label": "Grafana Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "api_key"
-        ]
+        "credentialTypes": ["api_key"]
       },
       {
         "name": "baseUrl",
@@ -7902,14 +7008,7 @@
       }
     ],
     "defaultParams": {},
-    "searchTerms": [
-      "grafana",
-      "annotation",
-      "create",
-      "deploy",
-      "monitoring",
-      "observability"
-    ]
+    "searchTerms": ["grafana", "annotation", "create", "deploy", "monitoring", "observability"]
   },
   {
     "type": "grafana.get_dashboard",
@@ -7940,9 +7039,7 @@
         "label": "Grafana Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "api_key"
-        ]
+        "credentialTypes": ["api_key"]
       },
       {
         "name": "baseUrl",
@@ -7962,13 +7059,7 @@
       }
     ],
     "defaultParams": {},
-    "searchTerms": [
-      "grafana",
-      "dashboard",
-      "get",
-      "monitoring",
-      "observability"
-    ]
+    "searchTerms": ["grafana", "dashboard", "get", "monitoring", "observability"]
   },
   {
     "type": "grafana.list_alert_rules",
@@ -7999,9 +7090,7 @@
         "label": "Grafana Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "api_key"
-        ]
+        "credentialTypes": ["api_key"]
       },
       {
         "name": "baseUrl",
@@ -8013,14 +7102,7 @@
       }
     ],
     "defaultParams": {},
-    "searchTerms": [
-      "grafana",
-      "alert",
-      "rules",
-      "list",
-      "monitoring",
-      "observability"
-    ]
+    "searchTerms": ["grafana", "alert", "rules", "list", "monitoring", "observability"]
   },
   {
     "type": "grafana.list_dashboards",
@@ -8051,9 +7133,7 @@
         "label": "Grafana Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "api_key"
-        ]
+        "credentialTypes": ["api_key"]
       },
       {
         "name": "baseUrl",
@@ -8096,14 +7176,7 @@
     "defaultParams": {
       "limit": 100
     },
-    "searchTerms": [
-      "grafana",
-      "dashboard",
-      "list",
-      "search",
-      "monitoring",
-      "observability"
-    ]
+    "searchTerms": ["grafana", "dashboard", "list", "search", "monitoring", "observability"]
   },
   {
     "type": "grafana.list_datasources",
@@ -8134,9 +7207,7 @@
         "label": "Grafana Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "api_key"
-        ]
+        "credentialTypes": ["api_key"]
       },
       {
         "name": "baseUrl",
@@ -8148,13 +7219,7 @@
       }
     ],
     "defaultParams": {},
-    "searchTerms": [
-      "grafana",
-      "datasource",
-      "list",
-      "monitoring",
-      "observability"
-    ]
+    "searchTerms": ["grafana", "datasource", "list", "monitoring", "observability"]
   },
   {
     "type": "http.request",
@@ -8185,9 +7250,7 @@
         "label": "Flowlib Core Credential",
         "type": "credential",
         "required": false,
-        "credentialTypes": [
-          "api_key"
-        ]
+        "credentialTypes": ["api_key"]
       },
       {
         "name": "method",
@@ -8296,15 +7359,9 @@
         "label": "HubSpot Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "hubspot"
-        ],
-        "requiredScopes": [
-          "crm.objects.contacts.write"
-        ]
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["hubspot"],
+        "requiredScopes": ["crm.objects.contacts.write"]
       },
       {
         "name": "email",
@@ -8348,13 +7405,7 @@
       }
     ],
     "defaultParams": {},
-    "searchTerms": [
-      "hubspot",
-      "crm",
-      "contacts",
-      "create",
-      "oauth2"
-    ]
+    "searchTerms": ["hubspot", "crm", "contacts", "create", "oauth2"]
   },
   {
     "type": "hubspot.create_deal",
@@ -8385,15 +7436,9 @@
         "label": "HubSpot Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "hubspot"
-        ],
-        "requiredScopes": [
-          "crm.objects.deals.write"
-        ]
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["hubspot"],
+        "requiredScopes": ["crm.objects.deals.write"]
       },
       {
         "name": "dealname",
@@ -8437,13 +7482,7 @@
       }
     ],
     "defaultParams": {},
-    "searchTerms": [
-      "hubspot",
-      "crm",
-      "deals",
-      "create",
-      "oauth2"
-    ]
+    "searchTerms": ["hubspot", "crm", "deals", "create", "oauth2"]
   },
   {
     "type": "hubspot.get_contact",
@@ -8474,15 +7513,9 @@
         "label": "HubSpot Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "hubspot"
-        ],
-        "requiredScopes": [
-          "crm.objects.contacts.read"
-        ]
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["hubspot"],
+        "requiredScopes": ["crm.objects.contacts.read"]
       },
       {
         "name": "contactId",
@@ -8502,13 +7535,7 @@
       }
     ],
     "defaultParams": {},
-    "searchTerms": [
-      "hubspot",
-      "crm",
-      "contacts",
-      "get",
-      "oauth2"
-    ]
+    "searchTerms": ["hubspot", "crm", "contacts", "get", "oauth2"]
   },
   {
     "type": "hubspot.list_contacts",
@@ -8539,15 +7566,9 @@
         "label": "HubSpot Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "hubspot"
-        ],
-        "requiredScopes": [
-          "crm.objects.contacts.read"
-        ]
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["hubspot"],
+        "requiredScopes": ["crm.objects.contacts.read"]
       },
       {
         "name": "limit",
@@ -8571,13 +7592,7 @@
       "limit": 10,
       "properties": "firstname,lastname,email"
     },
-    "searchTerms": [
-      "hubspot",
-      "crm",
-      "contacts",
-      "list",
-      "oauth2"
-    ]
+    "searchTerms": ["hubspot", "crm", "contacts", "list", "oauth2"]
   },
   {
     "type": "hubspot.list_deals",
@@ -8608,15 +7623,9 @@
         "label": "HubSpot Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "hubspot"
-        ],
-        "requiredScopes": [
-          "crm.objects.deals.read"
-        ]
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["hubspot"],
+        "requiredScopes": ["crm.objects.deals.read"]
       },
       {
         "name": "limit",
@@ -8640,13 +7649,7 @@
       "limit": 10,
       "properties": "dealname,amount,dealstage,closedate"
     },
-    "searchTerms": [
-      "hubspot",
-      "crm",
-      "deals",
-      "list",
-      "oauth2"
-    ]
+    "searchTerms": ["hubspot", "crm", "deals", "list", "oauth2"]
   },
   {
     "type": "hubspot.search_objects",
@@ -8677,12 +7680,8 @@
         "label": "HubSpot Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "hubspot"
-        ],
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["hubspot"],
         "requiredScopes": [
           "crm.objects.contacts.read",
           "crm.objects.companies.read",
@@ -8775,12 +7774,8 @@
         "label": "Intercom Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "intercom"
-        ]
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["intercom"]
       },
       {
         "name": "role",
@@ -8834,13 +7829,7 @@
     "defaultParams": {
       "role": "lead"
     },
-    "searchTerms": [
-      "intercom",
-      "contacts",
-      "create",
-      "crm",
-      "oauth2"
-    ]
+    "searchTerms": ["intercom", "contacts", "create", "crm", "oauth2"]
   },
   {
     "type": "intercom.get_contact",
@@ -8871,12 +7860,8 @@
         "label": "Intercom Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "intercom"
-        ]
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["intercom"]
       },
       {
         "name": "contactId",
@@ -8888,13 +7873,7 @@
       }
     ],
     "defaultParams": {},
-    "searchTerms": [
-      "intercom",
-      "contacts",
-      "get",
-      "crm",
-      "oauth2"
-    ]
+    "searchTerms": ["intercom", "contacts", "get", "crm", "oauth2"]
   },
   {
     "type": "intercom.list_contacts",
@@ -8925,12 +7904,8 @@
         "label": "Intercom Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "intercom"
-        ]
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["intercom"]
       },
       {
         "name": "limit",
@@ -8944,13 +7919,7 @@
     "defaultParams": {
       "limit": 25
     },
-    "searchTerms": [
-      "intercom",
-      "contacts",
-      "list",
-      "crm",
-      "oauth2"
-    ]
+    "searchTerms": ["intercom", "contacts", "list", "crm", "oauth2"]
   },
   {
     "type": "intercom.list_conversations",
@@ -8981,12 +7950,8 @@
         "label": "Intercom Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "intercom"
-        ]
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["intercom"]
       },
       {
         "name": "perPage",
@@ -9000,13 +7965,7 @@
     "defaultParams": {
       "perPage": 20
     },
-    "searchTerms": [
-      "intercom",
-      "conversations",
-      "list",
-      "messaging",
-      "oauth2"
-    ]
+    "searchTerms": ["intercom", "conversations", "list", "messaging", "oauth2"]
   },
   {
     "type": "intercom.reply_to_conversation",
@@ -9037,12 +7996,8 @@
         "label": "Intercom Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "intercom"
-        ]
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["intercom"]
       },
       {
         "name": "conversationId",
@@ -9070,13 +8025,7 @@
       }
     ],
     "defaultParams": {},
-    "searchTerms": [
-      "intercom",
-      "conversations",
-      "reply",
-      "messaging",
-      "oauth2"
-    ]
+    "searchTerms": ["intercom", "conversations", "reply", "messaging", "oauth2"]
   },
   {
     "type": "jira.add_comment",
@@ -9107,15 +8056,9 @@
         "label": "Jira Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "jira"
-        ],
-        "requiredScopes": [
-          "write:jira-work"
-        ]
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["jira"],
+        "requiredScopes": ["write:jira-work"]
       },
       {
         "name": "cloudId",
@@ -9143,13 +8086,7 @@
       }
     ],
     "defaultParams": {},
-    "searchTerms": [
-      "jira",
-      "atlassian",
-      "issues",
-      "project-management",
-      "comment"
-    ]
+    "searchTerms": ["jira", "atlassian", "issues", "project-management", "comment"]
   },
   {
     "type": "jira.create_issue",
@@ -9180,15 +8117,9 @@
         "label": "Jira Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "jira"
-        ],
-        "requiredScopes": [
-          "write:jira-work"
-        ]
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["jira"],
+        "requiredScopes": ["write:jira-work"]
       },
       {
         "name": "cloudId",
@@ -9256,13 +8187,7 @@
     "defaultParams": {
       "issueType": "Task"
     },
-    "searchTerms": [
-      "jira",
-      "atlassian",
-      "issues",
-      "project-management",
-      "create"
-    ]
+    "searchTerms": ["jira", "atlassian", "issues", "project-management", "create"]
   },
   {
     "type": "jira.get_issue",
@@ -9293,15 +8218,9 @@
         "label": "Jira Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "jira"
-        ],
-        "requiredScopes": [
-          "read:jira-work"
-        ]
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["jira"],
+        "requiredScopes": ["read:jira-work"]
       },
       {
         "name": "cloudId",
@@ -9321,13 +8240,7 @@
       }
     ],
     "defaultParams": {},
-    "searchTerms": [
-      "jira",
-      "atlassian",
-      "issues",
-      "project-management",
-      "read"
-    ]
+    "searchTerms": ["jira", "atlassian", "issues", "project-management", "read"]
   },
   {
     "type": "jira.list_projects",
@@ -9358,15 +8271,9 @@
         "label": "Jira Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "jira"
-        ],
-        "requiredScopes": [
-          "read:jira-work"
-        ]
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["jira"],
+        "requiredScopes": ["read:jira-work"]
       },
       {
         "name": "cloudId",
@@ -9378,14 +8285,7 @@
       }
     ],
     "defaultParams": {},
-    "searchTerms": [
-      "jira",
-      "atlassian",
-      "issues",
-      "project-management",
-      "list",
-      "read"
-    ]
+    "searchTerms": ["jira", "atlassian", "issues", "project-management", "list", "read"]
   },
   {
     "type": "jira.search_issues",
@@ -9416,15 +8316,9 @@
         "label": "Jira Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "jira"
-        ],
-        "requiredScopes": [
-          "read:jira-work"
-        ]
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["jira"],
+        "requiredScopes": ["read:jira-work"]
       },
       {
         "name": "cloudId",
@@ -9472,14 +8366,7 @@
       "startAt": 0,
       "fields": "summary,status,priority,assignee"
     },
-    "searchTerms": [
-      "jira",
-      "atlassian",
-      "issues",
-      "project-management",
-      "search",
-      "jql"
-    ]
+    "searchTerms": ["jira", "atlassian", "issues", "project-management", "search", "jql"]
   },
   {
     "type": "jira.update_issue",
@@ -9510,15 +8397,9 @@
         "label": "Jira Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "jira"
-        ],
-        "requiredScopes": [
-          "write:jira-work"
-        ]
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["jira"],
+        "requiredScopes": ["write:jira-work"]
       },
       {
         "name": "cloudId",
@@ -9562,13 +8443,7 @@
       }
     ],
     "defaultParams": {},
-    "searchTerms": [
-      "jira",
-      "atlassian",
-      "issues",
-      "project-management",
-      "update"
-    ]
+    "searchTerms": ["jira", "atlassian", "issues", "project-management", "update"]
   },
   {
     "type": "linear.create_issue",
@@ -9599,15 +8474,9 @@
         "label": "Linear Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "linear"
-        ],
-        "requiredScopes": [
-          "write"
-        ]
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["linear"],
+        "requiredScopes": ["write"]
       },
       {
         "name": "teamId",
@@ -9710,14 +8579,7 @@
     "defaultParams": {
       "labelIds": []
     },
-    "searchTerms": [
-      "linear",
-      "issues",
-      "create",
-      "project-management",
-      "development",
-      "oauth2"
-    ]
+    "searchTerms": ["linear", "issues", "create", "project-management", "development", "oauth2"]
   },
   {
     "type": "linear.list_issues",
@@ -9748,15 +8610,9 @@
         "label": "Linear Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "linear"
-        ],
-        "requiredScopes": [
-          "read"
-        ]
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["linear"],
+        "requiredScopes": ["read"]
       },
       {
         "name": "teamId",
@@ -9811,14 +8667,7 @@
       "limit": 50,
       "includeArchived": false
     },
-    "searchTerms": [
-      "linear",
-      "issues",
-      "list",
-      "project-management",
-      "development",
-      "oauth2"
-    ]
+    "searchTerms": ["linear", "issues", "list", "project-management", "development", "oauth2"]
   },
   {
     "type": "linear.list_teams",
@@ -9849,15 +8698,9 @@
         "label": "Linear Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "linear"
-        ],
-        "requiredScopes": [
-          "read"
-        ]
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["linear"],
+        "requiredScopes": ["read"]
       },
       {
         "name": "includeArchived",
@@ -9871,14 +8714,7 @@
     "defaultParams": {
       "includeArchived": false
     },
-    "searchTerms": [
-      "linear",
-      "teams",
-      "list",
-      "project-management",
-      "development",
-      "oauth2"
-    ]
+    "searchTerms": ["linear", "teams", "list", "project-management", "development", "oauth2"]
   },
   {
     "type": "linear.update_issue",
@@ -9909,15 +8745,9 @@
         "label": "Linear Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "linear"
-        ],
-        "requiredScopes": [
-          "write"
-        ]
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["linear"],
+        "requiredScopes": ["write"]
       },
       {
         "name": "issueId",
@@ -10011,14 +8841,7 @@
     "defaultParams": {
       "labelIds": []
     },
-    "searchTerms": [
-      "linear",
-      "issues",
-      "update",
-      "project-management",
-      "development",
-      "oauth2"
-    ]
+    "searchTerms": ["linear", "issues", "update", "project-management", "development", "oauth2"]
   },
   {
     "type": "linkedin.create_post",
@@ -10049,15 +8872,9 @@
         "label": "LinkedIn Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "linkedin"
-        ],
-        "requiredScopes": [
-          "w_member_social"
-        ]
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["linkedin"],
+        "requiredScopes": ["w_member_social"]
       },
       {
         "name": "personId",
@@ -10077,14 +8894,7 @@
       }
     ],
     "defaultParams": {},
-    "searchTerms": [
-      "linkedin",
-      "post",
-      "share",
-      "social",
-      "write",
-      "oauth2"
-    ]
+    "searchTerms": ["linkedin", "post", "share", "social", "write", "oauth2"]
   },
   {
     "type": "linkedin.get_company",
@@ -10115,15 +8925,9 @@
         "label": "LinkedIn Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "linkedin"
-        ],
-        "requiredScopes": [
-          "rw_organization_admin"
-        ]
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["linkedin"],
+        "requiredScopes": ["rw_organization_admin"]
       },
       {
         "name": "organizationId",
@@ -10135,13 +8939,7 @@
       }
     ],
     "defaultParams": {},
-    "searchTerms": [
-      "linkedin",
-      "company",
-      "organization",
-      "get",
-      "oauth2"
-    ]
+    "searchTerms": ["linkedin", "company", "organization", "get", "oauth2"]
   },
   {
     "type": "linkedin.get_profile",
@@ -10172,26 +8970,13 @@
         "label": "LinkedIn Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "linkedin"
-        ],
-        "requiredScopes": [
-          "openid",
-          "profile",
-          "email"
-        ]
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["linkedin"],
+        "requiredScopes": ["openid", "profile", "email"]
       }
     ],
     "defaultParams": {},
-    "searchTerms": [
-      "linkedin",
-      "profile",
-      "user",
-      "oauth2"
-    ]
+    "searchTerms": ["linkedin", "profile", "user", "oauth2"]
   },
   {
     "type": "math_eval",
@@ -10234,11 +9019,7 @@
       }
     ],
     "defaultParams": {},
-    "searchTerms": [
-      "math",
-      "calculation",
-      "arithmetic"
-    ]
+    "searchTerms": ["math", "calculation", "arithmetic"]
   },
   {
     "type": "microsoft_teams.list_channel_messages",
@@ -10269,15 +9050,9 @@
         "label": "Microsoft Teams Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "microsoft"
-        ],
-        "requiredScopes": [
-          "ChannelMessage.Read.All"
-        ]
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["microsoft"],
+        "requiredScopes": ["ChannelMessage.Read.All"]
       },
       {
         "name": "teamId",
@@ -10307,14 +9082,7 @@
     "defaultParams": {
       "top": 25
     },
-    "searchTerms": [
-      "microsoft",
-      "teams",
-      "messages",
-      "channels",
-      "list",
-      "oauth2"
-    ]
+    "searchTerms": ["microsoft", "teams", "messages", "channels", "list", "oauth2"]
   },
   {
     "type": "microsoft_teams.list_channels",
@@ -10345,15 +9113,9 @@
         "label": "Microsoft Teams Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "microsoft"
-        ],
-        "requiredScopes": [
-          "Channel.ReadBasic.All"
-        ]
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["microsoft"],
+        "requiredScopes": ["Channel.ReadBasic.All"]
       },
       {
         "name": "teamId",
@@ -10365,13 +9127,7 @@
       }
     ],
     "defaultParams": {},
-    "searchTerms": [
-      "microsoft",
-      "teams",
-      "channels",
-      "list",
-      "oauth2"
-    ]
+    "searchTerms": ["microsoft", "teams", "channels", "list", "oauth2"]
   },
   {
     "type": "microsoft_teams.list_teams",
@@ -10402,25 +9158,13 @@
         "label": "Microsoft Teams Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "microsoft"
-        ],
-        "requiredScopes": [
-          "Team.ReadBasic.All"
-        ]
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["microsoft"],
+        "requiredScopes": ["Team.ReadBasic.All"]
       }
     ],
     "defaultParams": {},
-    "searchTerms": [
-      "microsoft",
-      "teams",
-      "list",
-      "organization",
-      "oauth2"
-    ]
+    "searchTerms": ["microsoft", "teams", "list", "organization", "oauth2"]
   },
   {
     "type": "microsoft_teams.send_message",
@@ -10451,15 +9195,9 @@
         "label": "Microsoft Teams Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "microsoft"
-        ],
-        "requiredScopes": [
-          "ChannelMessage.Send"
-        ]
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["microsoft"],
+        "requiredScopes": ["ChannelMessage.Send"]
       },
       {
         "name": "teamId",
@@ -10507,14 +9245,7 @@
     "defaultParams": {
       "contentType": "html"
     },
-    "searchTerms": [
-      "microsoft",
-      "teams",
-      "messaging",
-      "chat",
-      "communication",
-      "oauth2"
-    ]
+    "searchTerms": ["microsoft", "teams", "messaging", "chat", "communication", "oauth2"]
   },
   {
     "type": "microsoft.get_calendar_event",
@@ -10545,15 +9276,9 @@
         "label": "Microsoft 365 Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "microsoft"
-        ],
-        "requiredScopes": [
-          "Calendars.Read"
-        ]
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["microsoft"],
+        "requiredScopes": ["Calendars.Read"]
       },
       {
         "name": "eventId",
@@ -10565,15 +9290,7 @@
       }
     ],
     "defaultParams": {},
-    "searchTerms": [
-      "microsoft",
-      "outlook",
-      "calendar",
-      "event",
-      "read",
-      "graph",
-      "oauth2"
-    ]
+    "searchTerms": ["microsoft", "outlook", "calendar", "event", "read", "graph", "oauth2"]
   },
   {
     "type": "microsoft.get_meeting_transcript",
@@ -10604,15 +9321,9 @@
         "label": "Microsoft 365 Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "microsoft"
-        ],
-        "requiredScopes": [
-          "OnlineMeetingTranscript.Read.All"
-        ]
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["microsoft"],
+        "requiredScopes": ["OnlineMeetingTranscript.Read.All"]
       },
       {
         "name": "meetingId",
@@ -10652,14 +9363,7 @@
     "defaultParams": {
       "format": "parsed"
     },
-    "searchTerms": [
-      "microsoft",
-      "teams",
-      "meeting",
-      "transcript",
-      "graph",
-      "oauth2"
-    ]
+    "searchTerms": ["microsoft", "teams", "meeting", "transcript", "graph", "oauth2"]
   },
   {
     "type": "microsoft.get_message",
@@ -10690,15 +9394,9 @@
         "label": "Microsoft 365 Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "microsoft"
-        ],
-        "requiredScopes": [
-          "Mail.Read"
-        ]
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["microsoft"],
+        "requiredScopes": ["Mail.Read"]
       },
       {
         "name": "messageId",
@@ -10729,15 +9427,7 @@
       "includeAttachments": true,
       "preferTextBody": false
     },
-    "searchTerms": [
-      "microsoft",
-      "outlook",
-      "email",
-      "mail",
-      "read",
-      "graph",
-      "oauth2"
-    ]
+    "searchTerms": ["microsoft", "outlook", "email", "mail", "read", "graph", "oauth2"]
   },
   {
     "type": "microsoft.list_calendar_events",
@@ -10768,15 +9458,9 @@
         "label": "Microsoft 365 Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "microsoft"
-        ],
-        "requiredScopes": [
-          "Calendars.Read"
-        ]
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["microsoft"],
+        "requiredScopes": ["Calendars.Read"]
       },
       {
         "name": "calendarId",
@@ -10834,15 +9518,7 @@
       "top": 25,
       "orderBy": "start/dateTime"
     },
-    "searchTerms": [
-      "microsoft",
-      "outlook",
-      "calendar",
-      "events",
-      "schedule",
-      "graph",
-      "oauth2"
-    ]
+    "searchTerms": ["microsoft", "outlook", "calendar", "events", "schedule", "graph", "oauth2"]
   },
   {
     "type": "microsoft.list_calendars",
@@ -10873,26 +9549,13 @@
         "label": "Microsoft 365 Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "microsoft"
-        ],
-        "requiredScopes": [
-          "Calendars.Read"
-        ]
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["microsoft"],
+        "requiredScopes": ["Calendars.Read"]
       }
     ],
     "defaultParams": {},
-    "searchTerms": [
-      "microsoft",
-      "outlook",
-      "calendar",
-      "list",
-      "graph",
-      "oauth2"
-    ]
+    "searchTerms": ["microsoft", "outlook", "calendar", "list", "graph", "oauth2"]
   },
   {
     "type": "microsoft.list_messages",
@@ -10923,15 +9586,9 @@
         "label": "Microsoft 365 Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "microsoft"
-        ],
-        "requiredScopes": [
-          "Mail.Read"
-        ]
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["microsoft"],
+        "requiredScopes": ["Mail.Read"]
       },
       {
         "name": "top",
@@ -11015,16 +9672,7 @@
       "orderBy": "receivedDateTime desc",
       "includeCount": false
     },
-    "searchTerms": [
-      "microsoft",
-      "outlook",
-      "email",
-      "mail",
-      "list",
-      "search",
-      "graph",
-      "oauth2"
-    ]
+    "searchTerms": ["microsoft", "outlook", "email", "mail", "list", "search", "graph", "oauth2"]
   },
   {
     "type": "microsoft.list_online_meetings",
@@ -11055,15 +9703,9 @@
         "label": "Microsoft 365 Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "microsoft"
-        ],
-        "requiredScopes": [
-          "OnlineMeetings.Read"
-        ]
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["microsoft"],
+        "requiredScopes": ["OnlineMeetings.Read"]
       },
       {
         "name": "top",
@@ -11084,14 +9726,7 @@
     "defaultParams": {
       "top": 25
     },
-    "searchTerms": [
-      "microsoft",
-      "teams",
-      "meetings",
-      "online",
-      "graph",
-      "oauth2"
-    ]
+    "searchTerms": ["microsoft", "teams", "meetings", "online", "graph", "oauth2"]
   },
   {
     "type": "mixpanel.create_profile",
@@ -11122,9 +9757,7 @@
         "label": "Mixpanel Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "api_key"
-        ]
+        "credentialTypes": ["api_key"]
       },
       {
         "name": "distinctId",
@@ -11144,13 +9777,7 @@
       }
     ],
     "defaultParams": {},
-    "searchTerms": [
-      "mixpanel",
-      "analytics",
-      "profile",
-      "user",
-      "engage"
-    ]
+    "searchTerms": ["mixpanel", "analytics", "profile", "user", "engage"]
   },
   {
     "type": "mixpanel.export_events",
@@ -11181,9 +9808,7 @@
         "label": "Mixpanel Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "api_key"
-        ]
+        "credentialTypes": ["api_key"]
       },
       {
         "name": "fromDate",
@@ -11218,13 +9843,7 @@
       }
     ],
     "defaultParams": {},
-    "searchTerms": [
-      "mixpanel",
-      "analytics",
-      "export",
-      "events",
-      "data"
-    ]
+    "searchTerms": ["mixpanel", "analytics", "export", "events", "data"]
   },
   {
     "type": "mixpanel.track_event",
@@ -11255,9 +9874,7 @@
         "label": "Mixpanel Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "api_key"
-        ]
+        "credentialTypes": ["api_key"]
       },
       {
         "name": "event",
@@ -11292,12 +9909,7 @@
       }
     ],
     "defaultParams": {},
-    "searchTerms": [
-      "mixpanel",
-      "analytics",
-      "tracking",
-      "event"
-    ]
+    "searchTerms": ["mixpanel", "analytics", "tracking", "event"]
   },
   {
     "type": "notion.create_page",
@@ -11328,12 +9940,8 @@
         "label": "Notion Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "notion"
-        ]
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["notion"]
       },
       {
         "name": "parentType",
@@ -11397,15 +10005,7 @@
     "defaultParams": {
       "parentType": "page_id"
     },
-    "searchTerms": [
-      "notion",
-      "page",
-      "create",
-      "add",
-      "write",
-      "new",
-      "oauth2"
-    ]
+    "searchTerms": ["notion", "page", "create", "add", "write", "new", "oauth2"]
   },
   {
     "type": "notion.get_page",
@@ -11436,12 +10036,8 @@
         "label": "Notion Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "notion"
-        ]
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["notion"]
       },
       {
         "name": "pageId",
@@ -11453,15 +10049,7 @@
       }
     ],
     "defaultParams": {},
-    "searchTerms": [
-      "notion",
-      "page",
-      "get",
-      "retrieve",
-      "read",
-      "properties",
-      "oauth2"
-    ]
+    "searchTerms": ["notion", "page", "get", "retrieve", "read", "properties", "oauth2"]
   },
   {
     "type": "notion.query_database",
@@ -11492,12 +10080,8 @@
         "label": "Notion Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "notion"
-        ]
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["notion"]
       },
       {
         "name": "databaseId",
@@ -11583,12 +10167,8 @@
         "label": "Notion Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "notion"
-        ]
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["notion"]
       },
       {
         "name": "query",
@@ -11658,15 +10238,7 @@
       "sortDirection": "descending",
       "pageSize": 10
     },
-    "searchTerms": [
-      "notion",
-      "search",
-      "find",
-      "pages",
-      "databases",
-      "workspace",
-      "oauth2"
-    ]
+    "searchTerms": ["notion", "search", "find", "pages", "databases", "workspace", "oauth2"]
   },
   {
     "type": "notion.update_page",
@@ -11697,12 +10269,8 @@
         "label": "Notion Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "notion"
-        ]
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["notion"]
       },
       {
         "name": "pageId",
@@ -11736,16 +10304,7 @@
       }
     ],
     "defaultParams": {},
-    "searchTerms": [
-      "notion",
-      "page",
-      "update",
-      "edit",
-      "modify",
-      "properties",
-      "archive",
-      "oauth2"
-    ]
+    "searchTerms": ["notion", "page", "update", "edit", "modify", "properties", "archive", "oauth2"]
   },
   {
     "type": "onedrive.create_folder",
@@ -11776,15 +10335,9 @@
         "label": "OneDrive Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "microsoft"
-        ],
-        "requiredScopes": [
-          "Files.ReadWrite"
-        ]
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["microsoft"],
+        "requiredScopes": ["Files.ReadWrite"]
       },
       {
         "name": "name",
@@ -11804,13 +10357,7 @@
       }
     ],
     "defaultParams": {},
-    "searchTerms": [
-      "microsoft",
-      "onedrive",
-      "folder",
-      "create",
-      "oauth2"
-    ]
+    "searchTerms": ["microsoft", "onedrive", "folder", "create", "oauth2"]
   },
   {
     "type": "onedrive.delete_item",
@@ -11841,15 +10388,9 @@
         "label": "OneDrive Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "microsoft"
-        ],
-        "requiredScopes": [
-          "Files.ReadWrite"
-        ]
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["microsoft"],
+        "requiredScopes": ["Files.ReadWrite"]
       },
       {
         "name": "itemId",
@@ -11860,14 +10401,7 @@
       }
     ],
     "defaultParams": {},
-    "searchTerms": [
-      "microsoft",
-      "onedrive",
-      "file",
-      "folder",
-      "delete",
-      "oauth2"
-    ]
+    "searchTerms": ["microsoft", "onedrive", "file", "folder", "delete", "oauth2"]
   },
   {
     "type": "onedrive.get_item",
@@ -11898,15 +10432,9 @@
         "label": "OneDrive Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "microsoft"
-        ],
-        "requiredScopes": [
-          "Files.Read"
-        ]
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["microsoft"],
+        "requiredScopes": ["Files.Read"]
       },
       {
         "name": "itemId",
@@ -11917,14 +10445,7 @@
       }
     ],
     "defaultParams": {},
-    "searchTerms": [
-      "microsoft",
-      "onedrive",
-      "file",
-      "get",
-      "metadata",
-      "oauth2"
-    ]
+    "searchTerms": ["microsoft", "onedrive", "file", "get", "metadata", "oauth2"]
   },
   {
     "type": "onedrive.list_files",
@@ -11955,15 +10476,9 @@
         "label": "OneDrive Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "microsoft"
-        ],
-        "requiredScopes": [
-          "Files.Read"
-        ]
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["microsoft"],
+        "requiredScopes": ["Files.Read"]
       },
       {
         "name": "folderId",
@@ -11975,13 +10490,7 @@
       }
     ],
     "defaultParams": {},
-    "searchTerms": [
-      "microsoft",
-      "onedrive",
-      "files",
-      "list",
-      "oauth2"
-    ]
+    "searchTerms": ["microsoft", "onedrive", "files", "list", "oauth2"]
   },
   {
     "type": "onedrive.search",
@@ -12012,15 +10521,9 @@
         "label": "OneDrive Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "microsoft"
-        ],
-        "requiredScopes": [
-          "Files.Read"
-        ]
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["microsoft"],
+        "requiredScopes": ["Files.Read"]
       },
       {
         "name": "query",
@@ -12032,14 +10535,7 @@
       }
     ],
     "defaultParams": {},
-    "searchTerms": [
-      "microsoft",
-      "onedrive",
-      "search",
-      "files",
-      "find",
-      "oauth2"
-    ]
+    "searchTerms": ["microsoft", "onedrive", "search", "files", "find", "oauth2"]
   },
   {
     "type": "pagerduty.create_incident",
@@ -12070,9 +10566,7 @@
         "label": "PagerDuty Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "api_key"
-        ]
+        "credentialTypes": ["api_key"]
       },
       {
         "name": "fromEmail",
@@ -12143,15 +10637,7 @@
     "defaultParams": {
       "urgency": "high"
     },
-    "searchTerms": [
-      "pagerduty",
-      "incident",
-      "create",
-      "trigger",
-      "alert",
-      "on-call",
-      "operations"
-    ]
+    "searchTerms": ["pagerduty", "incident", "create", "trigger", "alert", "on-call", "operations"]
   },
   {
     "type": "pagerduty.list_incidents",
@@ -12182,9 +10668,7 @@
         "label": "PagerDuty Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "api_key"
-        ]
+        "credentialTypes": ["api_key"]
       },
       {
         "name": "statuses",
@@ -12294,9 +10778,7 @@
         "label": "PagerDuty Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "api_key"
-        ]
+        "credentialTypes": ["api_key"]
       },
       {
         "name": "query",
@@ -12326,13 +10808,7 @@
       "limit": 25,
       "offset": 0
     },
-    "searchTerms": [
-      "pagerduty",
-      "services",
-      "list",
-      "discover",
-      "operations"
-    ]
+    "searchTerms": ["pagerduty", "services", "list", "discover", "operations"]
   },
   {
     "type": "pagerduty.manage_incident",
@@ -12363,9 +10839,7 @@
         "label": "PagerDuty Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "api_key"
-        ]
+        "credentialTypes": ["api_key"]
       },
       {
         "name": "fromEmail",
@@ -12494,9 +10968,7 @@
         "label": "PostgreSQL Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "database"
-        ]
+        "credentialTypes": ["database"]
       },
       {
         "name": "tableName",
@@ -12560,9 +11032,7 @@
         "label": "PostgreSQL Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "database"
-        ]
+        "credentialTypes": ["database"]
       },
       {
         "name": "query",
@@ -12627,9 +11097,7 @@
         "label": "PostgreSQL Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "database"
-        ]
+        "credentialTypes": ["database"]
       },
       {
         "name": "tableName",
@@ -12719,9 +11187,7 @@
         "label": "PostgreSQL Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "database"
-        ]
+        "credentialTypes": ["database"]
       },
       {
         "name": "schemaName",
@@ -12743,16 +11209,7 @@
       "schemaName": "public",
       "includeViews": false
     },
-    "searchTerms": [
-      "postgres",
-      "postgresql",
-      "sql",
-      "database",
-      "tables",
-      "schema",
-      "list",
-      "db"
-    ]
+    "searchTerms": ["postgres", "postgresql", "sql", "database", "tables", "schema", "list", "db"]
   },
   {
     "type": "resend.get_email",
@@ -12794,14 +11251,7 @@
       }
     ],
     "defaultParams": {},
-    "searchTerms": [
-      "resend",
-      "email",
-      "get",
-      "retrieve",
-      "status",
-      "delivery"
-    ]
+    "searchTerms": ["resend", "email", "get", "retrieve", "status", "delivery"]
   },
   {
     "type": "resend.list_domains",
@@ -12859,13 +11309,7 @@
       }
     ],
     "defaultParams": {},
-    "searchTerms": [
-      "resend",
-      "domains",
-      "list",
-      "email",
-      "configuration"
-    ]
+    "searchTerms": ["resend", "domains", "list", "email", "configuration"]
   },
   {
     "type": "resend.send_batch",
@@ -12907,14 +11351,7 @@
       }
     ],
     "defaultParams": {},
-    "searchTerms": [
-      "resend",
-      "email",
-      "batch",
-      "bulk",
-      "send",
-      "transactional"
-    ]
+    "searchTerms": ["resend", "email", "batch", "bulk", "send", "transactional"]
   },
   {
     "type": "resend.send_email",
@@ -13020,14 +11457,7 @@
       }
     ],
     "defaultParams": {},
-    "searchTerms": [
-      "resend",
-      "email",
-      "send",
-      "transactional",
-      "mail",
-      "notify"
-    ]
+    "searchTerms": ["resend", "email", "send", "transactional", "mail", "notify"]
   },
   {
     "type": "salesforce.create_record",
@@ -13058,15 +11488,9 @@
         "label": "Salesforce Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "salesforce"
-        ],
-        "requiredScopes": [
-          "api"
-        ]
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["salesforce"],
+        "requiredScopes": ["api"]
       },
       {
         "name": "objectType",
@@ -13086,13 +11510,7 @@
       }
     ],
     "defaultParams": {},
-    "searchTerms": [
-      "salesforce",
-      "crm",
-      "record",
-      "create",
-      "write"
-    ]
+    "searchTerms": ["salesforce", "crm", "record", "create", "write"]
   },
   {
     "type": "salesforce.get_record",
@@ -13123,15 +11541,9 @@
         "label": "Salesforce Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "salesforce"
-        ],
-        "requiredScopes": [
-          "api"
-        ]
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["salesforce"],
+        "requiredScopes": ["api"]
       },
       {
         "name": "objectType",
@@ -13151,12 +11563,7 @@
       }
     ],
     "defaultParams": {},
-    "searchTerms": [
-      "salesforce",
-      "crm",
-      "record",
-      "read"
-    ]
+    "searchTerms": ["salesforce", "crm", "record", "read"]
   },
   {
     "type": "salesforce.list_objects",
@@ -13187,25 +11594,13 @@
         "label": "Salesforce Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "salesforce"
-        ],
-        "requiredScopes": [
-          "api"
-        ]
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["salesforce"],
+        "requiredScopes": ["api"]
       }
     ],
     "defaultParams": {},
-    "searchTerms": [
-      "salesforce",
-      "crm",
-      "sobject",
-      "metadata",
-      "read"
-    ]
+    "searchTerms": ["salesforce", "crm", "sobject", "metadata", "read"]
   },
   {
     "type": "salesforce.query",
@@ -13236,15 +11631,9 @@
         "label": "Salesforce Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "salesforce"
-        ],
-        "requiredScopes": [
-          "api"
-        ]
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["salesforce"],
+        "requiredScopes": ["api"]
       },
       {
         "name": "query",
@@ -13256,13 +11645,7 @@
       }
     ],
     "defaultParams": {},
-    "searchTerms": [
-      "salesforce",
-      "crm",
-      "soql",
-      "query",
-      "read"
-    ]
+    "searchTerms": ["salesforce", "crm", "soql", "query", "read"]
   },
   {
     "type": "salesforce.update_record",
@@ -13293,15 +11676,9 @@
         "label": "Salesforce Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "salesforce"
-        ],
-        "requiredScopes": [
-          "api"
-        ]
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["salesforce"],
+        "requiredScopes": ["api"]
       },
       {
         "name": "objectType",
@@ -13329,13 +11706,7 @@
       }
     ],
     "defaultParams": {},
-    "searchTerms": [
-      "salesforce",
-      "crm",
-      "record",
-      "update",
-      "write"
-    ]
+    "searchTerms": ["salesforce", "crm", "record", "update", "write"]
   },
   {
     "type": "segment.group",
@@ -13366,9 +11737,7 @@
         "label": "Segment Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "api_key"
-        ]
+        "credentialTypes": ["api_key"]
       },
       {
         "name": "userId",
@@ -13395,13 +11764,7 @@
       }
     ],
     "defaultParams": {},
-    "searchTerms": [
-      "segment",
-      "analytics",
-      "group",
-      "company",
-      "organization"
-    ]
+    "searchTerms": ["segment", "analytics", "group", "company", "organization"]
   },
   {
     "type": "segment.identify",
@@ -13432,9 +11795,7 @@
         "label": "Segment Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "api_key"
-        ]
+        "credentialTypes": ["api_key"]
       },
       {
         "name": "userId",
@@ -13461,13 +11822,7 @@
       }
     ],
     "defaultParams": {},
-    "searchTerms": [
-      "segment",
-      "analytics",
-      "identify",
-      "user",
-      "traits"
-    ]
+    "searchTerms": ["segment", "analytics", "identify", "user", "traits"]
   },
   {
     "type": "segment.page",
@@ -13498,9 +11853,7 @@
         "label": "Segment Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "api_key"
-        ]
+        "credentialTypes": ["api_key"]
       },
       {
         "name": "userId",
@@ -13527,12 +11880,7 @@
       }
     ],
     "defaultParams": {},
-    "searchTerms": [
-      "segment",
-      "analytics",
-      "page",
-      "pageview"
-    ]
+    "searchTerms": ["segment", "analytics", "page", "pageview"]
   },
   {
     "type": "segment.track",
@@ -13563,9 +11911,7 @@
         "label": "Segment Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "api_key"
-        ]
+        "credentialTypes": ["api_key"]
       },
       {
         "name": "userId",
@@ -13600,12 +11946,7 @@
       }
     ],
     "defaultParams": {},
-    "searchTerms": [
-      "segment",
-      "analytics",
-      "tracking",
-      "event"
-    ]
+    "searchTerms": ["segment", "analytics", "tracking", "event"]
   },
   {
     "type": "sendgrid.get_email_activity",
@@ -13668,14 +12009,7 @@
       "baseUrl": "https://api.sendgrid.com",
       "limit": 10
     },
-    "searchTerms": [
-      "sendgrid",
-      "email",
-      "activity",
-      "tracking",
-      "events",
-      "delivery"
-    ]
+    "searchTerms": ["sendgrid", "email", "activity", "tracking", "events", "delivery"]
   },
   {
     "type": "sendgrid.get_stats",
@@ -13761,14 +12095,7 @@
       "baseUrl": "https://api.sendgrid.com",
       "aggregatedBy": "day"
     },
-    "searchTerms": [
-      "sendgrid",
-      "email",
-      "stats",
-      "analytics",
-      "metrics",
-      "reporting"
-    ]
+    "searchTerms": ["sendgrid", "email", "stats", "analytics", "metrics", "reporting"]
   },
   {
     "type": "sendgrid.list_verified_senders",
@@ -13833,14 +12160,7 @@
       "limit": 50,
       "offset": 0
     },
-    "searchTerms": [
-      "sendgrid",
-      "senders",
-      "verified",
-      "list",
-      "email",
-      "configuration"
-    ]
+    "searchTerms": ["sendgrid", "senders", "verified", "list", "email", "configuration"]
   },
   {
     "type": "sendgrid.send_email",
@@ -13982,15 +12302,7 @@
     "defaultParams": {
       "baseUrl": "https://api.sendgrid.com"
     },
-    "searchTerms": [
-      "sendgrid",
-      "twilio",
-      "email",
-      "send",
-      "transactional",
-      "mail",
-      "notify"
-    ]
+    "searchTerms": ["sendgrid", "twilio", "email", "send", "transactional", "mail", "notify"]
   },
   {
     "type": "sentry.get_issue",
@@ -14021,12 +12333,8 @@
         "label": "Sentry Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "sentry"
-        ]
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["sentry"]
       },
       {
         "name": "organizationSlug",
@@ -14046,15 +12354,7 @@
       }
     ],
     "defaultParams": {},
-    "searchTerms": [
-      "sentry",
-      "issue",
-      "get",
-      "errors",
-      "monitoring",
-      "development",
-      "oauth2"
-    ]
+    "searchTerms": ["sentry", "issue", "get", "errors", "monitoring", "development", "oauth2"]
   },
   {
     "type": "sentry.list_issues",
@@ -14085,12 +12385,8 @@
         "label": "Sentry Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "sentry"
-        ]
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["sentry"]
       },
       {
         "name": "organizationSlug",
@@ -14151,15 +12447,7 @@
       "query": "is:unresolved",
       "statsPeriod": "24h"
     },
-    "searchTerms": [
-      "sentry",
-      "issues",
-      "list",
-      "errors",
-      "monitoring",
-      "development",
-      "oauth2"
-    ]
+    "searchTerms": ["sentry", "issues", "list", "errors", "monitoring", "development", "oauth2"]
   },
   {
     "type": "sentry.list_projects",
@@ -14190,12 +12478,8 @@
         "label": "Sentry Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "sentry"
-        ]
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["sentry"]
       },
       {
         "name": "organizationSlug",
@@ -14215,14 +12499,7 @@
       }
     ],
     "defaultParams": {},
-    "searchTerms": [
-      "sentry",
-      "projects",
-      "list",
-      "monitoring",
-      "development",
-      "oauth2"
-    ]
+    "searchTerms": ["sentry", "projects", "list", "monitoring", "development", "oauth2"]
   },
   {
     "type": "sentry.update_issue",
@@ -14253,12 +12530,8 @@
         "label": "Sentry Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "sentry"
-        ]
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["sentry"]
       },
       {
         "name": "organizationSlug",
@@ -14366,15 +12639,9 @@
         "label": "Shopify Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "shopify"
-        ],
-        "requiredScopes": [
-          "write_products"
-        ]
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["shopify"],
+        "requiredScopes": ["write_products"]
       },
       {
         "name": "shop",
@@ -14421,14 +12688,7 @@
       }
     ],
     "defaultParams": {},
-    "searchTerms": [
-      "shopify",
-      "product",
-      "ecommerce",
-      "create",
-      "write",
-      "oauth2"
-    ]
+    "searchTerms": ["shopify", "product", "ecommerce", "create", "write", "oauth2"]
   },
   {
     "type": "shopify.get_product",
@@ -14459,15 +12719,9 @@
         "label": "Shopify Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "shopify"
-        ],
-        "requiredScopes": [
-          "read_products"
-        ]
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["shopify"],
+        "requiredScopes": ["read_products"]
       },
       {
         "name": "shop",
@@ -14486,13 +12740,7 @@
       }
     ],
     "defaultParams": {},
-    "searchTerms": [
-      "shopify",
-      "product",
-      "ecommerce",
-      "get",
-      "oauth2"
-    ]
+    "searchTerms": ["shopify", "product", "ecommerce", "get", "oauth2"]
   },
   {
     "type": "shopify.list_customers",
@@ -14523,15 +12771,9 @@
         "label": "Shopify Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "shopify"
-        ],
-        "requiredScopes": [
-          "read_customers"
-        ]
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["shopify"],
+        "requiredScopes": ["read_customers"]
       },
       {
         "name": "shop",
@@ -14553,13 +12795,7 @@
     "defaultParams": {
       "limit": 50
     },
-    "searchTerms": [
-      "shopify",
-      "customers",
-      "ecommerce",
-      "list",
-      "oauth2"
-    ]
+    "searchTerms": ["shopify", "customers", "ecommerce", "list", "oauth2"]
   },
   {
     "type": "shopify.list_orders",
@@ -14590,15 +12826,9 @@
         "label": "Shopify Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "shopify"
-        ],
-        "requiredScopes": [
-          "read_orders"
-        ]
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["shopify"],
+        "requiredScopes": ["read_orders"]
       },
       {
         "name": "shop",
@@ -14647,13 +12877,7 @@
       "limit": 50,
       "status": "any"
     },
-    "searchTerms": [
-      "shopify",
-      "orders",
-      "ecommerce",
-      "list",
-      "oauth2"
-    ]
+    "searchTerms": ["shopify", "orders", "ecommerce", "list", "oauth2"]
   },
   {
     "type": "shopify.list_products",
@@ -14684,15 +12908,9 @@
         "label": "Shopify Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "shopify"
-        ],
-        "requiredScopes": [
-          "read_products"
-        ]
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["shopify"],
+        "requiredScopes": ["read_products"]
       },
       {
         "name": "shop",
@@ -14714,13 +12932,7 @@
     "defaultParams": {
       "limit": 50
     },
-    "searchTerms": [
-      "shopify",
-      "products",
-      "ecommerce",
-      "list",
-      "oauth2"
-    ]
+    "searchTerms": ["shopify", "products", "ecommerce", "list", "oauth2"]
   },
   {
     "type": "slack.list_channels",
@@ -14751,16 +12963,9 @@
         "label": "Slack Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "slack"
-        ],
-        "requiredScopes": [
-          "channels:read",
-          "groups:read"
-        ]
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["slack"],
+        "requiredScopes": ["channels:read", "groups:read"]
       },
       {
         "name": "types",
@@ -14805,14 +13010,7 @@
       "excludeArchived": true,
       "limit": 100
     },
-    "searchTerms": [
-      "slack",
-      "messaging",
-      "channels",
-      "list",
-      "communication",
-      "oauth2"
-    ]
+    "searchTerms": ["slack", "messaging", "channels", "list", "communication", "oauth2"]
   },
   {
     "type": "slack.send_message",
@@ -14843,15 +13041,9 @@
         "label": "Slack Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "slack"
-        ],
-        "requiredScopes": [
-          "chat:write"
-        ]
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["slack"],
+        "requiredScopes": ["chat:write"]
       },
       {
         "name": "channel",
@@ -14897,13 +13089,7 @@
       "unfurlLinks": true,
       "unfurlMedia": true
     },
-    "searchTerms": [
-      "slack",
-      "messaging",
-      "chat",
-      "communication",
-      "oauth2"
-    ]
+    "searchTerms": ["slack", "messaging", "chat", "communication", "oauth2"]
   },
   {
     "type": "stripe.create_customer",
@@ -14934,9 +13120,7 @@
         "label": "Stripe Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "api_key"
-        ]
+        "credentialTypes": ["api_key"]
       },
       {
         "name": "email",
@@ -14971,12 +13155,7 @@
       }
     ],
     "defaultParams": {},
-    "searchTerms": [
-      "stripe",
-      "customer",
-      "create",
-      "payments"
-    ]
+    "searchTerms": ["stripe", "customer", "create", "payments"]
   },
   {
     "type": "stripe.create_payment_intent",
@@ -15007,9 +13186,7 @@
         "label": "Stripe Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "api_key"
-        ]
+        "credentialTypes": ["api_key"]
       },
       {
         "name": "amount",
@@ -15047,13 +13224,7 @@
     "defaultParams": {
       "currency": "usd"
     },
-    "searchTerms": [
-      "stripe",
-      "payment",
-      "intent",
-      "create",
-      "charge"
-    ]
+    "searchTerms": ["stripe", "payment", "intent", "create", "charge"]
   },
   {
     "type": "stripe.get_balance",
@@ -15084,18 +13255,11 @@
         "label": "Stripe Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "api_key"
-        ]
+        "credentialTypes": ["api_key"]
       }
     ],
     "defaultParams": {},
-    "searchTerms": [
-      "stripe",
-      "balance",
-      "account",
-      "payments"
-    ]
+    "searchTerms": ["stripe", "balance", "account", "payments"]
   },
   {
     "type": "stripe.list_charges",
@@ -15126,9 +13290,7 @@
         "label": "Stripe Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "api_key"
-        ]
+        "credentialTypes": ["api_key"]
       },
       {
         "name": "limit",
@@ -15150,12 +13312,7 @@
     "defaultParams": {
       "limit": 10
     },
-    "searchTerms": [
-      "stripe",
-      "charges",
-      "payments",
-      "list"
-    ]
+    "searchTerms": ["stripe", "charges", "payments", "list"]
   },
   {
     "type": "stripe.list_customers",
@@ -15186,9 +13343,7 @@
         "label": "Stripe Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "api_key"
-        ]
+        "credentialTypes": ["api_key"]
       },
       {
         "name": "limit",
@@ -15210,12 +13365,7 @@
     "defaultParams": {
       "limit": 10
     },
-    "searchTerms": [
-      "stripe",
-      "customers",
-      "list",
-      "payments"
-    ]
+    "searchTerms": ["stripe", "customers", "list", "payments"]
   },
   {
     "type": "stripe.list_subscriptions",
@@ -15246,9 +13396,7 @@
         "label": "Stripe Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "api_key"
-        ]
+        "credentialTypes": ["api_key"]
       },
       {
         "name": "limit",
@@ -15317,13 +13465,7 @@
       "limit": 10,
       "status": "all"
     },
-    "searchTerms": [
-      "stripe",
-      "subscriptions",
-      "list",
-      "recurring",
-      "payments"
-    ]
+    "searchTerms": ["stripe", "subscriptions", "list", "recurring", "payments"]
   },
   {
     "type": "trello.create_card",
@@ -15354,16 +13496,9 @@
         "label": "Trello Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "trello"
-        ],
-        "requiredScopes": [
-          "read",
-          "write"
-        ]
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["trello"],
+        "requiredScopes": ["read", "write"]
       },
       {
         "name": "listId",
@@ -15406,12 +13541,7 @@
       }
     ],
     "defaultParams": {},
-    "searchTerms": [
-      "trello",
-      "cards",
-      "create",
-      "project-management"
-    ]
+    "searchTerms": ["trello", "cards", "create", "project-management"]
   },
   {
     "type": "trello.list_boards",
@@ -15442,24 +13572,13 @@
         "label": "Trello Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "trello"
-        ],
-        "requiredScopes": [
-          "read"
-        ]
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["trello"],
+        "requiredScopes": ["read"]
       }
     ],
     "defaultParams": {},
-    "searchTerms": [
-      "trello",
-      "boards",
-      "list",
-      "project-management"
-    ]
+    "searchTerms": ["trello", "boards", "list", "project-management"]
   },
   {
     "type": "trello.list_cards",
@@ -15490,15 +13609,9 @@
         "label": "Trello Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "trello"
-        ],
-        "requiredScopes": [
-          "read"
-        ]
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["trello"],
+        "requiredScopes": ["read"]
       },
       {
         "name": "listId",
@@ -15510,12 +13623,7 @@
       }
     ],
     "defaultParams": {},
-    "searchTerms": [
-      "trello",
-      "cards",
-      "lists",
-      "project-management"
-    ]
+    "searchTerms": ["trello", "cards", "lists", "project-management"]
   },
   {
     "type": "trello.list_lists",
@@ -15546,15 +13654,9 @@
         "label": "Trello Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "trello"
-        ],
-        "requiredScopes": [
-          "read"
-        ]
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["trello"],
+        "requiredScopes": ["read"]
       },
       {
         "name": "boardId",
@@ -15566,12 +13668,7 @@
       }
     ],
     "defaultParams": {},
-    "searchTerms": [
-      "trello",
-      "lists",
-      "boards",
-      "project-management"
-    ]
+    "searchTerms": ["trello", "lists", "boards", "project-management"]
   },
   {
     "type": "trello.update_card",
@@ -15602,16 +13699,9 @@
         "label": "Trello Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "trello"
-        ],
-        "requiredScopes": [
-          "read",
-          "write"
-        ]
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["trello"],
+        "requiredScopes": ["read", "write"]
       },
       {
         "name": "cardId",
@@ -15660,12 +13750,7 @@
       }
     ],
     "defaultParams": {},
-    "searchTerms": [
-      "trello",
-      "cards",
-      "update",
-      "project-management"
-    ]
+    "searchTerms": ["trello", "cards", "update", "project-management"]
   },
   {
     "type": "trigger.cron",
@@ -15797,17 +13882,9 @@
         "label": "Twitter / X Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "twitter"
-        ],
-        "requiredScopes": [
-          "tweet.write",
-          "users.read",
-          "offline.access"
-        ]
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["twitter"],
+        "requiredScopes": ["tweet.write", "users.read", "offline.access"]
       },
       {
         "name": "text",
@@ -15819,14 +13896,7 @@
       }
     ],
     "defaultParams": {},
-    "searchTerms": [
-      "twitter",
-      "x",
-      "tweet",
-      "post",
-      "social-media",
-      "oauth2"
-    ]
+    "searchTerms": ["twitter", "x", "tweet", "post", "social-media", "oauth2"]
   },
   {
     "type": "twitter.get_me",
@@ -15857,28 +13927,13 @@
         "label": "Twitter / X Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "twitter"
-        ],
-        "requiredScopes": [
-          "users.read",
-          "offline.access"
-        ]
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["twitter"],
+        "requiredScopes": ["users.read", "offline.access"]
       }
     ],
     "defaultParams": {},
-    "searchTerms": [
-      "twitter",
-      "x",
-      "user",
-      "profile",
-      "me",
-      "social-media",
-      "oauth2"
-    ]
+    "searchTerms": ["twitter", "x", "user", "profile", "me", "social-media", "oauth2"]
   },
   {
     "type": "twitter.get_user",
@@ -15909,16 +13964,9 @@
         "label": "Twitter / X Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "twitter"
-        ],
-        "requiredScopes": [
-          "users.read",
-          "offline.access"
-        ]
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["twitter"],
+        "requiredScopes": ["users.read", "offline.access"]
       },
       {
         "name": "username",
@@ -15930,14 +13978,7 @@
       }
     ],
     "defaultParams": {},
-    "searchTerms": [
-      "twitter",
-      "x",
-      "user",
-      "profile",
-      "social-media",
-      "oauth2"
-    ]
+    "searchTerms": ["twitter", "x", "user", "profile", "social-media", "oauth2"]
   },
   {
     "type": "twitter.get_user_tweets",
@@ -15968,17 +14009,9 @@
         "label": "Twitter / X Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "twitter"
-        ],
-        "requiredScopes": [
-          "tweet.read",
-          "users.read",
-          "offline.access"
-        ]
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["twitter"],
+        "requiredScopes": ["tweet.read", "users.read", "offline.access"]
       },
       {
         "name": "userId",
@@ -16000,14 +14033,7 @@
     "defaultParams": {
       "maxResults": 10
     },
-    "searchTerms": [
-      "twitter",
-      "x",
-      "tweets",
-      "timeline",
-      "social-media",
-      "oauth2"
-    ]
+    "searchTerms": ["twitter", "x", "tweets", "timeline", "social-media", "oauth2"]
   },
   {
     "type": "twitter.search_tweets",
@@ -16038,16 +14064,9 @@
         "label": "Twitter / X Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "twitter"
-        ],
-        "requiredScopes": [
-          "tweet.read",
-          "offline.access"
-        ]
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["twitter"],
+        "requiredScopes": ["tweet.read", "offline.access"]
       },
       {
         "name": "query",
@@ -16069,14 +14088,7 @@
     "defaultParams": {
       "maxResults": 10
     },
-    "searchTerms": [
-      "twitter",
-      "x",
-      "search",
-      "tweets",
-      "social-media",
-      "oauth2"
-    ]
+    "searchTerms": ["twitter", "x", "search", "tweets", "social-media", "oauth2"]
   },
   {
     "type": "woocommerce.create_product",
@@ -16107,9 +14119,7 @@
         "label": "WooCommerce Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "api_key"
-        ]
+        "credentialTypes": ["api_key"]
       },
       {
         "name": "name",
@@ -16219,13 +14229,7 @@
       "type": "simple",
       "status": "publish"
     },
-    "searchTerms": [
-      "woocommerce",
-      "product",
-      "ecommerce",
-      "create",
-      "write"
-    ]
+    "searchTerms": ["woocommerce", "product", "ecommerce", "create", "write"]
   },
   {
     "type": "woocommerce.get_product",
@@ -16256,9 +14260,7 @@
         "label": "WooCommerce Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "api_key"
-        ]
+        "credentialTypes": ["api_key"]
       },
       {
         "name": "productId",
@@ -16269,12 +14271,7 @@
       }
     ],
     "defaultParams": {},
-    "searchTerms": [
-      "woocommerce",
-      "product",
-      "ecommerce",
-      "get"
-    ]
+    "searchTerms": ["woocommerce", "product", "ecommerce", "get"]
   },
   {
     "type": "woocommerce.list_customers",
@@ -16305,9 +14302,7 @@
         "label": "WooCommerce Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "api_key"
-        ]
+        "credentialTypes": ["api_key"]
       },
       {
         "name": "perPage",
@@ -16335,12 +14330,7 @@
     "defaultParams": {
       "perPage": 10
     },
-    "searchTerms": [
-      "woocommerce",
-      "customers",
-      "ecommerce",
-      "list"
-    ]
+    "searchTerms": ["woocommerce", "customers", "ecommerce", "list"]
   },
   {
     "type": "woocommerce.list_orders",
@@ -16371,9 +14361,7 @@
         "label": "WooCommerce Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "api_key"
-        ]
+        "credentialTypes": ["api_key"]
       },
       {
         "name": "perPage",
@@ -16441,12 +14429,7 @@
       "perPage": 10,
       "status": "any"
     },
-    "searchTerms": [
-      "woocommerce",
-      "orders",
-      "ecommerce",
-      "list"
-    ]
+    "searchTerms": ["woocommerce", "orders", "ecommerce", "list"]
   },
   {
     "type": "woocommerce.list_products",
@@ -16477,9 +14460,7 @@
         "label": "WooCommerce Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "api_key"
-        ]
+        "credentialTypes": ["api_key"]
       },
       {
         "name": "perPage",
@@ -16538,12 +14519,7 @@
       "perPage": 10,
       "status": "any"
     },
-    "searchTerms": [
-      "woocommerce",
-      "products",
-      "ecommerce",
-      "list"
-    ]
+    "searchTerms": ["woocommerce", "products", "ecommerce", "list"]
   },
   {
     "type": "zendesk.create_ticket",
@@ -16574,15 +14550,9 @@
         "label": "Zendesk Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "zendesk"
-        ],
-        "requiredScopes": [
-          "write"
-        ]
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["zendesk"],
+        "requiredScopes": ["write"]
       },
       {
         "name": "subdomain",
@@ -16673,13 +14643,7 @@
       "priority": "normal",
       "type": "question"
     },
-    "searchTerms": [
-      "zendesk",
-      "tickets",
-      "create",
-      "support",
-      "oauth2"
-    ]
+    "searchTerms": ["zendesk", "tickets", "create", "support", "oauth2"]
   },
   {
     "type": "zendesk.get_ticket",
@@ -16710,15 +14674,9 @@
         "label": "Zendesk Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "zendesk"
-        ],
-        "requiredScopes": [
-          "read"
-        ]
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["zendesk"],
+        "requiredScopes": ["read"]
       },
       {
         "name": "subdomain",
@@ -16738,13 +14696,7 @@
       }
     ],
     "defaultParams": {},
-    "searchTerms": [
-      "zendesk",
-      "tickets",
-      "get",
-      "support",
-      "oauth2"
-    ]
+    "searchTerms": ["zendesk", "tickets", "get", "support", "oauth2"]
   },
   {
     "type": "zendesk.list_tickets",
@@ -16775,15 +14727,9 @@
         "label": "Zendesk Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "zendesk"
-        ],
-        "requiredScopes": [
-          "read"
-        ]
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["zendesk"],
+        "requiredScopes": ["read"]
       },
       {
         "name": "subdomain",
@@ -16805,13 +14751,7 @@
     "defaultParams": {
       "perPage": 25
     },
-    "searchTerms": [
-      "zendesk",
-      "tickets",
-      "list",
-      "support",
-      "oauth2"
-    ]
+    "searchTerms": ["zendesk", "tickets", "list", "support", "oauth2"]
   },
   {
     "type": "zendesk.search",
@@ -16842,15 +14782,9 @@
         "label": "Zendesk Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "zendesk"
-        ],
-        "requiredScopes": [
-          "read"
-        ]
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["zendesk"],
+        "requiredScopes": ["read"]
       },
       {
         "name": "subdomain",
@@ -16880,15 +14814,7 @@
     "defaultParams": {
       "perPage": 25
     },
-    "searchTerms": [
-      "zendesk",
-      "search",
-      "tickets",
-      "users",
-      "organizations",
-      "support",
-      "oauth2"
-    ]
+    "searchTerms": ["zendesk", "search", "tickets", "users", "organizations", "support", "oauth2"]
   },
   {
     "type": "zendesk.update_ticket",
@@ -16919,15 +14845,9 @@
         "label": "Zendesk Credential",
         "type": "credential",
         "required": true,
-        "credentialTypes": [
-          "oauth2"
-        ],
-        "oauth2Providers": [
-          "zendesk"
-        ],
-        "requiredScopes": [
-          "write"
-        ]
+        "credentialTypes": ["oauth2"],
+        "oauth2Providers": ["zendesk"],
+        "requiredScopes": ["write"]
       },
       {
         "name": "subdomain",
@@ -17031,12 +14951,6 @@
     "defaultParams": {
       "commentPublic": true
     },
-    "searchTerms": [
-      "zendesk",
-      "tickets",
-      "update",
-      "support",
-      "oauth2"
-    ]
+    "searchTerms": ["zendesk", "tickets", "update", "support", "oauth2"]
   }
 ]

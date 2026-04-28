@@ -39,7 +39,10 @@ const loadCoreModule = async (): Promise<CoreModule> => {
 
 interface FlowlibHandler {
   GET: (request: Request, context: { params: Promise<{ flowlib: string[] }> }) => Promise<Response>;
-  POST: (request: Request, context: { params: Promise<{ flowlib: string[] }> }) => Promise<Response>;
+  POST: (
+    request: Request,
+    context: { params: Promise<{ flowlib: string[] }> },
+  ) => Promise<Response>;
   PATCH: (
     request: Request,
     context: { params: Promise<{ flowlib: string[] }> },

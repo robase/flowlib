@@ -68,8 +68,8 @@ The plugin adds a Webhooks page to the sidebar for managing webhook triggers.
 
 ## Exports
 
-| Entry Point              | Content                                              |
-| ------------------------ | ---------------------------------------------------- |
+| Entry Point               | Content                                              |
+| ------------------------- | ---------------------------------------------------- |
 | `@flowlib/webhooks`       | Backend plugin (Node.js)                             |
 | `@flowlib/webhooks/ui`    | Frontend plugin — `webhooksFrontend`, `WebhooksPage` |
 | `@flowlib/webhooks/types` | Shared types                                         |

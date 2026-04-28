@@ -12,8 +12,8 @@ npx flowlib-cli <command> [options]
 ```
 
 <Callout type="info">
-  You can also use your package manager's equivalent: `pnpm dlx flowlib-cli`, `yarn dlx flowlib-cli`,
-  or `bunx flowlib-cli`.
+  You can also use your package manager's equivalent: `pnpm dlx flowlib-cli`, `yarn dlx
+  flowlib-cli`, or `bunx flowlib-cli`.
 </Callout>
 
 All commands accept `--debug` for detailed error output and stack traces.
@@ -122,11 +122,11 @@ Start a Model Context Protocol (MCP) server over stdio. Connects to a running Fl
 npx flowlib-cli mcp --url http://localhost:3000/flowlib
 ```
 
-| Flag              | Description                                                              |
-| ----------------- | ------------------------------------------------------------------------ |
+| Flag              | Description                                                                |
+| ----------------- | -------------------------------------------------------------------------- |
 | `--url <url>`     | URL of the running Flowlib API (default: `http://localhost:3000/flowlib`). |
-| `--api-key <key>` | API key for authenticated access.                                        |
-| `--print-config`  | Output ready-to-paste MCP client config (e.g., for Claude Desktop).      |
+| `--api-key <key>` | API key for authenticated access.                                          |
+| `--print-config`  | Output ready-to-paste MCP client config (e.g., for Claude Desktop).        |
 
 **Example: generate config for Claude Desktop**
 

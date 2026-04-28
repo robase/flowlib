@@ -236,7 +236,9 @@ function parseColumnsFromCreateTable(sql: string): Set<string> {
   // Find the first `(` after CREATE TABLE … and walk to the matching `)`,
   // tracking quote/paren state so commas inside parens don't split us.
   const openIdx = sql.indexOf('(');
-  if (openIdx === -1) return columns;
+  if (openIdx === -1) {
+    return columns;
+  }
 
   let depth = 0;
   let buf = '';
@@ -257,7 +259,9 @@ function parseColumnsFromCreateTable(sql: string): Set<string> {
     }
     if (ch === '(') {
       depth++;
-      if (depth === 1) continue; // skip outer paren
+      if (depth === 1) {
+        continue;
+      } // skip outer paren
       buf += ch;
       continue;
     }
@@ -280,24 +284,26 @@ function parseColumnsFromCreateTable(sql: string): Set<string> {
   return columns;
 }
 
-const TABLE_LEVEL_KEYWORDS = new Set([
-  'PRIMARY',
-  'FOREIGN',
-  'UNIQUE',
-  'CHECK',
-  'CONSTRAINT',
-]);
+const TABLE_LEVEL_KEYWORDS = new Set(['PRIMARY', 'FOREIGN', 'UNIQUE', 'CHECK', 'CONSTRAINT']);
 
 function addCol(columns: Set<string>, raw: string): void {
   const trimmed = raw.trim();
-  if (!trimmed) return;
+  if (!trimmed) {
+    return;
+  }
   // First token = column name (or table-level keyword).
   // Match: optional quote char, then identifier chars, then closing quote.
   const match = trimmed.match(/^("([^"]+)"|`([^`]+)`|\[([^\]]+)\]|([A-Za-z_][A-Za-z0-9_]*))/);
-  if (!match) return;
+  if (!match) {
+    return;
+  }
   const ident = match[2] ?? match[3] ?? match[4] ?? match[5] ?? '';
-  if (!ident) return;
-  if (TABLE_LEVEL_KEYWORDS.has(ident.toUpperCase())) return;
+  if (!ident) {
+    return;
+  }
+  if (TABLE_LEVEL_KEYWORDS.has(ident.toUpperCase())) {
+    return;
+  }
   columns.add(ident);
 }
 

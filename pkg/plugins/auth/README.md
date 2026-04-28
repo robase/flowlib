@@ -98,11 +98,11 @@ import { AuthProvider, AuthGate, SignInPage, UserButton } from '@flowlib/user-au
 
 ## Exports
 
-| Entry Point               | Content                                                                                             |
-| ------------------------- | --------------------------------------------------------------------------------------------------- |
-| `@flowlib/user-auth`       | Backend plugin (Node.js)                                                                            |
+| Entry Point                | Content                                                                                              |
+| -------------------------- | ---------------------------------------------------------------------------------------------------- |
+| `@flowlib/user-auth`       | Backend plugin (Node.js)                                                                             |
 | `@flowlib/user-auth/ui`    | Frontend components — `AuthProvider`, `AuthGate`, `SignInForm`, `UserButton`, `AuthenticatedFlowlib` |
-| `@flowlib/user-auth/types` | Shared types                                                                                        |
+| `@flowlib/user-auth/types` | Shared types                                                                                         |
 
 ## What It Does
 

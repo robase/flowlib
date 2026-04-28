@@ -94,7 +94,7 @@ Each state gets a **full viewport** screenshot (1280×720). Modals and panels al
 
 | #   | State                         | Actions                   | Tags                              |
 | --- | ----------------------------- | ------------------------- | --------------------------------- |
-| 01  | Dashboard — sidebar collapsed | Navigate to `/flowlib`     | `page`, `dashboard`, `navigation` |
+| 01  | Dashboard — sidebar collapsed | Navigate to `/flowlib`    | `page`, `dashboard`, `navigation` |
 | 02  | Dashboard — sidebar expanded  | Click sidebar toggle      | `page`, `dashboard`, `navigation` |
 | 03  | Executions page               | Navigate via sidebar link | `page`, `executions`              |
 | 04  | Credentials page              | Navigate via sidebar link | `page`, `credentials`             |

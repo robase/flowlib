@@ -111,7 +111,10 @@ function debugError(label: string, error: unknown) {
 
 export const generateCommand = new Command('generate')
   .description('Generate Drizzle or Prisma schema files from core + plugin schemas')
-  .option('--config <path>', 'Path to your Flowlib config file. Defaults to the first config found.')
+  .option(
+    '--config <path>',
+    'Path to your Flowlib config file. Defaults to the first config found.',
+  )
   .option(
     '--output <path>',
     'Output directory for generated schema files (used when --schema is not set)',
@@ -1072,7 +1075,9 @@ function printNextSteps(): void {
       pc.cyan('npx drizzle-kit generate') +
       pc.dim(' to create SQL migrations'),
   );
-  console.log(pc.dim('    3. Run ') + pc.cyan('npx flowlib-cli migrate') + pc.dim(' to apply them'));
+  console.log(
+    pc.dim('    3. Run ') + pc.cyan('npx flowlib-cli migrate') + pc.dim(' to apply them'),
+  );
   console.log('');
 }
 

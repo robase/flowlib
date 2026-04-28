@@ -131,10 +131,11 @@ export class DatabaseConnectionFactory {
         break;
       }
       case 'sqlite': {
-        const { db: sqliteDb, driver, schema: sqliteSchema } = await this.createSQLiteConnection(
-          dbConfig,
-          logger,
-        );
+        const {
+          db: sqliteDb,
+          driver,
+          schema: sqliteSchema,
+        } = await this.createSQLiteConnection(dbConfig, logger);
         connection = {
           type: 'sqlite',
           db: sqliteDb,
@@ -400,7 +401,9 @@ export class DatabaseConnectionFactory {
         config.connectionString.startsWith('https://');
       const url = isRemote ? config.connectionString : `file:${filePath}`;
       const client = createClient({ url });
-      db = drizzleLibSQL(client, { schema: sqliteSchema }) as unknown as DrizzleSQLiteDb<SqliteSchema>;
+      db = drizzleLibSQL(client, {
+        schema: sqliteSchema,
+      }) as unknown as DrizzleSQLiteDb<SqliteSchema>;
     } else {
       const BetterSqlite3 = (await import('better-sqlite3')).default;
       const { drizzle: drizzleSQLite } = await import('drizzle-orm/better-sqlite3');

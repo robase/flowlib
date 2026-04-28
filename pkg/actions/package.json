@@ -4,8 +4,8 @@
   "description": "Built-in provider actions for Flowlib flows (Gmail, Slack, GitHub, etc.)",
   "keywords": [
     "actions",
-    "integrations",
-    "flowlib"
+    "flowlib",
+    "integrations"
   ],
   "homepage": "https://flowlib.dev",
   "bugs": {

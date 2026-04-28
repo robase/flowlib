@@ -1,7 +1,7 @@
 // Acme SaaS — Prisma Schema
 //
 // This is a typical multi-tenant SaaS application schema.
-// Invect tables are NOT included here — they will be added
+// Flowlib tables are NOT included here — they will be added
 // via `npx flowlib-cli generate --adapter prisma` during setup.
 
 generator client {
@@ -166,7 +166,7 @@ model FlowTriggers {
 model FlowVersions {
   flowId           String   @map("flow_id")
   version          Int
-  invectDefinition Json     @map("invect_definition")
+  flowlibDefinition Json     @map("flowlib_definition")
   createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
   createdBy        String?  @map("created_by")
   flow             Flows    @relation(fields: [flowId], references: [id], onDelete: Cascade)

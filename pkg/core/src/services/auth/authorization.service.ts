@@ -308,7 +308,10 @@ export class AuthorizationService extends EventEmitter {
    * Check if a permission list includes the required permission.
    * Handles admin:* wildcard.
    */
-  private permissionMatches(permissions: FlowlibPermission[], required: FlowlibPermission): boolean {
+  private permissionMatches(
+    permissions: FlowlibPermission[],
+    required: FlowlibPermission,
+  ): boolean {
     // Admin wildcard grants everything
     if (permissions.includes('admin:*')) {
       return true;

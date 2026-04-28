@@ -34,7 +34,9 @@ export interface FlowlibPluginDefinition {
 export function resolvePlugins(plugins: FlowlibPluginDefinition[]): FlowlibFrontendPlugin[] {
   return plugins
     .map((p) =>
-      p.frontend !== null && p.frontend !== undefined ? (p.frontend as FlowlibFrontendPlugin) : null,
+      p.frontend !== null && p.frontend !== undefined
+        ? (p.frontend as FlowlibFrontendPlugin)
+        : null,
     )
     .filter((p): p is FlowlibFrontendPlugin => p !== null);
 }

@@ -4,8 +4,8 @@
   "description": "Shared layout utilities for Flowlib graph positioning",
   "keywords": [
     "dagre",
-    "graph",
     "flowlib",
+    "graph",
     "layout"
   ],
   "homepage": "https://flowlib.dev",

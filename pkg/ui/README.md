@@ -44,12 +44,12 @@ This renders the full Flowlib UI — flow list, drag-and-drop editor, execution 
 
 ## Props
 
-| Prop               | Type                     | Default                        | Description                       |
-| ------------------ | ------------------------ | ------------------------------ | --------------------------------- |
-| `apiBaseUrl`       | `string`                 | `http://localhost:3000/flowlib` | Backend API URL                   |
-| `basePath`         | `string`                 | `/flowlib`                      | Base path for routing             |
-| `plugins`          | `FlowlibFrontendPlugin[]` | `[]`                           | Frontend plugins (RBAC, etc.)     |
-| `reactQueryClient` | `QueryClient`            | —                              | Bring your own React Query client |
+| Prop               | Type                      | Default                         | Description                       |
+| ------------------ | ------------------------- | ------------------------------- | --------------------------------- |
+| `apiBaseUrl`       | `string`                  | `http://localhost:3000/flowlib` | Backend API URL                   |
+| `basePath`         | `string`                  | `/flowlib`                      | Base path for routing             |
+| `plugins`          | `FlowlibFrontendPlugin[]` | `[]`                            | Frontend plugins (RBAC, etc.)     |
+| `reactQueryClient` | `QueryClient`             | —                               | Bring your own React Query client |
 
 ## CSS Scoping
 

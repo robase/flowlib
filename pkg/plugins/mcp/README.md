@@ -87,8 +87,8 @@ npx flowlib-mcp --url http://localhost:3000/flowlib --api-key YOUR_KEY
 
 ## Exports
 
-| Entry Point         | Content                     |
-| ------------------- | --------------------------- |
+| Entry Point          | Content                     |
+| -------------------- | --------------------------- |
 | `@flowlib/mcp`       | Backend plugin (Node.js)    |
 | `@flowlib/mcp/types` | Shared types                |
 | `flowlib-mcp` (bin)  | Standalone stdio MCP server |

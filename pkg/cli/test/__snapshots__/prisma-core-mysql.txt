@@ -24,7 +24,7 @@ model Credentials {
   createdAt   DateTime  @default(now()) @map("created_at")
   updatedAt   DateTime  @updatedAt @map("updated_at")
 
-  @@map("invect_credentials")
+  @@map("flowlib_credentials")
 }
 
 model Flows {
@@ -41,7 +41,7 @@ model Flows {
   chatMessages      ChatMessages[]
   flowRuns          FlowRuns[]
 
-  @@map("invect_flows")
+  @@map("flowlib_flows")
 }
 
 model FlowTriggers {
@@ -60,19 +60,19 @@ model FlowTriggers {
   flow            Flows     @relation(fields: [flowId], references: [id], onDelete: Cascade)
 
   @@unique([webhookPath])
-  @@map("invect_flow_triggers")
+  @@map("flowlib_flow_triggers")
 }
 
 model FlowVersions {
-  flowId           String   @map("flow_id")
-  version          Int
-  invectDefinition Json     @map("invect_definition")
-  createdAt        DateTime @default(now()) @map("created_at")
-  createdBy        String?  @map("created_by")
-  flow             Flows    @relation(fields: [flowId], references: [id], onDelete: Cascade)
+  flowId            String   @map("flow_id")
+  version           Int
+  flowlibDefinition Json     @map("flowlib_definition")
+  createdAt         DateTime @default(now()) @map("created_at")
+  createdBy         String?  @map("created_by")
+  flow              Flows    @relation(fields: [flowId], references: [id], onDelete: Cascade)
 
   @@id([version, flowId])
-  @@map("invect_flow_versions")
+  @@map("flowlib_flow_versions")
 }
 
 model ChatMessages {
@@ -84,7 +84,7 @@ model ChatMessages {
   createdAt DateTime @default(now()) @map("created_at")
   flow      Flows    @relation(fields: [flowId], references: [id], onDelete: Cascade)
 
-  @@map("invect_chat_messages")
+  @@map("flowlib_chat_messages")
 }
 
 model FlowRuns {
@@ -109,7 +109,7 @@ model FlowRuns {
   actionTraces    ActionTraces[]
   batchJobs       BatchJobs[]
 
-  @@map("invect_flow_executions")
+  @@map("flowlib_flow_executions")
 }
 
 model ActionTraces {
@@ -132,7 +132,7 @@ model ActionTraces {
   flowRun               FlowRuns      @relation(fields: [flowRunId], references: [id], onDelete: Cascade)
   parentNodeExecution   ActionTraces? @relation(fields: [parentNodeExecutionId], references: [id], onDelete: Cascade)
 
-  @@map("invect_action_traces")
+  @@map("flowlib_action_traces")
 }
 
 model BatchJobs {
@@ -151,5 +151,5 @@ model BatchJobs {
   updatedAt    DateTime  @updatedAt @map("updated_at")
   flowRun      FlowRuns  @relation(fields: [flowRunId], references: [id], onDelete: Cascade)
 
-  @@map("invect_batch_jobs")
+  @@map("flowlib_batch_jobs")
 }
