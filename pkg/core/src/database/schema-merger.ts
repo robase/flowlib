@@ -68,7 +68,7 @@ export interface TableIndex {
  * A reusable, declarative schema transform.
  *
  * Transforms run **after** the additive plugin merge and operate on the merged
- * schema. They are how a host (e.g., a multi-tenant hosted variant) injects a
+ * schema. They are how a host (e.g. a multi-tenant deployment) injects a
  * cross-cutting column like `organization_id` into every table without forking
  * the merger or every plugin.
  *

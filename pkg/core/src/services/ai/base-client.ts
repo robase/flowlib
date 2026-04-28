@@ -51,8 +51,6 @@ import type {
   BatchPollResult,
 } from './ai-types';
 
-type _BulkBatchPollResult = Record<string, BatchResult>;
-
 export interface BatchPollingRunResult {
   providersChecked: number;
   providersWithPendingJobs: number;
@@ -434,13 +432,12 @@ export class BaseAIClient {
   }
 
   /**
-   * Run a single batch-polling tick. PR 5/14 (flowlib-hosted/UPSTREAM.md):
-   * external-scheduler entry point that maps onto
-   * `pollBatchJobsForAllProviders()` and reports just `{ count }` (the
-   * total number of pending batch jobs polled across all providers).
+   * Run a single batch-polling tick. External-scheduler entry point that
+   * maps onto `pollBatchJobsForAllProviders()` and reports just `{ count }`
+   * (the total number of pending batch jobs polled across all providers).
    *
    * Hosts on serverless / edge runtimes invoke this from
-   * `flowlib.maintenance.pollPendingBatches()` from a cron tick; the
+   * `flowlib.maintenance.pollPendingBatches()` on a cron tick; the
    * in-process `setInterval` started by `startBatchPolling()` is the
    * long-lived-Node-process equivalent.
    */

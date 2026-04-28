@@ -1,7 +1,6 @@
 /**
  * Unit tests for ExecutionEventBus, RemoteEventBus, and NoopEventBus.
  *
- * Covers PR 8 from `flowlib-hosted/UPSTREAM.md`:
  *   - `ExecutionEventBus` formally implements `ExecutionEventBusAdapter`
  *     (compile-time check via assignment).
  *   - `RemoteEventBus` forwards `emit` to the injected `publish` callback

@@ -182,10 +182,9 @@ export class EncryptionService {
    * right KDF parameters. New writes always use the modern PBKDF2 iteration count.
    *
    * The optional `_context` parameter satisfies the `EncryptionAdapter` contract
-   * from PR 2 of flowlib-hosted/UPSTREAM.md. The default in-process service
-   * intentionally ignores it — wire format is unchanged. Multi-tenant hosted
-   * adapters use the context (e.g. `organizationId`) to select a per-tenant DEK;
-   * see PR 12 in the same plan.
+   * (`src/types/services.ts`). The default in-process service intentionally
+   * ignores it — wire format is unchanged. Multi-tenant adapters use the
+   * context (e.g. `organizationId`) to select a per-tenant DEK.
    */
   async encrypt(
     plaintext: string | object,
@@ -238,9 +237,9 @@ export class EncryptionService {
    * `node:crypto` and only works on Node-like runtimes.
    *
    * The optional `_context` parameter satisfies the `EncryptionAdapter` contract
-   * from PR 2 of flowlib-hosted/UPSTREAM.md. The default in-process service
-   * ignores it — wire format unchanged. Hosted adapters use it (e.g.
-   * `organizationId`) to select a per-tenant DEK; see PR 12.
+   * (`src/types/services.ts`). The default in-process service ignores it —
+   * wire format unchanged. Multi-tenant adapters use it (e.g.
+   * `organizationId`) to select a per-tenant DEK.
    */
   async decrypt(
     encrypted: EncryptedData,

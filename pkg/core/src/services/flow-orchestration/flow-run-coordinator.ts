@@ -113,13 +113,12 @@ export class FlowRunCoordinator {
    * Start a periodic heartbeat for a flow run.
    * The first heartbeat is written immediately.
    *
-   * PR 5/14 (flowlib-hosted/UPSTREAM.md): this in-process `setInterval` is
-   * intentionally not extracted into an external-tick maintenance method.
-   * Hosted runtimes that target Cloudflare Workflows / Vercel Workflows
-   * already get equivalent liveness from the workflow engine's own retry
-   * + step-resumption guarantees, so heartbeats are redundant there. To
-   * disable in-process heartbeats on those runtimes, set
-   * `executionConfig.heartbeatIntervalMs = 0` in `FlowlibConfig`.
+   * This in-process `setInterval` is intentionally not extracted into an
+   * external-tick maintenance method. Runtimes that target Cloudflare
+   * Workflows / Vercel Workflows already get equivalent liveness from the
+   * workflow engine's own retry + step-resumption guarantees, so heartbeats
+   * are redundant there. To disable in-process heartbeats on those runtimes,
+   * set `executionConfig.heartbeatIntervalMs = 0` in `FlowlibConfig`.
    */
   private startHeartbeat(flowRunId: string): void {
     const { heartbeatIntervalMs, flowRunsService, logger } = this.deps;

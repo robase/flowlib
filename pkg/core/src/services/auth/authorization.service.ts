@@ -43,9 +43,8 @@ export interface AuthorizationServiceOptions {
  * Currently extends Node's `EventEmitter` for back-compat with existing
  * `service.on('auth:authorized', ...)` callers. New code should prefer the
  * abstract `onChange(handler)` method below: it returns an idempotent
- * disposer, doesn't depend on `EventEmitter`, and is the surface that future
- * out-of-process auth-event adapters (mirror of `RemoteEventBus`) will
- * implement. See PR 8 in `flowlib-hosted/UPSTREAM.md`.
+ * disposer, doesn't depend on `EventEmitter`, and is the surface that
+ * out-of-process auth-event adapters (mirror of `RemoteEventBus`) implement.
  */
 export class AuthorizationService extends EventEmitter {
   private readonly config: FlowlibAuthConfig;

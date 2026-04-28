@@ -1,19 +1,33 @@
 // Database connection management for Flowlib core
 //
 // All database driver packages (better-sqlite3, @libsql/client, postgres,
-// pg, mysql2, drizzle-orm/*) are imported dynamically so that bundlers
-// (webpack / Next.js) don't try to resolve them statically.  This prevents
-// errors like the @libsql `require.context` pulling in README.md.
+// pg, mysql2, drizzle-orm/*) AND the dialect schemas themselves are
+// imported dynamically. The dialect schemas (`./schema-sqlite`,
+// `./schema-postgres`, `./schema-mysql`) each define their tables at
+// module-init via `mysqlTable(...)` / `pgTable(...)`. Eagerly importing
+// all three at the top of this file dragged drizzle-orm/mysql-core into
+// every consumer's bundle, which on Cloudflare Workers tickled an esbuild
+// `__esm` lazy-init ordering bug:
+//   `Uncaught TypeError: MySqlVarCharBuilder is not a constructor`
+// during Worker cold-start. Lazy-loading per driver branch keeps the
+// per-deployment bundle tight and sidesteps the bug entirely — D1-only
+// hosts no longer load PG/MySQL schemas at all.
 import type { drizzle as drizzlePostgresType } from 'drizzle-orm/postgres-js';
 import type { drizzle as drizzleSQLiteType } from 'drizzle-orm/better-sqlite3';
 import type { drizzle as drizzleMySQLType } from 'drizzle-orm/mysql2';
 import type Database from 'better-sqlite3';
 
-import { sqliteSchema, mysqlSchema, postgresqlSchema } from './schema';
+import type * as sqliteSchemaModule from './schema-sqlite';
+import type * as postgresqlSchemaModule from './schema-postgres';
+import type * as mysqlSchemaModule from './schema-mysql';
 import type { DatabaseDriver } from './drivers/types';
 import { createDatabaseDriver, resolveDatabaseDriverType } from './drivers';
 
 import { Logger, FlowlibDatabaseConfig } from 'src/schemas';
+
+type SqliteSchema = typeof sqliteSchemaModule;
+type PostgresqlSchema = typeof postgresqlSchemaModule;
+type MysqlSchema = typeof mysqlSchemaModule;
 
 /**
  * Drizzle SQLite ORM instance type.
@@ -33,20 +47,20 @@ type DrizzleSQLiteDb<S extends Record<string, unknown> = Record<string, unknown>
 export type DatabaseConnection =
   | {
       type: 'postgresql';
-      db: ReturnType<typeof drizzlePostgresType<typeof postgresqlSchema>>;
-      schema: typeof postgresqlSchema;
+      db: ReturnType<typeof drizzlePostgresType<PostgresqlSchema>>;
+      schema: PostgresqlSchema;
       driver: DatabaseDriver;
     }
   | {
       type: 'sqlite';
-      db: DrizzleSQLiteDb<typeof sqliteSchema>;
-      schema: typeof sqliteSchema;
+      db: DrizzleSQLiteDb<SqliteSchema>;
+      schema: SqliteSchema;
       driver: DatabaseDriver;
     }
   | {
       type: 'mysql';
-      db: ReturnType<typeof drizzleMySQLType<typeof mysqlSchema>>;
-      schema: typeof mysqlSchema;
+      db: ReturnType<typeof drizzleMySQLType<MysqlSchema>>;
+      schema: MysqlSchema;
       driver: DatabaseDriver;
     };
 
@@ -101,7 +115,13 @@ export class DatabaseConnectionFactory {
     switch (dbConfig.type) {
       case 'postgresql': {
         const driver = await createDatabaseDriver(dbConfig, logger);
-        const pgDb = await this.createPostgreSQLConnection(dbConfig, driver, logger);
+        const postgresqlSchema = (await import('./schema-postgres')) as PostgresqlSchema;
+        const pgDb = await this.createPostgreSQLConnection(
+          dbConfig,
+          driver,
+          logger,
+          postgresqlSchema,
+        );
         connection = {
           type: 'postgresql',
           db: pgDb,
@@ -111,7 +131,10 @@ export class DatabaseConnectionFactory {
         break;
       }
       case 'sqlite': {
-        const { db: sqliteDb, driver } = await this.createSQLiteConnection(dbConfig, logger);
+        const { db: sqliteDb, driver, schema: sqliteSchema } = await this.createSQLiteConnection(
+          dbConfig,
+          logger,
+        );
         connection = {
           type: 'sqlite',
           db: sqliteDb,
@@ -122,7 +145,8 @@ export class DatabaseConnectionFactory {
       }
       case 'mysql': {
         const driver = await createDatabaseDriver(dbConfig, logger);
-        const mysqlDb = await this.createMySQLConnection(dbConfig, driver, logger);
+        const mysqlSchema = (await import('./schema-mysql')) as MysqlSchema;
+        const mysqlDb = await this.createMySQLConnection(dbConfig, driver, logger, mysqlSchema);
         connection = {
           type: 'mysql',
           db: mysqlDb,
@@ -259,13 +283,14 @@ export class DatabaseConnectionFactory {
     config: FlowlibDatabaseConfig,
     driver: DatabaseDriver,
     logger: Logger,
-  ): Promise<ReturnType<typeof drizzlePostgresType<typeof postgresqlSchema>>> {
+    postgresqlSchema: PostgresqlSchema,
+  ): Promise<ReturnType<typeof drizzlePostgresType<PostgresqlSchema>>> {
     return this.createDrizzlePostgresDb(
       config,
       driver,
       logger,
       postgresqlSchema,
-    ) as unknown as ReturnType<typeof drizzlePostgresType<typeof postgresqlSchema>>;
+    ) as unknown as ReturnType<typeof drizzlePostgresType<PostgresqlSchema>>;
   }
 
   /**
@@ -331,10 +356,12 @@ export class DatabaseConnectionFactory {
     config: FlowlibDatabaseConfig,
     logger: Logger,
   ): Promise<{
-    db: DrizzleSQLiteDb<typeof sqliteSchema>;
+    db: DrizzleSQLiteDb<SqliteSchema>;
     driver: DatabaseDriver;
+    schema: SqliteSchema;
   }> {
     const driverType = resolveDatabaseDriverType(config);
+    const sqliteSchema = (await import('./schema-sqlite')) as SqliteSchema;
 
     // D1: no file path, no connection string — bind directly to env.DB.
     if (driverType === 'd1') {
@@ -347,9 +374,9 @@ export class DatabaseConnectionFactory {
       const { drizzle: drizzleD1 } = await import('drizzle-orm/d1');
       const db = drizzleD1(config.binding as Parameters<typeof drizzleD1>[0], {
         schema: sqliteSchema,
-      }) as unknown as DrizzleSQLiteDb<typeof sqliteSchema>;
+      }) as unknown as DrizzleSQLiteDb<SqliteSchema>;
       logger.debug('Skipping SQLite migrations - assuming D1 database conforms to schema');
-      return { db, driver };
+      return { db, driver, schema: sqliteSchema };
     }
 
     // File-based drivers (better-sqlite3 / libsql) — need filePath resolution.
@@ -363,7 +390,7 @@ export class DatabaseConnectionFactory {
     // Create the unified driver (handles pragmas internally).
     const driver = await createDatabaseDriver(config, logger, filePath);
 
-    let db: DrizzleSQLiteDb<typeof sqliteSchema>;
+    let db: DrizzleSQLiteDb<SqliteSchema>;
 
     if (driverType === 'libsql') {
       const { createClient } = await import('@libsql/client');
@@ -373,9 +400,7 @@ export class DatabaseConnectionFactory {
         config.connectionString.startsWith('https://');
       const url = isRemote ? config.connectionString : `file:${filePath}`;
       const client = createClient({ url });
-      db = drizzleLibSQL(client, { schema: sqliteSchema }) as unknown as DrizzleSQLiteDb<
-        typeof sqliteSchema
-      >;
+      db = drizzleLibSQL(client, { schema: sqliteSchema }) as unknown as DrizzleSQLiteDb<SqliteSchema>;
     } else {
       const BetterSqlite3 = (await import('better-sqlite3')).default;
       const { drizzle: drizzleSQLite } = await import('drizzle-orm/better-sqlite3');
@@ -388,7 +413,7 @@ export class DatabaseConnectionFactory {
     // Skip migrations - assume database already conforms to schema
     logger.debug('Skipping SQLite migrations - assuming database conforms to schema');
 
-    return { db, driver };
+    return { db, driver, schema: sqliteSchema };
   }
 
   /**
@@ -400,7 +425,8 @@ export class DatabaseConnectionFactory {
     config: FlowlibDatabaseConfig,
     _driver: DatabaseDriver,
     logger: Logger,
-  ): Promise<ReturnType<typeof drizzleMySQLType<typeof mysqlSchema>>> {
+    mysqlSchema: MysqlSchema,
+  ): Promise<ReturnType<typeof drizzleMySQLType<MysqlSchema>>> {
     if (!config.connectionString) {
       throw new Error('MySQL driver requires a connectionString in database config.');
     }
@@ -409,7 +435,7 @@ export class DatabaseConnectionFactory {
     const connection = mysql.createPool(config.connectionString);
     const db = drizzleMySQL(connection, { schema: mysqlSchema, mode: 'default' });
     logger.debug('MySQL Drizzle ORM instance created');
-    return db as unknown as ReturnType<typeof drizzleMySQLType<typeof mysqlSchema>>;
+    return db as unknown as ReturnType<typeof drizzleMySQLType<MysqlSchema>>;
   }
 
   /**
@@ -586,14 +612,14 @@ export class DatabaseConnectionFactory {
   /**
    * Get schema for database type
    */
-  static getSchema(type: FlowlibDatabaseConfig['type']) {
+  static async getSchema(type: FlowlibDatabaseConfig['type']) {
     switch (type) {
       case 'postgresql':
-        return postgresqlSchema;
+        return (await import('./schema-postgres')) as PostgresqlSchema;
       case 'sqlite':
-        return sqliteSchema;
+        return (await import('./schema-sqlite')) as SqliteSchema;
       case 'mysql':
-        return mysqlSchema;
+        return (await import('./schema-mysql')) as MysqlSchema;
       default:
         throw new Error(`Unsupported database type: ${type}`);
     }

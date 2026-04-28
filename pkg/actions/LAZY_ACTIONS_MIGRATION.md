@@ -1,10 +1,9 @@
 # Lazy Action Migration
 
-Tracks which providers have been migrated to the `LazyActionDefinition` pattern
-introduced in PR 7 of the [flowlib-hosted upstream
-plan](../../../flowlib-hosted/UPSTREAM.md). The goal is to keep edge-runtime
-bundles (Cloudflare Workers, Vercel Workflows) under their cold-start size
-caps by deferring provider-SDK imports until the action actually runs.
+Tracks which providers have been migrated to the `LazyActionDefinition`
+pattern. The goal is to keep edge-runtime bundles (Cloudflare Workers,
+Vercel Workflows) under their cold-start size caps by deferring provider-SDK
+imports until the action actually runs.
 
 ## How it works
 

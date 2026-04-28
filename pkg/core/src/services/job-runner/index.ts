@@ -1,6 +1,6 @@
 /**
- * Background job runner — pluggable enqueue path for batch resumption
- * and trigger-driven flow runs (PR 13/14 from flowlib-hosted/UPSTREAM.md).
+ * Background job runner — pluggable enqueue path for batch resumption and
+ * trigger-driven flow runs.
  *
  * The interface lives in `src/types/services.ts` (`JobRunnerAdapter`,
  * `JobOptions`); this module ships the default in-process implementation

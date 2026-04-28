@@ -5,13 +5,6 @@
  *
  * Each bridge is a thin shim. Their only purpose is to let `ServiceFactory`
  * substitute a user-provided adapter without touching every call site.
- *
- * Future PRs (see flowlib-hosted/UPSTREAM.md):
- *   - PR 5 will eliminate `setInterval`s in `BatchPollerBridge` and
- *     `CronSchedulerBridge` and let hosts pass `NoopBatchPoller` /
- *     `NoopCronScheduler` adapters directly.
- *   - PR 8 will move the `EventEmitter`-based default into a class that
- *     itself implements `ExecutionEventBusAdapter`, removing the bridge.
  */
 
 import type { FlowRun } from './flow-runs/flow-runs.model';

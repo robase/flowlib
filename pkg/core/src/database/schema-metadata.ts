@@ -32,8 +32,6 @@ export const FLOWLIB_SCHEMA_META: SchemaMetadata = {
     completed_at: { type: 'date' },
     trigger_data: { type: 'json' },
     last_heartbeat_at: { type: 'date' },
-    // PR 11: per-run persistence — buffered node-execution traces flushed
-    // at flow-run completion. JSON-encoded array of `NodeExecution` rows.
     node_outputs: { type: 'json' },
   },
 

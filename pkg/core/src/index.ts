@@ -300,7 +300,7 @@ export type {
   CreateChatStreamOptions,
 } from './services/chat';
 
-// Pluggable service adapter interfaces (PR 2/14 — see flowlib-hosted/UPSTREAM.md)
+// Pluggable service adapter interfaces — swap defaults for edge runtimes
 export type {
   EncryptionAdapter,
   EncryptionContext,

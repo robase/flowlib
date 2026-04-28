@@ -320,11 +320,10 @@ describe('OAuth2Service', () => {
     });
   });
 
-  // PR 5/14 (flowlib-hosted/UPSTREAM.md): pending-state cleanup must be
-  // driven externally now that the module-level setInterval has been
-  // removed. These tests cover both the new method behavior and the
-  // absence of any module-load timer side effect.
-  describe('cleanupExpiredStates() (PR 5/14)', () => {
+  // Pending-state cleanup must be driven externally now that the
+  // module-level setInterval has been removed. These tests cover the
+  // new method behavior and the absence of any module-load timer side effect.
+  describe('cleanupExpiredStates()', () => {
     it('removes pending states older than the expiry window and reports the count', () => {
       const tenMinutesMs = 10 * 60 * 1000;
       const t0 = Date.parse('2026-04-26T12:00:00.000Z');
@@ -357,11 +356,10 @@ describe('OAuth2Service', () => {
   });
 });
 
-// PR 5/14 (flowlib-hosted/UPSTREAM.md): the previous module-level
-// `setInterval` cleanup loop ran at import time, broke edge runtimes,
-// and was never cleared. This test verifies that simply loading the
-// module does NOT register any timer.
-describe('oauth2.service module load (PR 5/14)', () => {
+// The previous module-level `setInterval` cleanup loop ran at import time,
+// broke edge runtimes, and was never cleared. This test verifies that simply
+// loading the module does NOT register any timer.
+describe('oauth2.service module load', () => {
   it('does not call setInterval at module-load time', async () => {
     const setIntervalSpy = vi.spyOn(globalThis, 'setInterval');
     // Force a fresh module evaluation so we observe the import-time effect.

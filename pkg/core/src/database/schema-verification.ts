@@ -169,6 +169,15 @@ async function introspectSqlite(
 ): Promise<Map<string, Set<string>>> {
   const schema = new Map<string, Set<string>>();
 
+  // D1 (Cloudflare) restricts `PRAGMA` over `prepare()` — only `pragma
+  // foreign_keys` and `pragma defer_foreign_keys` are allowed; everything
+  // else returns `SQLITE_AUTH`. We sniff the driver type and fall back to
+  // parsing the CREATE TABLE statement out of `sqlite_master.sql`, which
+  // works on every SQLite-compatible driver.
+  if (driver.type === 'd1') {
+    return introspectSqliteFromMaster(driver);
+  }
+
   const tables = (await driver.queryAll(
     `SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite\\_%' ESCAPE '\\' AND name NOT LIKE '\\_\\_%' ESCAPE '\\'`,
   )) as Array<{ name: string }>;
@@ -181,6 +190,115 @@ async function introspectSqlite(
   }
 
   return schema;
+}
+
+/**
+ * D1-compatible introspection.
+ *
+ * Reads the CREATE TABLE statement from `sqlite_master.sql` and extracts
+ * column names from it. SQLite normalises whitespace + identifier quoting
+ * but preserves the original column order, so this is reliable. Returns the
+ * same `Map<table, Set<column>>` shape as the PRAGMA-based path.
+ */
+async function introspectSqliteFromMaster(
+  driver: import('./drivers/types').DatabaseDriver,
+): Promise<Map<string, Set<string>>> {
+  const schema = new Map<string, Set<string>>();
+
+  const rows = (await driver.queryAll(
+    `SELECT name, sql FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite\\_%' ESCAPE '\\' AND name NOT LIKE '\\_\\_%' ESCAPE '\\'`,
+  )) as Array<{ name: string; sql: string | null }>;
+
+  for (const row of rows) {
+    if (!row.sql) {
+      schema.set(row.name, new Set());
+      continue;
+    }
+    schema.set(row.name, parseColumnsFromCreateTable(row.sql));
+  }
+
+  return schema;
+}
+
+/**
+ * Extract column names from a `CREATE TABLE` statement. Handles:
+ *   - identifier quoting (backticks, double quotes, brackets)
+ *   - inline column constraints (NOT NULL, DEFAULT (...), REFERENCES …)
+ *   - skips table-level constraints (PRIMARY KEY, FOREIGN KEY, UNIQUE, CHECK)
+ *
+ * Not a full SQL parser — just enough to recover the column list. The
+ * generated DDL we verify against came from drizzle-kit which uses a
+ * predictable shape; this parser handles that shape and most hand-written
+ * variants.
+ */
+function parseColumnsFromCreateTable(sql: string): Set<string> {
+  const columns = new Set<string>();
+  // Find the first `(` after CREATE TABLE … and walk to the matching `)`,
+  // tracking quote/paren state so commas inside parens don't split us.
+  const openIdx = sql.indexOf('(');
+  if (openIdx === -1) return columns;
+
+  let depth = 0;
+  let buf = '';
+  let quote: string | null = null;
+  for (let i = openIdx; i < sql.length; i++) {
+    const ch = sql[i]!;
+    if (quote) {
+      buf += ch;
+      if (ch === quote && sql[i - 1] !== '\\') {
+        quote = null;
+      }
+      continue;
+    }
+    if (ch === '"' || ch === "'" || ch === '`') {
+      quote = ch;
+      buf += ch;
+      continue;
+    }
+    if (ch === '(') {
+      depth++;
+      if (depth === 1) continue; // skip outer paren
+      buf += ch;
+      continue;
+    }
+    if (ch === ')') {
+      depth--;
+      if (depth === 0) {
+        addCol(columns, buf);
+        break;
+      }
+      buf += ch;
+      continue;
+    }
+    if (ch === ',' && depth === 1) {
+      addCol(columns, buf);
+      buf = '';
+      continue;
+    }
+    buf += ch;
+  }
+  return columns;
+}
+
+const TABLE_LEVEL_KEYWORDS = new Set([
+  'PRIMARY',
+  'FOREIGN',
+  'UNIQUE',
+  'CHECK',
+  'CONSTRAINT',
+]);
+
+function addCol(columns: Set<string>, raw: string): void {
+  const trimmed = raw.trim();
+  if (!trimmed) return;
+  // First token = column name (or table-level keyword).
+  // Match: optional quote char, then identifier chars, then closing quote.
+  const match = trimmed.match(/^("([^"]+)"|`([^`]+)`|\[([^\]]+)\]|([A-Za-z_][A-Za-z0-9_]*))/);
+  if (!match) return;
+  const ident = match[2] ?? match[3] ?? match[4] ?? match[5] ?? '';
+  if (!ident) return;
+  if (TABLE_LEVEL_KEYWORDS.has(ident.toUpperCase())) return;
+  columns.add(ident);
 }
 
 async function introspectPostgres(db: DatabaseConnection['db']): Promise<Map<string, Set<string>>> {

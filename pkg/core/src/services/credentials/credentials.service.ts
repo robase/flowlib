@@ -70,12 +70,12 @@ export class CredentialsService {
     /**
      * Encryption adapter — accepts either the default `EncryptionService` or
      * any object conforming to `EncryptionAdapter` (the pluggable adapter
-     * interface introduced in PR 2/14 of flowlib-hosted/UPSTREAM.md).
+     * interface in `src/types/services.ts`).
      *
      * Only `encrypt`/`decrypt` are called from this service; the convenience
      * `encryptObject` / `decryptObject` helpers on `EncryptionService` are
      * inlined here as `encryptConfig` / `decryptConfig` so any conforming
-     * adapter (e.g. a Cloudflare KMS-backed implementation) works without
+     * adapter (e.g. a hosted KMS-backed implementation) works without
      * needing to expose those helpers.
      */
     private encryption: EncryptionAdapter,
@@ -116,10 +116,9 @@ export class CredentialsService {
    *
    * The core `credentials` schema does NOT include `organizationId` today
    * (only `workspaceId`). Multi-tenant hosts that inject an `organization_id`
-   * column via the schema transform from PR 4 of flowlib-hosted/UPSTREAM.md
-   * will see that value land on the row at runtime — we look for it
-   * dynamically here so the caller doesn't have to thread context through
-   * every call site.
+   * column via a `SchemaTransform` will see that value land on the row at
+   * runtime — we look for it dynamically here so the caller doesn't have to
+   * thread context through every call site.
    *
    * Caller-supplied `context` always wins over the row-derived default.
    */
@@ -152,10 +151,9 @@ export class CredentialsService {
    * Create a new credential
    * Automatically encrypts the config
    *
-   * `context` is forwarded to the encryption adapter (PR 12 in
-   * flowlib-hosted/UPSTREAM.md) so multi-tenant hosts can derive a per-org
-   * DEK. Default in-process `EncryptionService` ignores it — wire format
-   * unchanged when `context` is omitted.
+   * `context` is forwarded to the encryption adapter so multi-tenant hosts
+   * can derive a per-org DEK. Default in-process `EncryptionService` ignores
+   * it — wire format unchanged when `context` is omitted.
    */
   async create(input: CreateCredentialInput, context?: EncryptionContext): Promise<Credential> {
     // Encrypt the config before storing
@@ -188,9 +186,9 @@ export class CredentialsService {
    *
    * If `context` is omitted, defaults to `{ organizationId }` derived from
    * the credential row when the host has injected an `organization_id`
-   * column (see PR 4 / PR 12 in flowlib-hosted/UPSTREAM.md). On stock
-   * single-tenant deployments there is no such column and the default
-   * adapter ignores context — behavior unchanged.
+   * column via `SchemaTransform`. On stock single-tenant deployments there
+   * is no such column and the default adapter ignores context — behavior
+   * unchanged.
    */
   async get(id: string, context?: EncryptionContext): Promise<Credential> {
     const credential = await this.model.findById(id);
@@ -354,9 +352,8 @@ export class CredentialsService {
    *
    * Note: `list()` does not decrypt, so the second `_context` parameter is
    * unused today. It is accepted for signature symmetry with the rest of
-   * the CRUD API and to reserve the seam for hosted variants that may
-   * apply tenant-scoped row filtering on top of the encryption context
-   * (PR 12 in flowlib-hosted/UPSTREAM.md).
+   * the CRUD API and to reserve the seam for multi-tenant hosts that may
+   * apply tenant-scoped row filtering on top of the encryption context.
    */
   async list(
     filters?: CredentialFilters,

@@ -202,9 +202,9 @@ export class ChatStreamService {
   /**
    * Run a single chat-session eviction tick — drops sessions that have
    * either exceeded the lifetime cap or sat idle past the reconnect grace.
-   * PR 5/14 (flowlib-hosted/UPSTREAM.md): exposed for hosts that drive
-   * eviction from an external scheduler instead of per-session
-   * `setTimeout`s. Returns the number of sessions evicted.
+   * Exposed for hosts that drive eviction from an external scheduler
+   * (e.g. serverless runtimes that can't keep `setTimeout` alive between
+   * invocations). Returns the number of sessions evicted.
    */
   evictExpiredSessions(now?: number): { count: number } {
     return this.activeSessions.evictExpiredSessions(now);

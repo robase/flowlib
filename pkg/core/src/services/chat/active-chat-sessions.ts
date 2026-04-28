@@ -232,8 +232,8 @@ export class ActiveChatSessions {
    *   - completed (`done=true`) AND lived past `RECONNECT_GRACE_MS`
    *     (i.e. the per-session evict timer would have fired by now).
    *
-   * PR 5/14 (flowlib-hosted/UPSTREAM.md) — provided so hosts on serverless
-   * / edge runtimes can drive eviction from an external cron entry point
+   * Provided so hosts on serverless / edge runtimes can drive eviction from
+   * an external cron entry point
    * (`flowlib.maintenance.evictExpiredChatSessions()`) instead of relying on
    * per-session `setTimeout`s that don't run between worker invocations.
    * Long-lived Node processes use the in-process `setTimeout`s (set in

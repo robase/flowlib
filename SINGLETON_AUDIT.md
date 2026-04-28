@@ -1,4 +1,4 @@
-# Module-level singleton audit (PR 14/14)
+# Module-level singleton audit
 
 Tracks `pkg/core/src/` module-level state that must (or must not) be demoted to per-`FlowlibInstance` ownership for multi-isolate runtimes (Cloudflare Workers, Deno Deploy).
 
@@ -15,7 +15,7 @@ Categories:
 | `services/templating/template.service.ts`      | `defaultInstance` / `getTemplateService()`                | **(b)**                           | **Demoted in this PR.** `getTemplateService()` is now a deprecated pass-through that always returns a fresh instance (no memoization). `createTemplateService()` is the canonical factory; callers in `create-flowlib.ts`/`flowlib-core.ts` already use it.                                         |
 | `services/templating/js-expression.service.ts` | `defaultInstance` / `getJsExpressionService()`            | **(b) instance / (a) WASM cache** | **Demoted in this PR** — service instance no longer memoized. The underlying QuickJS WASM module cache (`getQuickJS()` from `quickjs-emscripten`) stays — that's a stateless parsed-WASM cache, safe across isolates.                                                                             |
 | `actions/action-registry.ts`                   | `globalActionRegistry` (re-export from `@flowlib/actions`) | **(a) cache / (b) mutable**       | Out of scope (lives in `@flowlib/actions`, not `pkg/core/src/`). Catalog content is stateless but the `set/initialize/reset` accessors mean it's mutable global state. **Flagged for follow-up** — should expose per-instance `ActionRegistry` on `FlowlibInstance`.                                |
-| `services/credentials/oauth2.service.ts:77`    | `pendingStates: Map<string, OAuthState>`                  | **(b)**                           | Cross-request CSRF state. PR 5 (already merged) removed the module-level `setInterval` cleanup; the Map itself remains module-level. **Flagged for follow-up** — needs DO-backed storage in hosted variant.                                                                                       |
+| `services/credentials/oauth2.service.ts:77`    | `pendingStates: Map<string, OAuthState>`                  | **(b)**                           | Cross-request CSRF state. The module-level `setInterval` cleanup has already been removed (an external entry point drives it); the Map itself remains module-level. **Flagged for follow-up** — multi-isolate deployments need an external store (e.g. KV / DO).                                  |
 | `utils/url-safe-id.ts:58`                      | `globalThis.crypto.getRandomValues`                       | n/a                               | Runtime API use, not a singleton. No action.                                                                                                                                                                                                                                                      |
 
 ## What's done in this PR
@@ -28,4 +28,4 @@ Categories:
 
 - Full demotion of `getExecutionEventBus()` (needs vscode-extension migration).
 - `globalActionRegistry` per-instance ownership (lives in `@flowlib/actions`, separate package).
-- OAuth2 pending-states map → DO-backed store for hosted variant (separate concern from upstream cleanup).
+- OAuth2 pending-states map → external store (KV / DO) for multi-isolate deployments.

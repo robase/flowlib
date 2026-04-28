@@ -1,18 +1,16 @@
 /**
- * Pluggable service adapter interfaces (PR 2/14 from flowlib-hosted/UPSTREAM.md).
+ * Pluggable service adapter interfaces.
  *
  * These interfaces define the seams that allow `createFlowlib()` users to swap
  * the default implementations of cross-cutting infrastructure services
- * (encryption, event bus, chat sessions, cron, batch polling) for
- * runtime-specific alternatives. The hosted Cloudflare variant uses these to
- * inject DO-backed event buses, KV-backed chat sessions, and no-op
- * schedulers (because Cloudflare Cron Triggers handle scheduling externally).
+ * (encryption, event bus, chat sessions, cron, batch polling, background
+ * job runner) for runtime-specific alternatives.
  *
- * Self-hosted users get the unchanged in-process defaults and never need to
- * touch this surface.
- *
- * Wave 2 PRs (5, 8, 12, 13, 14) will plug concrete adapters into these seams;
- * this file only defines the contracts.
+ * The default in-process implementations are designed for long-lived Node
+ * processes. Edge runtimes (Cloudflare Workers, Vercel Edge, Deno Deploy)
+ * substitute adapters that map onto their primitives (Durable Objects,
+ * KV, Queues, externally-driven cron). Standard Node hosts get the
+ * defaults and never need to touch this surface.
  */
 
 import type { ExecutionStreamEvent } from '../services/execution-event-bus';
@@ -25,8 +23,8 @@ import type { ActiveChatSession } from '../services/chat/active-chat-sessions';
  * Optional scope passed alongside `encrypt`/`decrypt` calls.
  *
  * The default `EncryptionService` ignores this entirely (wire-format unchanged).
- * Hosted multi-tenant adapters use it to look up a per-organization Data
- * Encryption Key (DEK) — see PR 12 in flowlib-hosted/UPSTREAM.md.
+ * Multi-tenant adapters use it to look up a per-organization Data Encryption
+ * Key (DEK) at encrypt/decrypt time.
  */
 export interface EncryptionContext {
   /** Tenant scope — multi-tenant hosts derive a per-org DEK from this. */
@@ -60,11 +58,10 @@ export interface EncryptionAdapter {
  *
  * The default in-process implementation is `ExecutionEventBus`
  * ([execution-event-bus.ts](../services/execution-event-bus.ts)) backed
- * by Node's `EventEmitter`. It works well for single-process self-hosted
- * deployments. Multi-isolate runtimes (Cloudflare Workers, multi-region
- * Vercel) need an out-of-process adapter — typically a Durable Object
- * that fans events out over WebSockets — see PR 8 in
- * flowlib-hosted/UPSTREAM.md.
+ * by Node's `EventEmitter`. It works well for single-process deployments.
+ * Multi-isolate runtimes (Cloudflare Workers, multi-region Vercel) need an
+ * out-of-process adapter — typically a Durable Object or external pub/sub
+ * that fans events out over WebSockets.
  *
  * `subscribe` returns an unsubscribe function. Implementations MUST be
  * idempotent — calling the returned disposer twice is a no-op.
@@ -109,8 +106,8 @@ export interface ChatSessionStore {
  *
  * Edge runtimes that use externally-managed cron (Cloudflare Cron
  * Triggers, Vercel Cron) should pass a no-op adapter and call
- * `flowlib.triggers.runDueTriggers()` (PR 5) directly from their
- * platform's cron entry point.
+ * `flowlib.triggers.runDueTriggers()` directly from their platform's
+ * cron entry point.
  */
 export interface CronSchedulerAdapter {
   start(): Promise<void>;
@@ -130,8 +127,8 @@ export interface CronSchedulerAdapter {
  * (no timers between requests).
  *
  * Edge hosts pass a no-op adapter and invoke
- * `flowlib.runs.pollBatchJobs()` (PR 5) from a Cloudflare Cron Trigger
- * or Vercel Cron Job. `start()` then returns immediately and the
+ * `flowlib.runs.pollBatchJobs()` from a Cloudflare Cron Trigger or
+ * Vercel Cron Job. `start()` then returns immediately and the
  * `setInterval` is never created.
  */
 export interface BatchPollerAdapter {
@@ -167,8 +164,7 @@ export interface JobOptions {
 }
 
 /**
- * Pluggable background job runner (PR 13/14 from
- * flowlib-hosted/UPSTREAM.md).
+ * Pluggable background job runner.
  *
  * Two work-shapes inside `@flowlib/core` route through this contract:
  *
@@ -180,10 +176,10 @@ export interface JobOptions {
  *    `{ flowRunId, nodeId, batchResult?, batchError? }`.
  *
  * The default `InProcessJobRunner` runs handlers on a microtask in the
- * same isolate, preserving today's fire-and-forget behaviour. Hosted
- * (Cloudflare) substitutes an adapter that maps `enqueue` to
- * `env.QUEUE.send(payload)` so a separate consumer Worker picks the
- * job up.
+ * same isolate, preserving fire-and-forget behaviour. Edge-runtime
+ * adapters typically map `enqueue` onto a hosted queue (Cloudflare
+ * Queues, AWS SQS, GCP Pub/Sub) so a separate consumer process picks
+ * the job up.
  *
  * `processNextBatch` is optional — it only makes sense for adapters
  * that pull from a local queue (the in-process default). External

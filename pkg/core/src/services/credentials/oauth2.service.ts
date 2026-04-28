@@ -79,12 +79,12 @@ const pendingStates = new Map<string, OAuth2PendingState>();
 // Clean up expired states (older than 10 minutes)
 const STATE_EXPIRY_MS = 10 * 60 * 1000;
 
-// PR 5/14 (flowlib-hosted/UPSTREAM.md): pending-state cleanup is now driven
-// by the host. The previous module-level `setInterval` started a timer at
-// import time which broke edge runtimes (no timers between requests, the
-// interval ran in every isolate, and was never cleared). Hosts must now
-// invoke `flowlib.maintenance.cleanupExpiredOAuthStates()` from a cron entry
-// point, OR call `OAuth2Service.cleanupExpiredStates()` directly.
+// Pending-state cleanup is host-driven. The previous module-level
+// `setInterval` started a timer at import time which broke edge runtimes
+// (no timers between requests, the interval ran in every isolate, and was
+// never cleared). Hosts must now invoke
+// `flowlib.maintenance.cleanupExpiredOAuthStates()` from a cron entry point,
+// OR call `OAuth2Service.cleanupExpiredStates()` directly.
 
 /**
  * OAuth2 Service for handling authorization flows

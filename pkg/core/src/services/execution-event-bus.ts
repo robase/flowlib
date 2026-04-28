@@ -6,14 +6,13 @@
  * subscribe per flow-run ID and forward events to connected clients.
  *
  * This module exports three implementations of `ExecutionEventBusAdapter`
- * (defined in `pkg/core/src/types/services.ts`, see PR 2/14 from
- * `flowlib-hosted/UPSTREAM.md`):
+ * (defined in `pkg/core/src/types/services.ts`):
  *
  *   1. `ExecutionEventBus` — the default `EventEmitter`-backed in-process
- *      bus. Used by self-hosted single-process deployments.
+ *      bus. Used by single-process deployments.
  *   2. `RemoteEventBus` — a skeleton that delegates `emit` and `subscribe`
- *      to host-supplied async callbacks. Hosted runtimes plug in a
- *      Durable Object (or any other out-of-process pub/sub) here.
+ *      to host-supplied async callbacks. Edge runtimes plug in a Durable
+ *      Object or any other out-of-process pub/sub here.
  *   3. `NoopEventBus` — drops every event and returns idempotent no-op
  *      disposers from `subscribe`. Useful for tests and minimal hosts.
  */
@@ -198,9 +197,9 @@ export interface RemoteEventBusOptions {
  * Skeleton out-of-process event bus.
  *
  * Implements `ExecutionEventBusAdapter` by delegating to host-supplied
- * `publish` / `subscribe` callbacks. The hosted Cloudflare variant wires
- * these to a Durable Object that fans events out via WebSockets — see
- * PR 8 in `flowlib-hosted/UPSTREAM.md`.
+ * `publish` / `subscribe` callbacks. Typical edge-runtime wiring routes
+ * `publish` to a Durable Object (or external pub/sub) that fans events
+ * out via WebSockets to subscribed clients.
  *
  * `subscribe` returns a synchronous disposer. If the host's `subscribe`
  * callback returns a `Promise<() => void>`, the disposer awaits the

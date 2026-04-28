@@ -258,13 +258,13 @@ export class TemplateService {
 
 // ── Factory helpers ──────────────────────────────────────────────────────────
 //
-// PR 14 (`flowlib-hosted/UPSTREAM.md`): the previous `getTemplateService()`
-// memoized a module-level instance. That meant the first `createFlowlib()`
-// call's `JsExpressionService` won — subsequent instances silently reused
-// the same `TemplateService` and ignored their own QuickJS runtime. Per-
-// instance state belongs on the `FlowlibInstance`, so `createTemplateService`
-// is now the canonical factory and `getTemplateService` is a deprecated
-// pass-through that always returns a fresh instance.
+// The previous `getTemplateService()` memoized a module-level instance, which
+// meant the first `createFlowlib()` call's `JsExpressionService` won —
+// subsequent instances silently reused the same `TemplateService` and ignored
+// their own QuickJS runtime. Per-instance state belongs on the
+// `FlowlibInstance`, so `createTemplateService` is now the canonical factory
+// and `getTemplateService` is a deprecated pass-through that always returns a
+// fresh instance.
 
 export function createTemplateService(
   jsExpressionService: JsExpressionService,
