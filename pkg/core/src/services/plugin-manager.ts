@@ -18,7 +18,7 @@ import type {
   PluginDatabaseApi,
 } from 'src/types/plugin.types';
 import type { FlowlibIdentity, FlowlibPermission, AuthorizationResult } from 'src/types/auth.types';
-import type { ActionDefinition } from 'src/actions/types';
+import type { ActionDefinition } from '@flowlib/action-kit';
 import type { FlowlibInstance } from 'src/api/types';
 
 // =============================================================================

@@ -7,16 +7,21 @@ export * from './database';
 export * from './types.internal';
 
 // Provider-Actions architecture
+// Re-export action infrastructure from the canonical packages.
+// `defineAction` + types live in @flowlib/action-kit (no runtime deps);
+// the registry, executor bridges, providers, and per-provider action
+// bundles live in @flowlib/actions.
+export { defineAction } from '@flowlib/action-kit';
 export {
-  defineAction,
   ActionRegistry,
   getGlobalActionRegistry,
   initializeGlobalActionRegistry,
+} from '@flowlib/actions/registry';
+export {
   executeActionAsNode,
   executeActionAsTool,
   createToolExecutorForAction,
-  registerBuiltinActions,
-  allBuiltinActions,
+  allProviderActions,
   coreActions,
   httpActions,
   gmailActions,
@@ -26,6 +31,10 @@ export {
   googleSheetsActions,
   googleDriveActions,
   googleCalendarActions,
+  linearActions,
+  postgresActions,
+} from '@flowlib/actions';
+export {
   CORE_PROVIDER,
   HTTP_PROVIDER,
   GMAIL_PROVIDER,
@@ -38,9 +47,16 @@ export {
   LINEAR_PROVIDER,
   POSTGRES_PROVIDER,
   TRIGGERS_PROVIDER,
-  linearActions,
-  postgresActions,
-} from './actions';
+} from '@flowlib/actions/providers';
+
+/**
+ * Convenience alias for `allProviderActions`. Retained for back-compat;
+ * new code should import `allProviderActions` from `@flowlib/actions`.
+ *
+ * @deprecated Use `allProviderActions` instead.
+ */
+export { allProviderActions as allBuiltinActions } from '@flowlib/actions';
+
 export type {
   ActionDefinition,
   ActionExecutionContext,
@@ -51,7 +67,7 @@ export type {
   ProviderCategory,
   CredentialRequirement,
   ParamField,
-} from './actions';
+} from '@flowlib/action-kit';
 
 // Re-export shared plugin database API factory
 export { createPluginDatabaseApi } from './services/plugin-database-api';

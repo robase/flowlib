@@ -10,7 +10,7 @@ import type {
   FlowRunHookContext,
   NodeExecutionHookContext,
 } from '../../../src/types/plugin.types';
-import type { ActionDefinition } from '../../../src/actions/types';
+import type { ActionDefinition } from '@flowlib/action-kit';
 
 const mockLogger = {
   debug: vi.fn(),

@@ -233,7 +233,7 @@ export class ServiceFactory {
         credentialsService,
         flowsService,
         flowVersionsService,
-        (this.actionRegistryRef as import('src/actions').ActionRegistry) ?? null,
+        (this.actionRegistryRef as import('@flowlib/actions/registry').ActionRegistry) ?? null,
         null, // flowlib instance wired post-init via chatStreamService.setFlowlibInstance()
       );
 

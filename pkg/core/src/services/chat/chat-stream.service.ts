@@ -14,7 +14,7 @@
 import type { Logger } from 'src/schemas';
 import type { FlowlibIdentity } from 'src/types/auth.types';
 import type { FlowlibInstance } from 'src/api/types';
-import type { ActionRegistry } from 'src/actions';
+import type { ActionRegistry } from '@flowlib/actions/registry';
 import type { ProviderAdapter } from '../ai/provider-adapter';
 import type {
   ChatMessage,

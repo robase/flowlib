@@ -1,5 +1,5 @@
 import type { AgentAPI } from './types';
-import { getGlobalActionRegistry } from '../actions';
+import { getGlobalActionRegistry } from '@flowlib/actions/registry';
 import type { ServiceFactory } from '../services/service-factory';
 import type { BatchProvider } from '../services/ai/base-client';
 import { detectProviderFromCredential } from '../utils/provider-detection';

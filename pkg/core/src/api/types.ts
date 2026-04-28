@@ -43,8 +43,8 @@ import type {
   FlowlibDefinition,
 } from '../services/flow-versions/schemas-fresh';
 import type { ExecutionStreamEvent } from '../services/execution-event-bus';
-import type { ActionDefinition, ProviderDef, LoadOptionsResult } from '../actions';
-import type { ActionRegistry } from '../actions';
+import type { ActionDefinition, ProviderDef, LoadOptionsResult } from '@flowlib/action-kit';
+import type { ActionRegistry } from '@flowlib/actions/registry';
 import type { AgentToolDefinition, AgentPromptResult } from '../types/agent-tool.types';
 import type { SubmitAgentPromptRequest } from '../types.internal';
 import type {

@@ -6,13 +6,13 @@
  * validation.
  */
 import { describe, it, expect, vi } from 'vitest';
-import { coerceJsonStringParams, executeActionAsNode } from 'src/actions/action-executor';
+import { coerceJsonStringParams, executeActionAsNode } from '@flowlib/actions';
 import { manualTriggerAction } from '@flowlib/actions';
-import { defineAction } from 'src/actions/define-action';
-import { CORE_PROVIDER } from 'src/actions/providers';
+import { defineAction } from '@flowlib/action-kit';
+import { CORE_PROVIDER } from '@flowlib/actions/providers';
 import { NodeExecutionStatus } from 'src/types/base';
 import { z } from 'zod/v4';
-import type { ActionExecutionContext } from 'src/actions/types';
+import type { ActionExecutionContext } from '@flowlib/action-kit';
 import type { NodeExecutionContext } from 'src/types.internal';
 
 // ---------------------------------------------------------------------------

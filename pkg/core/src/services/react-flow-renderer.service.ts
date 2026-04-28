@@ -6,7 +6,7 @@ import { Logger } from '../schemas';
 import { DatabaseError } from '../types/common/errors.types';
 import { FlowEdge, FlowNodeDefinitions } from './flow-versions/schemas-fresh';
 import type { NodeOutput, NodeInputData } from '../types/node-io-types';
-import { getGlobalActionRegistry } from '../actions/action-registry';
+import { getGlobalActionRegistry } from '@flowlib/actions/registry';
 import { applyElkLayout } from '@flowlib/layouts';
 import { FlowsService } from './flows/flows.service';
 import { FlowVersionsService } from './flow-versions/flow-versions.service';

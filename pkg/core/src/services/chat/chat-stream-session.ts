@@ -30,7 +30,7 @@ import type {
 import type { ChatToolkit } from './chat-toolkit';
 import type { FlowContextData } from './system-prompt';
 import { buildSystemPrompt } from './system-prompt';
-import type { ActionRegistry } from 'src/actions';
+import type { ActionRegistry } from '@flowlib/actions/registry';
 import { classifyError } from '@flowlib/action-kit';
 
 /**

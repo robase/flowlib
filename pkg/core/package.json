@@ -54,11 +54,6 @@
       "import": "./dist/database/schema-mysql.js",
       "require": "./dist/database/schema-mysql.cjs"
     },
-    "./actions": {
-      "types": "./dist/actions/index.d.ts",
-      "import": "./dist/actions/index.js",
-      "require": "./dist/actions/index.cjs"
-    },
     "./config": {
       "types": "./dist/config.d.ts",
       "import": "./dist/config.js",

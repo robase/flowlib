@@ -10,7 +10,7 @@
  *   > 50 nodes  → count only, LLM uses get_current_flow_context tool
  */
 
-import type { ActionRegistry } from 'src/actions';
+import type { ActionRegistry } from '@flowlib/actions/registry';
 
 // =====================================
 // BASE IDENTITY

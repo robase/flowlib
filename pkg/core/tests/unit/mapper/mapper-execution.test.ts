@@ -29,7 +29,7 @@ const mockActionExecute = vi.fn(async () => ({
   },
 }));
 
-vi.mock('src/actions/action-registry', () => ({
+vi.mock('@flowlib/actions/registry', () => ({
   getGlobalActionRegistry: () => ({
     get: () => ({
       id: 'core.test_action',
@@ -40,7 +40,7 @@ vi.mock('src/actions/action-registry', () => ({
   }),
 }));
 
-vi.mock('src/actions/action-executor', () => ({
+vi.mock('@flowlib/actions', () => ({
   executeActionAsNode: async () => {
     // Delegate to trackable mock
     return mockActionExecute();

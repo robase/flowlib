@@ -1,5 +1,5 @@
 import type { ActionsAPI } from './types';
-import type { ActionRegistry } from '../actions';
+import type { ActionRegistry } from '@flowlib/actions/registry';
 import type { ServiceFactory } from '../services/service-factory';
 import type { Logger } from '../schemas';
 import { ValidationError } from '../types/common/errors.types';

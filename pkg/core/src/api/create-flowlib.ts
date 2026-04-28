@@ -18,7 +18,8 @@ import {
 import { PluginManager } from '../services/plugin-manager';
 import type { FlowlibPlugin, FlowlibPluginDefinition } from '../types/plugin.types';
 import { AuthorizationService, createAuthorizationService } from '../services/auth';
-import { ActionRegistry, initializeGlobalActionRegistry, registerBuiltinActions } from '../actions';
+import { ActionRegistry, initializeGlobalActionRegistry } from '@flowlib/actions/registry';
+import { allProviderActions } from '@flowlib/actions';
 import type { CredentialAuthType } from '../database/schema-sqlite';
 
 import type { FlowlibInstance, FlowlibMaintenanceOptions, FlowlibMaintenanceResult } from './types';
@@ -179,7 +180,7 @@ export async function createFlowlib(config: FlowlibConfig): Promise<FlowlibInsta
 
     // Initialize action registry + built-in actions
     const actionRegistry: ActionRegistry = initializeGlobalActionRegistry(logger);
-    registerBuiltinActions(actionRegistry);
+    actionRegistry.registerMany(allProviderActions);
     logger.info(
       `Registered ${actionRegistry.size} built-in actions from ${actionRegistry.getProviders().length} providers`,
     );

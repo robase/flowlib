@@ -83,8 +83,9 @@ import type {
 import type { AgentToolDefinition, AgentPromptResult } from './types/agent-tool.types';
 
 // Action registry (Provider-Actions architecture)
-import { ActionRegistry, initializeGlobalActionRegistry, registerBuiltinActions } from './actions';
-import type { ActionDefinition, ProviderDef, LoadOptionsResult } from './actions';
+import { ActionRegistry, initializeGlobalActionRegistry } from '@flowlib/actions/registry';
+import { allProviderActions } from '@flowlib/actions';
+import type { ActionDefinition, ProviderDef, LoadOptionsResult } from '@flowlib/action-kit';
 
 // Authorization
 import { AuthorizationService, createAuthorizationService } from './services/auth';
@@ -441,7 +442,7 @@ export class Flowlib {
       this.actionRegistry = initializeGlobalActionRegistry(this.config.logger);
 
       // Register all built-in actions (core, http, gmail, etc.)
-      registerBuiltinActions(this.actionRegistry);
+      this.actionRegistry.registerMany(allProviderActions);
       this.config.logger.info(
         `Registered ${this.actionRegistry.size} built-in actions from ${this.actionRegistry.getProviders().length} providers`,
       );
@@ -1462,7 +1463,7 @@ export class Flowlib {
     });
 
     try {
-      const { executeActionAsNode } = await import('./actions/action-executor');
+      const { executeActionAsNode } = await import('@flowlib/actions');
 
       const mockContext: NodeExecutionContext = {
         nodeId: `test-${Date.now()}`,

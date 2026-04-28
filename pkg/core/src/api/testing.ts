@@ -1,6 +1,6 @@
 import type { TestingAPI } from './types';
 import type { ServiceFactory } from '../services/service-factory';
-import type { ActionRegistry } from '../actions';
+import type { ActionRegistry } from '@flowlib/actions/registry';
 import type { JsExpressionService, TemplateService } from '../services/templating';
 import type { Logger, FlowlibConfig } from '../schemas';
 import type { NodeExecutionContext } from '../types.internal';
@@ -121,7 +121,7 @@ export function createTestingAPI(
       });
 
       try {
-        const { executeActionAsNode } = await import('../actions/action-executor');
+        const { executeActionAsNode } = await import('@flowlib/actions');
 
         const mockContext: NodeExecutionContext = {
           nodeId: `test-${Date.now()}`,

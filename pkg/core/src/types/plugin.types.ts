@@ -22,7 +22,7 @@
  * ```
  */
 
-import type { ActionDefinition } from 'src/actions/types';
+import type { ActionDefinition } from '@flowlib/action-kit';
 import type { FlowlibInstance } from 'src/api/types';
 import type {
   FlowlibIdentity,

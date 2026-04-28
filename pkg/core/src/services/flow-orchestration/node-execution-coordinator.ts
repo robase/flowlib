@@ -16,8 +16,8 @@ import { detectProviderFromCredential } from 'src/utils/provider-detection';
 import { TemplateService, createTemplateService } from '../templating/template.service';
 import type { JsExpressionService } from '../templating/js-expression.service';
 import type { MapperConfig } from '../flow-versions/schemas-fresh';
-import { getGlobalActionRegistry } from 'src/actions/action-registry';
-import { executeActionAsNode } from 'src/actions/action-executor';
+import { getGlobalActionRegistry } from '@flowlib/actions/registry';
+import { executeActionAsNode } from '@flowlib/actions';
 import { classifyError } from '@flowlib/action-kit';
 
 export type NodeExecutionCoordinatorDeps = {
