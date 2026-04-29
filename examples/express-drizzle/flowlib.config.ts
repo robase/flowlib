@@ -18,7 +18,7 @@ export const flowlibConfig = defineConfig({
   encryptionKey: process.env.FLOWLIB_ENCRYPTION_KEY || 'change-me-in-production',
   database: {
     type: 'sqlite',
-    connectionString: process.env.DB_FILE_NAME || 'file:./dev.db',
+    connectionString: 'file:./dev.db',
   },
   apiPath: 'http://localhost:3000/flowlib',
   frontendPath: '/flowlib',

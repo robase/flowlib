@@ -12,6 +12,7 @@ import { SearchableSelectField } from './SearchableSelectField';
 import { CodeMirrorJsEditor } from '../../ui/codemirror-js-editor';
 import { SwitchCasesField } from './SwitchCasesField';
 import { useFlowEditorStore } from '../flow-editor.store';
+import { FieldHelperAdornment } from '../../field-helpers';
 
 interface ConfigFieldWithTemplateProps {
   field: NodeParamField;
@@ -65,6 +66,21 @@ export const ConfigFieldWithTemplate = ({
   if (field.hidden) {
     return null;
   }
+
+  const isTemplateValue = typeof value === 'string' && value.includes('{{') && value.includes('}}');
+  const adornment = field.helper ? (
+    <FieldHelperAdornment
+      field={field}
+      value={value}
+      onChange={onChange}
+      context={{
+        actionId: nodeType,
+        formValues,
+        portalContainer,
+        templateMode: isTemplateValue,
+      }}
+    />
+  ) : null;
 
   const fieldError = error ? (
     <div className="flex items-center gap-1 text-[11px] text-destructive mt-0.5">
@@ -158,23 +174,26 @@ export const ConfigFieldWithTemplate = ({
     return (
       <div className={cn('flex flex-col gap-1.5', isMultiline && 'flex-1 min-h-0')}>
         {fieldHeader}
-        <DroppableInput
-          id={field.name}
-          className={cn('text-xs font-mono', isMultiline && 'min-h-0 flex-1')}
-          multiline={isMultiline}
-          rows={rows}
-          fillAvailableHeight={isMultiline}
-          value={
-            typeof value === 'string'
-              ? value
-              : value === null || value === undefined
-                ? ''
-                : JSON.stringify(value, null, 2)
-          }
-          placeholder={field.placeholder || '{{ nodeId.data.variables.output.value }}'}
-          onChange={(newValue) => onChange(newValue)}
-          disabled={field.disabled}
-        />
+        <div className={cn('flex items-start gap-1', isMultiline && 'min-h-0 flex-1')}>
+          <DroppableInput
+            id={field.name}
+            className={cn('text-xs font-mono flex-1', isMultiline && 'min-h-0')}
+            multiline={isMultiline}
+            rows={rows}
+            fillAvailableHeight={isMultiline}
+            value={
+              typeof value === 'string'
+                ? value
+                : value === null || value === undefined
+                  ? ''
+                  : JSON.stringify(value, null, 2)
+            }
+            placeholder={field.placeholder || '{{ nodeId.data.variables.output.value }}'}
+            onChange={(newValue) => onChange(newValue)}
+            disabled={field.disabled}
+          />
+          {adornment}
+        </div>
         {fieldError}
       </div>
     );
@@ -277,18 +296,21 @@ export const ConfigFieldWithTemplate = ({
       return (
         <div className="flex flex-col gap-1.5">
           {fieldHeader}
-          <Input
-            id={field.name}
-            type="number"
-            className="h-8 font-mono text-xs"
-            value={value === undefined || value === null ? '' : String(value)}
-            placeholder={field.placeholder}
-            onChange={(event) => {
-              const nextValue = event.target.value;
-              onChange(nextValue === '' ? null : Number(nextValue));
-            }}
-            disabled={field.disabled}
-          />
+          <div className="flex items-center gap-1">
+            <Input
+              id={field.name}
+              type="number"
+              className="h-8 font-mono text-xs flex-1"
+              value={value === undefined || value === null ? '' : String(value)}
+              placeholder={field.placeholder}
+              onChange={(event) => {
+                const nextValue = event.target.value;
+                onChange(nextValue === '' ? null : Number(nextValue));
+              }}
+              disabled={field.disabled}
+            />
+            {adornment}
+          </div>
           {fieldError}
         </div>
       );
@@ -318,14 +340,17 @@ export const ConfigFieldWithTemplate = ({
       return (
         <div className="flex flex-col gap-1.5">
           {fieldHeader}
-          <DroppableInput
-            id={field.name}
-            value={(value as string) ?? ''}
-            placeholder={field.placeholder}
-            onChange={(newValue) => onChange(newValue)}
-            disabled={field.disabled}
-            className="font-mono text-xs"
-          />
+          <div className="flex items-start gap-1">
+            <DroppableInput
+              id={field.name}
+              value={(value as string) ?? ''}
+              placeholder={field.placeholder}
+              onChange={(newValue) => onChange(newValue)}
+              disabled={field.disabled}
+              className="font-mono text-xs flex-1"
+            />
+            {adornment}
+          </div>
           {fieldError}
         </div>
       );

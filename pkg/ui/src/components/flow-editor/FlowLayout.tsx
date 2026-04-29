@@ -2,6 +2,7 @@ import type React from 'react';
 import { FlowBottomToolbar } from './FlowBottomToolbar';
 import { ToolbarCollapsedProvider } from './toolbar-context';
 import { TooltipProvider } from '../ui/tooltip';
+import { useDelayedUnmount } from '../../hooks/use-delayed-unmount';
 
 interface FlowLayoutProps {
   sidebar: React.ReactNode;
@@ -54,10 +55,21 @@ export function FlowLayout({
   hideToolbar = false,
 }: FlowLayoutProps) {
   const hasFloatingToolbar = Boolean(chatToggle || viewCodeToggle);
+  const { shouldRender: shouldRenderSidebar, isVisible: sidebarVisible } = useDelayedUnmount(
+    sidebarOpen,
+    200,
+  );
 
   return (
     <div className="flex flex-1 min-h-0">
-      {sidebarOpen && sidebar}
+      {shouldRenderSidebar && (
+        <div
+          className="flex shrink-0 overflow-hidden transition-[width,opacity] duration-200 ease-out"
+          style={{ width: sidebarVisible ? '24rem' : 0, opacity: sidebarVisible ? 1 : 0 }}
+        >
+          {sidebar}
+        </div>
+      )}
       <div
         className="relative flex flex-col flex-1 min-h-0 overflow-hidden"
         ref={viewportRef as React.RefObject<HTMLDivElement>}

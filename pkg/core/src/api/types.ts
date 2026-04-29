@@ -323,6 +323,12 @@ export interface ActionsAPI {
     fieldName: string,
     deps: Record<string, unknown>,
   ): Promise<LoadOptionsResult>;
+  resolveActionLoader(
+    actionId: string,
+    loaderName: string,
+    deps: Record<string, unknown>,
+    query?: string,
+  ): Promise<LoadOptionsResult>;
 }
 
 // =====================================

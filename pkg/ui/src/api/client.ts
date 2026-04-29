@@ -519,6 +519,31 @@ class ApiClient {
     );
   }
 
+  /**
+   * Run a named action loader (powers `helper: { kind: 'async-picker' }`).
+   * Returns the same shape as `loadFieldOptions`.
+   */
+  async runActionLoader(
+    actionId: string,
+    loaderName: string,
+    dependencyValues: Record<string, unknown>,
+    query?: string,
+  ): Promise<{
+    options: { label: string; value: string | number }[];
+    defaultValue?: string | number;
+    placeholder?: string;
+    disabled?: boolean;
+  }> {
+    const params = new URLSearchParams();
+    params.set('deps', JSON.stringify(dependencyValues));
+    if (query !== undefined) {
+      params.set('query', query);
+    }
+    return this.request(
+      `/actions/${encodeURIComponent(actionId)}/loaders/${encodeURIComponent(loaderName)}?${params.toString()}`,
+    );
+  }
+
   // Credential endpoints
   async listCredentials(filters?: CredentialFilters): Promise<Credential[]> {
     const params = new URLSearchParams();

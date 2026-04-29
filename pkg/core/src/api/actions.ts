@@ -80,5 +80,15 @@ export function createActionsAPI(
       };
       return actionRegistry.resolveFieldOptions(actionId, fieldName, deps, context);
     },
+
+    resolveActionLoader(actionId, loaderName, deps, query) {
+      const context = {
+        logger,
+        services: {
+          credentials: sf.getCredentialsService(),
+        },
+      };
+      return actionRegistry.resolveActionLoader(actionId, loaderName, deps, context, query);
+    },
   };
 }

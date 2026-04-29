@@ -727,34 +727,6 @@ importers:
         specifier: ^5.1.4
         version: 5.1.4(typescript@5.9.3)(vite@8.0.8(@types/node@24.12.0)(esbuild@0.27.3)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.3))
 
-  experiments/embedded-backend-probe:
-    dependencies:
-      '@flowlib/core':
-        specifier: workspace:*
-        version: link:../../pkg/core
-      '@libsql/client':
-        specifier: '*'
-        version: 0.17.2(encoding@0.1.13)
-
-  experiments/webview-wasm-probe:
-    dependencies:
-      quickjs-emscripten:
-        specifier: ^0.29.2
-        version: 0.29.2
-    devDependencies:
-      '@types/node':
-        specifier: ^20.11.0
-        version: 20.19.37
-      '@types/vscode':
-        specifier: ^1.85.0
-        version: 1.116.0
-      esbuild:
-        specifier: '>=0.25.0'
-        version: 0.27.3
-      typescript:
-        specifier: ^5.4.0
-        version: 5.9.3
-
   pkg/action-kit:
     dependencies:
       zod:
@@ -1418,18 +1390,18 @@ importers:
       '@codemirror/view':
         specifier: ^6.38.8
         version: 6.39.16
-      '@fsegurai/codemirror-theme-vscode-dark':
-        specifier: ^6.2.4
-        version: 6.2.4(@codemirror/language@6.12.2)(@codemirror/state@6.5.4)(@codemirror/view@6.39.16)(@lezer/highlight@1.2.3)
-      '@fsegurai/codemirror-theme-vscode-light':
-        specifier: ^6.2.4
-        version: 6.2.4(@codemirror/language@6.12.2)(@codemirror/state@6.5.4)(@codemirror/view@6.39.16)(@lezer/highlight@1.2.3)
       '@flowlib/layouts':
         specifier: workspace:*
         version: link:../layouts
       '@flowlib/sdk':
         specifier: workspace:*
         version: link:../sdk
+      '@fsegurai/codemirror-theme-vscode-dark':
+        specifier: ^6.2.4
+        version: 6.2.4(@codemirror/language@6.12.2)(@codemirror/state@6.5.4)(@codemirror/view@6.39.16)(@lezer/highlight@1.2.3)
+      '@fsegurai/codemirror-theme-vscode-light':
+        specifier: ^6.2.4
+        version: 6.2.4(@codemirror/language@6.12.2)(@codemirror/state@6.5.4)(@codemirror/view@6.39.16)(@lezer/highlight@1.2.3)
       '@lezer/highlight':
         specifier: ^1.2.3
         version: 1.2.3
@@ -3112,32 +3084,17 @@ packages:
     resolution: {integrity: sha512-H9xg1/sfVvyfU7o3zMfBEjQ1gcsdeTMgqHoYdN79tuLqfTtuu7WckRA1R5whDwOzxaZAeMKTYWqP+WCAi0CHsg==}
     engines: {node: ^18.14.0 || ^20.0.0 || ^22.0.0 || >=24.0.0}
 
-  '@jitl/quickjs-ffi-types@0.29.2':
-    resolution: {integrity: sha512-069uQTiEla2PphXg6UpyyJ4QXHkTj3S9TeXgaMCd8NDYz3ODBw5U/rkg6fhuU8SMpoDrWjEzybmV5Mi2Pafb5w==}
-
   '@jitl/quickjs-ffi-types@0.32.0':
     resolution: {integrity: sha512-v9T+GQpmk43VDJ7d72sf0Nexhk+ArvtUihW27dy7lqAl0zBObFKtSBBIm5RBjwIhE8VwsPPm9PNuvPvNqLWUEg==}
-
-  '@jitl/quickjs-wasmfile-debug-asyncify@0.29.2':
-    resolution: {integrity: sha512-YdRw2414pFkxzyyoJGv81Grbo9THp/5athDMKipaSBNNQvFE9FGRrgE9tt2DT2mhNnBx1kamtOGj0dX84Yy9bg==}
 
   '@jitl/quickjs-wasmfile-debug-asyncify@0.32.0':
     resolution: {integrity: sha512-EX8zbXwGqCgAE764M+qvkHtyXDi/FUoMBea0JnES7vCM3P7a2+EOZOjGv85wtZ2sJhI1oJ+nekmqpOODFDY+hw==}
 
-  '@jitl/quickjs-wasmfile-debug-sync@0.29.2':
-    resolution: {integrity: sha512-VgisubjyPMWEr44g+OU0QWGyIxu7VkApkLHMxdORX351cw22aLTJ+Z79DJ8IVrTWc7jh4CBPsaK71RBQDuVB7w==}
-
   '@jitl/quickjs-wasmfile-debug-sync@0.32.0':
     resolution: {integrity: sha512-LeYWrPGC1uNCTBWvibo3ZLJj0CSVNYUXvJpXMCmuQ5Sap2cCACc3uvGvYV4homHHBAzfw5akoTqMMS4YFRtw+Q==}
 
-  '@jitl/quickjs-wasmfile-release-asyncify@0.29.2':
-    resolution: {integrity: sha512-sf3luCPr8wBVmGV6UV8Set+ie8wcO6mz5wMvDVO0b90UVCKfgnx65A1JfeA+zaSGoaFyTZ3sEpXSGJU+6qJmLw==}
-
   '@jitl/quickjs-wasmfile-release-asyncify@0.32.0':
     resolution: {integrity: sha512-3oSwPfja12ICz4aIblB58cuY8JlEq5Txt8Cut4VLo+LH47QN+mzCnSgnbB03hWzg1LBcc+VyyI9UOag7a1NF+Q==}
-
-  '@jitl/quickjs-wasmfile-release-sync@0.29.2':
-    resolution: {integrity: sha512-UFIcbY3LxBRUjEqCHq3Oa6bgX5znt51V5NQck8L2US4u989ErasiMLUjmhq6UPC837Sjqu37letEK/ZpqlJ7aA==}
 
   '@jitl/quickjs-wasmfile-release-sync@0.32.0':
     resolution: {integrity: sha512-BKNDI/TPBfGlLNGYpLrhcDGXmIk4xHm4MRAisOBnOzpXVn9HZWsfmMAc9WMBrAHjvvds6HOikKeaOBKdPdpVrg==}
@@ -11394,15 +11351,8 @@ packages:
     resolution: {integrity: sha512-WuyALRjWPDGtt/wzJiadO5AXY+8hZ80hVpe6MyivgraREW751X3SbhRvG3eLKOYN+8VEvqLcf3wdnt44Z4S4SA==}
     engines: {node: '>=10'}
 
-  quickjs-emscripten-core@0.29.2:
-    resolution: {integrity: sha512-jEAiURW4jGqwO/fW01VwlWqa2G0AJxnN5FBy1xnVu8VIVhVhiaxUfCe+bHqS6zWzfjFm86HoO40lzpteusvyJA==}
-
   quickjs-emscripten-core@0.32.0:
     resolution: {integrity: sha512-QFnPfjFey8EqknSrSxe1hZrf1/8z7/6s1QzGOmKo6++02r7QRRX7ZoyNaZh7JuVjWsVW87KnQrbZqnHkOAzUyg==}
-
-  quickjs-emscripten@0.29.2:
-    resolution: {integrity: sha512-SlvkvyZgarReu2nr4rkf+xz1vN0YDUz7sx4WHz8LFtK6RNg4/vzAGcFjE7nfHYBEbKrzfIWvKnMnxZkctQ898w==}
-    engines: {node: '>=16.0.0'}
 
   quickjs-emscripten@0.32.0:
     resolution: {integrity: sha512-So0Sqw869y/S2oE3Nuc0uT3Dhqgvsj8FSrwBdsuTosVsG8ME5/OcudU1GxsrIFdFABgy17GHnTVO9TYV/bLQcA==}
@@ -15071,37 +15021,19 @@ snapshots:
       '@types/yargs': 17.0.35
       chalk: 4.1.2
 
-  '@jitl/quickjs-ffi-types@0.29.2': {}
-
   '@jitl/quickjs-ffi-types@0.32.0': {}
-
-  '@jitl/quickjs-wasmfile-debug-asyncify@0.29.2':
-    dependencies:
-      '@jitl/quickjs-ffi-types': 0.29.2
 
   '@jitl/quickjs-wasmfile-debug-asyncify@0.32.0':
     dependencies:
       '@jitl/quickjs-ffi-types': 0.32.0
 
-  '@jitl/quickjs-wasmfile-debug-sync@0.29.2':
-    dependencies:
-      '@jitl/quickjs-ffi-types': 0.29.2
-
   '@jitl/quickjs-wasmfile-debug-sync@0.32.0':
     dependencies:
       '@jitl/quickjs-ffi-types': 0.32.0
 
-  '@jitl/quickjs-wasmfile-release-asyncify@0.29.2':
-    dependencies:
-      '@jitl/quickjs-ffi-types': 0.29.2
-
   '@jitl/quickjs-wasmfile-release-asyncify@0.32.0':
     dependencies:
       '@jitl/quickjs-ffi-types': 0.32.0
-
-  '@jitl/quickjs-wasmfile-release-sync@0.29.2':
-    dependencies:
-      '@jitl/quickjs-ffi-types': 0.29.2
 
   '@jitl/quickjs-wasmfile-release-sync@0.32.0':
     dependencies:
@@ -24746,21 +24678,9 @@ snapshots:
 
   quick-lru@5.1.1: {}
 
-  quickjs-emscripten-core@0.29.2:
-    dependencies:
-      '@jitl/quickjs-ffi-types': 0.29.2
-
   quickjs-emscripten-core@0.32.0:
     dependencies:
       '@jitl/quickjs-ffi-types': 0.32.0
-
-  quickjs-emscripten@0.29.2:
-    dependencies:
-      '@jitl/quickjs-wasmfile-debug-asyncify': 0.29.2
-      '@jitl/quickjs-wasmfile-debug-sync': 0.29.2
-      '@jitl/quickjs-wasmfile-release-asyncify': 0.29.2
-      '@jitl/quickjs-wasmfile-release-sync': 0.29.2
-      quickjs-emscripten-core: 0.29.2
 
   quickjs-emscripten@0.32.0:
     dependencies:

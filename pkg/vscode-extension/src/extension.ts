@@ -193,39 +193,14 @@ export function activate(ctx: vscode.ExtensionContext): void {
     }),
 
     // Use `createTreeView` (not `registerTreeDataProvider`) so we can
-    // listen for expand events and call `treeView.reveal()`. Expansion
-    // → invalidate that flow's runs cache → re-fetch. Plus we subscribe
-    // to the embedded server's ExecutionEventBus per-flow so live runs
-    // push updates without the user having to collapse/expand.
+    // call `treeView.reveal()` from the openFlow command. The provider
+    // manages its own per-flow subscriptions across both embedded and
+    // HTTP backends — the tree view itself only needs the reveal handle.
+    flowsExplorer,
     (() => {
       const treeView = vscode.window.createTreeView('flowlib.flows', {
         treeDataProvider: flowsExplorer,
         showCollapseAll: true,
-      });
-      const flowSubs = new Map<string, () => void>();
-      treeView.onDidExpandElement(async (e) => {
-        if (e.element.kind !== 'flow') {
-          return;
-        }
-        const flowId = e.element.flowId;
-        flowsExplorer.refreshFlowRuns(flowId);
-        if (currentBackend === embeddedBackend && !flowSubs.has(flowId)) {
-          const dispose = await embeddedBackend.subscribeFlowRuns(flowId, () =>
-            flowsExplorer.refreshFlowRuns(flowId),
-          );
-          flowSubs.set(flowId, dispose);
-        }
-      });
-      treeView.onDidCollapseElement((e) => {
-        if (e.element.kind !== 'flow') {
-          return;
-        }
-        const flowId = e.element.flowId;
-        const dispose = flowSubs.get(flowId);
-        if (dispose) {
-          dispose();
-          flowSubs.delete(flowId);
-        }
       });
 
       // `flowlib.openFlow` — single-click on a flow row both opens the
@@ -245,18 +220,12 @@ export function activate(ctx: vscode.ExtensionContext): void {
               FlowEditorProvider.viewType,
             );
           }
-          // `reveal` triggers onDidExpandElement, which kicks the runs
-          // cache invalidation + bus subscription path above.
           await treeView.reveal(item, { expand: true, focus: false, select: true });
         },
       );
 
       return {
         dispose: () => {
-          for (const d of flowSubs.values()) {
-            d();
-          }
-          flowSubs.clear();
           openFlowCmd.dispose();
           treeView.dispose();
         },

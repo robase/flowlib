@@ -77,6 +77,28 @@ export function useLoadFieldOptions(
   });
 }
 
+/**
+ * Hook for running a named action loader (powers `helper: { kind: 'async-picker' }`).
+ */
+export function useActionLoader(
+  actionId: string,
+  loaderName: string,
+  dependencyValues: Record<string, unknown>,
+  query: string,
+  options?: { enabled?: boolean },
+) {
+  const apiClient = useApiClient();
+  const depsKey = JSON.stringify(dependencyValues);
+
+  return useQuery({
+    queryKey: queryKeys.actionLoader(actionId, loaderName, depsKey, query),
+    queryFn: () => apiClient.runActionLoader(actionId, loaderName, dependencyValues, query),
+    enabled: options?.enabled ?? true,
+    staleTime: 1000 * 60 * 5,
+    retry: 1,
+  });
+}
+
 // Models Query
 export function useListAvailableModels(options?: {
   credentialId?: string;

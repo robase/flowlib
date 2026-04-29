@@ -116,6 +116,18 @@ export interface Backend {
    */
   streamRunEvents(runId: string, onEvent: SseHandler, signal?: AbortSignal): Promise<void>;
 
+  /**
+   * Fire `callback` whenever the runs list for `flowId` changes (new run,
+   * status transition, completion). Returns a disposer.
+   *
+   * Embedded mode bridges to ExecutionEventBus.subscribeFlow. HTTP mode
+   * polls `listRuns` on a short interval and fires when the
+   * `(id, status)` fingerprint changes. The semantics are identical from
+   * the caller's point of view: "something about this flow's runs is
+   * different — re-fetch and re-render".
+   */
+  subscribeFlowRuns(flowId: string, callback: () => void): Promise<() => void>;
+
   /** Free any held resources (DB connection, in-flight streams, etc.). */
   shutdown(): Promise<void>;
 }
@@ -159,6 +171,9 @@ export class DisconnectedBackend implements Backend {
   }
   async streamRunEvents(): Promise<void> {
     throw this.unavailable();
+  }
+  async subscribeFlowRuns(): Promise<() => void> {
+    return () => undefined;
   }
   async shutdown(): Promise<void> {
     /* no-op */

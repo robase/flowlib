@@ -13,6 +13,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/
 import { CredentialCombobox } from '../flow-editor/node-config-panel/CredentialCombobox';
 import { useCredentials } from '../../api/credentials.api';
 import { filterCredentialsForField } from '../../utils/credentialFiltering';
+import { FieldHelperAdornment } from '../field-helpers';
 
 export interface AddCredentialRequest {
   fieldName: string;
@@ -29,6 +30,10 @@ interface ToolParamFieldProps {
   onAiChosenChange: (enabled: boolean) => void;
   /** Callback to open the create credential modal (passes the field name and OAuth2 provider info) */
   onAddCredential?: (request: AddCredentialRequest) => void;
+  /** Action / node type id — needed for `helper` adornments backed by server loaders. */
+  actionId?: string;
+  /** Sibling field values — needed to resolve `dependsOn` for async-picker helpers. */
+  formValues?: Record<string, unknown>;
 }
 
 /**
@@ -48,6 +53,8 @@ export const ToolParamField = memo(function ToolParamField({
   aiChosen,
   onAiChosenChange,
   onAddCredential,
+  actionId,
+  formValues,
 }: ToolParamFieldProps) {
   // Credential hooks (only used for credential fields)
   const {
@@ -271,10 +278,31 @@ export const ToolParamField = memo(function ToolParamField({
     }
   };
 
+  const isTemplateValue = typeof value === 'string' && value.includes('{{') && value.includes('}}');
+  const adornment = field.helper ? (
+    <FieldHelperAdornment
+      field={field}
+      value={value}
+      onChange={onChange}
+      context={{
+        actionId,
+        formValues,
+        templateMode: isTemplateValue,
+      }}
+    />
+  ) : null;
+
   return (
     <div className="flex flex-col gap-1.5">
       {fieldHeader}
-      {renderStaticField()}
+      {adornment ? (
+        <div className="flex items-start gap-1">
+          <div className="flex-1 min-w-0">{renderStaticField()}</div>
+          {adornment}
+        </div>
+      ) : (
+        renderStaticField()
+      )}
     </div>
   );
 });

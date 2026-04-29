@@ -905,6 +905,43 @@ export async function createFlowlibRouter(config: FlowlibConfig): Promise<Router
   );
 
   /**
+   * GET /actions/:actionId/loaders/:loaderName - Run a named action loader
+   * Core method: ✅ resolveActionLoader(actionId, loaderName, deps, query?)
+   *
+   * Query params:
+   *   deps  - JSON-encoded object of dependency field values
+   *   query - optional free-text search forwarded to the loader
+   * Permission: flow:read
+   */
+  router.get(
+    '/actions/:actionId/loaders/:loaderName',
+    requirePermission('flow:read'),
+    async (req: Request, res: Response) => {
+      const actionId = param(req, 'actionId');
+      const loaderName = param(req, 'loaderName');
+
+      let dependencyValues: Record<string, unknown> = {};
+      if (typeof req.query.deps === 'string') {
+        try {
+          dependencyValues = JSON.parse(req.query.deps);
+        } catch {
+          res.status(400).json({ error: 'Invalid deps JSON' });
+          return;
+        }
+      }
+      const query = typeof req.query.query === 'string' ? req.query.query : undefined;
+
+      const result = await flowlib.actions.resolveActionLoader(
+        actionId,
+        loaderName,
+        dependencyValues,
+        query,
+      );
+      res.json(result);
+    },
+  );
+
+  /**
    * POST /nodes/test - Test/execute a single node in isolation
    * Core method: ✅ testNode(nodeType, params, inputData)
    * Body: { nodeType: string, params: Record<string, unknown>, inputData?: Record<string, unknown> }

@@ -223,7 +223,45 @@ export class BackendClient implements Backend {
     }
     await consumeRunEventStream(res, onEvent, signal);
   }
+
+  /**
+   * Poll `listRuns(flowId)` every `SUBSCRIBE_POLL_MS` and fire `cb` when
+   * the `(id, status)` fingerprint of the recent runs changes. The HTTP
+   * surface has no flow-scoped event stream today; polling at a few
+   * seconds is fine for a sidebar refresh and avoids a new endpoint.
+   * Transient errors are swallowed so a flapping connection doesn't tear
+   * down the subscription.
+   */
+  async subscribeFlowRuns(flowId: string, cb: () => void): Promise<() => void> {
+    let lastFingerprint = '';
+    let cancelled = false;
+    const tick = async (): Promise<void> => {
+      if (cancelled) {
+        return;
+      }
+      try {
+        const runs = await this.listRuns(flowId);
+        const fp = runs.map((r) => `${r.id}:${r.status}`).join('|');
+        if (fp !== lastFingerprint) {
+          lastFingerprint = fp;
+          if (!cancelled) {
+            cb();
+          }
+        }
+      } catch {
+        /* transient — try again next tick */
+      }
+    };
+    void tick();
+    const interval = setInterval(() => void tick(), SUBSCRIBE_POLL_MS);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }
 }
+
+const SUBSCRIBE_POLL_MS = 3000;
 
 async function safeReadBody(res: Response): Promise<string> {
   try {

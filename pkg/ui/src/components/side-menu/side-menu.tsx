@@ -6,6 +6,7 @@ import { Button } from '../ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '../ui/tooltip';
 import { useTheme } from '~/contexts/ThemeProvider';
 import { usePluginRegistry } from '~/contexts/PluginRegistryContext';
+import { buildFrontendRoute } from '~/contexts/FrontendPathContext';
 import { FlowlibLogo } from '../shared/FlowlibLogo';
 
 export interface AppSideMenuProps {
@@ -24,10 +25,16 @@ export function AppSideMenu({ basePath = '' }: AppSideMenuProps) {
     setTheme(resolvedTheme === 'dark' ? 'light' : 'dark');
   };
 
+  // Build hrefs through buildFrontendRoute so a basePath of `/` (root-mounted
+  // hosting) doesn't produce `//profile`-style protocol-relative URLs that
+  // browsers interpret as `http://profile/`. Home stays at the bare basePath
+  // (or `/` for root-mounted) so the isHome equality check below works.
+  // Strip a lone trailing `/` from basePath; keep `/` itself as `/`.
+  const homeHref = basePath && basePath !== '/' ? basePath.replace(/\/$/, '') : '/';
   const menuItems = [
-    { icon: Home, label: 'Home', href: basePath || '/' },
-    { icon: FileText, label: 'Flow Runs', href: `${basePath}/flow-runs` },
-    { icon: KeyRound, label: 'Credentials', href: `${basePath}/credentials` },
+    { icon: Home, label: 'Home', href: homeHref },
+    { icon: FileText, label: 'Flow Runs', href: buildFrontendRoute(basePath, '/flow-runs') },
+    { icon: KeyRound, label: 'Credentials', href: buildFrontendRoute(basePath, '/credentials') },
   ];
 
   // Plugin-contributed sidebar items (top position = after defaults)
@@ -37,7 +44,7 @@ export function AppSideMenu({ basePath = '' }: AppSideMenuProps) {
     .map((item) => ({
       icon: item.icon,
       label: item.label,
-      href: `${basePath}${item.path}`,
+      href: buildFrontendRoute(basePath, item.path),
     }));
 
   const pluginBottomItems = registry.sidebarItems
@@ -46,7 +53,7 @@ export function AppSideMenu({ basePath = '' }: AppSideMenuProps) {
     .map((item) => ({
       icon: item.icon,
       label: item.label,
-      href: `${basePath}${item.path}`,
+      href: buildFrontendRoute(basePath, item.path),
     }));
 
   const allMainItems = [...menuItems, ...pluginTopItems];

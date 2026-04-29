@@ -25,6 +25,8 @@ export const queryKeys = {
   agentTools: ['agent', 'tools'] as const,
   fieldOptions: (actionId: string, fieldName: string, deps: string) =>
     ['field-options', actionId, fieldName, deps] as const,
+  actionLoader: (actionId: string, loaderName: string, deps: string, query: string) =>
+    ['action-loader', actionId, loaderName, deps, query] as const,
   availableNodes: ['available-nodes'] as const,
   triggers: (flowId: string) => ['flows', flowId, 'triggers'] as const,
   trigger: (triggerId: string) => ['triggers', triggerId] as const,

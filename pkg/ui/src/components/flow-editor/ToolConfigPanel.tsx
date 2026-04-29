@@ -336,6 +336,8 @@ export const ToolConfigPanel = memo(function ToolConfigPanel({
                         });
                       }}
                       onAddCredential={handleAddCredential}
+                      actionId={tool.nodeType}
+                      formValues={instance.params as Record<string, unknown>}
                     />
                   );
                 })}

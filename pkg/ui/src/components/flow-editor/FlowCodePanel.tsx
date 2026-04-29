@@ -16,6 +16,7 @@ import { cn } from '~/lib/utils';
 import { Button } from '~/components/ui/button';
 import { useFlowEditorStore } from '~/stores/flow-editor.store';
 import { useUIStore } from '~/stores/uiStore';
+import { useDelayedUnmount } from '~/hooks/use-delayed-unmount';
 import { useFlow, useFlowVersions } from '~/api/flows.api';
 import type { FlowlibDefinition } from '@flowlib/core/types';
 import { transformToFlowlibDefinition } from '~/utils/flowTransformations';
@@ -125,42 +126,49 @@ export function FlowCodePanel({ flowId, source = 'editor', className }: FlowCode
     [panelWidth],
   );
 
-  if (!isOpen) {
+  const { shouldRender, isVisible } = useDelayedUnmount(isOpen, 200);
+
+  if (!shouldRender) {
     return null;
   }
 
   return (
     <div
-      className={cn(
-        'relative flex flex-col h-full border-l border-border bg-imp-background text-card-foreground',
-        className,
-      )}
-      style={{ width: panelWidth, minWidth: MIN_WIDTH, maxWidth: MAX_WIDTH }}
+      className="flex justify-end shrink-0 overflow-hidden transition-[width,opacity] duration-200 ease-out"
+      style={{ width: isVisible ? panelWidth : 0, opacity: isVisible ? 1 : 0 }}
     >
       <div
-        onMouseDown={startResize}
-        className="absolute inset-y-0 left-0 z-20 w-1 transition-colors cursor-col-resize hover:bg-primary/20 active:bg-primary/30"
-      />
-      <div className="flex items-center justify-between px-4 py-2.5 border-b border-border">
-        <div className="flex items-center gap-2">
-          <Code2 className="size-4 text-primary" />
-          <span className="text-sm font-semibold">Code</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <CopyCodeButton code={code} disabled={!!error || code.length === 0} />
-          <Button variant="ghost" size="icon-sm" onClick={() => setOpen(false)} title="Close">
-            <X className="size-4" />
-          </Button>
-        </div>
-      </div>
-      <div className="flex-1 min-h-0 overflow-hidden">
-        {error ? (
-          <div className="h-full overflow-auto p-4 text-xs font-mono text-destructive whitespace-pre-wrap">
-            {`// Cannot emit SDK source:\n// ${error}`}
-          </div>
-        ) : (
-          <ReadOnlyTsViewer value={code} />
+        className={cn(
+          'relative flex flex-col h-full border-l border-border bg-imp-background text-card-foreground',
+          className,
         )}
+        style={{ width: panelWidth, minWidth: MIN_WIDTH, maxWidth: MAX_WIDTH }}
+      >
+        <div
+          onMouseDown={startResize}
+          className="absolute inset-y-0 left-0 z-20 w-1 transition-colors cursor-col-resize hover:bg-primary/20 active:bg-primary/30"
+        />
+        <div className="flex items-center justify-between px-4 py-2.5 border-b border-border">
+          <div className="flex items-center gap-2">
+            <Code2 className="size-4 text-primary" />
+            <span className="text-sm font-semibold">Code</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <CopyCodeButton code={code} disabled={!!error || code.length === 0} />
+            <Button variant="ghost" size="icon-sm" onClick={() => setOpen(false)} title="Close">
+              <X className="size-4" />
+            </Button>
+          </div>
+        </div>
+        <div className="flex-1 min-h-0 overflow-hidden">
+          {error ? (
+            <div className="h-full overflow-auto p-4 text-xs font-mono text-destructive whitespace-pre-wrap">
+              {`// Cannot emit SDK source:\n// ${error}`}
+            </div>
+          ) : (
+            <ReadOnlyTsViewer value={code} />
+          )}
+        </div>
       </div>
     </div>
   );

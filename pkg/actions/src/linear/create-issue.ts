@@ -67,6 +67,12 @@ export const linearCreateIssueAction = defineAction({
           'The UUID of the team to create the issue in. ' +
           'Use linear.list_teams to find team IDs — do not guess.',
         aiProvided: true,
+        helper: {
+          kind: 'async-picker',
+          loader: 'teams',
+          dependsOn: ['credentialId'],
+          searchable: true,
+        },
       },
       {
         name: 'title',
@@ -146,6 +152,7 @@ export const linearCreateIssueAction = defineAction({
         description: 'Due date in YYYY-MM-DD format.',
         extended: true,
         aiProvided: true,
+        helper: { kind: 'date', mode: 'date' },
       },
       {
         name: 'parentId',
@@ -160,6 +167,52 @@ export const linearCreateIssueAction = defineAction({
   },
 
   tags: ['linear', 'issues', 'create', 'project-management', 'development', 'oauth2'],
+
+  loaders: {
+    /**
+     * Lists Linear teams the credential has access to. Powers the
+     * `teamId` field's async-picker helper.
+     */
+    teams: {
+      handler: async ({ deps }, ctx) => {
+        const credentialId = deps.credentialId as string | undefined;
+        if (!credentialId) {
+          return { options: [], placeholder: 'Pick a credential first' };
+        }
+
+        const credential = await ctx.services.credentials.getDecrypted(credentialId);
+        const accessToken =
+          (credential?.config?.accessToken as string) ?? (credential?.config?.token as string);
+        if (!accessToken) {
+          return { options: [], placeholder: 'Credential has no access token' };
+        }
+
+        const response = await fetch(LINEAR_API, {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            query: `query { teams(orderBy: updatedAt) { nodes { id name key } } }`,
+          }),
+        });
+
+        if (!response.ok) {
+          ctx.logger.warn('Linear teams loader: API error', { status: response.status });
+          return { options: [] };
+        }
+
+        const data = (await response.json()) as {
+          data?: { teams?: { nodes?: Array<{ id: string; name: string; key: string }> } };
+        };
+        const nodes = data?.data?.teams?.nodes ?? [];
+        return {
+          options: nodes.map((t) => ({ label: `${t.name} (${t.key})`, value: t.id })),
+        };
+      },
+    },
+  },
 
   async execute(params, context) {
     const {

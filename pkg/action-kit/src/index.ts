@@ -24,6 +24,8 @@ export type {
   LoadOptionsContext,
   LoadOptionsConfig,
   LoadOptionsResult,
+  FieldHelperSpec,
+  ActionLoader,
 } from './action';
 
 // Credential

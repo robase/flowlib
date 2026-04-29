@@ -807,6 +807,8 @@ function ToolInstanceView({
                     });
                   }}
                   onAddCredential={onAddCredential}
+                  actionId={tool?.nodeType}
+                  formValues={instance.params as Record<string, unknown>}
                 />
               );
             })}

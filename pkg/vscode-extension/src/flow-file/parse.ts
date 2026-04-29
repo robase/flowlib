@@ -44,6 +44,21 @@ export interface ParseOptions {
 }
 
 export async function parseFlowFile(src: string, opts: ParseOptions): Promise<ParseResult> {
+  // Empty / whitespace-only / comment-only files: treat as a fresh
+  // blank flow rather than a parse failure. `flowlib.newFlow` writes
+  // a populated template, but users also create `.flow.ts` files by
+  // hand (touch, "New File", git checkout of an empty placeholder)
+  // and expect the visual editor to open empty so they can start
+  // dragging nodes onto an empty canvas. The first save through the
+  // editor emits a real `defineFlow(...)` body.
+  if (isEffectivelyEmpty(src)) {
+    return {
+      ok: true,
+      flow: { nodes: [], edges: [] },
+      source: 'evaluator',
+    };
+  }
+
   if (!opts.trusted) {
     return {
       ok: false,
@@ -78,4 +93,18 @@ export async function parseFlowFile(src: string, opts: ParseOptions): Promise<Pa
       error: `Flow evaluation failed: ${(e as Error).message}`,
     };
   }
+}
+
+/**
+ * Strip block + line comments and check whether anything else remains.
+ * A file with only a license header or a `// TODO` should still open as
+ * an empty flow — the user clearly hasn't written a `defineFlow` body
+ * yet, and we'd rather give them a working canvas than an error.
+ */
+function isEffectivelyEmpty(src: string): boolean {
+  const stripped = src
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .replace(/(^|[^:])\/\/[^\n]*/g, '$1')
+    .trim();
+  return stripped.length === 0;
 }

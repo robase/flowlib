@@ -196,7 +196,8 @@ export function FlowRunsView({ flowId, flowVersion, basePath }: FlowRunsViewProp
           />
         }
         codePanel={<FlowCodePanel flowId={flowId} source="version" />}
-        sidebar={<></>}
+        sidebar={null}
+        sidebarOpen={false}
         hideToolbar
         viewport={
           <ResizablePanelGroup direction="vertical" className="h-full min-h-0">

@@ -1608,6 +1608,39 @@ export class Flowlib {
   }
 
   /**
+   * Resolve a named action loader (powers `helper: { kind: 'async-picker' }`).
+   *
+   * Called by: `GET /actions/:actionId/loaders/:loaderName?deps={...}&query=...`
+   */
+  async resolveActionLoader(
+    actionId: string,
+    loaderName: string,
+    dependencyValues: Record<string, unknown>,
+    query?: string,
+  ): Promise<LoadOptionsResult> {
+    this.ensureInitialized();
+
+    if (!this.actionRegistry) {
+      throw new ValidationError('Action registry not initialised');
+    }
+
+    const context = {
+      logger: this.config.logger,
+      services: {
+        credentials: this.credentialsService,
+      },
+    };
+
+    return this.actionRegistry.resolveActionLoader(
+      actionId,
+      loaderName,
+      dependencyValues,
+      context,
+      query,
+    );
+  }
+
+  /**
    * Render flow to React Flow format
    */
   async renderToReactFlow(

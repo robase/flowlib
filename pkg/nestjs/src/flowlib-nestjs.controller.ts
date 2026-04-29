@@ -708,6 +708,33 @@ export class FlowlibController {
   }
 
   /**
+   * GET /actions/:actionId/loaders/:loaderName - Run a named action loader
+   * Core method: ✅ resolveActionLoader(actionId, loaderName, deps, query?)
+   */
+  @Get('actions/:actionId/loaders/:loaderName')
+  async resolveActionLoader(
+    @Param('actionId') actionId: string,
+    @Param('loaderName') loaderName: string,
+    @Query('deps') deps?: string,
+    @Query('query') query?: string,
+  ): Promise<unknown> {
+    let dependencyValues: Record<string, unknown> = {};
+    if (deps) {
+      try {
+        dependencyValues = JSON.parse(deps);
+      } catch {
+        throw new BadRequestException('Invalid deps JSON');
+      }
+    }
+    return await this.flowlib.actions.resolveActionLoader(
+      actionId,
+      loaderName,
+      dependencyValues,
+      query,
+    );
+  }
+
+  /**
    * POST /nodes/test - Test/execute a single node in isolation
    * Core method: ✅ testNode(nodeType, params, inputData)
    */

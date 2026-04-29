@@ -23,7 +23,12 @@ export function SidebarUserMenu({ collapsed = false, basePath = '' }: SidebarUse
 
   const initials = (user.name ?? user.email ?? user.id)[0]?.toUpperCase() ?? '?';
   const displayName = user.name ?? user.email ?? 'User';
-  const profilePath = `${basePath}/profile`;
+  // Normalize basePath the same way @flowlib/ui's buildFrontendRoute does:
+  // a basePath of `/` (root-mounted hosting) collapses to `''`, so we don't
+  // produce `//profile` — which the browser interprets as the protocol-
+  // relative URL `http://profile/`.
+  const normalizedBase = !basePath || basePath === '/' ? '' : basePath.replace(/\/$/, '');
+  const profilePath = `${normalizedBase}/profile`;
   const isActive = location.pathname === profilePath;
 
   return (

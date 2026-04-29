@@ -338,6 +338,31 @@ export class ActionRegistry {
 
     return field.loadOptions.handler(dependencyValues, context);
   }
+
+  /**
+   * Resolve a named loader on an action. Powers `helper: { kind: 'async-picker' }`
+   * fields. Distinct from `resolveFieldOptions` (which is keyed on a field's
+   * `loadOptions`); loaders live in `action.loaders` and may back many fields.
+   */
+  async resolveActionLoader(
+    actionId: string,
+    loaderName: string,
+    dependencyValues: Record<string, unknown>,
+    context: LoadOptionsContext,
+    query?: string,
+  ): Promise<LoadOptionsResult> {
+    const action = this.get(actionId);
+    if (!action) {
+      throw new Error(`Unknown action '${actionId}'`);
+    }
+
+    const loader = action.loaders?.[loaderName];
+    if (!loader) {
+      throw new Error(`Unknown loader '${loaderName}' on action '${actionId}'`);
+    }
+
+    return loader.handler({ deps: dependencyValues, query }, context);
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -388,6 +413,7 @@ function paramFieldToNodeParamField(f: ParamField): NodeParamField {
     extended: f.extended,
     // Serialize only the metadata (dependsOn) — the handler stays server-side
     ...(f.loadOptions ? { loadOptions: { dependsOn: f.loadOptions.dependsOn } } : {}),
+    ...(f.helper ? { helper: f.helper } : {}),
   };
 }
 

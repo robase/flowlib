@@ -77,7 +77,39 @@ export interface ParamField {
   extended?: boolean;
   aiProvided?: boolean;
   loadOptions?: LoadOptionsConfig;
+  helper?: FieldHelperSpec;
 }
+
+/**
+ * Per-field UI helper spec. Decorates a field with a sidekick UI (calendar
+ * picker, JSON formatter, async combobox, etc). Distinct from `loadOptions`:
+ * `loadOptions` replaces a `select` field with a dynamic dropdown; `helper`
+ * augments any input with a popover/button on the right.
+ *
+ * The frontend has a registry keyed on `kind`; unknown kinds fall through
+ * to no adornment so older UIs ignore future helper kinds gracefully.
+ */
+export type FieldHelperSpec =
+  | { kind: 'date'; mode?: 'date' | 'datetime' | 'time'; min?: string; max?: string }
+  | { kind: 'duration'; units?: ('ms' | 's' | 'm' | 'h' | 'd')[] }
+  | { kind: 'json-format' }
+  | { kind: 'color' }
+  | { kind: 'cron' }
+  | { kind: 'regex' }
+  | { kind: 'recent-values'; max?: number }
+  | {
+      kind: 'async-picker';
+      /** Names a loader registered on the same action (`action.loaders`). */
+      loader: string;
+      /** Sibling field names whose values are sent as deps to the loader. */
+      dependsOn?: string[];
+      /** Allow multi-select; serialized into the field as a JSON array. */
+      multi?: boolean;
+      /** Optional `{{ name }} ({{ id }})`-style label override. */
+      labelTemplate?: string;
+      /** Free-text search box inside the popover. Default true. */
+      searchable?: boolean;
+    };
 
 export interface LoadOptionsContext {
   logger: Logger;
@@ -100,6 +132,20 @@ export interface LoadOptionsResult {
   defaultValue?: string | number;
   placeholder?: string;
   disabled?: boolean;
+}
+
+/**
+ * Named server-side loader attached to an `ActionDefinition`. Powers
+ * `helper: { kind: 'async-picker', loader: '<name>' }` fields. Receives the
+ * sibling fields the helper declares as `dependsOn`, plus an optional free-
+ * text `query`, and returns the same `LoadOptionsResult` shape `loadOptions`
+ * uses.
+ */
+export interface ActionLoader {
+  handler: (
+    args: { deps: Record<string, unknown>; query?: string },
+    context: LoadOptionsContext,
+  ) => Promise<LoadOptionsResult>;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -252,6 +298,12 @@ export interface ActionDefinition<
     schema: z.ZodType<TParamsOut, TParamsIn>;
     fields: ParamField[];
   };
+  /**
+   * Named loaders for `helper: { kind: 'async-picker' }` fields. Each loader
+   * is called server-side via `GET /actions/:id/loaders/:name` and runs with
+   * a `LoadOptionsContext` (logger + credentials service).
+   */
+  loaders?: Record<string, ActionLoader>;
   outputs?: THandles;
   dynamicOutputs?: boolean;
   noInput?: boolean;

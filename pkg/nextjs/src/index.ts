@@ -703,6 +703,31 @@ export function createFlowlibHandler(config: FlowlibConfig): FlowlibHandler {
         );
       }
 
+      // GET /actions/:actionId/loaders/:loaderName — run a named action loader
+      if (method === 'GET' && path.match(/^actions\/[^/]+\/loaders\/[^/]+$/)) {
+        const parts = path.split('/');
+        const actionId = parts[1];
+        const loaderName = parts[3];
+        let dependencyValues: Record<string, unknown> = {};
+        const depsParam = searchParams.get('deps');
+        if (depsParam) {
+          try {
+            dependencyValues = JSON.parse(depsParam);
+          } catch {
+            return Response.json({ error: 'Invalid deps JSON' }, { status: 400 });
+          }
+        }
+        const queryParam = searchParams.get('query') ?? undefined;
+        return Response.json(
+          await initializedCore.actions.resolveActionLoader(
+            actionId,
+            loaderName,
+            dependencyValues,
+            queryParam,
+          ),
+        );
+      }
+
       // POST /nodes/test — test a single node in isolation
       if (method === 'POST' && path === 'nodes/test') {
         const { nodeType, params: nodeParams, inputData } = body;

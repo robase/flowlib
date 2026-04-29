@@ -51,6 +51,13 @@ export interface NodeParamField {
   loadOptions?: {
     dependsOn: string[];
   };
+
+  /**
+   * Per-field UI helper. Frontend has a registry keyed on `kind`; unknown
+   * kinds render as no adornment so older UIs ignore future kinds gracefully.
+   * Mirrors `FieldHelperSpec` from `./action`.
+   */
+  helper?: import('./action').FieldHelperSpec;
 }
 
 export interface NodeDefinition {

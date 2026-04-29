@@ -44,7 +44,9 @@ const STATUS_ICONS: Record<string, string> = {
   PAUSED: 'debug-pause',
 };
 
-export class FlowsExplorerProvider implements vscode.TreeDataProvider<FlowsExplorerItem> {
+export class FlowsExplorerProvider
+  implements vscode.TreeDataProvider<FlowsExplorerItem>, vscode.Disposable
+{
   private readonly emitter = new vscode.EventEmitter<FlowsExplorerItem | undefined | void>();
   readonly onDidChangeTreeData = this.emitter.event;
 
@@ -52,18 +54,46 @@ export class FlowsExplorerProvider implements vscode.TreeDataProvider<FlowsExplo
   private flowsCache: FlowsExplorerItem[] | null = null;
   /** Per-flow runs cache; key = flow id (file URI in embedded mode). */
   private readonly runsCache = new Map<string, FlowsExplorerItem[]>();
+  /**
+   * Per-flow latest run status. Drives the parent flow row's icon, so a
+   * collapsed flow visibly transitions to a spinner the moment one of
+   * its runs starts and back to a check / × on completion.
+   */
+  private readonly flowStatusCache = new Map<string, string>();
+  /** Per-flow live subscription disposers — one per visible flow. */
+  private readonly subscriptions = new Map<string, () => void>();
 
   setClient(client: Backend | null): void {
+    this.disposeAllSubscriptions();
     this.client = client;
     this.flowsCache = null;
     this.runsCache.clear();
+    this.flowStatusCache.clear();
     this.emitter.fire();
   }
 
   refresh(): void {
+    this.disposeAllSubscriptions();
     this.flowsCache = null;
     this.runsCache.clear();
+    this.flowStatusCache.clear();
     this.emitter.fire();
+  }
+
+  dispose(): void {
+    this.disposeAllSubscriptions();
+    this.emitter.dispose();
+  }
+
+  private disposeAllSubscriptions(): void {
+    for (const dispose of this.subscriptions.values()) {
+      try {
+        dispose();
+      } catch {
+        /* disposers must not throw, but be defensive */
+      }
+    }
+    this.subscriptions.clear();
   }
 
   /** Refresh runs for a single flow without rebuilding the whole tree. */
@@ -75,8 +105,15 @@ export class FlowsExplorerProvider implements vscode.TreeDataProvider<FlowsExplo
   getTreeItem(item: FlowsExplorerItem): vscode.TreeItem {
     if (item.kind === 'flow') {
       const tree = new vscode.TreeItem(item.label, vscode.TreeItemCollapsibleState.Collapsed);
-      tree.description = item.description;
-      tree.iconPath = new vscode.ThemeIcon('symbol-event');
+      // Show the latest run's status as the row icon when known. A flow
+      // with an in-flight run shows the spinner even while collapsed; a
+      // failed last run shows the error icon. Idle flows fall back to
+      // the static node-graph glyph.
+      const status = this.flowStatusCache.get(item.flowId);
+      const iconId = status ? (STATUS_ICONS[status] ?? 'symbol-event') : 'symbol-event';
+      tree.description =
+        item.description ?? (status && status !== 'SUCCESS' ? status.toLowerCase() : undefined);
+      tree.iconPath = new vscode.ThemeIcon(iconId);
       tree.contextValue = 'flowlib.flow';
       tree.id = item.flowId; // stable id so TreeView can `.reveal(item)` later
       if (item.fileUri) {
@@ -173,12 +210,105 @@ export class FlowsExplorerProvider implements vscode.TreeDataProvider<FlowsExplo
       }));
       if (this.flowsCache.length === 0) {
         this.flowsCache = [{ kind: 'placeholder', label: 'No flows on this backend.' }];
+      } else {
+        // Subscribe to every visible flow so collapsed rows still react
+        // to runs starting / completing. Run in the background — the
+        // tree should render immediately; status icons and run children
+        // populate as the listRuns probes resolve.
+        void this.attachLiveSubscriptions(client, this.flowsCache);
       }
       return this.flowsCache;
     } catch (err) {
       const msg = (err as Error).message;
       getExtensionLogger().error('flows explorer fetch failed', { error: msg });
       return [{ kind: 'error', label: `Error: ${msg}` }];
+    }
+  }
+
+  /**
+   * Attach a live-update subscription for every visible flow and prime
+   * the runs / status caches with an initial fetch. Idempotent — flows
+   * already subscribed are skipped, so calling this on cache refresh
+   * won't double-subscribe.
+   */
+  private async attachLiveSubscriptions(
+    client: Backend,
+    flows: FlowsExplorerItem[],
+  ): Promise<void> {
+    for (const f of flows) {
+      if (f.kind !== 'flow' || this.subscriptions.has(f.flowId)) {
+        continue;
+      }
+      const flowId = f.flowId;
+      const fileUri = f.fileUri;
+      try {
+        const dispose = await client.subscribeFlowRuns(flowId, () => {
+          if (this.client === client) {
+            void this.refreshFlowFromBackend(flowId, fileUri);
+          }
+        });
+        if (this.client !== client) {
+          // Backend swapped while we were subscribing — discard.
+          dispose();
+          continue;
+        }
+        this.subscriptions.set(flowId, dispose);
+      } catch (err) {
+        getExtensionLogger().warn('subscribeFlowRuns failed', {
+          flowId,
+          error: (err as Error).message,
+        });
+      }
+      // Prime the caches even if subscribe failed — at minimum we want
+      // the parent icon to reflect the latest known status on first
+      // open. Fire-and-forget; errors are logged inside.
+      void this.refreshFlowFromBackend(flowId, fileUri);
+    }
+  }
+
+  /**
+   * Re-fetch the runs list for a single flow and update both the runs
+   * cache (used by `getRunItems` when the row is expanded) and the flow
+   * status cache (used by the parent row's icon). Fires the tree-data
+   * emitter so the next render reflects the new state.
+   */
+  private async refreshFlowFromBackend(flowId: string, fileUri?: string): Promise<void> {
+    const client = this.client;
+    if (!client) {
+      return;
+    }
+    try {
+      const runs = await client.listRuns(flowId);
+      if (this.client !== client) {
+        return;
+      }
+      const items = runs.map<FlowsExplorerItem>((r) => ({
+        kind: 'run',
+        runId: r.id,
+        flowId,
+        flowVersion: r.flowVersion,
+        fileUri,
+        status: r.status,
+        label: r.id.slice(0, 8),
+        description: formatRunMeta(r),
+      }));
+      if (items.length > 0) {
+        this.runsCache.set(flowId, items);
+      } else {
+        this.runsCache.delete(flowId);
+      }
+      const latest = runs[0]?.status;
+      if (latest) {
+        this.flowStatusCache.set(flowId, latest);
+      } else {
+        this.flowStatusCache.delete(flowId);
+      }
+      this.emitter.fire();
+    } catch (err) {
+      getExtensionLogger().warn('refreshFlowFromBackend failed', {
+        flowId,
+        error: (err as Error).message,
+      });
     }
   }
 

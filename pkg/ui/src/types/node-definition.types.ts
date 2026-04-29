@@ -39,7 +39,31 @@ export interface NodeParamField {
     /** Sibling field names that trigger a reload when they change. */
     dependsOn: string[];
   };
+
+  /**
+   * Per-field UI helper (calendar picker, async combobox, JSON formatter, etc).
+   * The frontend has a registry keyed on `kind`; unknown kinds render no
+   * adornment so older UIs ignore future kinds gracefully.
+   */
+  helper?: FieldHelperSpec;
 }
+
+export type FieldHelperSpec =
+  | { kind: 'date'; mode?: 'date' | 'datetime' | 'time'; min?: string; max?: string }
+  | { kind: 'duration'; units?: ('ms' | 's' | 'm' | 'h' | 'd')[] }
+  | { kind: 'json-format' }
+  | { kind: 'color' }
+  | { kind: 'cron' }
+  | { kind: 'regex' }
+  | { kind: 'recent-values'; max?: number }
+  | {
+      kind: 'async-picker';
+      loader: string;
+      dependsOn?: string[];
+      multi?: boolean;
+      labelTemplate?: string;
+      searchable?: boolean;
+    };
 
 export interface NodeDefinition {
   /**

@@ -13,6 +13,7 @@ import { Tooltip, TooltipTrigger, TooltipContent } from '~/components/ui/tooltip
 import { useChat } from './use-chat';
 import { useCredentials } from '~/api/credentials.api';
 import { useChatStore } from './chat.store';
+import { useDelayedUnmount } from '~/hooks/use-delayed-unmount';
 import { ChatSettingsPanel } from './ChatSettingsPanel';
 import { ChatMessageList } from './ChatMessageList';
 import { ChatInput } from './ChatInput';
@@ -126,83 +127,90 @@ export function ChatPanel({
     [panelWidth],
   );
 
-  if (!isOpen) {
+  const { shouldRender, isVisible } = useDelayedUnmount(isOpen, 200);
+
+  if (!shouldRender) {
     return null;
   }
 
   return (
     <div
-      className={cn(
-        'relative flex flex-col h-full border-l border-border bg-imp-background text-card-foreground',
-        className,
-      )}
-      style={{ width: panelWidth, minWidth: MIN_WIDTH, maxWidth: MAX_WIDTH }}
+      className="flex justify-end shrink-0 overflow-hidden transition-[width,opacity] duration-200 ease-out"
+      style={{ width: isVisible ? panelWidth : 0, opacity: isVisible ? 1 : 0 }}
     >
-      {/* Resize handle on left edge */}
       <div
-        onMouseDown={startResize}
-        className="absolute inset-y-0 left-0 z-20 w-1 transition-colors cursor-col-resize hover:bg-primary/20 active:bg-primary/30"
-      />
-      {/* Header */}
-      <div className="flex items-center justify-between px-4 py-2.5 border-b border-border">
-        <div className="flex items-center gap-2">
-          <Bot className="size-4 text-primary" />
-          <span className="text-sm font-semibold">Chat</span>
+        className={cn(
+          'relative flex flex-col h-full border-l border-border bg-imp-background text-card-foreground',
+          className,
+        )}
+        style={{ width: panelWidth, minWidth: MIN_WIDTH, maxWidth: MAX_WIDTH }}
+      >
+        {/* Resize handle on left edge */}
+        <div
+          onMouseDown={startResize}
+          className="absolute inset-y-0 left-0 z-20 w-1 transition-colors cursor-col-resize hover:bg-primary/20 active:bg-primary/30"
+        />
+        {/* Header */}
+        <div className="flex items-center justify-between px-4 py-2.5 border-b border-border">
+          <div className="flex items-center gap-2">
+            <Bot className="size-4 text-primary" />
+            <span className="text-sm font-semibold">Chat</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <Button
+              variant={isSettingsPanelOpen ? 'secondary' : 'ghost'}
+              size="icon-sm"
+              onClick={toggleSettingsPanel}
+              title="Chat settings"
+            >
+              <Settings2 className="size-3.5" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              onClick={clearMessages}
+              title="Clear chat"
+              disabled={isStreaming || messages.length === 0}
+            >
+              <Trash2 className="size-3.5" />
+            </Button>
+            <Button variant="ghost" size="icon-sm" onClick={() => setOpen(false)} title="Close">
+              <X className="size-4" />
+            </Button>
+          </div>
         </div>
-        <div className="flex items-center gap-1.5">
-          <Button
-            variant={isSettingsPanelOpen ? 'secondary' : 'ghost'}
-            size="icon-sm"
-            onClick={toggleSettingsPanel}
-            title="Chat settings"
-          >
-            <Settings2 className="size-3.5" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            onClick={clearMessages}
-            title="Clear chat"
-            disabled={isStreaming || messages.length === 0}
-          >
-            <Trash2 className="size-3.5" />
-          </Button>
-          <Button variant="ghost" size="icon-sm" onClick={() => setOpen(false)} title="Close">
-            <X className="size-4" />
-          </Button>
-        </div>
+
+        {/* Settings Panel (slide-over) */}
+        {isSettingsPanelOpen && (
+          <div className="absolute inset-0 z-30 flex flex-col bg-imp-background">
+            <ChatSettingsPanel onClose={toggleSettingsPanel} />
+          </div>
+        )}
+
+        {/* Messages */}
+        <ChatMessageList
+          messages={messages}
+          isStreaming={isStreaming}
+          isLoadingHistory={isLoadingHistory}
+          streamingText={streamingText}
+          error={error}
+          hasConfiguredCredential={hasConfiguredCredential}
+          hasAvailableLlmCredentials={hasAvailableLlmCredentials}
+          onOpenSettings={toggleSettingsPanel}
+          onSendMessage={sendMessage}
+        />
+
+        {/* Input */}
+        <ChatInput
+          isStreaming={isStreaming}
+          isLoadingHistory={isLoadingHistory}
+          hasConfiguredCredential={hasConfiguredCredential}
+          hasAvailableLlmCredentials={hasAvailableLlmCredentials}
+          onSend={sendMessage}
+          onStop={stopStreaming}
+          onOpenSettings={toggleSettingsPanel}
+        />
       </div>
-
-      {/* Settings Panel (slide-over) */}
-      {isSettingsPanelOpen && (
-        <div className="absolute inset-0 z-30 flex flex-col bg-imp-background">
-          <ChatSettingsPanel onClose={toggleSettingsPanel} />
-        </div>
-      )}
-
-      {/* Messages */}
-      <ChatMessageList
-        messages={messages}
-        isStreaming={isStreaming}
-        isLoadingHistory={isLoadingHistory}
-        streamingText={streamingText}
-        error={error}
-        hasConfiguredCredential={hasConfiguredCredential}
-        hasAvailableLlmCredentials={hasAvailableLlmCredentials}
-        onOpenSettings={toggleSettingsPanel}
-        onSendMessage={sendMessage}
-      />
-
-      {/* Input */}
-      <ChatInput
-        isStreaming={isStreaming}
-        isLoadingHistory={isLoadingHistory}
-        hasConfiguredCredential={hasConfiguredCredential}
-        hasAvailableLlmCredentials={hasAvailableLlmCredentials}
-        onSend={sendMessage}
-        onStop={stopStreaming}
-        onOpenSettings={toggleSettingsPanel}
-      />
     </div>
   );
 }
