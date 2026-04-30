@@ -25,8 +25,10 @@ import { modelAction } from './model';
 import { agentAction } from './agent';
 import { mathEvalAction } from './math-eval';
 
-// Lazy descriptors (edge-runtime bundle size — see ../LAZY_ACTIONS_MIGRATION.md)
-export { lazyCoreActions } from './lazy';
+// Lazy descriptors live in `./lazy` and are re-exported from the package
+// root (`@flowlib/actions/core/lazy`). Re-exporting them here would defeat
+// the dynamic-import chunking — consumers of the eager barrel statically
+// import every action module, so the bundler can no longer split them.
 
 /** All core actions as an array (for bulk registration). */
 export const coreActions: ActionDefinition[] = [

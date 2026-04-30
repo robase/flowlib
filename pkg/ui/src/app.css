@@ -120,6 +120,24 @@
   }
 }
 
+@keyframes accordion-down {
+  from {
+    height: 0;
+  }
+  to {
+    height: var(--radix-accordion-content-height);
+  }
+}
+
+@keyframes accordion-up {
+  from {
+    height: var(--radix-accordion-content-height);
+  }
+  to {
+    height: 0;
+  }
+}
+
 /* Edge from a finished parent to a currently-RUNNING child — bright, fast. */
 .edge-active {
   stroke: var(--primary, #5b5bd6);
@@ -354,23 +372,6 @@
       --shadow-x: var(--shadow-x);
       --animate-accordion-down: accordion-down 0.2s ease-out;
       --animate-accordion-up: accordion-up 0.2s ease-out;
-    }
-
-    @keyframes accordion-down {
-      from {
-        height: 0;
-      }
-      to {
-        height: var(--radix-accordion-content-height);
-      }
-    }
-    @keyframes accordion-up {
-      from {
-        height: var(--radix-accordion-content-height);
-      }
-      to {
-        height: 0;
-      }
     }
 
     /* Dark mode design */
