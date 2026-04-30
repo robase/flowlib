@@ -2,6 +2,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useApiClient } from '../contexts/ApiContext';
 import { queryKeys, getErrorMessage } from './query-keys';
+import { staleTime } from './stale-times';
 import { type ReactFlowDataOptions } from './types';
 import {
   type CreateFlowDto,
@@ -19,8 +20,11 @@ export function useDashboardStats() {
   return useQuery({
     queryKey: queryKeys.dashboardStats,
     queryFn: () => apiClient.getDashboardStats(),
-    staleTime: 1000 * 30, // 30 seconds
-    refetchInterval: 1000 * 60, // Refresh every minute
+    // Counters move when flows or runs change; mutations invalidate this
+    // explicitly. The 1-min refetchInterval is the failsafe for bg activity
+    // (cron-triggered runs, runs from other tabs/clients).
+    staleTime: staleTime.short,
+    refetchInterval: 1000 * 60,
   });
 }
 
@@ -30,7 +34,9 @@ export function useFlows(options?: QueryOptions<Flow>) {
   return useQuery({
     queryKey: [...queryKeys.flows, options],
     queryFn: () => apiClient.getFlows(options),
-    staleTime: 1000 * 60 * 5, // 5 minutes
+    // Sidebar list. Mutations invalidate, so 5min just covers passive
+    // re-navigation between dashboard / runs / credentials views.
+    staleTime: staleTime.medium,
     retry: (failureCount, error) => {
       if (failureCount >= 2) {
         return false;
@@ -50,7 +56,8 @@ export function useFlow(id: string) {
     queryKey: queryKeys.flow(id),
     queryFn: () => apiClient.getFlow(id),
     enabled: !!id,
-    staleTime: 1000 * 30, // 30 seconds - reduced to ensure fresh data after mutations
+    // Editor view; mutations (rename, version create) invalidate this.
+    staleTime: staleTime.short,
     retry: (failureCount, error) => {
       if (failureCount >= 2) {
         return false;
@@ -70,7 +77,9 @@ export function useFlowVersions(flowId: string, options?: QueryOptions<FlowVersi
     queryKey: [...queryKeys.flowVersions(flowId), options],
     queryFn: () => apiClient.getFlowVersions(flowId, options),
     enabled: !!flowId,
-    staleTime: 1000 * 30, // 30 seconds - reduced to ensure fresh data after mutations
+    // Versions are append-only; only the version-create mutation adds to
+    // the list and invalidates this key.
+    staleTime: staleTime.short,
   });
 }
 
@@ -85,7 +94,9 @@ export function useFlowReactFlowData(
     queryKey: queryKeys.reactFlow(flowId, options?.version, options?.flowRunId),
     queryFn: () => apiClient.getFlowReactFlowData(flowId, options),
     enabled: !!flowId,
-    staleTime: options?.flowRunId ? 0 : 1000 * 30,
+    // Run-scoped renders show live execution status, refetch every mount.
+    // Plain editor renders are mutation-invalidated.
+    staleTime: options?.flowRunId ? staleTime.always : staleTime.short,
     retry: (failureCount, error) => {
       if (failureCount >= 2) {
         return false;
@@ -106,6 +117,7 @@ export function useCreateFlow() {
     mutationFn: (data: CreateFlowDto) => apiClient.createFlow(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.flows });
+      queryClient.invalidateQueries({ queryKey: queryKeys.dashboardStats });
     },
     onError: (error) => {
       console.error('Error creating flow:', getErrorMessage(error));
@@ -126,6 +138,7 @@ export function useCreateFlowWithVersion() {
     }) => apiClient.createFlowWithVersion(flowDto, versionDto),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.flows });
+      queryClient.invalidateQueries({ queryKey: queryKeys.dashboardStats });
     },
     onError: (error) => {
       console.error('Error creating flow with version:', getErrorMessage(error));
@@ -142,6 +155,12 @@ export function useUpdateFlow() {
     onSuccess: (_, { id }) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.flow(id) });
       queryClient.invalidateQueries({ queryKey: queryKeys.flows });
+      // React-Flow data carries the flow's name/description/active state,
+      // so flow renames also need to bust any rendered editor views.
+      queryClient.invalidateQueries({
+        queryKey: ['flows', id, 'react-flow'],
+        exact: false,
+      });
     },
     onError: (error) => {
       console.error('Error updating flow:', getErrorMessage(error));
@@ -154,8 +173,18 @@ export function useDeleteFlow() {
   const apiClient = useApiClient();
   return useMutation({
     mutationFn: (id: string) => apiClient.deleteFlow(id),
-    onSuccess: () => {
+    onSuccess: (_, id) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.flows });
+      queryClient.invalidateQueries({ queryKey: queryKeys.dashboardStats });
+      // Drop everything we have for this flow id — detail, versions,
+      // react-flow renders, runs. `removeQueries` bypasses staleTime and
+      // clears them outright so the next mount won't briefly flash old
+      // data while the (now-404) GET roundtrips.
+      queryClient.removeQueries({ queryKey: queryKeys.flow(id) });
+      queryClient.removeQueries({ queryKey: queryKeys.flowVersions(id), exact: false });
+      queryClient.removeQueries({ queryKey: ['flows', id, 'react-flow'], exact: false });
+      queryClient.removeQueries({ queryKey: queryKeys.executions(id) });
+      queryClient.removeQueries({ queryKey: queryKeys.triggers(id) });
     },
     onError: (error) => {
       console.error('Error deleting flow:', getErrorMessage(error));
@@ -174,6 +203,12 @@ export function useCreateFlowVersion() {
       queryClient.invalidateQueries({ queryKey: queryKeys.flowVersions(flowId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.flow(flowId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.flows });
+      // The latest version is what the editor renders by default; bust
+      // every react-flow cache entry for this flow (any version key).
+      queryClient.invalidateQueries({
+        queryKey: ['flows', flowId, 'react-flow'],
+        exact: false,
+      });
     },
     onError: (error) => {
       console.error('Error creating flow version:', getErrorMessage(error));

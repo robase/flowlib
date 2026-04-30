@@ -5,6 +5,7 @@
 
 import { useState, type FC } from 'react';
 import { Globe, Plus, ChevronDown, ExternalLink } from 'lucide-react';
+import { useFrontendPath } from '@flowlib/ui';
 import { useWebhookTriggers } from '../hooks/useWebhookQueries';
 import { CreateWebhookModal } from './CreateWebhookModal';
 import { CopyableField } from './CopyableField';
@@ -26,6 +27,7 @@ export const WebhookTriggerSelector: FC<WebhookTriggerSelectorProps> = ({
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
   const { data: triggers, isLoading } = useWebhookTriggers();
+  const basePath = useFrontendPath();
 
   const selected = triggers?.find((t) => t.id === selectedId);
 
@@ -128,7 +130,7 @@ export const WebhookTriggerSelector: FC<WebhookTriggerSelectorProps> = ({
           </div>
           <CopyableField value={`/plugins/webhooks/receive/${selected.webhookPath}`} />
           <a
-            href="/flowlib/webhooks"
+            href={`${basePath}/webhooks`}
             className="text-xs text-primary hover:underline inline-flex items-center gap-1"
           >
             Manage webhooks <ExternalLink className="h-3 w-3" />

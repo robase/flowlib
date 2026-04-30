@@ -2,6 +2,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useApiClient } from '../contexts/ApiContext';
 import { queryKeys, getErrorMessage } from './query-keys';
+import { staleTime } from './stale-times';
 import type { CredentialFilters, CreateCredentialInput, UpdateCredentialInput } from './types';
 
 // Credential Queries
@@ -11,7 +12,8 @@ export function useCredentials(filters?: CredentialFilters, options?: { enabled?
   return useQuery({
     queryKey: queryKeys.credentials(filters),
     queryFn: () => apiClient.listCredentials(filters),
-    staleTime: 1000 * 60 * 5,
+    // Sidebar list. Mutations invalidate.
+    staleTime: staleTime.medium,
     enabled: options?.enabled ?? true,
   });
 }
@@ -23,7 +25,9 @@ export function useCredential(id: string) {
     queryKey: queryKeys.credential(id),
     queryFn: () => apiClient.getCredential(id),
     enabled: Boolean(id),
-    staleTime: 1000 * 60,
+    // OAuth refreshes mutate this server-side without a client mutation;
+    // keep short so a forced reload picks up new tokens.
+    staleTime: staleTime.short,
   });
 }
 
@@ -34,7 +38,9 @@ export function useCredentialUsage(id: string, enabled: boolean = true) {
     queryKey: queryKeys.credentialUsage(id),
     queryFn: () => apiClient.getCredentialUsage(id),
     enabled: enabled && Boolean(id),
-    staleTime: 1000 * 60,
+    // "How many flows use this credential" counter; updates when flows
+    // are edited but the dialog is rarely open long enough to matter.
+    staleTime: staleTime.short,
   });
 }
 
@@ -77,8 +83,12 @@ export function useDeleteCredential() {
 
   return useMutation({
     mutationFn: (id: string) => apiClient.deleteCredential(id),
-    onSuccess: () => {
+    onSuccess: (_, id) => {
       queryClient.invalidateQueries({ queryKey: ['credentials'] });
+      // The detail + usage caches for the deleted id will 404 on refetch;
+      // remove them outright instead of leaving them in an error state.
+      queryClient.removeQueries({ queryKey: queryKeys.credential(id) });
+      queryClient.removeQueries({ queryKey: queryKeys.credentialUsage(id) });
     },
     onError: (error) => {
       console.error('Error deleting credential:', getErrorMessage(error));
@@ -121,7 +131,8 @@ export function useOAuth2Providers() {
   return useQuery({
     queryKey: ['oauth2', 'providers'],
     queryFn: () => apiClient.getOAuth2Providers(),
-    staleTime: 1000 * 60 * 60, // 1 hour - providers don't change
+    // Provider catalogue is bundled into the Worker; only changes on deploy.
+    staleTime: staleTime.static,
   });
 }
 
@@ -132,7 +143,7 @@ export function useOAuth2Provider(providerId: string) {
     queryKey: ['oauth2', 'provider', providerId],
     queryFn: () => apiClient.getOAuth2Provider(providerId),
     enabled: Boolean(providerId),
-    staleTime: 1000 * 60 * 60,
+    staleTime: staleTime.static,
   });
 }
 

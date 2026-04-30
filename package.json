@@ -64,7 +64,7 @@
     "typecheck": "pnpm -r run typecheck",
     "clean": "rm -rf dist && pnpm --filter '@flowlib/*' run clean",
     "changeset": "changeset",
-    "version-packages": "changeset version",
+    "version-packages": "node scripts/force-patch-changesets.mjs && changeset version",
     "release": "pnpm build && pnpm publish -r --access public --no-git-checks"
   },
   "dependencies": {

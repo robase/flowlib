@@ -2,6 +2,7 @@
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useApiClient } from '../contexts/ApiContext';
 import { queryKeys, getErrorMessage } from './query-keys';
+import { staleTime } from './stale-times';
 import { type SubmitPromptRequest } from '@flowlib/core/types';
 import { BatchProvider } from '@flowlib/core/types';
 
@@ -72,7 +73,9 @@ export function useLoadFieldOptions(
     queryKey: queryKeys.fieldOptions(actionId, fieldName, depsKey),
     queryFn: () => apiClient.loadFieldOptions(actionId, fieldName, dependencyValues),
     enabled: options?.enabled ?? true,
-    staleTime: 1000 * 60 * 5, // 5 minutes
+    // External data (Slack channels, Notion DBs, etc). Users expect
+    // refresh on dropdown re-open within a session.
+    staleTime: staleTime.medium,
     retry: 1,
   });
 }
@@ -94,7 +97,9 @@ export function useActionLoader(
     queryKey: queryKeys.actionLoader(actionId, loaderName, depsKey, query),
     queryFn: () => apiClient.runActionLoader(actionId, loaderName, dependencyValues, query),
     enabled: options?.enabled ?? true,
-    staleTime: 1000 * 60 * 5,
+    // Same shape as field options — keyed by query string, so each
+    // distinct search term gets its own short-lived cache entry.
+    staleTime: staleTime.medium,
     retry: 1,
   });
 }
@@ -111,7 +116,9 @@ export function useListAvailableModels(options?: {
     queryFn: () =>
       apiClient.getModels({ credentialId: options?.credentialId, provider: options?.provider }),
     enabled: options?.enabled ?? true,
-    staleTime: 1000 * 60 * 30, // 30 minutes (models don't change often)
+    // Provider model lists (e.g. OpenAI, Anthropic) shift maybe weekly.
+    // 30 min covers a normal session without hammering the provider API.
+    staleTime: staleTime.long,
     retry: (failureCount, error) => {
       if (failureCount >= 2) {
         return false;
@@ -154,7 +161,8 @@ export function useAvailableNodes() {
   return useQuery({
     queryKey: queryKeys.availableNodes,
     queryFn: () => apiClient.getAvailableNodes(),
-    staleTime: 1000 * 60 * 60, // 1 hour - node definitions rarely change
+    // Action catalogue is bundled into the Worker; only changes on deploy.
+    staleTime: staleTime.static,
     retry: (failureCount, error) => {
       if (failureCount >= 2) {
         return false;

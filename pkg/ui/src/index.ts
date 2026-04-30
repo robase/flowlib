@@ -33,6 +33,17 @@ export type { ApiProviderProps } from './contexts/ApiContext';
 // OAuth2 callback handler - exported for advanced/custom routing setups
 export { OAuth2CallbackHandler } from './components/credentials/OAuth2ConnectButton';
 
+// Frontend path helpers — used by plugins that need to build links into
+// the host's routes. `useFrontendPath()` returns the (already-normalized)
+// basePath; `buildFrontendRoute(basePath, '/foo')` is the safe way to
+// build a path for `<Link to>` etc. without producing protocol-relative
+// `//foo` URLs when the host is mounted at the origin root.
+export {
+  useFrontendPath,
+  buildFrontendRoute,
+  buildOAuthCallbackUri,
+} from './contexts/FrontendPathContext';
+
 // Flow editor shell
 export { FlowEditor } from './components/flow-editor/FlowEditor';
 

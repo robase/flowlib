@@ -2,6 +2,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useApiClient } from '../contexts/ApiContext';
 import { queryKeys } from './query-keys';
+import { staleTime } from './stale-times';
 
 export function useAgentTools() {
   const apiClient = useApiClient();
@@ -9,7 +10,8 @@ export function useAgentTools() {
   return useQuery({
     queryKey: queryKeys.agentTools,
     queryFn: () => apiClient.getAgentTools(),
-    staleTime: 1000 * 60 * 30, // 30 minutes - tools don't change often
+    // Tools are bundled into the Worker, change only on deploy.
+    staleTime: staleTime.static,
     retry: (failureCount, error) => {
       if (failureCount >= 2) {
         return false;

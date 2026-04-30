@@ -18,7 +18,7 @@ import {
   Workflow,
   Loader2,
 } from 'lucide-react';
-import { DialogHeader, DialogTitle, DialogDescription } from '@flowlib/ui';
+import { DialogHeader, DialogTitle, DialogDescription, useFrontendPath } from '@flowlib/ui';
 import { useUpdateWebhookTrigger, useDeleteWebhookTrigger } from '../hooks/useWebhookQueries';
 import { CopyableField } from './CopyableField';
 import type { WebhookTrigger, UpdateWebhookTriggerInput } from '../../shared/types';
@@ -174,140 +174,143 @@ const OverviewSection: FC<{
   onDelete: () => void;
   isToggling: boolean;
   isDeleting: boolean;
-}> = ({ trigger, flowName, onToggleEnabled, onDelete, isToggling, isDeleting }) => (
-  <div className="pt-4 space-y-5">
-    {/* Endpoint URL */}
-    <div className="space-y-1">
-      <label className="text-xs font-medium tracking-wide uppercase text-muted-foreground">
-        Webhook URL
-      </label>
-      <CopyableField value={`/plugins/webhooks/receive/${trigger.webhookPath}`} />
-    </div>
-
-    {/* HMAC Authentication */}
-    {trigger.hmacEnabled && trigger.hmacHeaderName && (
+}> = ({ trigger, flowName, onToggleEnabled, onDelete, isToggling, isDeleting }) => {
+  const basePath = useFrontendPath();
+  return (
+    <div className="pt-4 space-y-5">
+      {/* Endpoint URL */}
       <div className="space-y-1">
         <label className="text-xs font-medium tracking-wide uppercase text-muted-foreground">
-          HMAC Authentication
+          Webhook URL
         </label>
-        <div className="p-3 space-y-1 border rounded-lg bg-muted/30">
-          <div className="flex items-center justify-between">
-            <span className="text-xs text-muted-foreground">Signature Header</span>
-            <span className="font-mono text-sm">{trigger.hmacHeaderName}</span>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-xs text-muted-foreground">Secret</span>
-            <CopyableField value={trigger.hmacSecret ?? ''} masked />
+        <CopyableField value={`/plugins/webhooks/receive/${trigger.webhookPath}`} />
+      </div>
+
+      {/* HMAC Authentication */}
+      {trigger.hmacEnabled && trigger.hmacHeaderName && (
+        <div className="space-y-1">
+          <label className="text-xs font-medium tracking-wide uppercase text-muted-foreground">
+            HMAC Authentication
+          </label>
+          <div className="p-3 space-y-1 border rounded-lg bg-muted/30">
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-muted-foreground">Signature Header</span>
+              <span className="font-mono text-sm">{trigger.hmacHeaderName}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-muted-foreground">Secret</span>
+              <CopyableField value={trigger.hmacSecret ?? ''} masked />
+            </div>
           </div>
         </div>
-      </div>
-    )}
+      )}
 
-    {/* IP Whitelist */}
-    {trigger.allowedIps && (
-      <div className="space-y-1">
-        <label className="text-xs font-medium tracking-wide uppercase text-muted-foreground">
-          IP Whitelist
-        </label>
+      {/* IP Whitelist */}
+      {trigger.allowedIps && (
+        <div className="space-y-1">
+          <label className="text-xs font-medium tracking-wide uppercase text-muted-foreground">
+            IP Whitelist
+          </label>
+          <div className="p-3 border rounded-lg bg-muted/30">
+            <span className="font-mono text-sm break-all">{trigger.allowedIps}</span>
+          </div>
+        </div>
+      )}
+
+      {/* Info grid */}
+      <div className="grid grid-cols-2 gap-4 py-2">
+        <div>
+          <span className="block mb-1 text-xs text-muted-foreground">Methods</span>
+          <span className="font-mono text-sm">{trigger.allowedMethods}</span>
+        </div>
+        <div>
+          <span className="block mb-1 text-xs text-muted-foreground">Authentication</span>
+          <span className="text-sm">{getAuthModeConfig(trigger).label}</span>
+        </div>
+        <div>
+          <span className="block mb-1 text-xs text-muted-foreground">Created</span>
+          <span className="text-sm">{formatFullDate(trigger.createdAt)}</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <Hash className="w-3 h-3 text-muted-foreground" />
+          <span className="text-xs text-muted-foreground">Triggers:</span>
+          <span className="text-sm font-medium">{trigger.triggerCount}</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <Clock className="w-3 h-3 text-muted-foreground" />
+          <span className="text-xs text-muted-foreground">Last:</span>
+          <span className="text-sm">{formatFullDate(trigger.lastTriggeredAt)}</span>
+        </div>
+      </div>
+
+      {/* Linked flow */}
+      {trigger.flowId && (
         <div className="p-3 border rounded-lg bg-muted/30">
-          <span className="font-mono text-sm break-all">{trigger.allowedIps}</span>
-        </div>
-      </div>
-    )}
-
-    {/* Info grid */}
-    <div className="grid grid-cols-2 gap-4 py-2">
-      <div>
-        <span className="block mb-1 text-xs text-muted-foreground">Methods</span>
-        <span className="font-mono text-sm">{trigger.allowedMethods}</span>
-      </div>
-      <div>
-        <span className="block mb-1 text-xs text-muted-foreground">Authentication</span>
-        <span className="text-sm">{getAuthModeConfig(trigger).label}</span>
-      </div>
-      <div>
-        <span className="block mb-1 text-xs text-muted-foreground">Created</span>
-        <span className="text-sm">{formatFullDate(trigger.createdAt)}</span>
-      </div>
-      <div className="flex items-center gap-1.5">
-        <Hash className="w-3 h-3 text-muted-foreground" />
-        <span className="text-xs text-muted-foreground">Triggers:</span>
-        <span className="text-sm font-medium">{trigger.triggerCount}</span>
-      </div>
-      <div className="flex items-center gap-1.5">
-        <Clock className="w-3 h-3 text-muted-foreground" />
-        <span className="text-xs text-muted-foreground">Last:</span>
-        <span className="text-sm">{formatFullDate(trigger.lastTriggeredAt)}</span>
-      </div>
-    </div>
-
-    {/* Linked flow */}
-    {trigger.flowId && (
-      <div className="p-3 border rounded-lg bg-muted/30">
-        <div className="flex items-center gap-2">
-          <Workflow className="w-4 h-4 text-muted-foreground shrink-0" />
-          <div className="flex-1 min-w-0">
-            <span className="block text-xs text-muted-foreground">Linked Flow</span>
-            <a
-              href={`/flowlib/flow/${trigger.flowId}`}
-              className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline"
-            >
-              {flowName ?? trigger.flowId}
-              <ExternalLink className="w-3 h-3" />
-            </a>
+          <div className="flex items-center gap-2">
+            <Workflow className="w-4 h-4 text-muted-foreground shrink-0" />
+            <div className="flex-1 min-w-0">
+              <span className="block text-xs text-muted-foreground">Linked Flow</span>
+              <a
+                href={`${basePath}/flow/${trigger.flowId}`}
+                className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline"
+              >
+                {flowName ?? trigger.flowId}
+                <ExternalLink className="w-3 h-3" />
+              </a>
+            </div>
           </div>
         </div>
+      )}
+
+      {/* Last payload */}
+      {trigger.lastPayload !== null && trigger.lastPayload !== undefined && (
+        <div className="space-y-1">
+          <label className="text-xs font-medium tracking-wide uppercase text-muted-foreground">
+            Last Payload
+          </label>
+          <pre className="p-3 overflow-auto font-mono text-xs rounded-lg bg-muted max-h-32">
+            {JSON.stringify(trigger.lastPayload, null, 2)}
+          </pre>
+        </div>
+      )}
+
+      {/* Actions */}
+      <div className="flex items-center justify-between pt-3 border-t">
+        <button
+          onClick={onToggleEnabled}
+          disabled={isToggling}
+          className={`inline-flex items-center gap-2 rounded-md text-sm font-medium h-8 px-3 border transition-colors ${
+            trigger.isEnabled
+              ? 'border-amber-200 text-amber-700 hover:bg-amber-50 dark:border-amber-800 dark:text-amber-400 dark:hover:bg-amber-950/30'
+              : 'border-emerald-200 text-emerald-700 hover:bg-emerald-50 dark:border-emerald-800 dark:text-emerald-400 dark:hover:bg-emerald-950/30'
+          }`}
+        >
+          {isToggling ? (
+            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+          ) : trigger.isEnabled ? (
+            <ToggleLeft className="w-3.5 h-3.5" />
+          ) : (
+            <ToggleRight className="w-3.5 h-3.5" />
+          )}
+          {trigger.isEnabled ? 'Disable' : 'Enable'}
+        </button>
+
+        <button
+          onClick={onDelete}
+          disabled={isDeleting}
+          className="inline-flex items-center h-8 gap-2 px-3 text-sm font-medium text-imp-destructive transition-colors border border-imp-destructive/30 rounded-md hover:bg-imp-destructive/10"
+        >
+          {isDeleting ? (
+            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+          ) : (
+            <Trash2 className="w-3.5 h-3.5" />
+          )}
+          Delete
+        </button>
       </div>
-    )}
-
-    {/* Last payload */}
-    {trigger.lastPayload !== null && trigger.lastPayload !== undefined && (
-      <div className="space-y-1">
-        <label className="text-xs font-medium tracking-wide uppercase text-muted-foreground">
-          Last Payload
-        </label>
-        <pre className="p-3 overflow-auto font-mono text-xs rounded-lg bg-muted max-h-32">
-          {JSON.stringify(trigger.lastPayload, null, 2)}
-        </pre>
-      </div>
-    )}
-
-    {/* Actions */}
-    <div className="flex items-center justify-between pt-3 border-t">
-      <button
-        onClick={onToggleEnabled}
-        disabled={isToggling}
-        className={`inline-flex items-center gap-2 rounded-md text-sm font-medium h-8 px-3 border transition-colors ${
-          trigger.isEnabled
-            ? 'border-amber-200 text-amber-700 hover:bg-amber-50 dark:border-amber-800 dark:text-amber-400 dark:hover:bg-amber-950/30'
-            : 'border-emerald-200 text-emerald-700 hover:bg-emerald-50 dark:border-emerald-800 dark:text-emerald-400 dark:hover:bg-emerald-950/30'
-        }`}
-      >
-        {isToggling ? (
-          <Loader2 className="w-3.5 h-3.5 animate-spin" />
-        ) : trigger.isEnabled ? (
-          <ToggleLeft className="w-3.5 h-3.5" />
-        ) : (
-          <ToggleRight className="w-3.5 h-3.5" />
-        )}
-        {trigger.isEnabled ? 'Disable' : 'Enable'}
-      </button>
-
-      <button
-        onClick={onDelete}
-        disabled={isDeleting}
-        className="inline-flex items-center h-8 gap-2 px-3 text-sm font-medium text-imp-destructive transition-colors border border-imp-destructive/30 rounded-md hover:bg-imp-destructive/10"
-      >
-        {isDeleting ? (
-          <Loader2 className="w-3.5 h-3.5 animate-spin" />
-        ) : (
-          <Trash2 className="w-3.5 h-3.5" />
-        )}
-        Delete
-      </button>
     </div>
-  </div>
-);
+  );
+};
 
 // ─── Edit Section ───────────────────────────────────────────────────
 

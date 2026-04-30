@@ -2,6 +2,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useApiClient } from '../contexts/ApiContext';
 import { queryKeys, getErrorMessage } from './query-keys';
+import { staleTime } from './stale-times';
 import type { CreateTriggerInput, UpdateTriggerInput } from './types';
 
 /**
@@ -14,7 +15,9 @@ export function useFlowTriggers(flowId: string) {
     queryKey: queryKeys.triggers(flowId),
     queryFn: () => apiClient.listTriggersForFlow(flowId),
     enabled: !!flowId,
-    staleTime: 1000 * 30, // 30 seconds
+    // Trigger list mutates only via this app's own create/update/delete
+    // mutations (which invalidate); 1 min covers passive re-mount.
+    staleTime: staleTime.short,
   });
 }
 
@@ -28,6 +31,7 @@ export function useTrigger(triggerId: string) {
     queryKey: queryKeys.trigger(triggerId),
     queryFn: () => apiClient.getTrigger(triggerId),
     enabled: !!triggerId,
+    staleTime: staleTime.short,
   });
 }
 
@@ -86,8 +90,10 @@ export function useDeleteTrigger() {
   return useMutation({
     mutationFn: ({ triggerId }: { triggerId: string; flowId: string }) =>
       apiClient.deleteTrigger(triggerId),
-    onSuccess: (_, { flowId }) => {
+    onSuccess: (_, { triggerId, flowId }) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.triggers(flowId) });
+      // Drop the dead detail entry — refetch would 404.
+      queryClient.removeQueries({ queryKey: queryKeys.trigger(triggerId) });
     },
     onError: (error) => {
       console.error('Error deleting trigger:', getErrorMessage(error));

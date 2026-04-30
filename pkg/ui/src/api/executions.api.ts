@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useMemo } from 'react';
 import { useApiClient } from '../contexts/ApiContext';
 import { queryKeys, getErrorMessage } from './query-keys';
+import { staleTime } from './stale-times';
 import { type FlowRun, type FlowInputs } from '@flowlib/core/types';
 
 // Execution Queries
@@ -16,6 +17,10 @@ export function useFlowRuns(flowId: string) {
     queryKey: queryKeys.executions(flowId),
     queryFn: () => apiClient.getFlowRunsByFlowId(flowId),
     enabled: !!flowId,
+    // Run history changes only when a new run starts (we invalidate from
+    // useExecuteFlow / useExecuteFlowToNode) or when an SSE event mutates
+    // the cache directly. 1 min covers the gap between mounts.
+    staleTime: staleTime.short,
   });
 }
 
@@ -25,6 +30,9 @@ export function useFlowRun(id: string) {
     queryKey: queryKeys.flowRun(id),
     queryFn: () => apiClient.getFlowRun(id),
     enabled: !!id,
+    // Live status updates flow through SSE; this is the fallback for the
+    // brief window after mount before the stream catches up.
+    staleTime: staleTime.live,
   });
 }
 
@@ -35,6 +43,8 @@ export function useNodeExecutions(flowRunId: string) {
     queryKey: queryKeys.nodeExecutions(flowRunId),
     queryFn: () => apiClient.getNodeExecutionsByFlowRun(flowRunId),
     enabled: !!flowRunId,
+    // Same SSE-driven story as useFlowRun.
+    staleTime: staleTime.live,
   });
 }
 
@@ -81,7 +91,9 @@ export function useListFlowRuns(
   return useQuery({
     queryKey: queryKeys.allExecutions(flowId, status, page, limit, sortBy, sortOrder),
     queryFn: () => apiClient.getAllFlowRuns(queryOptions),
-    staleTime: 1000 * 60 * 2, // 2 minutes
+    // Paginated runs history; the user is browsing past runs, ok to
+    // serve from cache for a minute on back-navigation.
+    staleTime: staleTime.short,
     retry: (failureCount, error) => {
       if (failureCount >= 2) {
         return false;
@@ -113,7 +125,11 @@ export function useExecuteFlow() {
         useBatchProcessing: useBatchProcessing,
       }),
     onSuccess: (_, { flowId }) => {
+      // Per-flow run history + the cross-flow "all runs" list both gain a
+      // row; the dashboard counter ticks too.
       queryClient.invalidateQueries({ queryKey: queryKeys.executions(flowId) });
+      queryClient.invalidateQueries({ queryKey: ['executions', 'all'], exact: false });
+      queryClient.invalidateQueries({ queryKey: queryKeys.dashboardStats });
     },
     onError: (error) => {
       console.error('Error executing flow:', getErrorMessage(error));
@@ -130,6 +146,9 @@ export function usePauseFlowRun() {
       apiClient.pauseFlowRun(executionId, reason),
     onSuccess: (_, { executionId }) => {
       queryClient.invalidateQueries({ queryKey: queryKeys.flowRun(executionId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.nodeExecutions(executionId) });
+      // The "all runs" list reflects status; bust it so the row shows paused.
+      queryClient.invalidateQueries({ queryKey: ['executions', 'all'], exact: false });
     },
     onError: (error) => {
       console.error('Failed to pause execution:', error);
@@ -145,6 +164,7 @@ export function useResumeFlowRun() {
     onSuccess: (_, executionId) => {
       queryClient.invalidateQueries({ queryKey: ['executions'] });
       queryClient.invalidateQueries({ queryKey: queryKeys.flowRun(executionId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.nodeExecutions(executionId) });
     },
     onError: (error) => {
       console.error('Failed to resume execution:', error);
@@ -160,6 +180,8 @@ export function useCancelFlowRun() {
     onSuccess: (_, executionId) => {
       queryClient.invalidateQueries({ queryKey: ['executions'] });
       queryClient.invalidateQueries({ queryKey: queryKeys.flowRun(executionId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.nodeExecutions(executionId) });
+      queryClient.invalidateQueries({ queryKey: queryKeys.dashboardStats });
     },
     onError: (error) => {
       console.error('Failed to cancel execution:', error);
@@ -170,6 +192,7 @@ export function useCancelFlowRun() {
 // Execute Flow To Node Mutation
 export function useExecuteFlowToNode() {
   const apiClient = useApiClient();
+  const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: (params: {
@@ -184,6 +207,12 @@ export function useExecuteFlowToNode() {
         params.inputs || {},
         params.options,
       ),
+    onSuccess: (_, { flowId }) => {
+      // run-to-node also produces a flow run row; treat like useExecuteFlow.
+      queryClient.invalidateQueries({ queryKey: queryKeys.executions(flowId) });
+      queryClient.invalidateQueries({ queryKey: ['executions', 'all'], exact: false });
+      queryClient.invalidateQueries({ queryKey: queryKeys.dashboardStats });
+    },
     onError: (error) => {
       console.error('Error executing flow to node:', getErrorMessage(error));
     },

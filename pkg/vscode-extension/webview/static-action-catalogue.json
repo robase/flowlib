@@ -8484,7 +8484,13 @@
         "type": "text",
         "description": "The UUID of the team to create the issue in. Use linear.list_teams to find team IDs — do not guess.",
         "placeholder": "e.g. abc123",
-        "required": true
+        "required": true,
+        "helper": {
+          "kind": "async-picker",
+          "loader": "teams",
+          "dependsOn": ["credentialId"],
+          "searchable": true
+        }
       },
       {
         "name": "title",
@@ -8565,7 +8571,11 @@
         "type": "text",
         "description": "Due date in YYYY-MM-DD format.",
         "placeholder": "YYYY-MM-DD",
-        "extended": true
+        "extended": true,
+        "helper": {
+          "kind": "date",
+          "mode": "date"
+        }
       },
       {
         "name": "parentId",

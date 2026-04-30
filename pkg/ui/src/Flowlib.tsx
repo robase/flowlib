@@ -291,8 +291,18 @@ FlowlibRoutes.displayName = 'FlowlibRoutes';
  */
 export const Flowlib = React.memo(
   ({ config, reactQueryClient, useMemoryRouter = false, apiClient }: FlowlibProps) => {
-    const apiBaseUrl = (config.apiPath as string | undefined) ?? 'http://localhost:3000/flowlib';
-    const basePath = (config.frontendPath as string | undefined) ?? '/flowlib';
+    // Normalize both apiPath and frontendPath so downstream code can safely
+    // do `${base}${'/foo'}` without producing `//foo` (which the browser
+    // parses as a protocol-relative URL → `https://foo/`).
+    //
+    // For apiPath we strip a trailing slash if present. For frontendPath
+    // we additionally collapse `'/'` → `''` so a root-mounted host doesn't
+    // emit `'//foo'` from `${basePath}/foo`.
+    const rawApiBaseUrl = (config.apiPath as string | undefined) ?? 'http://localhost:3000/flowlib';
+    const apiBaseUrl = rawApiBaseUrl.replace(/\/$/, '') || '/';
+    const rawBasePath = (config.frontendPath as string | undefined) ?? '/flowlib';
+    const basePath =
+      rawBasePath === '/' || rawBasePath === '' ? '' : rawBasePath.replace(/\/$/, '');
     const theme = (config.theme as 'light' | 'dark' | 'system' | undefined) ?? 'dark';
 
     const resolvedPlugins = React.useMemo(
