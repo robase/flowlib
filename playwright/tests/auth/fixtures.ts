@@ -267,7 +267,10 @@ export async function waitForFlowlibDashboard(page: Page) {
 }
 
 export function uniqueValue(prefix: string) {
-  return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  // Keep this short — better-auth's apiKey plugin caps key names at ~32 chars
+  // and the Set-Cookie/Domain machinery doesn't tolerate overly long values
+  // either. Date.now in base-36 + 4 random chars stays well under that.
+  return `${prefix}-${Date.now().toString(36).slice(-6)}${Math.random().toString(36).slice(2, 6)}`;
 }
 
 /**

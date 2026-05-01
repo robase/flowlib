@@ -79,6 +79,17 @@ app.get('/flowlib/plugins/auth/api/auth/get-session', (_req, res) => {
   });
 });
 
+// Mock the auth plugin's /me endpoint — RbacProvider relies on this to
+// determine current identity / permissions; a 404 from a non-auth-plugin
+// test server effectively gates the flow editor.
+app.get('/flowlib/plugins/auth/me', (_req, res) => {
+  res.json({
+    identity: { id: 'test-user', name: 'Test User', role: 'admin', resolvedRole: 'admin' },
+    permissions: ['admin:*', 'flow:read', 'flow:write', 'flow:delete'],
+    isAuthenticated: true,
+  });
+});
+
 app.use(
   '/flowlib',
   await createFlowlibRouter({

@@ -77,7 +77,7 @@ function getSidebarToggle(page: Page) {
 }
 
 async function ensureSidebarExpanded(page: Page) {
-  const label = page.locator('.imp-sidebar-shell nav span').filter({ hasText: 'Executions' });
+  const label = page.locator('.imp-sidebar-shell nav span').filter({ hasText: 'Flow Runs' });
   if (!(await label.isVisible().catch(() => false))) {
     await getSidebarToggle(page).click();
     await expect(label).toBeVisible({ timeout: 3_000 });
@@ -202,12 +202,12 @@ test.describe('Visual Audit — Screenshot Capture', () => {
     await ensureSidebarExpanded(page);
     await takeScreenshot(page, screensById['02-dashboard-expanded']!, '/flowlib');
 
-    // ── 03: Executions page ───────────────────────────────────────────────
-    await page.locator('.imp-sidebar-shell').getByRole('link', { name: 'Executions' }).click();
-    await expect(page.getByRole('heading', { level: 1, name: 'Executions' })).toBeVisible({
+    // ── 03: Flow Runs (executions) page ───────────────────────────────────
+    await page.locator('.imp-sidebar-shell').getByRole('link', { name: 'Flow Runs' }).click();
+    await expect(page.getByRole('heading', { level: 1, name: 'Flow Runs' })).toBeVisible({
       timeout: 15_000,
     });
-    await takeScreenshot(page, screensById['03-executions-page']!, '/flowlib/executions');
+    await takeScreenshot(page, screensById['03-executions-page']!, '/flowlib/flow-runs');
 
     // ── 04: Credentials page ──────────────────────────────────────────────
     await page.locator('.imp-sidebar-shell').getByRole('link', { name: 'Credentials' }).click();
@@ -1444,6 +1444,826 @@ test.describe('Visual Audit — Screenshot Capture', () => {
 
     // Clean up auth/me mock
     await page.unroute(`${pluginApiBase}/plugins/auth/me`);
+
+    // ════════════════════════════════════════════════════════════════════════
+    // AUTH PLUGIN — UNAUTHENTICATED PAGES (44-50)
+    // ════════════════════════════════════════════════════════════════════════
+    // The express test server returns a hardcoded authenticated session for
+    // GET /plugins/auth/api/auth/get-session. To render the auth gate's
+    // unauthenticated branch (sign-in, sign-up, forgot-password, etc.) we
+    // intercept that endpoint and return null until the cluster is done.
+
+    const authGetSessionUrl = `${pluginApiBase}/plugins/auth/api/auth/get-session`;
+    const authPublicConfigUrl = `${pluginApiBase}/plugins/auth/public-config`;
+    const authMeUrl = `${pluginApiBase}/plugins/auth/me`;
+
+    await page.route(authGetSessionUrl, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: 'null',
+      });
+    });
+    await page.route(authPublicConfigUrl, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          signUpEnabled: true,
+          emailOtpEnabled: true,
+          socialProviders: ['google', 'github'],
+        }),
+      });
+    });
+    // The `me` endpoint sometimes 401s — return that explicitly so the
+    // RbacProvider treats the user as unauthenticated rather than retrying.
+    await page.route(authMeUrl, async (route) => {
+      await route.fulfill({
+        status: 401,
+        contentType: 'application/json',
+        body: JSON.stringify({ error: 'Unauthorized' }),
+      });
+    });
+
+    // ── 44: Sign-in page ───────────────────────────────────────────────────
+    await page.goto(`${VITE_BASE}/flowlib`);
+    await expect(page.getByRole('heading', { name: 'Welcome back' }))
+      .toBeVisible({ timeout: 15_000 })
+      .catch(() => {});
+    await page.waitForTimeout(500);
+    await takeScreenshot(page, screensById['44-sign-in-page']!, '/flowlib');
+
+    // ── 45: Sign-up chooser ────────────────────────────────────────────────
+    await page.goto(`${VITE_BASE}/flowlib/sign-up`);
+    await expect(page.getByRole('heading', { name: /create your account/i }))
+      .toBeVisible({ timeout: 15_000 })
+      .catch(() => {});
+    await page.waitForTimeout(500);
+    await takeScreenshot(page, screensById['45-sign-up-chooser']!, '/flowlib/sign-up');
+
+    // ── 46: Sign-up email step ─────────────────────────────────────────────
+    const continueWithEmail = page.getByRole('button', { name: /Continue with Email/i }).first();
+    if (await continueWithEmail.isVisible().catch(() => false)) {
+      await continueWithEmail.click();
+      await page.waitForTimeout(400);
+    }
+    await takeScreenshot(page, screensById['46-sign-up-email-step']!, '/flowlib/sign-up');
+
+    // ── 47: Forgot-password form ───────────────────────────────────────────
+    await page.goto(`${VITE_BASE}/flowlib/forgot-password`);
+    await expect(page.getByRole('heading', { name: 'Reset your password' }))
+      .toBeVisible({ timeout: 15_000 })
+      .catch(() => {});
+    await page.waitForTimeout(400);
+    await takeScreenshot(page, screensById['47-forgot-password']!, '/flowlib/forgot-password');
+
+    // ── 48: Forgot-password sent state ─────────────────────────────────────
+    // Mock the request-reset endpoint to succeed so the form transitions to
+    // the "Check your inbox" state.
+    const requestResetUrl = `${pluginApiBase}/plugins/auth/api/auth/forget-password`;
+    await page.route(requestResetUrl, async (route) => {
+      await route.fulfill({ status: 200, contentType: 'application/json', body: '{}' });
+    });
+    const emailField48 = page.getByLabel(/email/i).first();
+    if (await emailField48.isVisible().catch(() => false)) {
+      await emailField48.fill('user@example.com');
+      const submitBtn = page.getByRole('button', { name: /send|reset|continue/i }).first();
+      if (await submitBtn.isVisible().catch(() => false)) {
+        await submitBtn.click();
+        await expect(page.getByRole('heading', { name: 'Check your inbox' }))
+          .toBeVisible({ timeout: 5_000 })
+          .catch(() => {});
+        await page.waitForTimeout(400);
+      }
+    }
+    await takeScreenshot(page, screensById['48-forgot-password-sent']!, '/flowlib/forgot-password');
+    await page.unroute(requestResetUrl);
+
+    // ── 49: Reset-password form ────────────────────────────────────────────
+    await page.goto(`${VITE_BASE}/flowlib/reset-password?token=visual-audit-token`);
+    await page.waitForTimeout(800);
+    await takeScreenshot(page, screensById['49-reset-password']!, '/flowlib/reset-password');
+
+    // ── 50: Two-factor verify page ─────────────────────────────────────────
+    // Force the AuthProvider's twoFactorRequired flag by intercepting any
+    // sign-in attempt and returning twoFactorRedirect: true. The page then
+    // transitions to the 2FA verify component on its own.
+    const signInEmailUrl = `${pluginApiBase}/plugins/auth/api/auth/sign-in/email`;
+    await page.route(signInEmailUrl, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ twoFactorRedirect: true }),
+      });
+    });
+    await page.goto(`${VITE_BASE}/flowlib`);
+    await expect(page.getByRole('heading', { name: 'Welcome back' }))
+      .toBeVisible({ timeout: 15_000 })
+      .catch(() => {});
+    const emailInput50 = page.getByLabel(/email/i).first();
+    const passwordInput50 = page.getByLabel(/password/i).first();
+    if (
+      (await emailInput50.isVisible().catch(() => false)) &&
+      (await passwordInput50.isVisible().catch(() => false))
+    ) {
+      await emailInput50.fill('user@example.com');
+      await passwordInput50.fill('password1234');
+      await page.getByRole('button', { name: 'Sign in' }).click();
+      // Wait for the 2FA shell to take over.
+      await page.waitForTimeout(1200);
+    }
+    await takeScreenshot(page, screensById['50-two-factor-verify']!, '/flowlib');
+    await page.unroute(signInEmailUrl);
+
+    // Done with unauthenticated cluster — restore the authenticated state
+    // and clean up the auth-state mocks.
+    await page.unroute(authGetSessionUrl);
+    await page.unroute(authPublicConfigUrl);
+    await page.unroute(authMeUrl);
+
+    // The 2FA capture flips AuthProvider's `twoFactorRequired` flag in
+    // memory; force a fresh page load so the next captures start from a
+    // clean authenticated state.
+    await page.goto(`${VITE_BASE}/flowlib`);
+    await waitForDashboard(page).catch(() => {});
+
+    // ════════════════════════════════════════════════════════════════════════
+    // AUTH PLUGIN — AUTHENTICATED PROFILE / API KEYS / SESSIONS (51-54)
+    // ════════════════════════════════════════════════════════════════════════
+
+    const apiKeysUrl = `${pluginApiBase}/plugins/auth/api-keys`;
+    const sessionsUrl = `${pluginApiBase}/plugins/auth/api/auth/list-sessions`;
+
+    const mockApiKeys = [
+      {
+        id: 'ak-1',
+        name: 'Production API',
+        start: 'fl_p_aB',
+        prefix: 'fl_p_',
+        enabled: true,
+        expiresAt: null,
+        createdAt: new Date(Date.now() - 14 * 86400000).toISOString(),
+      },
+      {
+        id: 'ak-2',
+        name: 'CI Pipeline',
+        start: 'fl_c_xY',
+        prefix: 'fl_c_',
+        enabled: true,
+        expiresAt: new Date(Date.now() + 30 * 86400000).toISOString(),
+        createdAt: new Date(Date.now() - 3 * 86400000).toISOString(),
+      },
+      {
+        id: 'ak-3',
+        name: 'Staging Webhook',
+        start: 'fl_s_mN',
+        prefix: 'fl_s_',
+        enabled: false,
+        expiresAt: null,
+        createdAt: new Date(Date.now() - 90 * 86400000).toISOString(),
+      },
+    ];
+
+    await page.route(apiKeysUrl, async (route) => {
+      const method = route.request().method();
+      if (method === 'GET') {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({ apiKeys: mockApiKeys, total: mockApiKeys.length, maxKeysPerUser: 10 }),
+        });
+        return;
+      }
+      if (method === 'POST') {
+        const created = {
+          id: 'ak-new',
+          name: 'New Key',
+          start: 'fl_n_zZ',
+          prefix: 'fl_n_',
+          enabled: true,
+          expiresAt: null,
+          createdAt: new Date().toISOString(),
+          key: 'fl_n_zZ7pK4Jq8M2RsT5VxBnEhDjFmGwL6cVa',
+        };
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify(created),
+        });
+        return;
+      }
+      await route.fallback();
+    });
+
+    await page.route(sessionsUrl, async (route) => {
+      const now = new Date();
+      const sessions = [
+        {
+          id: 'sess-1',
+          token: 'tok-1',
+          userAgent:
+            'Mozilla/5.0 (Macintosh; Intel Mac OS X 13_5_1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
+          ipAddress: '203.0.113.42',
+          createdAt: new Date(now.getTime() - 30 * 60_000).toISOString(),
+          expiresAt: new Date(now.getTime() + 7 * 86_400_000).toISOString(),
+        },
+        {
+          id: 'sess-2',
+          token: 'tok-2',
+          userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 Safari/604.1',
+          ipAddress: '198.51.100.7',
+          createdAt: new Date(now.getTime() - 5 * 3600_000).toISOString(),
+          expiresAt: new Date(now.getTime() + 7 * 86_400_000).toISOString(),
+        },
+        {
+          id: 'sess-3',
+          token: 'tok-3',
+          userAgent:
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36',
+          ipAddress: '192.0.2.18',
+          createdAt: new Date(now.getTime() - 2 * 86_400_000).toISOString(),
+          expiresAt: new Date(now.getTime() + 5 * 86_400_000).toISOString(),
+        },
+      ];
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(sessions),
+      });
+    });
+
+    // ── 51: Profile Authentication tab ─────────────────────────────────────
+    await page.goto(`${VITE_BASE}/flowlib/profile`);
+    await expect(page.getByRole('heading', { name: 'Profile' }))
+      .toBeVisible({ timeout: 15_000 })
+      .catch(() => {});
+    const authTabBtn = page.getByRole('tab', { name: 'Authentication' }).first();
+    if (await authTabBtn.isVisible().catch(() => false)) {
+      await authTabBtn.click();
+      await page.waitForTimeout(800);
+    }
+    await takeScreenshot(page, screensById['51-profile-auth-tab']!, '/flowlib/profile');
+
+    // ── 52: API keys populated + reveal-token banner ──────────────────────
+    // Click "New" → fill name → Create. The mocked POST returns a key with
+    // `key:` set, which the card renders as the "copy it now" notice.
+    const newKeyBtn = page.getByRole('button', { name: /^New$/ }).first();
+    if (await newKeyBtn.isVisible().catch(() => false)) {
+      await newKeyBtn.click();
+      await page.waitForTimeout(300);
+      const nameInput = page.getByLabel(/name/i).last();
+      if (await nameInput.isVisible().catch(() => false)) {
+        await nameInput.fill('Audit Visual Key');
+      }
+      const createBtn = page.getByRole('button', { name: /^Create$/ }).first();
+      if (await createBtn.isVisible().catch(() => false)) {
+        await createBtn.click();
+        await expect(page.getByText(/copy it now/i))
+          .toBeVisible({ timeout: 5_000 })
+          .catch(() => {});
+        await page.waitForTimeout(300);
+      }
+    }
+    await takeScreenshot(page, screensById['52-api-keys-populated']!, '/flowlib/profile');
+
+    // Dismiss the reveal banner before the next capture so it doesn't cover
+    // the row we want to interact with.
+    const dismissBtn = page.getByRole('button', { name: /^Dismiss$/ }).first();
+    if (await dismissBtn.isVisible().catch(() => false)) {
+      await dismissBtn.click();
+      await page.waitForTimeout(200);
+    }
+
+    // ── 53: API keys delete-confirm row ───────────────────────────────────
+    const deleteIcon = page.getByRole('button', { name: 'Delete API key' }).first();
+    if (await deleteIcon.isVisible().catch(() => false)) {
+      await deleteIcon.click();
+      await page.waitForTimeout(300);
+    }
+    await takeScreenshot(page, screensById['53-api-keys-delete-confirm']!, '/flowlib/profile');
+
+    // Cancel the pending delete so the row goes back to its default state.
+    const cancelBtn = page.getByRole('button', { name: 'Cancel' }).first();
+    if (await cancelBtn.isVisible().catch(() => false)) {
+      await cancelBtn.click();
+      await page.waitForTimeout(200);
+    }
+
+    // ── 54: Sessions list ─────────────────────────────────────────────────
+    // Sessions card sits below API keys on the same Authentication tab —
+    // scroll it into view before capturing.
+    await page.getByText('Active sessions').first().scrollIntoViewIfNeeded().catch(() => {});
+    await page.waitForTimeout(300);
+    await takeScreenshot(page, screensById['54-sessions-list']!, '/flowlib/profile');
+
+    await page.unroute(apiKeysUrl);
+    await page.unroute(sessionsUrl);
+
+    // The profile-page captures above interact with React Query caches and
+    // can leave the SPA in a state where the next /flow/:id navigation lands
+    // on a blank page. Reset to a known-good state by hitting the dashboard
+    // before the VC / Vercel / main-app clusters.
+    await page.goto(`${VITE_BASE}/flowlib`);
+    await waitForDashboard(page).catch(() => {});
+
+    // ════════════════════════════════════════════════════════════════════════
+    // RBAC + remaining clusters need an authenticated /me — leave it mocked
+    // for the rest of the run. RbacProvider treats a 404 (the test server
+    // has no auth plugin) as unauthenticated and blocks the flow editor,
+    // which broke every cluster downstream of this point.
+    // ════════════════════════════════════════════════════════════════════════
+    await page.route(`${pluginApiBase}/plugins/auth/me`, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(mockAuthMe),
+      });
+    });
+
+    // ════════════════════════════════════════════════════════════════════════
+    // Each remaining cluster is wrapped in try/catch so a flake in one
+    // doesn't kill the rest of the run. The shared Vite frontend gets
+    // intermittent blank-screen states after long mock-heavy sequences;
+    // a per-cluster reset (page.goto /flowlib + waitForDashboard) gives
+    // each one a clean React tree to start from.
+    // ════════════════════════════════════════════════════════════════════════
+
+    async function withClusterReset(name: string, body: () => Promise<void>) {
+      try {
+        await page.goto(`${VITE_BASE}/flowlib`);
+        await waitForDashboard(page).catch(() => {});
+        await body();
+      } catch (err) {
+        process.stderr.write(
+          `[visual-audit] WARN: cluster "${name}" failed — ${err instanceof Error ? err.message : String(err)}\n`,
+        );
+      }
+    }
+
+    // ════════════════════════════════════════════════════════════════════════
+    // VERSION CONTROL — Header button + sync dialog (57-58)
+    // ════════════════════════════════════════════════════════════════════════
+    const vcStatusUrl = `${pluginApiBase}/plugins/vc/flows/*/status`;
+    const vcHistoryUrl = `${pluginApiBase}/plugins/vc/flows/*/history**`;
+    const vcSyncedFlowsUrl = `${pluginApiBase}/plugins/vc/flows`;
+
+    const vcConfig = {
+      id: 'vc-cfg-1',
+      flowId: dataPipelineId,
+      provider: 'github',
+      repo: 'acme/flows',
+      branch: 'main',
+      filePath: 'flows/data-pipeline.flow.ts',
+      mode: 'auto-commit' as const,
+      syncDirection: 'two-way' as const,
+      lastSyncedAt: new Date(Date.now() - 12 * 60_000).toISOString(),
+      lastCommitSha: 'abc1234',
+      lastSyncedVersion: 7,
+      draftBranch: null,
+      activePrNumber: null,
+      activePrUrl: null,
+      enabled: true,
+    };
+    const mockVcStatus = {
+      flowId: dataPipelineId,
+      status: 'synced',
+      config: vcConfig,
+      lastSync: {
+        id: 'vc-h-0',
+        flowId: dataPipelineId,
+        direction: 'push',
+        status: 'success',
+        commitSha: 'abc1234',
+        commitMessage: 'Tweak transform filter',
+        author: 'admin@acme.io',
+        createdAt: new Date(Date.now() - 12 * 60_000).toISOString(),
+      },
+    };
+    await page.route(vcStatusUrl, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(mockVcStatus),
+      });
+    });
+    await page.route(vcHistoryUrl, async (route) => {
+      const history = Array.from({ length: 6 }).map((_, i) => ({
+        id: `vc-h-${i}`,
+        flowId: dataPipelineId,
+        direction: i % 2 === 0 ? 'push' : 'pull',
+        status: i === 2 ? 'failed' : 'success',
+        commitSha: `sha-${(7 - i).toString().padStart(7, '0')}`,
+        commitMessage: i === 0 ? 'Tweak transform filter' : `Update flow @ v${7 - i}`,
+        author: 'admin@acme.io',
+        createdAt: new Date(Date.now() - (i + 1) * 600_000).toISOString(),
+      }));
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ history }),
+      });
+    });
+    await page.route(vcSyncedFlowsUrl, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ flows: [mockVcStatus] }),
+      });
+    });
+
+    if (dataPipelineId) {
+      await withClusterReset('version-control', async () => {
+        // The first /flow/:id navigation immediately after the auth profile
+        // cluster intermittently lands on a blank page (React Query state
+        // from the previous mocks doesn't fully settle). Give the dashboard
+        // an extra beat to stabilise, then retry once if needed.
+        await page.waitForTimeout(1500);
+        await page.goto(`${VITE_BASE}/flowlib/flow/${dataPipelineId}`);
+        let mounted = await page
+          .locator('.react-flow')
+          .waitFor({ state: 'visible', timeout: 15_000 })
+          .then(() => true)
+          .catch(() => false);
+        if (!mounted) {
+          await page.goto(`${VITE_BASE}/flowlib`);
+          await waitForDashboard(page).catch(() => {});
+          await page.waitForTimeout(2_000);
+          await page.goto(`${VITE_BASE}/flowlib/flow/${dataPipelineId}`);
+          mounted = await page
+            .locator('.react-flow')
+            .waitFor({ state: 'visible', timeout: 25_000 })
+            .then(() => true)
+            .catch(() => false);
+        }
+        if (!mounted) {
+          throw new Error('VC cluster: flow editor failed to mount after retry');
+        }
+        await page.waitForTimeout(800);
+
+        // ── 57: VC header button ──────────────────────────────────────────
+        await takeScreenshot(
+          page,
+          screensById['57-vc-header-button']!,
+          `/flowlib/flow/${dataPipelineId}`,
+        );
+
+        // ── 58: VC sync dialog ────────────────────────────────────────────
+        const vcBtn = page.getByRole('button', { name: /version control|git/i }).first();
+        if (await vcBtn.isVisible().catch(() => false)) {
+          await vcBtn.click();
+          await page
+            .getByRole('dialog')
+            .waitFor({ state: 'visible', timeout: 5_000 })
+            .catch(() => {});
+          await page.waitForTimeout(700);
+        }
+        await takeScreenshot(
+          page,
+          screensById['58-vc-sync-dialog']!,
+          `/flowlib/flow/${dataPipelineId}`,
+        );
+        await page.keyboard.press('Escape');
+        await page.waitForTimeout(300);
+      });
+    }
+
+    await page.unroute(vcStatusUrl);
+    await page.unroute(vcHistoryUrl);
+    await page.unroute(vcSyncedFlowsUrl);
+
+    // ════════════════════════════════════════════════════════════════════════
+    // VERCEL WORKFLOWS — Deploy modal (59-60)
+    // ════════════════════════════════════════════════════════════════════════
+    const previewUrl = `${pluginApiBase}/plugins/vercel-workflows/preview/**`;
+
+    await withClusterReset('vercel-workflows', async () => {
+      if (!dataPipelineId) return;
+      // ── 59: Deploy modal — generated source ────────────────────────────
+      await page.route(previewUrl, async (route) => {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            success: true,
+            workflowSource: [
+              "'use workflow';",
+              '',
+              "import { runFlow } from './flow';",
+              '',
+              'export async function dataPipelineWorkflow(input: unknown) {',
+              '  const result = await runFlow(input);',
+              '  return result;',
+              '}',
+            ].join('\n'),
+            sdkSource: [
+              "import { defineFlow, input, output, javascript } from '@flowlib/sdk';",
+              '',
+              'export default defineFlow({',
+              "  name: 'Data Pipeline',",
+              '  nodes: {',
+              '    user_data: input(),',
+              '    transform: javascript({ code: (ctx) => ctx.user_data.users.filter(u => u.active) }),',
+              '    results: output({ value: "{{ transform }}" }),',
+              '  },',
+              '  edges: [',
+              "    { from: 'user_data', to: 'transform' },",
+              "    { from: 'transform', to: 'results' },",
+              '  ],',
+              '});',
+            ].join('\n'),
+            metadata: {
+              stepCount: 3,
+              outputCount: 1,
+              workflowName: 'dataPipelineWorkflow',
+              flowExport: 'default',
+            },
+          }),
+        });
+      });
+
+      await page.goto(`${VITE_BASE}/flowlib/flow/${dataPipelineId}`);
+      await expect(page.locator('.react-flow')).toBeVisible({ timeout: 15_000 });
+      await page.waitForTimeout(600);
+      const deployBtn = page.getByRole('button', { name: /deploy/i }).first();
+      if (await deployBtn.isVisible().catch(() => false)) {
+        await deployBtn.click();
+        await page
+          .getByRole('dialog')
+          .waitFor({ state: 'visible', timeout: 5_000 })
+          .catch(() => {});
+        await page.waitForTimeout(900);
+      }
+      await takeScreenshot(page, screensById['59-vercel-deploy-source']!, `/flowlib/flow/${dataPipelineId}`);
+      await page.keyboard.press('Escape');
+      await page.waitForTimeout(300);
+      await page.unroute(previewUrl);
+
+      // ── 60: Deploy modal — multi-trigger picker ───────────────────────
+      // The component treats this as a non-OK response (status 400) carrying
+      // a select-trigger payload — see DeployButton.tsx:88-101.
+      await page.route(previewUrl, async (route) => {
+        await route.fulfill({
+          status: 400,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            success: false,
+            stage: 'select-trigger',
+            triggers: [
+              { id: 'cron-1', referenceId: 'daily_summary', type: 'trigger.cron' },
+              { id: 'wh-1', referenceId: 'inbound_webhook', type: 'trigger.webhook' },
+              { id: 'manual-1', referenceId: 'manual_run', type: 'trigger.manual' },
+            ],
+          }),
+        });
+      });
+      await page.goto(`${VITE_BASE}/flowlib/flow/${dataPipelineId}`);
+      await expect(page.locator('.react-flow')).toBeVisible({ timeout: 15_000 });
+      await page.waitForTimeout(600);
+      const deployBtn2 = page.getByRole('button', { name: /deploy/i }).first();
+      if (await deployBtn2.isVisible().catch(() => false)) {
+        await deployBtn2.click();
+        await page
+          .getByRole('dialog')
+          .waitFor({ state: 'visible', timeout: 5_000 })
+          .catch(() => {});
+        await page.waitForTimeout(900);
+      }
+      await takeScreenshot(
+        page,
+        screensById['60-vercel-deploy-trigger-picker']!,
+        `/flowlib/flow/${dataPipelineId}`,
+      );
+      await page.keyboard.press('Escape');
+      await page.waitForTimeout(300);
+      await page.unroute(previewUrl);
+    });
+
+    // ════════════════════════════════════════════════════════════════════════
+    // MAIN APP — Additional surfaces (61-66) — wrapped in withClusterReset
+    // ════════════════════════════════════════════════════════════════════════
+
+    await withClusterReset('main-app', async () => {
+    // ── 61: Empty dashboard ───────────────────────────────────────────────
+    // Mock the flows-list endpoint to return an empty array so the dashboard
+    // renders its "no flows" empty state without disturbing the seeded data
+    // used by earlier captures.
+    const flowsListUrl = `${pluginApiBase}/flows/list`;
+    const flowsListEmptyHandler = async (route: Parameters<Parameters<Page['route']>[1]>[0]) => {
+      if (route.request().method() === 'GET') {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({ data: [] }),
+        });
+      } else {
+        await route.fallback();
+      }
+    };
+    await page.route(flowsListUrl, flowsListEmptyHandler);
+    await page.goto(`${VITE_BASE}/flowlib`);
+    await waitForDashboard(page);
+    await page.waitForTimeout(500);
+    await takeScreenshot(page, screensById['61-dashboard-empty']!, '/flowlib');
+    await page.unroute(flowsListUrl);
+
+    // ── 62: Per-flow runs page ────────────────────────────────────────────
+    if (dataPipelineId) {
+      const flowRunsUrl = `${pluginApiBase}/flows/${dataPipelineId}/flow-runs`;
+      const now62 = Date.now();
+      const mockFlowRuns = [
+        {
+          id: 'fr-1',
+          flowId: dataPipelineId,
+          flowVersion: 3,
+          status: 'SUCCESS',
+          startedAt: new Date(now62 - 30 * 60_000).toISOString(),
+          completedAt: new Date(now62 - 30 * 60_000 + 4_200).toISOString(),
+          durationMs: 4200,
+        },
+        {
+          id: 'fr-2',
+          flowId: dataPipelineId,
+          flowVersion: 3,
+          status: 'FAILED',
+          startedAt: new Date(now62 - 5 * 3600_000).toISOString(),
+          completedAt: new Date(now62 - 5 * 3600_000 + 1_700).toISOString(),
+          durationMs: 1700,
+          errorMessage: 'Transform node returned no data',
+        },
+        {
+          id: 'fr-3',
+          flowId: dataPipelineId,
+          flowVersion: 2,
+          status: 'SUCCESS',
+          startedAt: new Date(now62 - 26 * 3600_000).toISOString(),
+          completedAt: new Date(now62 - 26 * 3600_000 + 5_900).toISOString(),
+          durationMs: 5900,
+        },
+        {
+          id: 'fr-4',
+          flowId: dataPipelineId,
+          flowVersion: 2,
+          status: 'RUNNING',
+          startedAt: new Date(now62 - 4 * 60_000).toISOString(),
+          completedAt: null,
+          durationMs: null,
+        },
+      ];
+      await page.route(flowRunsUrl, async (route) => {
+        if (route.request().method() === 'GET') {
+          await route.fulfill({
+            status: 200,
+            contentType: 'application/json',
+            body: JSON.stringify({ data: mockFlowRuns }),
+          });
+        } else {
+          await route.fallback();
+        }
+      });
+      await page.goto(`${VITE_BASE}/flowlib/flow/${dataPipelineId}/runs`);
+      await page.waitForTimeout(1500);
+      await takeScreenshot(
+        page,
+        screensById['62-per-flow-runs']!,
+        `/flowlib/flow/${dataPipelineId}/runs`,
+      );
+      await page.unroute(flowRunsUrl);
+    }
+
+    // ── 63: FlowCodePanel ─────────────────────────────────────────────────
+    if (dataPipelineId) {
+      await page.goto(`${VITE_BASE}/flowlib/flow/${dataPipelineId}`);
+      await expect(page.locator('.react-flow')).toBeVisible({ timeout: 15_000 });
+      await page.waitForTimeout(600);
+      const codeToggle = page.getByRole('button', { name: /view code|close code view/i }).first();
+      if (await codeToggle.isVisible().catch(() => false)) {
+        await codeToggle.click();
+        await page.waitForTimeout(800);
+      }
+      await takeScreenshot(
+        page,
+        screensById['63-flow-code-panel']!,
+        `/flowlib/flow/${dataPipelineId}`,
+      );
+      // Close it again so it doesn't bleed into subsequent captures.
+      const codeToggleClose = page.getByRole('button', { name: /close code view/i }).first();
+      if (await codeToggleClose.isVisible().catch(() => false)) {
+        await codeToggleClose.click();
+        await page.waitForTimeout(300);
+      }
+    }
+
+    // ── 64: Shortcuts help dialog ─────────────────────────────────────────
+    if (dataPipelineId) {
+      await page.goto(`${VITE_BASE}/flowlib/flow/${dataPipelineId}`);
+      await expect(page.locator('.react-flow')).toBeVisible({ timeout: 15_000 });
+      await page.waitForTimeout(600);
+      // The shortcut binding is `shift+/` (= "?") — try a few keystroke
+      // shapes since some shortcut libraries listen for the literal "?",
+      // others for the shift+slash combination.
+      await page.locator('body').click().catch(() => {});
+      await page.keyboard.press('?').catch(() => {});
+      const dialogOpened = await page
+        .getByRole('dialog')
+        .filter({ hasText: /Keyboard Shortcuts/i })
+        .isVisible({ timeout: 1_500 })
+        .catch(() => false);
+      if (!dialogOpened) {
+        await page.keyboard.press('Shift+/');
+        await page
+          .getByRole('dialog')
+          .waitFor({ state: 'visible', timeout: 3_000 })
+          .catch(() => {});
+      }
+      await page.waitForTimeout(400);
+      await takeScreenshot(
+        page,
+        screensById['64-shortcuts-help-dialog']!,
+        `/flowlib/flow/${dataPipelineId}`,
+      );
+      await page.keyboard.press('Escape');
+      await page.waitForTimeout(300);
+    }
+
+    // ── 65: ActionsSidebar (node insertion mode) ──────────────────────────
+    if (dataPipelineId) {
+      await page.goto(`${VITE_BASE}/flowlib/flow/${dataPipelineId}`);
+      await expect(page.locator('.react-flow')).toBeVisible({ timeout: 15_000 });
+      await page.waitForTimeout(600);
+      // The left sidebar starts in "Add Node" mode for non-agent flows. If it
+      // isn't already showing the action catalogue, try the mode-switcher.
+      const addNodeBtn = page
+        .getByRole('button', { name: /add node|nodes/i })
+        .first();
+      if (await addNodeBtn.isVisible().catch(() => false)) {
+        await addNodeBtn.click();
+        await page.waitForTimeout(400);
+      }
+      await takeScreenshot(
+        page,
+        screensById['65-actions-sidebar-nodes']!,
+        `/flowlib/flow/${dataPipelineId}`,
+      );
+    }
+
+    // ── 66: OAuth2 callback page ──────────────────────────────────────────
+    // Navigate with synthesised code/state so the handler attempts to post
+    // a result back to the opener. There's no opener in tests, so the page
+    // typically renders a brief "processing" / error state — which is what
+    // we capture (it's the only visible representation of the route).
+    await page.goto(`${VITE_BASE}/flowlib/oauth/callback?code=visual-audit-code&state=visual-audit-state`);
+    await page.waitForTimeout(1200);
+    await takeScreenshot(page, screensById['66-oauth2-callback']!, '/flowlib/oauth/callback');
+    });
+
+    // ════════════════════════════════════════════════════════════════════════
+    // RBAC — Share modal empty state (55) — RUNS LAST
+    // ════════════════════════════════════════════════════════════════════════
+    // Earlier runs put this cluster before VC + Vercel + main-app, but the
+    // share modal cluster reliably leaves the SPA in a state where the next
+    // /flow/:id navigation lands on a blank page. Running it last sidesteps
+    // the issue — there's nothing downstream to corrupt.
+    await withClusterReset('rbac-share-modal-empty', async () => {
+      if (!dataPipelineId) return;
+      await page.route(`${pluginApiBase}/plugins/auth/users**`, async (route) => {
+        if (route.request().method() === 'GET') {
+          await route.fulfill({
+            status: 200,
+            contentType: 'application/json',
+            body: JSON.stringify({ users: mockUsers }),
+          });
+        } else {
+          await route.fallback();
+        }
+      });
+      await page.route(`${pluginApiBase}/plugins/rbac/flows/*/access`, async (route) => {
+        if (route.request().method() === 'GET') {
+          await route.fulfill({
+            status: 200,
+            contentType: 'application/json',
+            body: JSON.stringify({ access: [] }),
+          });
+        } else {
+          await route.fallback();
+        }
+      });
+
+      await page.goto(`${VITE_BASE}/flowlib/flow/${dataPipelineId}`);
+      await expect(page.locator('.react-flow'))
+        .toBeVisible({ timeout: 15_000 })
+        .catch(() => {});
+      await page.waitForTimeout(800);
+      const shareBtn55 = page.getByRole('button', { name: /share/i }).first();
+      if (await shareBtn55.isVisible().catch(() => false)) {
+        await shareBtn55.click();
+        await page.waitForTimeout(800);
+      }
+      await takeScreenshot(page, screensById['55-share-modal-empty']!, `/flowlib/flow/${dataPipelineId}`);
+      await page.keyboard.press('Escape');
+      await page.waitForTimeout(300);
+      await page.unroute(`${pluginApiBase}/plugins/rbac/flows/*/access`);
+      await page.unroute(`${pluginApiBase}/plugins/auth/users**`);
+    });
   });
 
   test.afterAll(async () => {

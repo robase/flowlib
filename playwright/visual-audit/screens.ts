@@ -239,14 +239,14 @@ export const SCREENS: ScreenDefinition[] = [
   {
     id: '02-dashboard-expanded',
     description:
-      'Dashboard page with sidebar expanded showing full nav labels (Home, Executions, Credentials).',
+      'Dashboard page with sidebar expanded showing full nav labels (Home, Flow Runs, Credentials).',
     tags: ['page', 'dashboard', 'navigation'],
   },
   {
     id: '03-executions-page',
     description:
-      'Executions page showing the flow run history table with status, duration, and timestamp columns.',
-    tags: ['page', 'executions'],
+      'Flow Runs page (formerly Executions) showing the run history table with status, duration, and timestamp columns.',
+    tags: ['page', 'executions', 'flow-runs'],
   },
   {
     id: '04-credentials-page',
@@ -521,5 +521,167 @@ export const SCREENS: ScreenDefinition[] = [
       "Share Flow modal dialog showing the 'People with access' list with user avatars, permission badges, and revoke buttons, plus the 'Add people' section with user/team selector and permission dropdown.",
     tags: ['modal', 'plugin', 'rbac', 'share-flow'],
     focusCropSelector: '.fixed.inset-0',
+  },
+
+  // ── Plugin: Auth — Unauthenticated pages ────────────────────────────────
+  // These captures temporarily mock GET /plugins/auth/api/auth/get-session
+  // to return null so the auth gate falls through to its sign-in branch.
+  {
+    id: '44-sign-in-page',
+    description:
+      'Sign-in page rendered by the @flowlib/user-auth plugin when no session exists. Shows the Welcome back card with email + password fields, "Forgot password?" link, and Sign up footer link.',
+    tags: ['page', 'plugin', 'auth', 'sign-in', 'unauthenticated'],
+    focusCropSelector: 'form',
+  },
+  {
+    id: '45-sign-up-chooser',
+    description:
+      'Sign-up page chooser step — first step of the @flowlib/user-auth plugin sign-up flow. Shows the Continue with Google / GitHub social buttons and the Continue with Email link.',
+    tags: ['page', 'plugin', 'auth', 'sign-up', 'unauthenticated'],
+    focusCropSelector: 'form, [class*="auth-card"], main',
+  },
+  {
+    id: '46-sign-up-email-step',
+    description:
+      'Sign-up email step after clicking "Continue with Email" on the chooser. Shows the email field and Continue with Email submit button.',
+    tags: ['page', 'plugin', 'auth', 'sign-up', 'unauthenticated'],
+    focusCropSelector: 'form',
+  },
+  {
+    id: '47-forgot-password',
+    description:
+      "Forgot password page with the 'Reset your password' heading, email input, and Send reset link button. Linked from the sign-in form.",
+    tags: ['page', 'plugin', 'auth', 'forgot-password', 'unauthenticated'],
+    focusCropSelector: 'form',
+  },
+  {
+    id: '48-forgot-password-sent',
+    description:
+      'Forgot password page after submitting the form — shows the "Check your inbox" success state with the resend instruction.',
+    tags: ['page', 'plugin', 'auth', 'forgot-password', 'success', 'unauthenticated'],
+    focusCropSelector: 'form, [class*="auth-card"]',
+  },
+  {
+    id: '49-reset-password',
+    description:
+      'Reset password page reached by clicking the email link. Shows the new password + confirm password fields with submit button.',
+    tags: ['page', 'plugin', 'auth', 'reset-password', 'unauthenticated'],
+    focusCropSelector: 'form',
+  },
+  {
+    id: '50-two-factor-verify',
+    description:
+      'Two-factor verification page shown mid sign-in when the user has 2FA enabled. Shows the OTP code input grid and Verify button.',
+    tags: ['page', 'plugin', 'auth', 'two-factor', 'unauthenticated'],
+    focusCropSelector: 'form, [class*="auth-card"]',
+  },
+
+  // ── Plugin: Auth — Authenticated profile / API keys / sessions ──────────
+  {
+    id: '51-profile-auth-tab',
+    description:
+      'Profile page with the Authentication tab active, showing the Two Factor Authentication card (Disabled state with Enable 2FA button), the API keys card, and the Active sessions card stacked vertically.',
+    tags: ['page', 'plugin', 'auth', 'profile', 'authentication-tab'],
+  },
+  {
+    id: '52-api-keys-populated',
+    description:
+      'API keys card on the Authentication tab with several keys listed, immediately after creating one — the green "API key created — copy it now" notice is visible above the table with the full token shown once and a Dismiss button.',
+    tags: ['plugin', 'auth', 'api-keys', 'reveal-token'],
+    focusCropSelector:
+      'div:has(> h3:has-text("Your API keys")), div:has(h3:has-text("Your API keys"))',
+  },
+  {
+    id: '53-api-keys-delete-confirm',
+    description:
+      'API keys card with a row in the pending-delete confirmation state — the trash icon has been swapped for a destructive Confirm button next to a neutral Cancel button.',
+    tags: ['plugin', 'auth', 'api-keys', 'delete-confirm'],
+  },
+  {
+    id: '54-sessions-list',
+    description:
+      'Active sessions list on the profile Authentication tab with multiple devices listed (Chrome · macOS, etc.), each row showing IP address + relative-time started + per-row Sign out button.',
+    tags: ['plugin', 'auth', 'sessions'],
+  },
+
+  // ── Plugin: RBAC — Share modal empty state ──────────────────────────────
+  {
+    id: '55-share-modal-empty',
+    description:
+      "Share Flow modal in its empty state — no flow-specific access records exist yet. Shows the 'No flow-specific access records yet.' notice plus the empty Add people form.",
+    tags: ['modal', 'plugin', 'rbac', 'share-flow', 'empty-state'],
+    focusCropSelector: '.fixed.inset-0',
+  },
+
+  // ── Plugin: Version Control — Header button + sync dialog ───────────────
+  {
+    id: '57-vc-header-button',
+    description:
+      'Flow editor header showing the "Version Control" button contributed by the @flowlib/version-control plugin alongside the standard flow header actions.',
+    tags: ['editor', 'plugin', 'version-control', 'header-button'],
+    focusCropSelector: 'header, [class*="FlowHeader"]',
+  },
+  {
+    id: '58-vc-sync-dialog',
+    description:
+      'Version Control dialog opened by clicking the header button. Shows the configured repo / branch / file box, sync activity feed, and the paged Flow Versions table with version metadata.',
+    tags: ['editor', 'modal', 'plugin', 'version-control', 'sync-dialog'],
+    focusCropSelector: "[role='dialog']",
+  },
+
+  // ── Plugin: Vercel Workflows — Deploy modal ─────────────────────────────
+  {
+    id: '59-vercel-deploy-source',
+    description:
+      "Vercel Workflows deploy dialog showing the generated 'use workflow' source for copy-paste deployment. Shows the workflow.ts and flow.ts code blocks side-by-side with copy buttons.",
+    tags: ['editor', 'modal', 'plugin', 'vercel-workflows', 'deploy', 'source'],
+    focusCropSelector: "[role='dialog']",
+  },
+  {
+    id: '60-vercel-deploy-trigger-picker',
+    description:
+      "Vercel Workflows deploy dialog in the 'select trigger' state — shown when the flow has multiple trigger entry points. Lists clickable trigger rows the user picks from before the source preview is generated.",
+    tags: ['editor', 'modal', 'plugin', 'vercel-workflows', 'deploy', 'trigger-picker'],
+    focusCropSelector: "[role='dialog']",
+  },
+
+  // ── Main app — additional surfaces ──────────────────────────────────────
+  {
+    id: '61-dashboard-empty',
+    description:
+      "Dashboard page in the no-flows-yet state — empty card grid with the 'Create your first flow' empty-state CTA.",
+    tags: ['page', 'dashboard', 'empty-state'],
+  },
+  {
+    id: '62-per-flow-runs',
+    description:
+      'Per-flow run history page (/flow/:id/runs) showing the table of recent runs for a single flow with status badges, duration, and timestamps. Reachable from the flow editor.',
+    tags: ['page', 'flow-runs', 'per-flow'],
+  },
+  {
+    id: '63-flow-code-panel',
+    description:
+      'Flow editor with the FlowCodePanel right sidebar open (toggled via the View code button). Shows the read-only TypeScript SDK source of the current flow.',
+    tags: ['editor', 'flow-code-panel'],
+    focusCropSelector: '[class*="cm-editor"], aside, [aria-label*="code"], section',
+  },
+  {
+    id: '64-shortcuts-help-dialog',
+    description:
+      'Keyboard Shortcuts help dialog opened with Shift+/. Lists shortcuts grouped by category (general, editing, navigation, view) with kbd-styled key combos.',
+    tags: ['editor', 'modal', 'shortcuts'],
+    focusCropSelector: "[role='dialog']",
+  },
+  {
+    id: '65-actions-sidebar-nodes',
+    description:
+      'Left sidebar in node-insertion mode showing the action catalogue (search input, category filters, provider-grouped action tiles) used to add nodes to the canvas — the non-agent flavour of ActionsSidebar.',
+    tags: ['editor', 'left-sidebar', 'actions', 'node-insertion'],
+  },
+  {
+    id: '66-oauth2-callback',
+    description:
+      'OAuth2 callback page (/oauth/callback) — the transient handler that runs when an OAuth2 popup redirects back to Flowlib. Captured with synthesized code/state query params; typically shows a brief processing/loading state.',
+    tags: ['page', 'oauth2', 'callback', 'transient'],
   },
 ];

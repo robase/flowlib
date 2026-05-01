@@ -25,10 +25,10 @@ export interface AuthAppShellProps {
   basePath: string;
 }
 
-export function AuthAppShell({ children, apiBaseUrl }: AuthAppShellProps) {
+export function AuthAppShell({ children, apiBaseUrl, basePath }: AuthAppShellProps) {
   return (
     <AuthProvider baseUrl={apiBaseUrl}>
-      <AuthGate loading={<LoadingSpinner />} fallback={<UnauthenticatedRoutes />}>
+      <AuthGate loading={<LoadingSpinner />} fallback={<UnauthenticatedRoutes basePath={basePath} />}>
         {children}
       </AuthGate>
     </AuthProvider>
@@ -37,7 +37,7 @@ export function AuthAppShell({ children, apiBaseUrl }: AuthAppShellProps) {
 
 // ── Internal: unauthenticated path-based routing ────────────────
 
-function UnauthenticatedRoutes() {
+function UnauthenticatedRoutes({ basePath }: { basePath: string }) {
   const { twoFactorRequired } = useAuth();
   const { pathname } = useLocation();
   const config = useAuthPublicConfig();
@@ -48,15 +48,23 @@ function UnauthenticatedRoutes() {
     return <TwoFactorVerifyPage />;
   }
 
-  // The pathname here is already stripped of the React Router basename,
-  // so '/flowlib/sign-up' shows up as '/sign-up'.
-  if (pathname.startsWith('/sign-up') && !signUpDisabled) {
+  // Strip the host's frontend basePath if the React Router basename isn't
+  // already doing it. Hosts that wrap Flowlib in `<BrowserRouter basename>`
+  // pass a stripped pathname here ('/sign-up'); hosts that don't (the Vite
+  // dev frontend) leave the full path ('/flowlib/sign-up'). We handle both.
+  const normalizedBase = !basePath || basePath === '/' ? '' : basePath.replace(/\/$/, '');
+  const stripped =
+    normalizedBase && pathname.startsWith(normalizedBase)
+      ? pathname.slice(normalizedBase.length) || '/'
+      : pathname;
+
+  if (stripped.startsWith('/sign-up') && !signUpDisabled) {
     return <SignUpPage />;
   }
-  if (pathname.startsWith('/forgot-password')) {
+  if (stripped.startsWith('/forgot-password')) {
     return <ForgotPasswordPage />;
   }
-  if (pathname.startsWith('/reset-password')) {
+  if (stripped.startsWith('/reset-password')) {
     return <ResetPasswordPage />;
   }
 

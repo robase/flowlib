@@ -93,7 +93,13 @@ describe('authentication', () => {
       const auth = createMockAuth();
       const plugin = authentication({ auth });
 
-      const managementEndpoints = plugin.endpoints!.filter((e) => e.path !== '/auth/*');
+      // Exclude the proxy catch-all (covered above) and the deliberately-
+      // public sign-in shell config endpoint, which has to be reachable
+      // before a session exists so the unauthenticated SignInPage can read
+      // signUpEnabled / configured social providers.
+      const managementEndpoints = plugin.endpoints!.filter(
+        (e) => e.path !== '/auth/*' && e.path !== '/auth/public-config',
+      );
       expect(managementEndpoints.length).toBeGreaterThan(0);
       for (const endpoint of managementEndpoints) {
         expect(endpoint.isPublic).toBe(false);

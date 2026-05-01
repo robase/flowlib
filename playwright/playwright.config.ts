@@ -132,7 +132,8 @@ export default defineConfig({
       name: 'visual-audit',
       testDir: './visual-audit',
       testMatch: /capture\.ts/,
-      timeout: 120_000,
+      // 60+ screenshots × ~3-5s each settles around 4-5 min wall-clock.
+      timeout: 360_000,
       use: {
         ...devices['Desktop Chrome'],
         baseURL: viteBaseUrl,
