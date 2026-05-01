@@ -1630,7 +1630,11 @@ test.describe('Visual Audit — Screenshot Capture', () => {
         await route.fulfill({
           status: 200,
           contentType: 'application/json',
-          body: JSON.stringify({ apiKeys: mockApiKeys, total: mockApiKeys.length, maxKeysPerUser: 10 }),
+          body: JSON.stringify({
+            apiKeys: mockApiKeys,
+            total: mockApiKeys.length,
+            maxKeysPerUser: 10,
+          }),
         });
         return;
       }
@@ -1670,7 +1674,8 @@ test.describe('Visual Audit — Screenshot Capture', () => {
         {
           id: 'sess-2',
           token: 'tok-2',
-          userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 Safari/604.1',
+          userAgent:
+            'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 Safari/604.1',
           ipAddress: '198.51.100.7',
           createdAt: new Date(now.getTime() - 5 * 3600_000).toISOString(),
           expiresAt: new Date(now.getTime() + 7 * 86_400_000).toISOString(),
@@ -1752,7 +1757,11 @@ test.describe('Visual Audit — Screenshot Capture', () => {
     // ── 54: Sessions list ─────────────────────────────────────────────────
     // Sessions card sits below API keys on the same Authentication tab —
     // scroll it into view before capturing.
-    await page.getByText('Active sessions').first().scrollIntoViewIfNeeded().catch(() => {});
+    await page
+      .getByText('Active sessions')
+      .first()
+      .scrollIntoViewIfNeeded()
+      .catch(() => {});
     await page.waitForTimeout(300);
     await takeScreenshot(page, screensById['54-sessions-list']!, '/flowlib/profile');
 
@@ -1937,7 +1946,9 @@ test.describe('Visual Audit — Screenshot Capture', () => {
     const previewUrl = `${pluginApiBase}/plugins/vercel-workflows/preview/**`;
 
     await withClusterReset('vercel-workflows', async () => {
-      if (!dataPipelineId) return;
+      if (!dataPipelineId) {
+        return;
+      }
       // ── 59: Deploy modal — generated source ────────────────────────────
       await page.route(previewUrl, async (route) => {
         await route.fulfill({
@@ -1993,7 +2004,11 @@ test.describe('Visual Audit — Screenshot Capture', () => {
           .catch(() => {});
         await page.waitForTimeout(900);
       }
-      await takeScreenshot(page, screensById['59-vercel-deploy-source']!, `/flowlib/flow/${dataPipelineId}`);
+      await takeScreenshot(
+        page,
+        screensById['59-vercel-deploy-source']!,
+        `/flowlib/flow/${dataPipelineId}`,
+      );
       await page.keyboard.press('Escape');
       await page.waitForTimeout(300);
       await page.unroute(previewUrl);
@@ -2043,177 +2058,180 @@ test.describe('Visual Audit — Screenshot Capture', () => {
     // ════════════════════════════════════════════════════════════════════════
 
     await withClusterReset('main-app', async () => {
-    // ── 61: Empty dashboard ───────────────────────────────────────────────
-    // Mock the flows-list endpoint to return an empty array so the dashboard
-    // renders its "no flows" empty state without disturbing the seeded data
-    // used by earlier captures.
-    const flowsListUrl = `${pluginApiBase}/flows/list`;
-    const flowsListEmptyHandler = async (route: Parameters<Parameters<Page['route']>[1]>[0]) => {
-      if (route.request().method() === 'GET') {
-        await route.fulfill({
-          status: 200,
-          contentType: 'application/json',
-          body: JSON.stringify({ data: [] }),
-        });
-      } else {
-        await route.fallback();
-      }
-    };
-    await page.route(flowsListUrl, flowsListEmptyHandler);
-    await page.goto(`${VITE_BASE}/flowlib`);
-    await waitForDashboard(page);
-    await page.waitForTimeout(500);
-    await takeScreenshot(page, screensById['61-dashboard-empty']!, '/flowlib');
-    await page.unroute(flowsListUrl);
-
-    // ── 62: Per-flow runs page ────────────────────────────────────────────
-    if (dataPipelineId) {
-      const flowRunsUrl = `${pluginApiBase}/flows/${dataPipelineId}/flow-runs`;
-      const now62 = Date.now();
-      const mockFlowRuns = [
-        {
-          id: 'fr-1',
-          flowId: dataPipelineId,
-          flowVersion: 3,
-          status: 'SUCCESS',
-          startedAt: new Date(now62 - 30 * 60_000).toISOString(),
-          completedAt: new Date(now62 - 30 * 60_000 + 4_200).toISOString(),
-          durationMs: 4200,
-        },
-        {
-          id: 'fr-2',
-          flowId: dataPipelineId,
-          flowVersion: 3,
-          status: 'FAILED',
-          startedAt: new Date(now62 - 5 * 3600_000).toISOString(),
-          completedAt: new Date(now62 - 5 * 3600_000 + 1_700).toISOString(),
-          durationMs: 1700,
-          errorMessage: 'Transform node returned no data',
-        },
-        {
-          id: 'fr-3',
-          flowId: dataPipelineId,
-          flowVersion: 2,
-          status: 'SUCCESS',
-          startedAt: new Date(now62 - 26 * 3600_000).toISOString(),
-          completedAt: new Date(now62 - 26 * 3600_000 + 5_900).toISOString(),
-          durationMs: 5900,
-        },
-        {
-          id: 'fr-4',
-          flowId: dataPipelineId,
-          flowVersion: 2,
-          status: 'RUNNING',
-          startedAt: new Date(now62 - 4 * 60_000).toISOString(),
-          completedAt: null,
-          durationMs: null,
-        },
-      ];
-      await page.route(flowRunsUrl, async (route) => {
+      // ── 61: Empty dashboard ───────────────────────────────────────────────
+      // Mock the flows-list endpoint to return an empty array so the dashboard
+      // renders its "no flows" empty state without disturbing the seeded data
+      // used by earlier captures.
+      const flowsListUrl = `${pluginApiBase}/flows/list`;
+      const flowsListEmptyHandler = async (route: Parameters<Parameters<Page['route']>[1]>[0]) => {
         if (route.request().method() === 'GET') {
           await route.fulfill({
             status: 200,
             contentType: 'application/json',
-            body: JSON.stringify({ data: mockFlowRuns }),
+            body: JSON.stringify({ data: [] }),
           });
         } else {
           await route.fallback();
         }
-      });
-      await page.goto(`${VITE_BASE}/flowlib/flow/${dataPipelineId}/runs`);
-      await page.waitForTimeout(1500);
-      await takeScreenshot(
-        page,
-        screensById['62-per-flow-runs']!,
-        `/flowlib/flow/${dataPipelineId}/runs`,
-      );
-      await page.unroute(flowRunsUrl);
-    }
+      };
+      await page.route(flowsListUrl, flowsListEmptyHandler);
+      await page.goto(`${VITE_BASE}/flowlib`);
+      await waitForDashboard(page);
+      await page.waitForTimeout(500);
+      await takeScreenshot(page, screensById['61-dashboard-empty']!, '/flowlib');
+      await page.unroute(flowsListUrl);
 
-    // ── 63: FlowCodePanel ─────────────────────────────────────────────────
-    if (dataPipelineId) {
-      await page.goto(`${VITE_BASE}/flowlib/flow/${dataPipelineId}`);
-      await expect(page.locator('.react-flow')).toBeVisible({ timeout: 15_000 });
-      await page.waitForTimeout(600);
-      const codeToggle = page.getByRole('button', { name: /view code|close code view/i }).first();
-      if (await codeToggle.isVisible().catch(() => false)) {
-        await codeToggle.click();
-        await page.waitForTimeout(800);
+      // ── 62: Per-flow runs page ────────────────────────────────────────────
+      if (dataPipelineId) {
+        const flowRunsUrl = `${pluginApiBase}/flows/${dataPipelineId}/flow-runs`;
+        const now62 = Date.now();
+        const mockFlowRuns = [
+          {
+            id: 'fr-1',
+            flowId: dataPipelineId,
+            flowVersion: 3,
+            status: 'SUCCESS',
+            startedAt: new Date(now62 - 30 * 60_000).toISOString(),
+            completedAt: new Date(now62 - 30 * 60_000 + 4_200).toISOString(),
+            durationMs: 4200,
+          },
+          {
+            id: 'fr-2',
+            flowId: dataPipelineId,
+            flowVersion: 3,
+            status: 'FAILED',
+            startedAt: new Date(now62 - 5 * 3600_000).toISOString(),
+            completedAt: new Date(now62 - 5 * 3600_000 + 1_700).toISOString(),
+            durationMs: 1700,
+            errorMessage: 'Transform node returned no data',
+          },
+          {
+            id: 'fr-3',
+            flowId: dataPipelineId,
+            flowVersion: 2,
+            status: 'SUCCESS',
+            startedAt: new Date(now62 - 26 * 3600_000).toISOString(),
+            completedAt: new Date(now62 - 26 * 3600_000 + 5_900).toISOString(),
+            durationMs: 5900,
+          },
+          {
+            id: 'fr-4',
+            flowId: dataPipelineId,
+            flowVersion: 2,
+            status: 'RUNNING',
+            startedAt: new Date(now62 - 4 * 60_000).toISOString(),
+            completedAt: null,
+            durationMs: null,
+          },
+        ];
+        await page.route(flowRunsUrl, async (route) => {
+          if (route.request().method() === 'GET') {
+            await route.fulfill({
+              status: 200,
+              contentType: 'application/json',
+              body: JSON.stringify({ data: mockFlowRuns }),
+            });
+          } else {
+            await route.fallback();
+          }
+        });
+        await page.goto(`${VITE_BASE}/flowlib/flow/${dataPipelineId}/runs`);
+        await page.waitForTimeout(1500);
+        await takeScreenshot(
+          page,
+          screensById['62-per-flow-runs']!,
+          `/flowlib/flow/${dataPipelineId}/runs`,
+        );
+        await page.unroute(flowRunsUrl);
       }
-      await takeScreenshot(
-        page,
-        screensById['63-flow-code-panel']!,
-        `/flowlib/flow/${dataPipelineId}`,
-      );
-      // Close it again so it doesn't bleed into subsequent captures.
-      const codeToggleClose = page.getByRole('button', { name: /close code view/i }).first();
-      if (await codeToggleClose.isVisible().catch(() => false)) {
-        await codeToggleClose.click();
+
+      // ── 63: FlowCodePanel ─────────────────────────────────────────────────
+      if (dataPipelineId) {
+        await page.goto(`${VITE_BASE}/flowlib/flow/${dataPipelineId}`);
+        await expect(page.locator('.react-flow')).toBeVisible({ timeout: 15_000 });
+        await page.waitForTimeout(600);
+        const codeToggle = page.getByRole('button', { name: /view code|close code view/i }).first();
+        if (await codeToggle.isVisible().catch(() => false)) {
+          await codeToggle.click();
+          await page.waitForTimeout(800);
+        }
+        await takeScreenshot(
+          page,
+          screensById['63-flow-code-panel']!,
+          `/flowlib/flow/${dataPipelineId}`,
+        );
+        // Close it again so it doesn't bleed into subsequent captures.
+        const codeToggleClose = page.getByRole('button', { name: /close code view/i }).first();
+        if (await codeToggleClose.isVisible().catch(() => false)) {
+          await codeToggleClose.click();
+          await page.waitForTimeout(300);
+        }
+      }
+
+      // ── 64: Shortcuts help dialog ─────────────────────────────────────────
+      if (dataPipelineId) {
+        await page.goto(`${VITE_BASE}/flowlib/flow/${dataPipelineId}`);
+        await expect(page.locator('.react-flow')).toBeVisible({ timeout: 15_000 });
+        await page.waitForTimeout(600);
+        // The shortcut binding is `shift+/` (= "?") — try a few keystroke
+        // shapes since some shortcut libraries listen for the literal "?",
+        // others for the shift+slash combination.
+        await page
+          .locator('body')
+          .click()
+          .catch(() => {});
+        await page.keyboard.press('?').catch(() => {});
+        const dialogOpened = await page
+          .getByRole('dialog')
+          .filter({ hasText: /Keyboard Shortcuts/i })
+          .isVisible({ timeout: 1_500 })
+          .catch(() => false);
+        if (!dialogOpened) {
+          await page.keyboard.press('Shift+/');
+          await page
+            .getByRole('dialog')
+            .waitFor({ state: 'visible', timeout: 3_000 })
+            .catch(() => {});
+        }
+        await page.waitForTimeout(400);
+        await takeScreenshot(
+          page,
+          screensById['64-shortcuts-help-dialog']!,
+          `/flowlib/flow/${dataPipelineId}`,
+        );
+        await page.keyboard.press('Escape');
         await page.waitForTimeout(300);
       }
-    }
 
-    // ── 64: Shortcuts help dialog ─────────────────────────────────────────
-    if (dataPipelineId) {
-      await page.goto(`${VITE_BASE}/flowlib/flow/${dataPipelineId}`);
-      await expect(page.locator('.react-flow')).toBeVisible({ timeout: 15_000 });
-      await page.waitForTimeout(600);
-      // The shortcut binding is `shift+/` (= "?") — try a few keystroke
-      // shapes since some shortcut libraries listen for the literal "?",
-      // others for the shift+slash combination.
-      await page.locator('body').click().catch(() => {});
-      await page.keyboard.press('?').catch(() => {});
-      const dialogOpened = await page
-        .getByRole('dialog')
-        .filter({ hasText: /Keyboard Shortcuts/i })
-        .isVisible({ timeout: 1_500 })
-        .catch(() => false);
-      if (!dialogOpened) {
-        await page.keyboard.press('Shift+/');
-        await page
-          .getByRole('dialog')
-          .waitFor({ state: 'visible', timeout: 3_000 })
-          .catch(() => {});
+      // ── 65: ActionsSidebar (node insertion mode) ──────────────────────────
+      if (dataPipelineId) {
+        await page.goto(`${VITE_BASE}/flowlib/flow/${dataPipelineId}`);
+        await expect(page.locator('.react-flow')).toBeVisible({ timeout: 15_000 });
+        await page.waitForTimeout(600);
+        // The left sidebar starts in "Add Node" mode for non-agent flows. If it
+        // isn't already showing the action catalogue, try the mode-switcher.
+        const addNodeBtn = page.getByRole('button', { name: /add node|nodes/i }).first();
+        if (await addNodeBtn.isVisible().catch(() => false)) {
+          await addNodeBtn.click();
+          await page.waitForTimeout(400);
+        }
+        await takeScreenshot(
+          page,
+          screensById['65-actions-sidebar-nodes']!,
+          `/flowlib/flow/${dataPipelineId}`,
+        );
       }
-      await page.waitForTimeout(400);
-      await takeScreenshot(
-        page,
-        screensById['64-shortcuts-help-dialog']!,
-        `/flowlib/flow/${dataPipelineId}`,
-      );
-      await page.keyboard.press('Escape');
-      await page.waitForTimeout(300);
-    }
 
-    // ── 65: ActionsSidebar (node insertion mode) ──────────────────────────
-    if (dataPipelineId) {
-      await page.goto(`${VITE_BASE}/flowlib/flow/${dataPipelineId}`);
-      await expect(page.locator('.react-flow')).toBeVisible({ timeout: 15_000 });
-      await page.waitForTimeout(600);
-      // The left sidebar starts in "Add Node" mode for non-agent flows. If it
-      // isn't already showing the action catalogue, try the mode-switcher.
-      const addNodeBtn = page
-        .getByRole('button', { name: /add node|nodes/i })
-        .first();
-      if (await addNodeBtn.isVisible().catch(() => false)) {
-        await addNodeBtn.click();
-        await page.waitForTimeout(400);
-      }
-      await takeScreenshot(
-        page,
-        screensById['65-actions-sidebar-nodes']!,
-        `/flowlib/flow/${dataPipelineId}`,
+      // ── 66: OAuth2 callback page ──────────────────────────────────────────
+      // Navigate with synthesised code/state so the handler attempts to post
+      // a result back to the opener. There's no opener in tests, so the page
+      // typically renders a brief "processing" / error state — which is what
+      // we capture (it's the only visible representation of the route).
+      await page.goto(
+        `${VITE_BASE}/flowlib/oauth/callback?code=visual-audit-code&state=visual-audit-state`,
       );
-    }
-
-    // ── 66: OAuth2 callback page ──────────────────────────────────────────
-    // Navigate with synthesised code/state so the handler attempts to post
-    // a result back to the opener. There's no opener in tests, so the page
-    // typically renders a brief "processing" / error state — which is what
-    // we capture (it's the only visible representation of the route).
-    await page.goto(`${VITE_BASE}/flowlib/oauth/callback?code=visual-audit-code&state=visual-audit-state`);
-    await page.waitForTimeout(1200);
-    await takeScreenshot(page, screensById['66-oauth2-callback']!, '/flowlib/oauth/callback');
+      await page.waitForTimeout(1200);
+      await takeScreenshot(page, screensById['66-oauth2-callback']!, '/flowlib/oauth/callback');
     });
 
     // ════════════════════════════════════════════════════════════════════════
@@ -2224,7 +2242,9 @@ test.describe('Visual Audit — Screenshot Capture', () => {
     // /flow/:id navigation lands on a blank page. Running it last sidesteps
     // the issue — there's nothing downstream to corrupt.
     await withClusterReset('rbac-share-modal-empty', async () => {
-      if (!dataPipelineId) return;
+      if (!dataPipelineId) {
+        return;
+      }
       await page.route(`${pluginApiBase}/plugins/auth/users**`, async (route) => {
         if (route.request().method() === 'GET') {
           await route.fulfill({
@@ -2258,7 +2278,11 @@ test.describe('Visual Audit — Screenshot Capture', () => {
         await shareBtn55.click();
         await page.waitForTimeout(800);
       }
-      await takeScreenshot(page, screensById['55-share-modal-empty']!, `/flowlib/flow/${dataPipelineId}`);
+      await takeScreenshot(
+        page,
+        screensById['55-share-modal-empty']!,
+        `/flowlib/flow/${dataPipelineId}`,
+      );
       await page.keyboard.press('Escape');
       await page.waitForTimeout(300);
       await page.unroute(`${pluginApiBase}/plugins/rbac/flows/*/access`);

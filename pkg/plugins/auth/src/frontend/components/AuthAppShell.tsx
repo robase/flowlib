@@ -28,7 +28,10 @@ export interface AuthAppShellProps {
 export function AuthAppShell({ children, apiBaseUrl, basePath }: AuthAppShellProps) {
   return (
     <AuthProvider baseUrl={apiBaseUrl}>
-      <AuthGate loading={<LoadingSpinner />} fallback={<UnauthenticatedRoutes basePath={basePath} />}>
+      <AuthGate
+        loading={<LoadingSpinner />}
+        fallback={<UnauthenticatedRoutes basePath={basePath} />}
+      >
         {children}
       </AuthGate>
     </AuthProvider>
