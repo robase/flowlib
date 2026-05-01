@@ -16,6 +16,8 @@
     "coverage",
     "build",
     "drizzle",
-    "pnpm-lock.yaml"
+    "pnpm-lock.yaml",
+    "**/next-env.d.ts",
+    "pkg/vscode-extension/webview/static-action-catalogue.json"
   ]
 }
