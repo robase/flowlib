@@ -3,7 +3,6 @@ packages:
   - pkg/plugins/*
   - examples/*
   - experiments/*
-  - docs
 
 onlyBuiltDependencies:
   - '@nestjs/core'

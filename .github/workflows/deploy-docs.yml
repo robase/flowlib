@@ -6,9 +6,6 @@ env:
 on:
   push:
     branches: [main]
-    paths:
-      - 'docs/**'
-      - '.github/workflows/deploy-docs.yml'
   workflow_dispatch:
 
 permissions:
@@ -38,23 +35,22 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Build workspace packages
-        run: pnpm --filter @flowlib/core --filter @flowlib/layouts --filter @flowlib/ui run build
-
-      - name: Build docs
-        run: pnpm --filter @flowlib/docs run build
+      - name: Build docs (and all workspace deps)
+        run: |
+          pnpm --filter @flowlib/docs^... run build
+          pnpm --filter @flowlib/docs run build
         env:
           DOCS_BASE_PATH: ''
 
       - name: Disable Jekyll processing
-        run: touch docs/out/.nojekyll
+        run: touch pkg/docs/out/.nojekyll
 
       - name: Configure custom domain
-        run: printf '%s\n' "$CUSTOM_DOMAIN" > docs/out/CNAME
+        run: printf '%s\n' "$CUSTOM_DOMAIN" > pkg/docs/out/CNAME
 
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: docs/out
+          path: pkg/docs/out
 
   deploy:
     needs: build

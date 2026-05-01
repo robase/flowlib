@@ -61,7 +61,7 @@
     ".turbo",
     "drizzle",
     "pnpm-lock.yaml",
-    "docs/",
+    "pkg/docs/",
     ".claude",
     "**/.claude/**"
   ],
