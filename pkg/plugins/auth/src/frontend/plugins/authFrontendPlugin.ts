@@ -13,6 +13,10 @@ import { ProfilePage } from '../components/ProfilePage';
 import { UserManagementPage } from '../components/UserManagementPage';
 import { SidebarUserMenu } from '../components/SidebarUserMenu';
 import { AuthAppShell } from '../components/AuthAppShell';
+import { SignInPage } from '../components/SignInPage';
+import { SignUpPage } from '../components/SignUpPage';
+import { ForgotPasswordPage } from '../components/ForgotPasswordPage';
+import { ResetPasswordPage } from '../components/ResetPasswordPage';
 import type { FlowlibFrontendPlugin } from '@flowlib/ui';
 
 export const authFrontend: FlowlibFrontendPlugin = {
@@ -39,14 +43,17 @@ export const authFrontend: FlowlibFrontendPlugin = {
   sidebarFooter: SidebarUserMenu,
 
   // ─── Routes ───
+  // The /sign-in, /sign-up, /forgot-password, /reset-password pages are
+  // primarily rendered by AuthAppShell when unauthenticated. Registering
+  // them here as well means authenticated users hitting those URLs directly
+  // get redirected home (via the page components' internal guard) instead
+  // of falling through to a blank `<Outlet />`.
   routes: [
-    {
-      path: '/profile',
-      component: ProfilePage,
-    },
-    {
-      path: '/users',
-      component: UserManagementPage,
-    },
+    { path: '/sign-in', component: SignInPage },
+    { path: '/sign-up', component: SignUpPage },
+    { path: '/forgot-password', component: ForgotPasswordPage },
+    { path: '/reset-password', component: ResetPasswordPage },
+    { path: '/profile', component: ProfilePage },
+    { path: '/users', component: UserManagementPage },
   ],
 };

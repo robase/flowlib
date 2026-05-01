@@ -1062,12 +1062,18 @@ importers:
       better-sqlite3:
         specifier: '>=9.0.0'
         version: 12.8.0
+      clsx:
+        specifier: ^2.1.1
+        version: 2.1.1
       kysely:
         specifier: '>=0.28.16'
         version: 0.28.16
       react-router:
         specifier: '>=7.0.0'
         version: 7.13.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      tailwind-merge:
+        specifier: ^3.3.1
+        version: 3.5.0
     devDependencies:
       '@flowlib/ui':
         specifier: workspace:*

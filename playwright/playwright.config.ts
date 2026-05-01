@@ -82,6 +82,7 @@ export default defineConfig({
       testIgnore: [
         /platform\//,
         /examples\//,
+        /auth\//,
         /nest-prisma-installation/,
         /critical-paths\//,
         /visual-audit\//,
@@ -95,6 +96,15 @@ export default defineConfig({
     {
       name: 'critical-paths',
       testMatch: /critical-paths\/.*\.spec\.ts/,
+      use: {
+        ...devices['Desktop Chrome'],
+        baseURL: viteBaseUrl,
+      },
+    },
+    /* Auth-flow tests — shared frontend, isolated Express+auth+rbac backend per worker */
+    {
+      name: 'auth',
+      testMatch: /tests\/auth\/.*\.spec\.ts/,
       use: {
         ...devices['Desktop Chrome'],
         baseURL: viteBaseUrl,

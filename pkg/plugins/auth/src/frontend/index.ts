@@ -4,57 +4,94 @@
  * Browser-safe entry point that exports the auth UI components.
  * Import via: `import { AuthProvider, useAuth } from '@flowlib/user-auth/ui'`
  *
- * No Node.js dependencies. No better-auth runtime imports.
+ * No Node.js dependencies. No better-auth-ui runtime imports.
  */
 
-// Provider & hook
+// ── Provider + auth client ───────────────────────────────────────
 export { AuthProvider, useAuth } from './providers/AuthProvider';
-export type { AuthProviderProps, AuthContextValue } from './providers/AuthProvider';
+export type { AuthContextValue, AuthProviderProps } from './providers/AuthProvider';
+export type { AuthClient } from './lib/auth-client';
 
-// Form components
+// ── Per-action hooks (borrowed from better-auth-ui patterns) ─────
+export {
+  // Queries
+  useSession,
+  useListSessions,
+  useListAccounts,
+  // Auth flow mutations
+  useSignInEmail,
+  useSignUpEmail,
+  useSignOut,
+  useRequestPasswordReset,
+  useResetPassword,
+  // Profile mutations
+  useUpdateUser,
+  useChangePassword,
+  useChangeEmail,
+  useRevokeSession,
+  useDeleteUser,
+  // 2FA mutations
+  useVerifyTwoFactorTotp,
+  useVerifyTwoFactorBackupCode,
+  useEnableTwoFactor,
+  useDisableTwoFactor,
+  useGetTwoFactorTotpUri,
+  useGenerateTwoFactorBackupCodes,
+} from './hooks';
+
+// ── Form components ──────────────────────────────────────────────
 export { SignInForm } from './components/SignInForm';
 export type { SignInFormProps } from './components/SignInForm';
-
-// Full-page components
-export { SignInPage } from './components/SignInPage';
-export type { SignInPageProps } from './components/SignInPage';
-
-// Utility components
-export { UserButton } from './components/UserButton';
-export type { UserButtonProps } from './components/UserButton';
-export { AuthGate } from './components/AuthGate';
-export type { AuthGateProps } from './components/AuthGate';
-
-// User management (admin-only)
-export { UserManagement } from './components/UserManagement';
-export type { UserManagementProps } from './components/UserManagement';
-
-// API key management (admin-only, requires apiKey enabled)
-export { ApiKeysDialog } from './components/ApiKeysDialog';
-export type { ApiKeysDialogProps } from './components/ApiKeysDialog';
-
-// Two-Factor Authentication components
+export { SignUpForm } from './components/SignUpForm';
+export type { SignUpFormProps } from './components/SignUpForm';
+export { ForgotPasswordForm } from './components/ForgotPasswordForm';
+export { ResetPasswordForm } from './components/ResetPasswordForm';
 export { TwoFactorVerifyForm } from './components/TwoFactorVerifyForm';
 export type { TwoFactorVerifyFormProps } from './components/TwoFactorVerifyForm';
 export { TwoFactorSetup } from './components/TwoFactorSetup';
-export type { TwoFactorSetupProps } from './components/TwoFactorSetup';
 
-// Authenticated Flowlib wrapper
-export { AuthenticatedFlowlib } from './components/AuthenticatedFlowlib';
-export type { AuthenticatedFlowlibProps } from './components/AuthenticatedFlowlib';
-
-// User management page (standalone route)
-export { UserManagementPage } from './components/UserManagementPage';
+// ── Full-page components ─────────────────────────────────────────
+export { SignInPage } from './components/SignInPage';
+export type { SignInPageProps } from './components/SignInPage';
+export { SignUpPage } from './components/SignUpPage';
+export type { SignUpPageProps } from './components/SignUpPage';
+export { ForgotPasswordPage } from './components/ForgotPasswordPage';
+export { ResetPasswordPage } from './components/ResetPasswordPage';
+export { TwoFactorVerifyPage } from './components/TwoFactorVerifyPage';
+export type { TwoFactorVerifyPageProps } from './components/TwoFactorVerifyPage';
 export { ProfilePage } from './components/ProfilePage';
+export { UserManagementPage } from './components/UserManagementPage';
 
-// Sidebar user menu (sign-out, profile info)
+// ── Settings cards (compose your own profile shell) ──────────────
+export { SessionsList } from './components/SessionsList';
+export { DetailsTab } from './components/profile/DetailsTab';
+export { AuthenticationTab } from './components/profile/AuthenticationTab';
+export { ApiKeysCard } from './components/profile/ApiKeysCard';
+
+// ── Header / sidebar utilities ───────────────────────────────────
+export { UserButton } from './components/UserButton';
+export type { UserButtonProps } from './components/UserButton';
+export { Avatar } from './components/ui/Avatar';
+export type { AvatarProps } from './components/ui/Avatar';
 export { SidebarUserMenu } from './components/SidebarUserMenu';
 export type { SidebarUserMenuProps } from './components/SidebarUserMenu';
 
-// Frontend plugin definition
+// ── Auth gating ──────────────────────────────────────────────────
+export { AuthGate } from './components/AuthGate';
+export type { AuthGateProps } from './components/AuthGate';
+export { AuthAppShell } from './components/AuthAppShell';
+export type { AuthAppShellProps } from './components/AuthAppShell';
+
+// ── User management (admin-only) ─────────────────────────────────
+export { UserManagement } from './components/UserManagement';
+export type { UserManagementProps } from './components/UserManagement';
+export { ApiKeysDialog } from './components/ApiKeysDialog';
+export type { ApiKeysDialogProps } from './components/ApiKeysDialog';
+
+// ── Frontend plugin definition ───────────────────────────────────
 export { authFrontend } from './plugins/authFrontendPlugin';
 
-// Re-export shared types for convenience
+// ── Shared types ─────────────────────────────────────────────────
 export type {
   AuthSession,
   AuthUser,

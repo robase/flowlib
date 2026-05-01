@@ -118,6 +118,32 @@ export interface BetterAuthPassthroughOptions {
     maxPasswordLength?: number;
     autoSignIn?: boolean;
     revokeSessionsOnPasswordReset?: boolean;
+    /**
+     * Sends a password reset email when a user calls
+     * `requestPasswordReset`. The reset URL contains a single-use token
+     * that the frontend's reset-password page consumes. Without this,
+     * the forgot-password UI will surface a configuration error.
+     */
+    sendResetPassword?: (
+      data: {
+        user: { id: string; email: string; name?: string | null };
+        url: string;
+        token: string;
+      },
+      request?: Request,
+    ) => Promise<void> | void;
+    /**
+     * Sends a verification email after sign-up when
+     * `requireEmailVerification` is enabled.
+     */
+    sendVerificationEmail?: (
+      data: {
+        user: { id: string; email: string; name?: string | null };
+        url: string;
+        token: string;
+      },
+      request?: Request,
+    ) => Promise<void> | void;
   };
 
   /** Session configuration. */
@@ -287,6 +313,36 @@ export interface TwoFactorPluginOptions {
 }
 
 /**
+ * Options forwarded to the `emailOTP()` Better Auth plugin.
+ *
+ * The plugin needs `sendVerificationOTP` to actually deliver codes — typically
+ * via Resend / Postmark / SES. Other fields tune OTP length, expiry, rate
+ * limit, and whether sign-up via OTP is allowed.
+ *
+ * @see https://better-auth.com/docs/plugins/email-otp
+ */
+export interface EmailOtpPluginOptions {
+  /** Deliver an OTP to the user's email address. Required for OTP flows to work. */
+  sendVerificationOTP: (data: {
+    email: string;
+    otp: string;
+    type: 'sign-in' | 'email-verification' | 'forget-password' | 'change-email';
+  }) => Promise<void> | void;
+  /** Length of the OTP. @default 6 */
+  otpLength?: number;
+  /** Expiry time of the OTP in seconds. @default 300 */
+  expiresIn?: number;
+  /** Send email verification on sign-up. @default false */
+  sendVerificationOnSignUp?: boolean;
+  /** Block automatic sign-up when the user is not registered. @default false */
+  disableSignUp?: boolean;
+  /** Allowed code attempts before the OTP is invalidated. @default 3 */
+  allowedAttempts?: number;
+  /** Rate limit for OTP requests. @default { window: 60, max: 3 } */
+  rateLimit?: { window: number; max: number };
+}
+
+/**
  * Configuration for the User Auth Flowlib plugin.
  *
  * A light wrapper around [Better Auth](https://better-auth.com).
@@ -448,6 +504,21 @@ export interface AuthenticationPluginOptions {
    * @see https://better-auth.com/docs/plugins/2fa
    */
   twoFactor?: TwoFactorPluginOptions;
+
+  /**
+   * Email OTP plugin — enables passwordless sign-up and sign-in via a one-time
+   * code emailed to the user. Required for the OTP-based sign-up form to
+   * actually deliver codes; without this, the SignUp form's "Continue with
+   * Email" step will fail.
+   *
+   * Pass an options object with at least `sendVerificationOTP` so the plugin
+   * knows how to deliver the email. Pass `true` to enable with defaults
+   * (note: with no `sendVerificationOTP` callback, codes are generated
+   * server-side but never delivered — only useful in tests).
+   *
+   * @see https://better-auth.com/docs/plugins/email-otp
+   */
+  emailOtp?: boolean | EmailOtpPluginOptions;
 
   /**
    * Frontend plugin (sidebar, routes, providers) for the auth UI.

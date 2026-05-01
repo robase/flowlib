@@ -1,70 +1,38 @@
 /**
- * AuthProvider — Context provider for authentication state.
+ * AuthProvider — exposes a Better Auth client + session state via context.
  *
- * Fetches the current session from the better-auth proxy endpoints
- * and caches it via React Query. Provides sign-in, sign-up, and
- * sign-out actions to child components.
+ * Per-action hooks (useSignInEmail, useSignUpEmail, ...) consume the client
+ * from context and wrap React Query mutations/queries.
  */
 
-import { createContext, useContext, useCallback, useMemo, useState, type ReactNode } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import type {
-  AuthSession,
-  AuthUser,
-  SignInCredentials,
-  SignUpCredentials,
-  TwoFactorVerifyInput,
-  TwoFactorEnableResponse,
-  TwoFactorEnableInput,
-  TwoFactorDisableInput,
-} from '../../shared/types';
-
-// ─────────────────────────────────────────────────────────────
-// Context Types
-// ─────────────────────────────────────────────────────────────
-
-export interface AuthContextValue {
-  /** Current authenticated user, null if not signed in */
-  user: AuthUser | null;
-  /** Whether the user is authenticated */
-  isAuthenticated: boolean;
-  /** Whether the session query is still loading */
-  isLoading: boolean;
-  /** Sign in with email/password */
-  signIn: (credentials: SignInCredentials) => Promise<void>;
-  /** Sign up with email/password */
-  signUp: (credentials: SignUpCredentials) => Promise<void>;
-  /** Sign out the current session */
-  signOut: () => Promise<void>;
-  /** Whether a sign-in is in progress */
-  isSigningIn: boolean;
-  /** Whether a sign-up is in progress */
-  isSigningUp: boolean;
-  /** Last auth error, if any */
-  error: string | null;
-  /** Whether 2FA verification is required (after sign-in) */
-  twoFactorRequired: boolean;
-  /** Cancel the pending 2FA verification and return to sign-in */
-  cancelTwoFactor: () => void;
-  /** Verify a TOTP code during sign-in */
-  verifyTotp: (input: TwoFactorVerifyInput) => Promise<void>;
-  /** Verify a backup code during sign-in */
-  verifyBackupCode: (code: string) => Promise<void>;
-  /** Whether a 2FA verification is in progress */
-  isVerifyingTwoFactor: boolean;
-  /** Enable 2FA for the current user — returns TOTP URI and backup codes */
-  enableTwoFactor: (input: TwoFactorEnableInput) => Promise<TwoFactorEnableResponse>;
-  /** Disable 2FA for the current user */
-  disableTwoFactor: (input: TwoFactorDisableInput) => Promise<void>;
-  /** Get the TOTP URI for the current user (requires password) */
-  getTotpUri: (password: string) => Promise<string>;
-  /** Generate new backup codes for the current user */
-  generateBackupCodes: (password: string) => Promise<string[]>;
-}
+import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import type { AuthSession, AuthUser } from '../../shared/types';
+import { createFlowlibAuthClient, type AuthClient } from '../lib/auth-client';
+import { sessionOptions } from '../queries/options';
 
 // ─────────────────────────────────────────────────────────────
 // Context
 // ─────────────────────────────────────────────────────────────
+
+export interface AuthContextValue {
+  /** Better Auth client. Use this directly in the per-action hooks. */
+  authClient: AuthClient;
+  /** Base URL passed to the client — exposed for components that need to build endpoint URLs. */
+  baseUrl: string;
+  /** Whether the session query is still loading on first mount. */
+  isLoading: boolean;
+  /** Current user, or null when unauthenticated. */
+  user: AuthUser | null;
+  /** Convenience flag derived from `user`. */
+  isAuthenticated: boolean;
+  /** Whether sign-in completed but 2FA verification is pending. */
+  twoFactorRequired: boolean;
+  /** Set the 2FA-required flag (forms call this after a sign-in returns `twoFactorRedirect`). */
+  setTwoFactorRequired: (required: boolean) => void;
+  /** Clear the 2FA-required flag and return to the sign-in page. */
+  cancelTwoFactor: () => void;
+}
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
@@ -75,329 +43,59 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 export interface AuthProviderProps {
   children: ReactNode;
   /**
-   * Base URL for the Flowlib API (e.g. 'http://localhost:3000/flowlib').
-   * Auth endpoints are at `${baseUrl}/plugins/auth/api/auth/*`.
+   * Base URL for the Flowlib API (e.g. `'http://localhost:3000/flowlib'`).
+   * Better Auth routes are mounted at `${baseUrl}/plugins/auth/api/auth`.
    */
   baseUrl: string;
 }
 
 export function AuthProvider({ children, baseUrl }: AuthProviderProps) {
-  const queryClient = useQueryClient();
   const [twoFactorRequired, setTwoFactorRequired] = useState(false);
 
-  // Construct auth API base URL
-  const authApiBase = `${baseUrl}/plugins/auth/api/auth`;
+  const authClient = useMemo(
+    () => createFlowlibAuthClient(`${baseUrl}/plugins/auth/api/auth`),
+    [baseUrl],
+  );
 
-  // ── Session Query ──────────────────────────────────────────
+  const cancelTwoFactor = useCallback(() => setTwoFactorRequired(false), []);
 
-  const { data: session, isLoading } = useQuery<AuthSession>({
-    queryKey: ['auth', 'session'],
-    queryFn: async () => {
-      const response = await fetch(`${authApiBase}/get-session`, {
-        credentials: 'include',
-      });
-      if (!response.ok) {
-        return { user: null as unknown as AuthUser, isAuthenticated: false };
-      }
-      const data = await response.json();
-      if (!data?.user) {
-        return { user: null as unknown as AuthUser, isAuthenticated: false };
-      }
-      return {
-        user: {
-          id: data.user.id,
-          name: data.user.name ?? undefined,
-          email: data.user.email ?? undefined,
-          image: data.user.image ?? undefined,
-          role: data.user.role ?? undefined,
-          twoFactorEnabled: data.user.twoFactorEnabled ?? undefined,
-        },
-        isAuthenticated: true,
-      };
-    },
-    staleTime: 5 * 60 * 1000, // 5 minutes
+  // `sessionOptions` wires `throw: true` so the queryFn returns the unwrapped
+  // `{user, session}` (or `null` for unauthenticated). React Query catches
+  // network/auth errors and surfaces them via `error`.
+  const sessionQuery = useQuery({
+    ...sessionOptions(authClient),
+    staleTime: 5 * 60 * 1000,
     retry: 1,
   });
 
-  // ── Sign In ────────────────────────────────────────────────
-
-  const signInMutation = useMutation({
-    mutationFn: async (credentials: SignInCredentials) => {
-      const response = await fetch(`${authApiBase}/sign-in/email`, {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify(credentials),
-      });
-      if (!response.ok) {
-        const err = await response.json().catch(() => ({ message: 'Sign in failed' }));
-        throw new Error(err.message || `Sign in failed (${response.status})`);
-      }
-      return response.json();
-    },
-    onSuccess: (data) => {
-      if (data && data.twoFactorRedirect) {
-        setTwoFactorRequired(true);
-        return;
-      }
-      setTwoFactorRequired(false);
-      queryClient.invalidateQueries({ queryKey: ['auth', 'session'] });
-    },
-  });
-
-  // ── Sign Up ────────────────────────────────────────────────
-
-  const signUpMutation = useMutation({
-    mutationFn: async (credentials: SignUpCredentials) => {
-      const response = await fetch(`${authApiBase}/sign-up/email`, {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify(credentials),
-      });
-      if (!response.ok) {
-        const err = await response.json().catch(() => ({ message: 'Sign up failed' }));
-        throw new Error(err.message || `Sign up failed (${response.status})`);
-      }
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['auth', 'session'] });
-    },
-  });
-
-  // ── Sign Out ───────────────────────────────────────────────
-
-  const signOutMutation = useMutation({
-    mutationFn: async () => {
-      const response = await fetch(`${authApiBase}/sign-out`, {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({}),
-      });
-      if (!response.ok) {
-        const err = await response.json().catch(async () => ({
-          message: (await response.text().catch(() => '')) || 'Sign out failed',
-        }));
-        throw new Error(err.message || `Sign out failed (${response.status})`);
-      }
-    },
-    onSuccess: () => {
-      setTwoFactorRequired(false);
-      queryClient.invalidateQueries({ queryKey: ['auth', 'session'] });
-    },
-  });
-
-  // ── 2FA: Verify TOTP ──────────────────────────────────────
-
-  const verifyTotpMutation = useMutation({
-    mutationFn: async (input: TwoFactorVerifyInput) => {
-      const response = await fetch(`${authApiBase}/two-factor/verify-totp`, {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify(input),
-      });
-      if (!response.ok) {
-        const err = await response.json().catch(() => ({ message: 'Invalid verification code' }));
-        throw new Error(err.message || `Verification failed (${response.status})`);
-      }
-      return response.json();
-    },
-    onSuccess: () => {
-      setTwoFactorRequired(false);
-      queryClient.invalidateQueries({ queryKey: ['auth', 'session'] });
-    },
-  });
-
-  // ── 2FA: Verify Backup Code ────────────────────────────────
-
-  const verifyBackupCodeMutation = useMutation({
-    mutationFn: async (code: string) => {
-      const response = await fetch(`${authApiBase}/two-factor/verify-backup-code`, {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ code }),
-      });
-      if (!response.ok) {
-        const err = await response.json().catch(() => ({ message: 'Invalid backup code' }));
-        throw new Error(err.message || `Verification failed (${response.status})`);
-      }
-      return response.json();
-    },
-    onSuccess: () => {
-      setTwoFactorRequired(false);
-      queryClient.invalidateQueries({ queryKey: ['auth', 'session'] });
-    },
-  });
-
-  // ── Callbacks ──────────────────────────────────────────────
-
-  const signIn = useCallback(
-    async (credentials: SignInCredentials) => {
-      await signInMutation.mutateAsync(credentials);
-    },
-    [signInMutation],
-  );
-
-  const signUp = useCallback(
-    async (credentials: SignUpCredentials) => {
-      await signUpMutation.mutateAsync(credentials);
-    },
-    [signUpMutation],
-  );
-
-  const signOut = useCallback(async () => {
-    await signOutMutation.mutateAsync();
-  }, [signOutMutation]);
-
-  const cancelTwoFactor = useCallback(() => {
-    setTwoFactorRequired(false);
-  }, []);
-
-  const verifyTotp = useCallback(
-    async (input: TwoFactorVerifyInput) => {
-      await verifyTotpMutation.mutateAsync(input);
-    },
-    [verifyTotpMutation],
-  );
-
-  const verifyBackupCode = useCallback(
-    async (code: string) => {
-      await verifyBackupCodeMutation.mutateAsync(code);
-    },
-    [verifyBackupCodeMutation],
-  );
-
-  const enableTwoFactor = useCallback(
-    async (input: TwoFactorEnableInput): Promise<TwoFactorEnableResponse> => {
-      const response = await fetch(`${authApiBase}/two-factor/enable`, {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify(input),
-      });
-      if (!response.ok) {
-        const err = await response.json().catch(() => ({ message: 'Failed to enable 2FA' }));
-        throw new Error(err.message || `Failed to enable 2FA (${response.status})`);
-      }
-      const data = await response.json();
-      queryClient.invalidateQueries({ queryKey: ['auth', 'session'] });
-      return data;
-    },
-    [authApiBase, queryClient],
-  );
-
-  const disableTwoFactor = useCallback(
-    async (input: TwoFactorDisableInput): Promise<void> => {
-      const response = await fetch(`${authApiBase}/two-factor/disable`, {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify(input),
-      });
-      if (!response.ok) {
-        const err = await response.json().catch(() => ({ message: 'Failed to disable 2FA' }));
-        throw new Error(err.message || `Failed to disable 2FA (${response.status})`);
-      }
-      queryClient.invalidateQueries({ queryKey: ['auth', 'session'] });
-    },
-    [authApiBase, queryClient],
-  );
-
-  const getTotpUri = useCallback(
-    async (password: string): Promise<string> => {
-      const response = await fetch(`${authApiBase}/two-factor/get-totp-uri`, {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ password }),
-      });
-      if (!response.ok) {
-        const err = await response.json().catch(() => ({ message: 'Failed to get TOTP URI' }));
-        throw new Error(err.message || `Failed to get TOTP URI (${response.status})`);
-      }
-      const data = await response.json();
-      return data.totpURI;
-    },
-    [authApiBase],
-  );
-
-  const generateBackupCodes = useCallback(
-    async (password: string): Promise<string[]> => {
-      const response = await fetch(`${authApiBase}/two-factor/generate-backup-codes`, {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ password }),
-      });
-      if (!response.ok) {
-        const err = await response
-          .json()
-          .catch(() => ({ message: 'Failed to generate backup codes' }));
-        throw new Error(err.message || `Failed to generate backup codes (${response.status})`);
-      }
-      const data = await response.json();
-      return data.backupCodes;
-    },
-    [authApiBase],
-  );
-
-  // ── Error ──────────────────────────────────────────────────
-
-  const error =
-    signInMutation.error?.message ??
-    signUpMutation.error?.message ??
-    signOutMutation.error?.message ??
-    verifyTotpMutation.error?.message ??
-    verifyBackupCodeMutation.error?.message ??
-    null;
-
-  // ── Context Value ──────────────────────────────────────────
+  const user: AuthUser | null = useMemo(() => {
+    const data = sessionQuery.data as { user?: Record<string, unknown> | null } | null | undefined;
+    const u = data?.user;
+    if (!u) {
+      return null;
+    }
+    return {
+      id: String(u.id),
+      name: typeof u.name === 'string' ? u.name : undefined,
+      email: typeof u.email === 'string' ? u.email : undefined,
+      image: typeof u.image === 'string' ? u.image : undefined,
+      role: typeof u.role === 'string' ? u.role : undefined,
+      twoFactorEnabled: typeof u.twoFactorEnabled === 'boolean' ? u.twoFactorEnabled : undefined,
+    };
+  }, [sessionQuery.data]);
 
   const value = useMemo<AuthContextValue>(
     () => ({
-      user: session?.isAuthenticated ? session.user : null,
-      isAuthenticated: session?.isAuthenticated ?? false,
-      isLoading,
-      signIn,
-      signUp,
-      signOut,
-      isSigningIn: signInMutation.isPending,
-      isSigningUp: signUpMutation.isPending,
-      error,
+      authClient,
+      baseUrl,
+      isLoading: sessionQuery.isLoading,
+      user,
+      isAuthenticated: user !== null,
       twoFactorRequired,
+      setTwoFactorRequired,
       cancelTwoFactor,
-      verifyTotp,
-      verifyBackupCode,
-      isVerifyingTwoFactor: verifyTotpMutation.isPending || verifyBackupCodeMutation.isPending,
-      enableTwoFactor,
-      disableTwoFactor,
-      getTotpUri,
-      generateBackupCodes,
     }),
-    [
-      session,
-      isLoading,
-      signIn,
-      signUp,
-      signOut,
-      signInMutation.isPending,
-      signUpMutation.isPending,
-      error,
-      twoFactorRequired,
-      cancelTwoFactor,
-      verifyTotp,
-      verifyBackupCode,
-      verifyTotpMutation.isPending,
-      verifyBackupCodeMutation.isPending,
-      enableTwoFactor,
-      disableTwoFactor,
-      getTotpUri,
-      generateBackupCodes,
-    ],
+    [authClient, baseUrl, sessionQuery.isLoading, user, twoFactorRequired, cancelTwoFactor],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
@@ -408,57 +106,16 @@ export function AuthProvider({ children, baseUrl }: AuthProviderProps) {
 // ─────────────────────────────────────────────────────────────
 
 /**
- * Access auth context — current user, sign-in/sign-up/sign-out actions.
- *
- * Must be used within an `<AuthProvider>`.
- * Returns a safe fallback (unauthenticated) if provider is missing.
+ * Access the auth context. Throws when used outside an `<AuthProvider>` —
+ * components in this package always render under one.
  */
 export function useAuth(): AuthContextValue {
   const ctx = useContext(AuthContext);
-
   if (!ctx) {
-    // Graceful fallback
-    return {
-      user: null,
-      isAuthenticated: false,
-      isLoading: false,
-      signIn: async () => {
-        throw new Error('AuthProvider not found');
-      },
-      signUp: async () => {
-        throw new Error('AuthProvider not found');
-      },
-      signOut: async () => {
-        throw new Error('AuthProvider not found');
-      },
-      isSigningIn: false,
-      isSigningUp: false,
-      error: null,
-      twoFactorRequired: false,
-      cancelTwoFactor: () => {
-        return null;
-      },
-      verifyTotp: async () => {
-        throw new Error('AuthProvider not found');
-      },
-      verifyBackupCode: async () => {
-        throw new Error('AuthProvider not found');
-      },
-      isVerifyingTwoFactor: false,
-      enableTwoFactor: async () => {
-        throw new Error('AuthProvider not found');
-      },
-      disableTwoFactor: async () => {
-        throw new Error('AuthProvider not found');
-      },
-      getTotpUri: async () => {
-        throw new Error('AuthProvider not found');
-      },
-      generateBackupCodes: async () => {
-        throw new Error('AuthProvider not found');
-      },
-    };
+    throw new Error('[@flowlib/user-auth] useAuth must be used inside <AuthProvider>');
   }
-
   return ctx;
 }
+
+// Re-export AuthSession type for back-compat with old imports.
+export type { AuthSession };

@@ -421,7 +421,7 @@ export function AccessControlPage() {
         </div>
         {isAdmin ? (
           showNewTeam ? (
-            <div className="flex items-center gap-1.5">
+            <div className="ml-auto flex items-center gap-1.5">
               <input
                 value={newTeamName}
                 onChange={(event) => setNewTeamName(event.target.value)}
@@ -451,7 +451,7 @@ export function AccessControlPage() {
                   setShowNewTeam(false);
                 }}
                 disabled={!newTeamName.trim()}
-                className="px-3 py-2 text-sm font-medium rounded-lg bg-imp-primary text-imp-primary-foreground hover:bg-imp-primary/90 disabled:opacity-50"
+                className="px-3 py-2 text-sm font-medium rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
               >
                 Create
               </button>
@@ -461,7 +461,7 @@ export function AccessControlPage() {
                   setShowNewTeam(false);
                   setNewTeamName('');
                 }}
-                className="px-3 py-2 text-sm rounded-lg text-imp-muted-foreground hover:text-imp-foreground"
+                className="px-3 py-2 text-sm rounded-lg text-muted-foreground hover:text-foreground"
               >
                 Cancel
               </button>
@@ -470,7 +470,7 @@ export function AccessControlPage() {
             <button
               type="button"
               onClick={() => setShowNewTeam(true)}
-              className="flex items-center gap-1.5 rounded-lg border border-imp-border px-3 py-2 text-sm font-medium text-imp-muted-foreground hover:border-imp-primary/50 hover:text-imp-foreground"
+              className="ml-auto flex items-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
             >
               <Plus className="w-4 h-4" /> New Team
             </button>

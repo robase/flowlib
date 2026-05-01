@@ -1,55 +1,81 @@
 /**
- * SignInForm — Email/password sign-in form component.
+ * SignInForm — email/password sign-in.
  *
- * Uses the AuthProvider's signIn action. Styled to match the Flowlib
- * design system with grouped fields, clean labels, and themed inputs.
+ * Uses the borrowed `useSignInEmail` hook which wraps `authClient.signIn.email`
+ * with React Query. When the response includes `twoFactorRedirect: true`,
+ * flips the AuthProvider's `twoFactorRequired` flag so AuthAppShell renders
+ * the 2FA verification page next.
  */
 
 import { useState, type FormEvent } from 'react';
+import { Link } from 'react-router';
 import { useAuth } from '../providers/AuthProvider';
-import { Loader2 } from 'lucide-react';
+import { useAuthPublicConfig, useSignInEmail } from '../hooks';
+import { AuthCard, ErrorMessage, Field, SubmitButton, TextInput } from './ui/auth-form';
 
 export interface SignInFormProps {
-  /** Called after successful sign-in */
+  /** Called after successful (no-2FA) sign-in */
   onSuccess?: () => void;
-  /** Additional CSS class names */
-  className?: string;
+  /**
+   * Force-hide the sign-up footer link. By default the form auto-hides it
+   * when the server-side public config reports `signUpEnabled: false`.
+   */
+  hideSignUp?: boolean;
 }
 
-export function SignInForm({ onSuccess, className }: SignInFormProps) {
-  const { signIn, isSigningIn, error } = useAuth();
+export function SignInForm({ onSuccess, hideSignUp = false }: SignInFormProps) {
+  const { setTwoFactorRequired } = useAuth();
+  const config = useAuthPublicConfig();
+  const signUpDisabled = hideSignUp || config.data?.signUpEnabled === false;
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [localError, setLocalError] = useState<string | null>(null);
+
+  const signIn = useSignInEmail();
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setLocalError(null);
 
-    if (!email.trim() || !password.trim()) {
+    if (!email.trim() || !password) {
       setLocalError('Email and password are required');
       return;
     }
 
     try {
-      await signIn({ email, password });
+      const result = await signIn.mutateAsync({ email, password });
+      const data = (result as { twoFactorRedirect?: boolean }) ?? {};
+      if (data.twoFactorRedirect) {
+        setTwoFactorRequired(true);
+        return;
+      }
       onSuccess?.();
     } catch (err) {
       setLocalError(err instanceof Error ? err.message : 'Sign in failed');
     }
   };
 
-  const displayError = localError ?? error;
-
   return (
-    <form onSubmit={handleSubmit} className={className}>
-      <div className="flex flex-col gap-6">
-        {/* Email field */}
-        <div className="grid gap-2">
-          <label htmlFor="auth-signin-email" className="text-sm font-medium leading-none">
-            Email
-          </label>
-          <input
+    <AuthCard
+      title="Welcome back"
+      description="Sign in to your account to continue"
+      footer={
+        !signUpDisabled ? (
+          <p>
+            Don&apos;t have an account?{' '}
+            <Link
+              to="/sign-up"
+              className="font-medium text-foreground underline-offset-4 hover:underline"
+            >
+              Sign up
+            </Link>
+          </p>
+        ) : undefined
+      }
+    >
+      <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+        <Field label="Email" htmlFor="auth-signin-email">
+          <TextInput
             id="auth-signin-email"
             type="email"
             value={email}
@@ -57,16 +83,22 @@ export function SignInForm({ onSuccess, className }: SignInFormProps) {
             placeholder="you@example.com"
             autoComplete="email"
             required
-            className="flex h-9 w-full rounded-md border border-imp-border bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-imp-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-imp-ring disabled:cursor-not-allowed disabled:opacity-50"
           />
-        </div>
+        </Field>
 
-        {/* Password field */}
-        <div className="grid gap-2">
-          <label htmlFor="auth-signin-password" className="text-sm font-medium leading-none">
-            Password
-          </label>
-          <input
+        <Field
+          label="Password"
+          htmlFor="auth-signin-password"
+          trailing={
+            <Link
+              to="/forgot-password"
+              className="text-xs font-normal text-muted-foreground underline-offset-4 hover:underline"
+            >
+              Forgot password?
+            </Link>
+          }
+        >
+          <TextInput
             id="auth-signin-password"
             type="password"
             value={password}
@@ -74,33 +106,15 @@ export function SignInForm({ onSuccess, className }: SignInFormProps) {
             placeholder="••••••••"
             autoComplete="current-password"
             required
-            className="flex h-9 w-full rounded-md border border-imp-border bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-imp-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-imp-ring disabled:cursor-not-allowed disabled:opacity-50"
           />
-        </div>
+        </Field>
 
-        {/* Error message */}
-        {displayError && (
-          <div className="rounded-md border border-imp-destructive/30 bg-imp-destructive/10 px-3 py-2 text-sm text-imp-destructive">
-            {displayError}
-          </div>
-        )}
+        <ErrorMessage>{localError}</ErrorMessage>
 
-        {/* Submit */}
-        <button
-          type="submit"
-          disabled={isSigningIn}
-          className="inline-flex h-9 w-full items-center justify-center gap-2 whitespace-nowrap rounded-md bg-imp-primary px-4 py-2 text-sm font-medium text-imp-primary-foreground shadow transition-colors hover:bg-imp-primary/90 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-imp-ring disabled:pointer-events-none disabled:opacity-50"
-        >
-          {isSigningIn ? (
-            <>
-              <Loader2 className="w-4 h-4 animate-spin" />
-              Signing in…
-            </>
-          ) : (
-            'Sign in'
-          )}
-        </button>
-      </div>
-    </form>
+        <SubmitButton loading={signIn.isPending}>
+          {signIn.isPending ? 'Signing in…' : 'Sign in'}
+        </SubmitButton>
+      </form>
+    </AuthCard>
   );
 }

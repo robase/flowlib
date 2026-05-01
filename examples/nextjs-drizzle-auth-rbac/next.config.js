@@ -1,6 +1,5 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  eslint: { ignoreDuringBuilds: true },
   typescript: { ignoreBuildErrors: true },
   transpilePackages: [
     '@flowlib/core',
@@ -10,16 +9,7 @@ const nextConfig = {
     '@flowlib/user-auth',
     '@flowlib/rbac',
   ],
-  serverExternalPackages: ['pg', 'better-auth', 'drizzle-orm'],
-  webpack: (config, { isServer }) => {
-    if (isServer) {
-      config.externals.push({
-        fsevents: 'commonjs fsevents',
-        chokidar: 'commonjs chokidar',
-      });
-    }
-    return config;
-  },
+  serverExternalPackages: ['pg', 'better-auth', 'drizzle-orm', 'fsevents', 'chokidar'],
 };
 
 export default nextConfig;

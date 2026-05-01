@@ -1,109 +1,128 @@
 /**
- * UserButton — Compact user avatar + dropdown for the authenticated user.
+ * UserButton — avatar trigger with a dropdown of profile + sign-out actions.
  *
- * Shows the user's avatar/initials when signed in, with a dropdown
- * containing their name, email, and sign-out button.
- * Shows a "Sign In" button when not authenticated.
+ * Visual style cribbed from
+ * https://github.com/better-auth-ui/better-auth-ui — header card with avatar,
+ * name, email, role chip, then menu items.
+ *
+ * Uses the @flowlib/ui DropdownMenu primitives so it portals correctly inside
+ * the .flowlib CSS scope.
  */
 
-import { useState, useRef, useEffect } from 'react';
-import { LogOut, User } from 'lucide-react';
+import { LogIn, LogOut, Settings, User } from 'lucide-react';
+import { Link, useNavigate } from 'react-router';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@flowlib/ui';
 import { useAuth } from '../providers/AuthProvider';
+import { useSignOut } from '../hooks';
 import { formatAuthRoleLabel } from '../../shared/roles';
+import { Avatar } from './ui/Avatar';
+import { cn } from '../lib/utils';
 
 export interface UserButtonProps {
   /** Called when the sign-in button is clicked (unauthenticated state) */
   onSignInClick?: () => void;
-  /** Additional CSS class names */
   className?: string;
 }
 
 export function UserButton({ onSignInClick, className }: UserButtonProps) {
-  const { user, isAuthenticated, isLoading, signOut } = useAuth();
-  const [isOpen, setIsOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    const handleClick = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
-        setIsOpen(false);
-      }
-    };
-    if (isOpen) {
-      document.addEventListener('mousedown', handleClick);
-    }
-    return () => document.removeEventListener('mousedown', handleClick);
-  }, [isOpen]);
+  const { user, isAuthenticated, isLoading } = useAuth();
+  const navigate = useNavigate();
+  // Run navigate from the mutation callback rather than after `await` so
+  // the redirect survives the immediate unmount triggered by AuthGate.
+  const signOut = useSignOut({
+    onSuccess: () => navigate('/sign-in', { replace: true }),
+  });
 
   if (isLoading) {
-    return <div className={`h-8 w-8 animate-pulse rounded-full bg-imp-muted ${className ?? ''}`} />;
+    return <div className={cn('h-9 w-9 animate-pulse rounded-full bg-muted', className)} />;
   }
 
   if (!isAuthenticated || !user) {
     return (
       <button
+        type="button"
         onClick={onSignInClick}
-        className={`inline-flex items-center gap-2 rounded-md px-3 py-1.5 text-sm font-medium text-imp-foreground hover:bg-imp-muted ${className ?? ''}`}
+        className={cn(
+          'inline-flex h-9 items-center gap-2 rounded-md px-3 text-sm font-medium hover:bg-accent hover:text-accent-foreground',
+          className,
+        )}
       >
-        <User className="h-4 w-4" />
-        Sign In
+        <LogIn className="h-4 w-4" />
+        Sign in
       </button>
     );
   }
 
-  const initials = (user.name ?? user.email ?? user.id)[0]?.toUpperCase() ?? '?';
-
   return (
-    <div ref={ref} className={`relative ${className ?? ''}`}>
-      {/* Avatar trigger */}
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="flex h-8 w-8 items-center justify-center rounded-full bg-imp-primary/10 text-sm font-medium text-imp-primary hover:bg-imp-primary/20 transition-colors"
-        title={user.name ?? user.email ?? user.id}
-      >
-        {user.image ? (
-          <img
-            src={user.image}
-            alt={user.name ?? ''}
-            className="h-8 w-8 rounded-full object-cover"
-          />
-        ) : (
-          initials
-        )}
-      </button>
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button
+          type="button"
+          className={cn(
+            'inline-flex shrink-0 items-center justify-center rounded-full ring-offset-background transition-colors hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2',
+            className,
+          )}
+          aria-label="Account menu"
+        >
+          <Avatar src={user.image} name={user.name} email={user.email} />
+        </button>
+      </DropdownMenuTrigger>
 
-      {/* Dropdown */}
-      {isOpen && (
-        <div className="absolute right-0 top-full z-50 mt-2 w-56 rounded-lg border border-imp-border bg-imp-background shadow-lg">
-          {/* User info */}
-          <div className="border-b border-imp-border px-4 py-3">
+      <DropdownMenuContent align="end" className="w-64 p-0">
+        <DropdownMenuLabel className="flex items-start gap-3 px-3 py-3">
+          <Avatar src={user.image} name={user.name} email={user.email} size="md" />
+          <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-medium">{user.name ?? 'User'}</p>
             {user.email && (
-              <p className="truncate text-xs text-imp-muted-foreground">{user.email}</p>
+              <p className="truncate text-xs font-normal text-muted-foreground">{user.email}</p>
             )}
             {user.role && (
-              <span className="mt-1 inline-block rounded-full bg-imp-muted px-2 py-0.5 text-xs font-medium">
+              <span className="mt-1 inline-block rounded-full bg-muted px-2 py-0.5 text-xs font-medium">
                 {formatAuthRoleLabel(user.role)}
               </span>
             )}
           </div>
+        </DropdownMenuLabel>
 
-          {/* Actions */}
-          <div className="p-1">
-            <button
-              onClick={async () => {
-                setIsOpen(false);
-                await signOut();
-              }}
-              className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm text-imp-foreground hover:bg-imp-muted"
-            >
-              <LogOut className="h-4 w-4" />
-              Sign Out
-            </button>
-          </div>
+        <DropdownMenuSeparator />
+
+        <div className="p-1">
+          <DropdownMenuItem asChild>
+            <Link to="/profile" className="cursor-pointer">
+              <User className="h-4 w-4" />
+              Profile
+            </Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem asChild>
+            <Link to="/profile" className="cursor-pointer">
+              <Settings className="h-4 w-4" />
+              Settings
+            </Link>
+          </DropdownMenuItem>
         </div>
-      )}
-    </div>
+
+        <DropdownMenuSeparator />
+
+        <div className="p-1">
+          <DropdownMenuItem
+            onSelect={(e) => {
+              e.preventDefault();
+              signOut.mutate();
+            }}
+            className="cursor-pointer text-destructive focus:text-destructive"
+          >
+            <LogOut className="h-4 w-4" />
+            Sign out
+          </DropdownMenuItem>
+        </div>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }

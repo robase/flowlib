@@ -244,7 +244,7 @@ function parseColumnsFromCreateTable(sql: string): Set<string> {
   let buf = '';
   let quote: string | null = null;
   for (let i = openIdx; i < sql.length; i++) {
-    const ch = sql[i]!;
+    const ch = sql[i] ?? '';
     if (quote) {
       buf += ch;
       if (ch === quote && sql[i - 1] !== '\\') {

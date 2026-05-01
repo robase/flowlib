@@ -177,6 +177,7 @@ const RATE_LIMITED_AUTH_PATHS = [
   '/forgot-password',
   '/reset-password',
   '/two-factor/',
+  '/email-otp/',
 ];
 
 /**
@@ -795,6 +796,38 @@ async function createInternalBetterAuth(
     logger.info?.('Better Auth API Key plugin enabled');
   }
 
+  // 7b. Optionally load the Email OTP plugin (powers passwordless sign-up).
+  const emailOtpOpt = options.emailOtp;
+  if (emailOtpOpt) {
+    let emailOtpPluginFn: (config: Record<string, unknown>) => unknown;
+    try {
+      const pluginsModule = await import('better-auth/plugins');
+      emailOtpPluginFn = pluginsModule.emailOTP as unknown as (
+        config: Record<string, unknown>,
+      ) => unknown;
+    } catch {
+      throw new Error(
+        'Could not import emailOTP from "better-auth/plugins". Ensure better-auth is properly installed.',
+      );
+    }
+
+    const emailOtpConfig: Record<string, unknown> =
+      typeof emailOtpOpt === 'object' ? { ...emailOtpOpt } : {};
+    // Without a sendVerificationOTP callback, codes are generated but never
+    // delivered. Warn so the operator notices.
+    if (typeof emailOtpConfig.sendVerificationOTP !== 'function') {
+      emailOtpConfig.sendVerificationOTP = async () => {
+        // No-op delivery — codes are generated but never sent. Useful in
+        // tests; useless in production.
+      };
+      logger.warn?.(
+        'emailOTP enabled without a sendVerificationOTP callback — codes will not be delivered.',
+      );
+    }
+    betterAuthPlugins.push(emailOtpPluginFn(emailOtpConfig));
+    logger.info?.('Better Auth Email OTP plugin enabled');
+  }
+
   // 8. Create the instance
   logger.info?.('Creating internal Better Auth instance');
 
@@ -1110,6 +1143,15 @@ export function authentication(options: AuthenticationPluginOptions): FlowlibPlu
 
   // ----- Resolve API key opt from top-level or passthrough -----
   const apiKeyEnabled = !!(options.apiKey ?? options.betterAuthOptions?.apiKey);
+  // Cap how many API keys a single user can hold at once. Keeps the
+  // bookkeeping bounded and limits blast radius if a key leaks. Override via
+  // `apiKey.maxKeysPerUser` on the auth plugin options.
+  const apiKeyMaxPerUser =
+    (typeof options.apiKey === 'object' &&
+      options.apiKey !== null &&
+      typeof (options.apiKey as { maxKeysPerUser?: unknown }).maxKeysPerUser === 'number' &&
+      (options.apiKey as { maxKeysPerUser: number }).maxKeysPerUser) ||
+    10;
 
   // ----- Build schema (always includes twoFactor, conditionally includes apikey) -----
   let schema: FlowlibPluginSchema = { ...USER_AUTH_SCHEMA };
@@ -1210,6 +1252,39 @@ export function authentication(options: AuthenticationPluginOptions): FlowlibPlu
         },
       },
 
+      // ── Public sign-in page config ───────────────────────────
+      // Returns flags the unauthenticated sign-in / sign-up pages need to
+      // know about (sign-up enabled? email-OTP enabled? configured social
+      // providers?). Public — no session required.
+      {
+        method: 'GET' as const,
+        path: `/${prefix}/public-config`,
+        isPublic: true,
+        handler: async () => {
+          const passthroughOpts = options.betterAuthOptions ?? {};
+          const signUpDisabledViaPassword =
+            passthroughOpts.emailAndPassword?.disableSignUp === true;
+          const signUpDisabledViaOtp =
+            typeof options.emailOtp === 'object' &&
+            options.emailOtp !== null &&
+            (options.emailOtp as { disableSignUp?: boolean }).disableSignUp === true;
+          const signUpEnabled = !signUpDisabledViaPassword && !signUpDisabledViaOtp;
+
+          const socialProviders = Object.keys(
+            (passthroughOpts.socialProviders as Record<string, unknown> | undefined) ?? {},
+          );
+
+          return {
+            status: 200,
+            body: {
+              signUpEnabled,
+              emailOtpEnabled: !!options.emailOtp,
+              socialProviders,
+            },
+          };
+        },
+      },
+
       // ── Auth Info ────────────────────────────────────────────
 
       {
@@ -1275,7 +1350,8 @@ export function authentication(options: AuthenticationPluginOptions): FlowlibPlu
               query: ctx.query,
             });
             if (result && result.status >= 200 && result.status < 300) {
-              return { status: 200, body: result.body };
+              const body = (result.body ?? {}) as Record<string, unknown>;
+              return { status: 200, body: { ...body, maxKeysPerUser: apiKeyMaxPerUser } };
             }
             return {
               status: result?.status ?? 500,
@@ -1328,6 +1404,23 @@ export function authentication(options: AuthenticationPluginOptions): FlowlibPlu
           };
 
           try {
+            // Enforce per-user cap. Better Auth's /api-key/list returns
+            // the current user's keys when no organizationId is supplied.
+            const existing = await callBetterAuthHandler(auth, ctx.request, '/api-key/list', {
+              method: 'GET',
+            });
+            const existingKeys = (existing?.body as { apiKeys?: unknown[] } | undefined)?.apiKeys;
+            if (Array.isArray(existingKeys) && existingKeys.length >= apiKeyMaxPerUser) {
+              return {
+                status: 409,
+                body: {
+                  error: 'API key limit reached',
+                  message: `You can have at most ${apiKeyMaxPerUser} API keys. Delete an existing key to create a new one.`,
+                  limit: apiKeyMaxPerUser,
+                },
+              };
+            }
+
             const result = await callBetterAuthHandler(auth, ctx.request, '/api-key/create', {
               method: 'POST',
               body: {
