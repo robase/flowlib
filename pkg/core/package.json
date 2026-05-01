@@ -1,6 +1,6 @@
 {
   "name": "@flowlib/core",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Framework-agnostic core package for Flowlib workflow execution engine",
   "keywords": [
     "automation",

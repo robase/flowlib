@@ -1,6 +1,6 @@
 {
   "name": "@flowlib/action-kit",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Framework-agnostic type kit for defining Flowlib actions (flow nodes + agent tools)",
   "keywords": [
     "actions",

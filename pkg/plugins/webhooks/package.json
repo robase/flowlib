@@ -1,6 +1,6 @@
 {
   "name": "@flowlib/webhooks",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Webhook trigger plugin for Flowlib — adds webhook management, ingestion, signature verification, and a dedicated webhooks UI page",
   "keywords": [
     "flowlib",
