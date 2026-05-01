@@ -3,6 +3,11 @@
   "version": "0.0.2",
   "description": "Version control plugin for Flowlib — sync flows to GitHub/GitLab/Bitbucket as .flow.ts files",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/robase/flowlib.git",
+    "directory": "pkg/plugins/version-control"
+  },
   "files": [
     "dist",
     "README.md"
