@@ -3,7 +3,12 @@ import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const monorepoRoot = resolve(__dirname, '..');
+// Workspace root — the directory containing pnpm-workspace.yaml. From
+// pkg/docs that's two levels up. Turbopack/Next resolve `next/package.json`
+// from this root; pnpm hoists `next` to `<repo>/node_modules/next`, not to
+// `pkg/node_modules/next`, so pointing `root` at `pkg/` makes Next 16
+// fail with "couldn't find the Next.js package".
+const monorepoRoot = resolve(__dirname, '../..');
 
 const withMDX = createMDX();
 

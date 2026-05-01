@@ -4,14 +4,14 @@ import type { ReactNode } from 'react';
 import './global.css';
 
 const geistSans = localFont({
-  src: '../../pkg/ui/src/assets/fonts/geist-latin-wght-normal.woff2',
+  src: '../../ui/src/assets/fonts/geist-latin-wght-normal.woff2',
   variable: '--font-geist-sans',
   display: 'swap',
   weight: '100 900',
 });
 
 const iosevkaMono = localFont({
-  src: '../../pkg/ui/src/assets/fonts/iosevka-latin-400-normal.woff2',
+  src: '../../ui/src/assets/fonts/iosevka-latin-400-normal.woff2',
   variable: '--font-iosevka',
   display: 'swap',
   weight: '400',
