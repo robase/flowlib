@@ -1,0 +1,69 @@
+name: Changeset from PR
+
+# Auto-derive a changeset from the PR title (conventional commit format)
+# and the diff against the base branch. Commits the file back to the PR
+# branch so the existing Release workflow on push-to-main picks it up.
+#
+# Skip conditions:
+#   - PR is from a fork (we can't push back to it)
+#   - PR head is the version-packages branch (`changeset-release/main`)
+#   - PR has the `skip-changeset` label
+#   - PR title prefix is non-versioning (chore/docs/ci/build/style/refactor/test)
+#   - No workspace packages are affected by the diff
+#
+# The script (`.github/scripts/changeset-from-pr.mjs`) is idempotent: if
+# the target `.changeset/pr-<N>.md` already matches what we'd generate,
+# nothing is committed — so the workflow is safe to re-run on every
+# `synchronize` event without infinite-looping on its own commits.
+
+on:
+  pull_request:
+    types: [opened, synchronize, edited, reopened, labeled, unlabeled]
+
+permissions:
+  contents: write
+  pull-requests: read
+
+concurrency:
+  group: changeset-from-pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  changeset:
+    if: |
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      github.event.pull_request.head.ref != 'changeset-release/main' &&
+      !contains(github.event.pull_request.labels.*.name, 'skip-changeset')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          # Need history back to the merge-base so `git diff origin/<base>...HEAD`
+          # works. Shallow clone is OK; the script fetches base on demand.
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: pnpm/action-setup@v5
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+
+      - name: Generate changeset from PR title
+        id: gen
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_BASE: ${{ github.event.pull_request.base.ref }}
+        run: node .github/scripts/changeset-from-pr.mjs
+
+      - name: Commit + push
+        if: steps.gen.outputs.changed == 'true'
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add ".changeset/pr-${PR_NUMBER}.md"
+          git commit -m "chore: changeset for #${PR_NUMBER}"
+          git push
