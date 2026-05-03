@@ -54,7 +54,7 @@ function useUsers() {
 // ─────────────────────────────────────────────────────────────
 
 export function TeamsPage() {
-  const { isAuthenticated, checkPermission } = useRbac();
+  const { isAuthenticated, isLoading: isAuthLoading, checkPermission } = useRbac();
   const teamsQuery = useTeams();
   const createTeam = useCreateTeam();
   const deleteTeam = useDeleteTeam();
@@ -106,6 +106,14 @@ export function TeamsPage() {
       setExpandedTeamId(null);
     }
   };
+
+  if (isAuthLoading) {
+    return (
+      <div className="flex items-center justify-center w-full h-full min-h-0 overflow-y-auto fl-page bg-fl-background text-fl-foreground">
+        <p className="text-sm text-fl-muted-foreground">Loading…</p>
+      </div>
+    );
+  }
 
   if (!isAuthenticated) {
     return (

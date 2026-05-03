@@ -13,8 +13,16 @@ import { useAuth } from '../providers/AuthProvider';
 
 export function UserManagementPage() {
   const api = useApiClient();
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, isLoading } = useAuth();
   const apiBaseUrl = api.getBaseURL();
+
+  if (isLoading) {
+    return (
+      <div className="fl-page w-full h-full min-h-0 overflow-y-auto bg-fl-background text-fl-foreground flex items-center justify-center">
+        <p className="text-sm text-fl-muted-foreground">Loading…</p>
+      </div>
+    );
+  }
 
   if (!isAuthenticated) {
     return (

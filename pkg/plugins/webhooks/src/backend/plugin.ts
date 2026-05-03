@@ -102,10 +102,16 @@ function buildWebhookUrl(
 // ─── Helper: Generate random paths/secrets ──────────────────────────
 
 function generateWebhookPath(): string {
+  // Webhook paths are the only thing standing between an attacker and the
+  // ability to fire payloads at a flow (HMAC verification is opt-in). Use
+  // a CSPRNG so paths can't be predicted from observed siblings — Math.random
+  // is xoroshiro128+ in V8 and its state is recoverable from a few samples.
   const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+  const bytes = new Uint8Array(24);
+  crypto.getRandomValues(bytes);
   let path = '';
   for (let i = 0; i < 24; i++) {
-    path += chars[Math.floor(Math.random() * chars.length)];
+    path += chars[bytes[i] % chars.length];
   }
   return path;
 }

@@ -98,7 +98,18 @@ export function useSignUpEmail(options?: OmitKeys<ReturnType<typeof signUpEmailO
 
 export function useSignInSocial(options?: OmitKeys<ReturnType<typeof signInSocialOptions>>) {
   const { authClient } = useAuth();
-  return useMutation({ ...signInSocialOptions(authClient), ...options });
+  const queryClient = useQueryClient();
+  return useMutation({
+    ...signInSocialOptions(authClient),
+    ...options,
+    onSuccess: async (...args) => {
+      // Match useSignInEmail / useSignUpEmail — reset the session query so
+      // the AuthProvider picks up the new identity instead of holding a
+      // stale snapshot from a prior user in the same tab.
+      queryClient.resetQueries({ queryKey: sessionOptions(authClient).queryKey });
+      await options?.onSuccess?.(...args);
+    },
+  });
 }
 
 /**
@@ -119,7 +130,13 @@ export function useSignOut(options?: OmitKeys<ReturnType<typeof signOutOptions>>
     ...signOutOptions(authClient),
     ...options,
     onSuccess: async (...args) => {
-      queryClient.removeQueries({ queryKey: ['auth'] });
+      // resetQueries (not removeQueries) is required: removeQueries wipes the
+      // cache but does NOT cause active observers to refetch, so AuthProvider's
+      // useQuery keeps its last `{user,...}` snapshot and AuthGate stays on
+      // the authenticated branch. resetQueries removes the data AND triggers
+      // an immediate refetch — getSession then returns null and the gate
+      // flips to its unauthenticated fallback.
+      await queryClient.resetQueries({ queryKey: ['auth'] });
       await options?.onSuccess?.(...args);
     },
   });
@@ -156,14 +173,36 @@ export function useUpdateUser(options?: OmitKeys<ReturnType<typeof updateUserOpt
 
 export function useChangePassword(options?: OmitKeys<ReturnType<typeof changePasswordOptions>>) {
   const { authClient } = useAuth();
-  return useMutation({ ...changePasswordOptions(authClient), ...options });
+  const queryClient = useQueryClient();
+  return useMutation({
+    ...changePasswordOptions(authClient),
+    ...options,
+    onSuccess: async (...args) => {
+      // Better Auth may rotate the session token on password change; refetch
+      // so the auth observers reflect any new session/user state.
+      await queryClient.invalidateQueries({
+        queryKey: sessionOptions(authClient).queryKey,
+      });
+      await options?.onSuccess?.(...args);
+    },
+  });
 }
 
 // Set an initial password for an account created via OTP / social — no
 // current-password required.
 export function useSetPassword(options?: OmitKeys<ReturnType<typeof setPasswordOptions>>) {
   const { authClient } = useAuth();
-  return useMutation({ ...setPasswordOptions(authClient), ...options });
+  const queryClient = useQueryClient();
+  return useMutation({
+    ...setPasswordOptions(authClient),
+    ...options,
+    onSuccess: async (...args) => {
+      await queryClient.invalidateQueries({
+        queryKey: sessionOptions(authClient).queryKey,
+      });
+      await options?.onSuccess?.(...args);
+    },
+  });
 }
 
 export function useChangeEmail(options?: OmitKeys<ReturnType<typeof changeEmailOptions>>) {
@@ -201,7 +240,10 @@ export function useDeleteUser(options?: OmitKeys<ReturnType<typeof deleteUserOpt
     ...deleteUserOptions(authClient),
     ...options,
     onSuccess: async (...args) => {
-      queryClient.removeQueries({ queryKey: ['auth'] });
+      // See useSignOut for why resetQueries (not removeQueries) — we need
+      // the AuthProvider's session observer to actually refetch and flip
+      // AuthGate to its unauthenticated branch.
+      await queryClient.resetQueries({ queryKey: ['auth'] });
       await options?.onSuccess?.(...args);
     },
   });

@@ -193,17 +193,23 @@ async function getFlowScopeId(db: PluginDatabaseApi, flowId: string): Promise<st
   return rows[0]?.scope_id ?? null;
 }
 
+// Depth cap on recursive scope traversals — protects every authorization
+// path against a pathological tree (very deep, or a cycle introduced via
+// direct DB write that bypassed the move-time descendant check).
+const MAX_SCOPE_DEPTH = 100;
+
 async function getAncestorScopeIds(db: PluginDatabaseApi, scopeId: string): Promise<string[]> {
   const rows = await db.query<{ id: string }>(
     `WITH RECURSIVE ancestors AS (
-      SELECT id, parent_id FROM flowlib_rbac_teams WHERE id = ?
+      SELECT id, parent_id, 1 AS depth FROM flowlib_rbac_teams WHERE id = ?
       UNION ALL
-      SELECT parent.id, parent.parent_id
+      SELECT parent.id, parent.parent_id, current.depth + 1
       FROM flowlib_rbac_teams parent
       INNER JOIN ancestors current ON parent.id = current.parent_id
+      WHERE current.depth < ?
     )
     SELECT id FROM ancestors`,
-    [scopeId],
+    [scopeId, MAX_SCOPE_DEPTH],
   );
   return rows.map((row) => row.id);
 }
@@ -211,14 +217,15 @@ async function getAncestorScopeIds(db: PluginDatabaseApi, scopeId: string): Prom
 async function getDescendantScopeIds(db: PluginDatabaseApi, scopeId: string): Promise<string[]> {
   const rows = await db.query<{ id: string }>(
     `WITH RECURSIVE descendants AS (
-      SELECT id FROM flowlib_rbac_teams WHERE id = ?
+      SELECT id, 1 AS depth FROM flowlib_rbac_teams WHERE id = ?
       UNION ALL
-      SELECT child.id
+      SELECT child.id, current.depth + 1
       FROM flowlib_rbac_teams child
       INNER JOIN descendants current ON child.parent_id = current.id
+      WHERE current.depth < ?
     )
     SELECT id FROM descendants`,
-    [scopeId],
+    [scopeId, MAX_SCOPE_DEPTH],
   );
   return rows.map((row) => row.id);
 }
@@ -328,6 +335,31 @@ async function getEffectiveFlowPermission(
     identity.teamIds ?? [],
   );
 
+  let highest: FlowAccessPermission | null = null;
+  for (const record of records) {
+    highest = getHigherPermission(highest, record.permission);
+  }
+  return highest;
+}
+
+// Caller's effective permission on a scope itself, considering the scope's
+// own grants and inheritance from ancestors. Used when granting access into a
+// scope or moving a flow into one — both require owner on the target.
+async function getEffectiveScopePermission(
+  db: PluginDatabaseApi,
+  scopeId: string,
+  identity: FlowlibIdentity,
+): Promise<FlowAccessPermission | null> {
+  const ancestorIds = await getAncestorScopeIds(db, scopeId);
+  if (ancestorIds.length === 0) {
+    return null;
+  }
+  const records = await listScopeAccessForScopeIds(
+    db,
+    ancestorIds,
+    identity.id,
+    identity.teamIds ?? [],
+  );
   let highest: FlowAccessPermission | null = null;
   for (const record of records) {
     highest = getHigherPermission(highest, record.permission);
@@ -1114,6 +1146,24 @@ function _rbacBackendPlugin(options: Omit<RbacPluginOptions, 'frontend'> = {}): 
             );
             if (scopeRows.length === 0) {
               return { status: 404, body: { error: 'Scope not found' } };
+            }
+
+            // Caller must also be an owner of the *target* scope. Without this
+            // check, any flow owner could move their flow into an unrelated
+            // scope to graft permissions onto themselves via scope-cascade
+            // rules, or to share a flow with a scope they otherwise can't
+            // touch.
+            const targetPermission = isAdmin
+              ? 'owner'
+              : await getEffectiveScopePermission(ctx.database, scopeId, ctx.identity);
+            if (targetPermission !== 'owner') {
+              return {
+                status: 403,
+                body: {
+                  error: 'Forbidden',
+                  message: 'Owner access on the target scope is required to move flows into it',
+                },
+              };
             }
           }
 

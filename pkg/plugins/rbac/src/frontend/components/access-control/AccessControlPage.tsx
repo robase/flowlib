@@ -285,7 +285,7 @@ const EMPTY_SCOPES: ScopeTreeNode[] = [];
 const EMPTY_FLOWS: FlowSummary[] = [];
 
 export function AccessControlPage() {
-  const { isAuthenticated, checkPermission } = useRbac();
+  const { isAuthenticated, isLoading: isAuthLoading, checkPermission } = useRbac();
   const isAdmin = isAuthenticated && checkPermission('admin:*');
 
   const users = useUsers();
@@ -387,6 +387,18 @@ export function AccessControlPage() {
     },
     [scopes, endDrag, previewMove, setPendingMove, setMovePreview, setMoveError],
   );
+
+  if (isAuthLoading) {
+    return (
+      <PageLayout
+        title="Access Control"
+        subtitle="Manage team hierarchy and flow-level access grants."
+        icon={Shield}
+      >
+        <p className="text-sm text-fl-muted-foreground">Loading…</p>
+      </PageLayout>
+    );
+  }
 
   if (!isAuthenticated) {
     return (
