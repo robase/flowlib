@@ -25,11 +25,30 @@ import type { FlowlibInstance } from 'src/api/types';
 // Plugin Manager
 // =============================================================================
 
+type ManagerLogger = {
+  debug: (...args: unknown[]) => void;
+  info: (...args: unknown[]) => void;
+  warn: (...args: unknown[]) => void;
+  error: (...args: unknown[]) => void;
+};
+
+const noop = (): void => undefined;
+const noopLogger: ManagerLogger = {
+  debug: noop,
+  info: noop,
+  warn: noop,
+  error: noop,
+};
+
 export class PluginManager implements PluginHookRunner {
   private plugins: FlowlibPlugin[] = [];
   private pluginMap = new Map<string, FlowlibPlugin>();
   private pluginStores = new Map<string, Map<string, unknown>>();
   private _initialized = false;
+  // Logger captured during initializePlugins so hooks called outside the
+  // init path (e.g. runOnAuthorize on every request) can log without a
+  // logger being threaded through the call site.
+  private logger: ManagerLogger = noopLogger;
 
   constructor(plugins: FlowlibPlugin[] = []) {
     // Validate: no duplicate IDs
@@ -51,15 +70,11 @@ export class PluginManager implements PluginHookRunner {
    */
   async initializePlugins(opts: {
     config: Record<string, unknown>;
-    logger: {
-      debug: (...args: unknown[]) => void;
-      info: (...args: unknown[]) => void;
-      warn: (...args: unknown[]) => void;
-      error: (...args: unknown[]) => void;
-    };
+    logger: ManagerLogger;
     registerAction: (action: ActionDefinition) => void;
     getFlowlib: () => FlowlibInstance;
   }): Promise<FlowlibPluginInitResult[]> {
+    this.logger = opts.logger;
     const results: FlowlibPluginInitResult[] = [];
 
     for (const plugin of this.plugins) {
@@ -360,7 +375,7 @@ export class PluginManager implements PluginHookRunner {
       } catch (error) {
         // Fail closed: a hook that throws while computing authorization
         // cannot be trusted to have allowed the request.
-        console.error(
+        this.logger.error(
           `[plugin-manager] onAuthorize hook for plugin "${plugin.id}" threw — denying`,
           error,
         );
