@@ -35,7 +35,6 @@ export {
 export {
   coreActions,
   javascriptAction,
-  inputAction,
   templateStringAction,
   outputAction,
   ifElseAction,

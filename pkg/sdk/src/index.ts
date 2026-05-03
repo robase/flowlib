@@ -17,16 +17,16 @@
  *
  * Use the **named-record form** (preferred):
  *   ```ts
- *   import { defineFlow, input, code, output } from '@flowlib/sdk';
+ *   import { defineFlow, trigger, code, output } from '@flowlib/sdk';
  *
  *   export default defineFlow({
  *     nodes: {
- *       query:  input(),
- *       upper:  code({ code: 'return query.toUpperCase()' }),
+ *       start:  trigger.manual({ inputs: [{ name: 'query', type: 'string' }] as const }),
+ *       upper:  code({ code: 'return start.query.toUpperCase()' }),
  *       result: output({ value: '{{ upper }}' }),
  *     },
  *     edges: [
- *       { from: 'query', to: 'upper' },
+ *       { from: 'start', to: 'upper' },
  *       { from: 'upper', to: 'result' },
  *     ],
  *   });
@@ -66,7 +66,7 @@ export { tool } from './tool';
 export type { ToolInstance } from './tool';
 
 // Core node helpers (ergonomic wrappers over the action callables)
-export { input, output, code, javascript, ifElse, switchNode, model, agent } from './nodes/core';
+export { output, code, javascript, ifElse, switchNode, model, agent } from './nodes/core';
 export type { ModelParams, AgentParams, SwitchCase } from './nodes/core';
 
 // Extended node helpers

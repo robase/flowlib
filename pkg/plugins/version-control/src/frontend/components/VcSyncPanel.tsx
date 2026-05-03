@@ -152,7 +152,7 @@ export function VcSyncPanel({ flowId }: PanelTabProps) {
 
       {/* Action buttons */}
       <div className="mb-4 flex gap-2">
-        {config.syncDirection !== 'pull' && (
+        {config.syncDirection !== 'read' && (
           <button
             onClick={() => pushMutation.mutate()}
             disabled={isBusy}
@@ -162,7 +162,7 @@ export function VcSyncPanel({ flowId }: PanelTabProps) {
             Push
           </button>
         )}
-        {config.syncDirection !== 'push' && (
+        {config.syncDirection !== 'write' && (
           <button
             onClick={() => pullMutation.mutate()}
             disabled={isBusy}
@@ -172,7 +172,7 @@ export function VcSyncPanel({ flowId }: PanelTabProps) {
             Pull
           </button>
         )}
-        {config.mode === 'pr-per-publish' && config.syncDirection !== 'pull' && (
+        {config.mode === 'pr-per-publish' && config.syncDirection !== 'read' && (
           <button
             onClick={() => publishMutation.mutate()}
             disabled={isBusy}

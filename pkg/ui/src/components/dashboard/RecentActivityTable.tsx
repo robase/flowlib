@@ -8,9 +8,9 @@ import {
   TableHeader,
   TableRow,
 } from '~/components/ui/table';
+import { Skeleton } from '~/components/ui/skeleton';
 import { StatusBadge, formatRelativeTime, formatDuration } from './status-helpers';
 import type { Flow, FlowRun } from '@flowlib/core/types';
-import { FlowlibLoader } from '../shared/FlowlibLoader';
 
 interface RecentActivityTableProps {
   runs: FlowRun[];
@@ -28,7 +28,36 @@ export function RecentActivityTable({
   const flowMap = new Map(flows.map((f) => [f.id, f]));
 
   if (isLoading) {
-    return <FlowlibLoader className="py-8" iconClassName="h-10" label="Loading activity..." />;
+    return (
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead className="w-[160px]">Flow</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead>When</TableHead>
+            <TableHead className="text-right">Duration</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {Array.from({ length: 5 }).map((_, i) => (
+            <TableRow key={i}>
+              <TableCell>
+                <Skeleton className="h-3.5 w-32" />
+              </TableCell>
+              <TableCell>
+                <Skeleton className="h-5 w-16 rounded-full" />
+              </TableCell>
+              <TableCell>
+                <Skeleton className="h-3 w-20" />
+              </TableCell>
+              <TableCell className="text-right">
+                <Skeleton className="ml-auto h-3 w-12" />
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    );
   }
 
   if (runs.length === 0) {

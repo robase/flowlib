@@ -13,7 +13,7 @@ import type {
 } from '@flowlib/core/types';
 import {
   isIfElseType,
-  isInputType,
+  isTriggerManualType,
   isOutputType,
   isModelType,
   isAgentType,
@@ -111,11 +111,12 @@ interface StepCodeResult {
   needsAI: boolean;
 }
 
-function compileInputNode(node: FlowNodeDefinitions, _slug: string): StepCodeResult {
-  // Input nodes just forward the flow inputs
+function compileTriggerManualNode(node: FlowNodeDefinitions, _slug: string): StepCodeResult {
+  // Manual trigger nodes forward the flow inputs (with declared defaults
+  // already merged in by the runtime — at compile time we just pass through).
   return {
     lines: [
-      `    // Node: ${node.label ?? node.id} (input)`,
+      `    // Node: ${node.label ?? node.id} (manual trigger)`,
       `    const ${nodeSlug(node)} = inputs;`,
       '',
     ],
@@ -514,8 +515,8 @@ export function compileFlow(input: CompileInput): CompileResult {
     // Dispatch via predicate helpers so both `core.X` and `primitives.X`
     // variants are handled. Fixed-string types (`core.jq`, `http.request`,
     // text) stay as direct comparisons since they have no SDK alias.
-    if (isInputType(node.type)) {
-      result = compileInputNode(node, slug);
+    if (isTriggerManualType(node.type)) {
+      result = compileTriggerManualNode(node, slug);
     } else if (isOutputType(node.type)) {
       result = compileOutputNode(node, upstreamSlugs);
     } else if (isModelType(node.type)) {

@@ -68,7 +68,7 @@ describe('clipboardToSdkText', () => {
       nodes: [
         clipNode({
           originalId: 'n1',
-          type: 'core.input',
+          type: 'trigger.manual',
           referenceId: 'query',
           params: { variableName: 'query' },
         }),
@@ -85,16 +85,16 @@ describe('clipboardToSdkText', () => {
 
     const source = clipboardToSdkText(data, true);
 
-    expect(source).toContain(`import { defineFlow, input, output } from "@flowlib/sdk"`);
+    expect(source).toContain(`import { defineFlow, output, trigger } from "@flowlib/sdk"`);
     expect(source).toContain(`export const copiedFlow = defineFlow({`);
-    expect(source).toContain(`query: input(`);
+    expect(source).toContain(`query: trigger.manual(`);
     expect(source).toContain(`result: output(`);
   });
 
   it('emits just the fragment body for a partial selection', () => {
     const data: ClipboardData = {
       sourceFlowId: 'flow-1',
-      nodes: [clipNode({ originalId: 'n1', type: 'core.input', referenceId: 'q' })],
+      nodes: [clipNode({ originalId: 'n1', type: 'trigger.manual', referenceId: 'q' })],
       edges: [],
       copyTime: Date.now(),
     };
@@ -107,7 +107,7 @@ describe('clipboardToSdkText', () => {
     expect(source).not.toContain('defineFlow');
     // But it does carry the nodes/edges entries.
     expect(source).toContain('nodes: {');
-    expect(source).toContain(`q: input(`);
+    expect(source).toContain(`q: trigger.manual(`);
   });
 
   it('preserves sourceHandle on edges (if_else true/false branches)', () => {
@@ -167,7 +167,7 @@ describe('sdkResultToClipboard', () => {
   it('converts parsed SDK source back to a ClipboardData structure', () => {
     const parsed = parseSDKText(`
       nodes: [
-        input('query'),
+        trigger.manual('query'),
         output('result', { value: '{{ query }}' }),
       ],
       edges: [
@@ -180,7 +180,7 @@ describe('sdkResultToClipboard', () => {
     expect(clipboard.sourceFlowId).toBe('flow-destination');
     expect(clipboard.nodes).toHaveLength(2);
     expect(clipboard.nodes[0].data.reference_id).toBe('query');
-    expect(clipboard.nodes[0].type).toBe('core.input');
+    expect(clipboard.nodes[0].type).toBe('trigger.manual');
     expect(clipboard.nodes[0].originalId).toContain('query');
     expect(clipboard.nodes[1].data.reference_id).toBe('result');
     expect(clipboard.nodes[1].type).toBe('core.output');
@@ -210,9 +210,9 @@ describe('sdkResultToClipboard', () => {
   it('synthesises unique originalIds per node', () => {
     const parsed = parseSDKText(`
       nodes: [
-        input('a'),
-        input('b'),
-        input('c'),
+        trigger.manual('a'),
+        output('b', { value: '1' }),
+        output('c', { value: '1' }),
       ],
       edges: [],
     `);
@@ -227,8 +227,8 @@ describe('sdkResultToClipboard', () => {
     // the helpers. Synthesise a flow with positions to validate the math.
     const parsed = parseSDKText(`
       nodes: [
-        input('a', {}, { position: { x: 200, y: 100 } }),
-        input('b', {}, { position: { x: 300, y: 200 } }),
+        trigger.manual('a', undefined, { position: { x: 200, y: 100 } }),
+        output('b', { value: '1' }, { position: { x: 300, y: 200 } }),
       ],
       edges: [],
     `);
@@ -255,10 +255,10 @@ describe('full copy-paste round-trip', () => {
       nodes: [
         clipNode({
           originalId: 'src_n1',
-          type: 'core.input',
+          type: 'trigger.manual',
           referenceId: 'input_x',
           displayName: 'Input X',
-          params: { variableName: 'x', defaultValue: 'default' },
+          params: { inputs: [{ name: 'x', type: 'string', defaultValue: 'default' }] },
           absolutePosition: { x: 100, y: 100 },
         }),
         clipNode({
@@ -285,7 +285,7 @@ describe('full copy-paste round-trip', () => {
     // Node structure preserved (types + referenceIds).
     expect(pasted.nodes).toHaveLength(2);
     expect(pasted.nodes.map((n) => n.data.reference_id)).toEqual(['input_x', 'compose']);
-    expect(pasted.nodes.map((n) => n.type)).toEqual(['core.input', 'core.template_string']);
+    expect(pasted.nodes.map((n) => n.type)).toEqual(['trigger.manual', 'core.template_string']);
 
     // Edge connectivity preserved (via new originalIds).
     expect(pasted.edges).toHaveLength(1);
@@ -293,9 +293,10 @@ describe('full copy-paste round-trip', () => {
     expect(pasted.edges[0].source).toBe(ids.get('input_x'));
     expect(pasted.edges[0].target).toBe(ids.get('compose'));
 
-    // Params that stay as strings through the emit/parse round-trip.
-    expect(pasted.nodes[0].data.params.variableName).toBe('x');
-    expect(pasted.nodes[0].data.params.defaultValue).toBe('default');
+    // Params that stay structured through the emit/parse round-trip.
+    expect(pasted.nodes[0].data.params.inputs).toEqual([
+      { name: 'x', type: 'string', defaultValue: 'default' },
+    ]);
     expect(pasted.nodes[1].data.params.template).toBe('Value is {{ input_x }}');
   });
 
@@ -305,7 +306,7 @@ describe('full copy-paste round-trip', () => {
       nodes: [
         clipNode({
           originalId: 'n1',
-          type: 'core.input',
+          type: 'trigger.manual',
           referenceId: 'age',
         }),
         clipNode({

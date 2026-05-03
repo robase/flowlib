@@ -65,9 +65,9 @@ describe('Chat SDK tools — source-level flow editing', () => {
           nodes: [
             {
               id: 'node-query',
-              type: 'core.input',
+              type: 'trigger.manual',
               referenceId: 'query',
-              params: { variableName: 'query' },
+              params: { inputs: [{ name: 'query', type: 'string' }] },
             },
             {
               id: 'node-out',
@@ -89,7 +89,7 @@ describe('Chat SDK tools — source-level flow editing', () => {
         nodeCount: number;
       };
       expect(data.source).toContain(`from "@flowlib/sdk"`);
-      expect(data.source).toContain(`query: input(`);
+      expect(data.source).toContain(`query: trigger.manual(`);
       expect(data.source).toContain(`out: output(`);
       expect(data.nodeCount).toBe(2);
     });
@@ -117,12 +117,12 @@ describe('Chat SDK tools — source-level flow editing', () => {
   describe('write_flow_source', () => {
     it('seeds a new flow with a full TS source', async () => {
       const source = `
-import { defineFlow, input, output } from '@flowlib/sdk';
+import { defineFlow, trigger, output } from '@flowlib/sdk';
 
 export default defineFlow({
   name: 'Hello',
   nodes: [
-    input('query'),
+    trigger.manual('query'),
     output('greeting', { value: 'Hello {{ query }}' }),
   ],
   edges: [{ from: 'query', to: 'greeting' }],
@@ -148,9 +148,9 @@ export default defineFlow({
           nodes: [
             {
               id: 'node_opaque_abc',
-              type: 'core.input',
+              type: 'trigger.manual',
               referenceId: 'query',
-              params: { variableName: 'query' },
+              params: { inputs: [{ name: 'query', type: 'string' }] },
               position: { x: 100, y: 50 },
             },
             {
@@ -167,11 +167,11 @@ export default defineFlow({
 
       // Write a new source that changes params but keeps the referenceIds.
       const source = `
-import { defineFlow, input, output } from '@flowlib/sdk';
+import { defineFlow, trigger, output } from '@flowlib/sdk';
 
 export default defineFlow({
   nodes: [
-    input('query', { defaultValue: 'default text' }),
+    trigger.manual('query', { inputs: [{ name: 'query', type: 'string', defaultValue: 'default text' }] as const }),
     output('out', { value: '{{ query }} (updated)' }),
   ],
   edges: [{ from: 'query', to: 'out' }],
@@ -193,9 +193,9 @@ export default defineFlow({
 
     it('reports import-forbidden errors from the evaluator', async () => {
       const source = `
-import { defineFlow, input } from '@flowlib/sdk';
+import { defineFlow, trigger } from '@flowlib/sdk';
 import fs from 'node:fs';
-export default defineFlow({ nodes: [input('q')], edges: [] });
+export default defineFlow({ nodes: [trigger.manual('q')], edges: [] });
 `;
       const result = await writeFlowSourceTool.execute(
         { source },
@@ -210,8 +210,8 @@ export default defineFlow({ nodes: [input('q')], edges: [] });
 
     it('reports missing default export as a structured diagnostic', async () => {
       const source = `
-import { defineFlow, input } from '@flowlib/sdk';
-const notDefault = defineFlow({ nodes: [input('q')], edges: [] });
+import { defineFlow, trigger } from '@flowlib/sdk';
+const notDefault = defineFlow({ nodes: [trigger.manual('q')], edges: [] });
 `;
       const result = await writeFlowSourceTool.execute(
         { source },
@@ -226,12 +226,12 @@ const notDefault = defineFlow({ nodes: [input('q')], edges: [] });
       // Authored source uses a closure over an outer variable — transform
       // should flag it with `unknown-identifier`.
       const source = `
-import { defineFlow, input, code } from '@flowlib/sdk';
+import { defineFlow, trigger, code } from '@flowlib/sdk';
 
 const threshold = 10;
 export default defineFlow({
   nodes: [
-    input('x'),
+    trigger.manual('x'),
     code('check', { code: ((ctx) => ctx.x > threshold) }),
   ],
   edges: [{ from: 'x', to: 'check' }],
@@ -256,11 +256,11 @@ export default defineFlow({
       // are valid handles for a `core.if_else` source. The named-record
       // EdgeOf<N> machinery rejects 'output' here at typecheck time.
       const source = `
-import { defineFlow, input, output, ifElse } from '@flowlib/sdk';
+import { defineFlow, trigger, output, ifElse } from '@flowlib/sdk';
 
 export default defineFlow({
   nodes: {
-    q: input(),
+    q: trigger.manual(),
     classify: ifElse({ condition: 'true' }),
     out: output({ value: 'x' }),
   },
@@ -295,12 +295,12 @@ export default defineFlow({
       // build the node and Zod would reject only when the node ran. The
       // pre-save typecheck catches it before save.
       const source = `
-import { defineFlow, input } from '@flowlib/sdk';
+import { defineFlow, trigger } from '@flowlib/sdk';
 import { gmail } from '@flowlib/sdk/actions';
 
 export default defineFlow({
   nodes: {
-    event: input(),
+    event: trigger.manual(),
     notify: gmail.sendMessage({
       credentialId: 'cred',
       to: 'a@b.c',
@@ -345,9 +345,9 @@ export default defineFlow({
           nodes: [
             {
               id: 'node_a',
-              type: 'core.input',
+              type: 'trigger.manual',
               referenceId: 'query',
-              params: { variableName: 'query' },
+              params: { inputs: [{ name: 'query', type: 'string' }] },
             },
             {
               id: 'node_b',
@@ -416,9 +416,9 @@ export default defineFlow({
           nodes: [
             {
               id: 'node_a',
-              type: 'core.input',
+              type: 'trigger.manual',
               referenceId: 'query',
-              params: { variableName: 'query' },
+              params: { inputs: [{ name: 'query', type: 'string' }] },
               position: { x: 100, y: 200 },
             },
             {
@@ -463,9 +463,9 @@ export default defineFlow({
           nodes: [
             {
               id: 'node_a',
-              type: 'core.input',
+              type: 'trigger.manual',
               referenceId: 'query',
-              params: { variableName: 'query' },
+              params: { inputs: [{ name: 'query', type: 'string' }] },
             },
             {
               id: 'node_b',
@@ -528,9 +528,9 @@ export default defineFlow({
           nodes: [
             {
               id: 'node_a',
-              type: 'core.input',
+              type: 'trigger.manual',
               referenceId: 'query',
-              params: { variableName: 'query' },
+              params: { inputs: [{ name: 'query', type: 'string' }] },
             },
             {
               id: 'node_b',
@@ -594,9 +594,9 @@ export default defineFlow({
           nodes: [
             {
               id: 'node_a',
-              type: 'core.input',
+              type: 'trigger.manual',
               referenceId: 'query',
-              params: { variableName: 'query' },
+              params: { inputs: [{ name: 'query', type: 'string' }] },
             },
             {
               id: 'node_b',
@@ -627,7 +627,7 @@ export default defineFlow({
       };
       expect(data.reason).toBe('not_found');
       expect(data.availableReferenceIds).toEqual(['query', 'result']);
-      expect(data.nodeIndex.query.type).toBe('core.input');
+      expect(data.nodeIndex.query.type).toBe('trigger.manual');
       expect(data.nodeIndex.result.type).toBe('core.output');
       expect(data.nodeIndex.result.paramKeys).toContain('outputValue');
       // closestMatches may be empty when the needle shares no tokens with the
@@ -655,15 +655,29 @@ export default defineFlow({
 
     it('omits currentSource when emitted source exceeds the budget', async () => {
       // Build a large flow so emitted source blows past SOURCE_INCLUDE_BUDGET
-      // (8000 chars). Padded defaultValue inflates each line to ~150 chars.
+      // (8000 chars). One trigger.manual with many declared inputs + many
+      // output nodes to inflate the source size.
       const pad = 'x'.repeat(120);
-      const nodes = Array.from({ length: 80 }, (_, i) => ({
-        id: `node_id_${i}`,
-        type: 'core.input',
-        referenceId: `query_${i}`,
-        params: { variableName: `query_${i}`, defaultValue: `${pad}_${i}` },
+      const inputs = Array.from({ length: 40 }, (_, i) => ({
+        name: `query_${i}`,
+        type: 'string' as const,
+        defaultValue: `${pad}_${i}`,
       }));
-      await flowlib.versions.create(flowId, { flowlibDefinition: { nodes, edges: [] } });
+      const triggerNode = {
+        id: 'node_trigger',
+        type: 'trigger.manual',
+        referenceId: 'start',
+        params: { inputs },
+      };
+      const outputNodes = Array.from({ length: 40 }, (_, i) => ({
+        id: `node_out_${i}`,
+        type: 'core.output',
+        referenceId: `out_${i}`,
+        params: { outputValue: `${pad}_${i}`, outputName: `out_${i}` },
+      }));
+      await flowlib.versions.create(flowId, {
+        flowlibDefinition: { nodes: [triggerNode, ...outputNodes], edges: [] },
+      });
 
       const result = await editFlowSourceTool.execute(
         { oldString: 'absolutely_not_in_source_zz', newString: '' },
@@ -685,9 +699,9 @@ export default defineFlow({
           nodes: [
             {
               id: 'node_in',
-              type: 'core.input',
+              type: 'trigger.manual',
               referenceId: 'x',
-              params: { variableName: 'x' },
+              params: { inputs: [{ name: 'x', type: 'string' }] },
             },
             {
               id: 'node_sw',
@@ -782,7 +796,12 @@ export default defineFlow({
       await flowlib.versions.create(flowId, {
         flowlibDefinition: {
           nodes: [
-            { id: 'n1', type: 'core.input', referenceId: 'name', params: { variableName: 'name' } },
+            {
+              id: 'n1',
+              type: 'trigger.manual',
+              referenceId: 'name',
+              params: { inputs: [{ name: 'name', type: 'string' }] },
+            },
             {
               id: 'n2',
               type: 'core.output',

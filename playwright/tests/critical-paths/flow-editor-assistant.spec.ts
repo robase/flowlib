@@ -112,7 +112,7 @@ test.describe('Flow Editor Assistant And Tooling', () => {
       nodes: [
         {
           id: 'input-topic',
-          type: 'core.input',
+          type: 'trigger.manual',
           label: 'Topic Input',
           referenceId: 'topic',
           params: {

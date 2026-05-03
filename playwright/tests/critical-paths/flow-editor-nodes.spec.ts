@@ -80,7 +80,7 @@ test.describe('Flow Editor — Node Operations', () => {
             nodes: [
               {
                 id: 'node-1',
-                type: 'core.input',
+                type: 'trigger.manual',
                 label: 'User List',
                 referenceId: 'user_list',
                 params: {},
@@ -226,7 +226,7 @@ test.describe('Flow Editor — Node Operations', () => {
           nodes: [
             {
               id: 'node-1',
-              type: 'core.input',
+              type: 'trigger.manual',
               label: 'Seed Input',
               referenceId: 'seed_input',
               params: { variableName: 'seed_input', defaultValue: '"seed"' },

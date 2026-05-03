@@ -363,7 +363,7 @@ const ToolCard = memo(function ToolCard({
 
   return (
     <div
-      className="relative flex items-center gap-2.5 p-2.5 transition-all border rounded-lg cursor-pointer group border-border hover:border-muted-foreground/50 hover:bg-muted/50"
+      className="relative flex items-center gap-2.5 p-2.5 transition-all border rounded-lg cursor-pointer group border-border bg-fl-card hover:border-muted-foreground/50 hover:bg-muted/50"
       onClick={onAdd}
     >
       <div className={cn('h-8 w-8', toolIconDiamondClass, cfg.color)}>

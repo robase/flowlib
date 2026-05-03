@@ -77,9 +77,9 @@ function VcHeaderButtonInner({ flowId, basePath }: { flowId: string; basePath: s
     pullMutation.isPending ||
     publishMutation.isPending ||
     createVersionMutation.isPending;
-  const canPush = config?.syncDirection !== 'pull';
-  const canPull = config?.syncDirection !== 'push';
-  const canPublish = config?.mode === 'pr-per-publish' && config.syncDirection !== 'pull';
+  const canPush = config?.syncDirection !== 'read';
+  const canPull = config?.syncDirection !== 'write';
+  const canPublish = config?.mode === 'pr-per-publish' && config.syncDirection !== 'read';
   const currentViewedVersion = getCurrentViewedVersion();
   const latestVersion = versions[0]?.version ?? null;
   const pageCount = Math.max(1, Math.ceil(versions.length / PAGE_SIZE));

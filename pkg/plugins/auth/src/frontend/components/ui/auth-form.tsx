@@ -25,7 +25,7 @@ export interface AuthPageShellProps {
 export function AuthPageShell({ children, brand }: AuthPageShellProps) {
   return (
     <div className="bg-fl-background text-fl-foreground flex min-h-screen items-center justify-center p-4">
-      <div className="flex w-full max-w-sm flex-col gap-6">
+      <div className="flex w-full max-w-sm flex-col gap-10">
         {brand && <div className="flex items-center justify-center">{brand}</div>}
         {children}
       </div>

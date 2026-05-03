@@ -245,7 +245,7 @@ async function createFlow(page: Page, name: string) {
           nodes: [
             {
               id: 'input-1',
-              type: 'core.input',
+              type: 'trigger.manual',
               label: 'Seed Input',
               referenceId: 'seed_input',
               params: { variableName: 'seed_input', defaultValue: '"hello"' },

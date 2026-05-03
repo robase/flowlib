@@ -59,10 +59,10 @@ describe('Flow Execution', () => {
       nodes: [
         {
           id: 'input-1',
-          type: 'core.input',
+          type: 'trigger.manual',
           label: 'Data',
           referenceId: 'data',
-          params: { variableName: 'greeting', defaultValue: '"hello world"' },
+          params: { inputs: [{ name: 'greeting', type: 'json', defaultValue: '"hello world"' }] },
           position: { x: 0, y: 0 },
         },
       ],
@@ -70,7 +70,8 @@ describe('Flow Execution', () => {
     });
 
     expect(result.status).toBe(FlowRunStatus.SUCCESS);
-    expect(getNodeOutput(result, 'input-1')).toBe('hello world');
+    // trigger.manual outputs an object keyed by declared input name
+    expect(getNodeOutput(result, 'input-1')).toEqual({ greeting: 'hello world' });
   });
 
   // ---------------------------------------------------------------------------
@@ -82,12 +83,11 @@ describe('Flow Execution', () => {
       nodes: [
         {
           id: 'input-1',
-          type: 'core.input',
+          type: 'trigger.manual',
           label: 'User',
           referenceId: 'user',
           params: {
-            variableName: 'user',
-            defaultValue: JSON.stringify({ name: 'Alice', age: 30 }),
+            inputs: [{ name: 'user', type: 'json', defaultValue: { name: 'Alice', age: 30 } }],
           },
           position: { x: 0, y: 0 },
         },
@@ -118,13 +118,10 @@ describe('Flow Execution', () => {
       nodes: [
         {
           id: 'input-1',
-          type: 'core.input',
+          type: 'trigger.manual',
           label: 'User',
           referenceId: 'user',
-          params: {
-            variableName: 'user',
-            defaultValue: JSON.stringify({ name: 'Bob' }),
-          },
+          params: { inputs: [{ name: 'user', type: 'json', defaultValue: { name: 'Bob' } }] },
           position: { x: 0, y: 0 },
         },
         {
@@ -154,13 +151,10 @@ describe('Flow Execution', () => {
       nodes: [
         {
           id: 'input-1',
-          type: 'core.input',
+          type: 'trigger.manual',
           label: 'Data',
           referenceId: 'data',
-          params: {
-            variableName: 'data',
-            defaultValue: JSON.stringify({ score: 90 }),
-          },
+          params: { inputs: [{ name: 'data', type: 'json', defaultValue: { score: 90 } }] },
           position: { x: 0, y: 0 },
         },
         {
@@ -219,13 +213,10 @@ describe('Flow Execution', () => {
       nodes: [
         {
           id: 'input-1',
-          type: 'core.input',
+          type: 'trigger.manual',
           label: 'Data',
           referenceId: 'data',
-          params: {
-            variableName: 'data',
-            defaultValue: JSON.stringify({ score: 50 }),
-          },
+          params: { inputs: [{ name: 'data', type: 'json', defaultValue: { score: 50 } }] },
           position: { x: 0, y: 0 },
         },
         {
@@ -284,12 +275,17 @@ describe('Flow Execution', () => {
       nodes: [
         {
           id: 'input-user',
-          type: 'core.input',
+          type: 'trigger.manual',
           label: 'User Data',
           referenceId: 'user_data',
           params: {
-            variableName: 'user',
-            defaultValue: JSON.stringify({ name: 'Alice', age: 25, email: 'alice@example.com' }),
+            inputs: [
+              {
+                name: 'user_data',
+                type: 'json',
+                defaultValue: { name: 'Alice', age: 25, email: 'alice@example.com' },
+              },
+            ],
           },
           position: { x: 100, y: 200 },
         },
@@ -386,10 +382,10 @@ describe('Flow Execution', () => {
         nodes: [
           {
             id: 'input-1',
-            type: 'core.input',
+            type: 'trigger.manual',
             label: 'X',
             referenceId: 'x',
-            params: { variableName: 'x', defaultValue: '1' },
+            params: { inputs: [{ name: 'x', type: 'json', defaultValue: '1' }] },
             position: { x: 0, y: 0 },
           },
         ],
@@ -417,10 +413,10 @@ describe('Flow Execution', () => {
         nodes: [
           {
             id: 'input-1',
-            type: 'core.input',
+            type: 'trigger.manual',
             label: 'A',
             referenceId: 'a',
-            params: { variableName: 'a', defaultValue: '"test"' },
+            params: { inputs: [{ name: 'a', type: 'json', defaultValue: '"test"' }] },
             position: { x: 0, y: 0 },
           },
           {
@@ -446,8 +442,8 @@ describe('Flow Execution', () => {
   // trigger.manual — defaultInputs (manual run defaults + code-triggered override)
   // ---------------------------------------------------------------------------
 
-  describe('trigger.manual defaultInputs', () => {
-    it('should use defaultInputs when no flowInputs are provided (manual run)', async () => {
+  describe('trigger.manual declared inputs', () => {
+    it('should use declared defaultValues when no flowInputs are provided (manual run)', async () => {
       const result = await runFlow('trigger-manual-defaults', {
         nodes: [
           {
@@ -456,7 +452,10 @@ describe('Flow Execution', () => {
             label: 'Start',
             referenceId: 'start',
             params: {
-              defaultInputs: { topic: 'general', severity: 'medium' },
+              inputs: [
+                { name: 'topic', type: 'string', defaultValue: 'general' },
+                { name: 'severity', type: 'string', defaultValue: 'medium' },
+              ],
             },
             position: { x: 0, y: 0 },
           },
@@ -468,7 +467,7 @@ describe('Flow Execution', () => {
       expect(getNodeOutput(result, 'trigger-1')).toEqual({ topic: 'general', severity: 'medium' });
     });
 
-    it('should accept defaultInputs as a JSON string (from UI config panel)', async () => {
+    it('should accept inputs as a JSON string (from UI config panel)', async () => {
       const result = await runFlow('trigger-defaults-json-string', {
         nodes: [
           {
@@ -477,8 +476,9 @@ describe('Flow Execution', () => {
             label: 'Start',
             referenceId: 'start',
             params: {
-              // UI config panel stores this as a stringified JSON object
-              defaultInputs: '{ "topic": "general", "severity": "medium" }',
+              // UI config panel stores this as a stringified JSON array
+              inputs:
+                '[{ "name": "topic", "type": "string", "defaultValue": "general" }, { "name": "severity", "type": "string", "defaultValue": "medium" }]',
             },
             position: { x: 0, y: 0 },
           },
@@ -501,7 +501,10 @@ describe('Flow Execution', () => {
               label: 'Start',
               referenceId: 'start',
               params: {
-                defaultInputs: { topic: 'general', severity: 'medium' },
+                inputs: [
+                  { name: 'topic', type: 'string', defaultValue: 'general' },
+                  { name: 'severity', type: 'string', defaultValue: 'medium' },
+                ],
               },
               position: { x: 0, y: 0 },
             },
@@ -525,7 +528,7 @@ describe('Flow Execution', () => {
       });
     });
 
-    it('should pass through all flowInputs when no defaultInputs configured', async () => {
+    it('should pass through all flowInputs when no inputs are declared', async () => {
       const flow = await flowlib.flows.create({ name: `trigger-passthrough-${Date.now()}` });
       await flowlib.versions.create(flow.id, {
         flowlibDefinition: {
@@ -535,7 +538,7 @@ describe('Flow Execution', () => {
               type: 'trigger.manual',
               label: 'Start',
               referenceId: 'start',
-              params: { defaultInputs: '' },
+              params: { inputs: [] },
               position: { x: 0, y: 0 },
             },
           ],

@@ -79,11 +79,11 @@ describe('Chat SDK tools — agent-tool lifecycle', () => {
   describe('create agent with tools', () => {
     it('mints fresh instanceIds for each tool at creation', async () => {
       const source = `
-import { defineFlow, input, agent, tool } from '@flowlib/sdk';
+import { defineFlow, trigger, agent, tool } from '@flowlib/sdk';
 
 export default defineFlow({
   nodes: [
-    input('prompt'),
+    trigger.manual('prompt'),
     agent('assistant', {
       credentialId: 'cred',
       model: 'gpt-4o',
@@ -116,11 +116,11 @@ export default defineFlow({
   describe('preservation across edits', () => {
     async function seedAgentWithTools() {
       const source = `
-import { defineFlow, input, agent, tool } from '@flowlib/sdk';
+import { defineFlow, trigger, agent, tool } from '@flowlib/sdk';
 
 export default defineFlow({
   nodes: [
-    input('prompt'),
+    trigger.manual('prompt'),
     agent('assistant', {
       credentialId: 'cred',
       model: 'gpt-4o',
@@ -189,11 +189,11 @@ export default defineFlow({
       const before = await seedAgentWithTools();
 
       const newSource = `
-import { defineFlow, input, agent, tool } from '@flowlib/sdk';
+import { defineFlow, trigger, agent, tool } from '@flowlib/sdk';
 
 export default defineFlow({
   nodes: [
-    input('prompt'),
+    trigger.manual('prompt'),
     agent('assistant', {
       credentialId: 'cred',
       model: 'gpt-4o',
@@ -234,11 +234,11 @@ export default defineFlow({
 
       // Rewrite without the slack tool.
       const newSource = `
-import { defineFlow, input, agent, tool } from '@flowlib/sdk';
+import { defineFlow, trigger, agent, tool } from '@flowlib/sdk';
 
 export default defineFlow({
   nodes: [
-    input('prompt'),
+    trigger.manual('prompt'),
     agent('assistant', {
       credentialId: 'cred',
       model: 'gpt-4o',
@@ -268,11 +268,11 @@ export default defineFlow({
 
       // Swap the order — slack first, then gmail.
       const newSource = `
-import { defineFlow, input, agent, tool } from '@flowlib/sdk';
+import { defineFlow, trigger, agent, tool } from '@flowlib/sdk';
 
 export default defineFlow({
   nodes: [
-    input('prompt'),
+    trigger.manual('prompt'),
     agent('assistant', {
       credentialId: 'cred',
       model: 'gpt-4o',
@@ -307,11 +307,11 @@ export default defineFlow({
 
     it('duplicate toolIds with different descriptions get separate instanceIds', async () => {
       const source = `
-import { defineFlow, input, agent, tool } from '@flowlib/sdk';
+import { defineFlow, trigger, agent, tool } from '@flowlib/sdk';
 
 export default defineFlow({
   nodes: [
-    input('prompt'),
+    trigger.manual('prompt'),
     agent('assistant', {
       credentialId: 'cred',
       model: 'gpt-4o',

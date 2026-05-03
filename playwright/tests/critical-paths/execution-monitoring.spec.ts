@@ -158,7 +158,7 @@ test.describe('Execution Monitoring', () => {
               nodes: [
                 {
                   id: 'node-1',
-                  type: 'core.input',
+                  type: 'trigger.manual',
                   label: 'User List',
                   referenceId: 'user_list',
                   params: {},

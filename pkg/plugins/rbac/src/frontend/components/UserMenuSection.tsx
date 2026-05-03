@@ -46,9 +46,12 @@ export function UserMenuSection({ collapsed = false }: { collapsed?: boolean }) 
 }
 
 export function UserAvatar({ className }: { className?: string }) {
-  const { user, isAuthenticated } = useRbac();
+  const { user, isAuthenticated, isLoading } = useRbac();
 
-  if (!isAuthenticated || !user) {
+  // Mirror UserMenuSection's loading guard — without this, callers that
+  // render <UserAvatar/> standalone (e.g. inside a header) flash empty
+  // during the initial rbac-me query.
+  if (isLoading || !isAuthenticated || !user) {
     return null;
   }
 

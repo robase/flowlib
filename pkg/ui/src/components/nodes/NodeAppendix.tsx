@@ -16,17 +16,17 @@ interface NodeAppendixProps {
 }
 
 const positionClasses: Record<AppendixPosition, string> = {
-  top: 'bottom-full left-1/2 -translate-x-1/2 mb-2 flex-col-reverse',
-  bottom: 'top-full left-1/2 -translate-x-1/2 mt-2 flex-col',
-  left: 'right-full top-1/2 -translate-y-1/2 mr-2 flex-row-reverse',
-  right: 'left-full top-1/2 -translate-y-1/2 ml-2 flex-row',
+  top: 'bottom-full left-1/2 -translate-x-1/2 flex-col-reverse',
+  bottom: 'top-full left-1/2 -translate-x-1/2 flex-col',
+  left: 'right-full top-1/2 -translate-y-1/2 flex-row-reverse',
+  right: 'left-full top-1/2 -translate-y-1/2 flex-row',
 };
 
 const connectorClasses: Record<AppendixPosition, string> = {
-  top: 'w-px h-2 mx-auto',
-  bottom: 'w-px h-2 mx-auto',
-  left: 'h-px w-2 my-auto',
-  right: 'h-px w-2 my-auto',
+  top: 'w-px h-4 mx-auto',
+  bottom: 'w-px h-4 mx-auto',
+  left: 'h-px w-4 my-auto',
+  right: 'h-px w-4 my-auto',
 };
 
 const positionCycle: AppendixPosition[] = ['bottom', 'right', 'top', 'left'];

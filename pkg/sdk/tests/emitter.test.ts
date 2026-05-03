@@ -25,7 +25,7 @@ describe('emitSdkSource', () => {
     it('emits a valid TS module for a minimal flow', () => {
       const def: DbFlowDefinition = {
         nodes: [
-          { id: 'n1', type: 'core.input', referenceId: 'query', params: {} },
+          { id: 'n1', type: 'trigger.manual', referenceId: 'query', params: {} },
           {
             id: 'n2',
             type: 'core.output',
@@ -37,12 +37,12 @@ describe('emitSdkSource', () => {
       };
       const { code, sdkImports } = emitSdkSource(def, { flowName: 'myFlow' });
       assertParses(code);
-      expect(code).toContain(`import { defineFlow, input, output } from "@flowlib/sdk"`);
+      expect(code).toContain(`import { defineFlow, output, trigger } from "@flowlib/sdk"`);
       expect(code).toContain(`export const myFlow = defineFlow({`);
-      expect(code).toContain(`query: input(),`);
+      expect(code).toContain(`query: trigger.manual(),`);
       expect(code).toContain(`out: output({`);
       expect(code).toContain(`{ from: "query", to: "out" }`);
-      expect(sdkImports.sort()).toEqual(['defineFlow', 'input', 'output'].sort());
+      expect(sdkImports.sort()).toEqual(['defineFlow', 'output', 'trigger'].sort());
     });
 
     it('rejects invalid flowName', () => {
@@ -52,7 +52,7 @@ describe('emitSdkSource', () => {
 
     it('preserves metadata', () => {
       const def: DbFlowDefinition = {
-        nodes: [{ id: 'n1', type: 'core.input', referenceId: 'q', params: {} }],
+        nodes: [{ id: 'n1', type: 'trigger.manual', referenceId: 'q', params: {} }],
         edges: [],
         metadata: { name: 'My Flow', description: 'hi', tags: ['a'] },
       };
@@ -67,7 +67,7 @@ describe('emitSdkSource', () => {
     it('code() emits an arrow with upstream destructured', () => {
       const def: DbFlowDefinition = {
         nodes: [
-          { id: 'n1', type: 'core.input', referenceId: 'user', params: {} },
+          { id: 'n1', type: 'trigger.manual', referenceId: 'user', params: {} },
           {
             id: 'n2',
             type: 'core.javascript',
@@ -88,7 +88,7 @@ describe('emitSdkSource', () => {
     it('ifElse emits condition as arrow', () => {
       const def: DbFlowDefinition = {
         nodes: [
-          { id: 'n1', type: 'core.input', referenceId: 'x', params: {} },
+          { id: 'n1', type: 'trigger.manual', referenceId: 'x', params: {} },
           { id: 'n2', type: 'core.if_else', referenceId: 'check', params: { expression: 'x > 5' } },
         ],
         edges: [{ id: 'e1', source: 'n1', target: 'n2' }],
@@ -103,7 +103,7 @@ describe('emitSdkSource', () => {
     it('switch emits cases with arrow conditions', () => {
       const def: DbFlowDefinition = {
         nodes: [
-          { id: 'n1', type: 'core.input', referenceId: 'kind', params: {} },
+          { id: 'n1', type: 'trigger.manual', referenceId: 'kind', params: {} },
           {
             id: 'n2',
             type: 'core.switch',
@@ -130,7 +130,7 @@ describe('emitSdkSource', () => {
     it('previous_nodes is destructured when an expression references it', () => {
       const def: DbFlowDefinition = {
         nodes: [
-          { id: 'n1', type: 'core.input', referenceId: 'direct', params: {} },
+          { id: 'n1', type: 'trigger.manual', referenceId: 'direct', params: {} },
           {
             id: 'n2',
             type: 'core.javascript',
@@ -150,7 +150,7 @@ describe('emitSdkSource', () => {
     it('pure `{{ expr }}` → arrow with return(expr)', () => {
       const def: DbFlowDefinition = {
         nodes: [
-          { id: 'n1', type: 'core.input', referenceId: 'metrics', params: {} },
+          { id: 'n1', type: 'trigger.manual', referenceId: 'metrics', params: {} },
           {
             id: 'n2',
             type: 'core.output',
@@ -170,7 +170,7 @@ describe('emitSdkSource', () => {
     it('mixed text + {{ expr }} → template literal', () => {
       const def: DbFlowDefinition = {
         nodes: [
-          { id: 'n1', type: 'core.input', referenceId: 'user', params: {} },
+          { id: 'n1', type: 'trigger.manual', referenceId: 'user', params: {} },
           {
             id: 'n2',
             type: 'core.output',
@@ -302,23 +302,29 @@ describe('emitSdkSource', () => {
       expect(sdkImports).toContain('trigger');
     });
 
-    it('trigger.manual with defaultInputs → passes them through', () => {
+    it('trigger.manual with declared inputs → emits structured inputs literal', () => {
       const def: DbFlowDefinition = {
         nodes: [
           {
             id: 'n1',
             type: 'trigger.manual',
             referenceId: 'start',
-            params: { defaultInputs: { foo: 'bar', count: 5 } },
+            params: {
+              inputs: [
+                { name: 'foo', type: 'string', defaultValue: 'bar' },
+                { name: 'count', type: 'number', defaultValue: 5 },
+              ],
+            },
           },
         ],
         edges: [],
       };
       const { code } = emitSdkSource(def);
       assertParses(code);
-      expect(code).toContain(`start: trigger.manual({`);
-      expect(code).toContain(`foo: "bar"`);
-      expect(code).toContain(`count: 5`);
+      expect(code).toContain(`start: trigger.manual({ inputs:`);
+      expect(code).toContain(`as const`);
+      expect(code).toContain(`name: "foo"`);
+      expect(code).toContain(`name: "count"`);
     });
 
     it('trigger.cron emits expression + timezone', () => {
@@ -394,7 +400,7 @@ describe('emitSdkSource', () => {
         nodes: [
           {
             id: 'n1',
-            type: 'core.input',
+            type: 'trigger.manual',
             referenceId: 'q',
             params: {},
             position: { x: 100, y: 200 },
@@ -414,7 +420,7 @@ describe('emitSdkSource', () => {
     it('unknown provider action → direct action-callable import', () => {
       const def: DbFlowDefinition = {
         nodes: [
-          { id: 'n1', type: 'core.input', referenceId: 'x', params: {} },
+          { id: 'n1', type: 'trigger.manual', referenceId: 'x', params: {} },
           {
             id: 'n2',
             type: 'gmail.send_message',
@@ -447,7 +453,7 @@ describe('emitSdkSource', () => {
   describe('JSON footer', () => {
     it('emits /* @flowlib-definition */ footer when includeJsonFooter is true', () => {
       const def: DbFlowDefinition = {
-        nodes: [{ id: 'n1', type: 'core.input', referenceId: 'q', params: {} }],
+        nodes: [{ id: 'n1', type: 'trigger.manual', referenceId: 'q', params: {} }],
         edges: [],
         metadata: { name: 'test' },
       };
@@ -467,7 +473,7 @@ describe('emitSdkSource', () => {
 
     it('no footer by default', () => {
       const def: DbFlowDefinition = {
-        nodes: [{ id: 'n1', type: 'core.input', referenceId: 'q', params: {} }],
+        nodes: [{ id: 'n1', type: 'trigger.manual', referenceId: 'q', params: {} }],
         edges: [],
       };
       const { code } = emitSdkSource(def);
@@ -506,7 +512,7 @@ describe('emitSdkSource', () => {
 
     it('throws for edge referencing nonexistent node', () => {
       const def: DbFlowDefinition = {
-        nodes: [{ id: 'n1', type: 'core.input', referenceId: 'x', params: {} }],
+        nodes: [{ id: 'n1', type: 'trigger.manual', referenceId: 'x', params: {} }],
         edges: [{ id: 'e1', source: 'n1', target: 'nonexistent' }],
       };
       expect(() => emitSdkSource(def)).toThrow(/unknown node/);

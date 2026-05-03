@@ -18,7 +18,7 @@ import { InMemoryApiClient } from '~/flow-canvas/InMemoryApiClient';
 
 const sampleActions: ActionMetadata[] = [
   {
-    type: 'core.input',
+    type: 'trigger.manual',
     label: 'Flow Input',
     description: 'Flow input',
     outputs: [{ id: 'output', label: 'Output', type: 'any' }],
@@ -47,7 +47,7 @@ const simpleFlow: FlowlibDefinition = {
   nodes: [
     {
       id: 'n1',
-      type: 'core.input',
+      type: 'trigger.manual',
       position: { x: 0, y: 0 },
       params: { value: 'hello' },
     },
@@ -80,7 +80,7 @@ describe('flow-canvas adapter', () => {
     expect(rf.nodes).toHaveLength(3);
     expect(rf.edges).toHaveLength(2);
     expect(rf.nodes[0].id).toBe('n1');
-    expect(rf.nodes[0].type).toBe('core.input');
+    expect(rf.nodes[0].type).toBe('trigger.manual');
     expect(rf.nodes[0].position).toEqual({ x: 0, y: 0 });
     // Display name falls back to action label when node.label absent
     expect(rf.nodes[0].data.display_name).toBe('Flow Input');
@@ -114,7 +114,7 @@ describe('flow-canvas adapter', () => {
     expect(round.nodes).toHaveLength(3);
     expect(round.edges).toHaveLength(2);
     const byId = Object.fromEntries(round.nodes.map((n) => [n.id, n]));
-    expect(byId.n1.type).toBe('core.input');
+    expect(byId.n1.type).toBe('trigger.manual');
     expect(byId.n1.position).toEqual({ x: 0, y: 0 });
     expect(byId.n1.params).toEqual({ value: 'hello' });
     expect(byId.n2.type).toBe('core.javascript');
@@ -128,7 +128,7 @@ describe('flow-canvas adapter', () => {
     });
     expect(rf.nodes).toHaveLength(3);
     // Falls back to humanised type string
-    expect(rf.nodes[0].data.display_name).toBe('Core Input');
+    expect(rf.nodes[0].data.display_name).toBe('Trigger Manual');
   });
 });
 
@@ -158,7 +158,7 @@ describe('InMemoryApiClient', () => {
     });
     const actions = await client.getAvailableNodes();
     expect(actions).toHaveLength(3);
-    expect(actions[0].type).toBe('core.input');
+    expect(actions[0].type).toBe('trigger.manual');
   });
 
   it('createFlowVersion calls onEdit with the new definition', async () => {

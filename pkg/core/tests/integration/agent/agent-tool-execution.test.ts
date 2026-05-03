@@ -581,10 +581,12 @@ describe('Agent Node + Tool Execution', () => {
         nodes: [
           {
             id: 'input-1',
-            type: 'core.input',
+            type: 'trigger.manual',
             label: 'Question',
             referenceId: 'question',
-            params: { variableName: 'user_question', defaultValue: 'What is 2+2?' },
+            params: {
+              inputs: [{ name: 'question', type: 'string', defaultValue: 'What is 2+2?' }],
+            },
             position: { x: 0, y: 0 },
           },
           agentNode({
@@ -614,11 +616,11 @@ describe('Agent Node + Tool Execution', () => {
           nodes: [
             {
               id: 'input-1',
-              type: 'core.input',
+              type: 'trigger.manual',
               label: 'Data',
               referenceId: 'data',
               params: {
-                variableName: 'payload',
+                inputs: [{ name: 'payload', type: 'string' }],
               },
               position: { x: 0, y: 0 },
             },
@@ -912,12 +914,11 @@ describe('Agent Node + Tool Execution', () => {
         nodes: [
           {
             id: 'input-1',
-            type: 'core.input',
+            type: 'trigger.manual',
             label: 'Question',
             referenceId: 'question',
             params: {
-              variableName: 'math_question',
-              defaultValue: 'What is 100 / 4?',
+              inputs: [{ name: 'math_question', type: 'json', defaultValue: 'What is 100 / 4?' }],
             },
             position: { x: 0, y: 200 },
           },

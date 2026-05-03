@@ -13,7 +13,7 @@ export const fixtureFlow: FlowlibDefinition = {
   nodes: [
     {
       id: 'input_1',
-      type: 'core.input',
+      type: 'trigger.manual',
       position: { x: 0, y: 120 },
       params: {
         variableName: 'user_data',
@@ -83,7 +83,7 @@ export const fixtureFlow: FlowlibDefinition = {
  */
 export const fixtureActions: ActionMetadata[] = [
   {
-    type: 'core.input',
+    type: 'trigger.manual',
     label: 'Flow Input',
     description: 'Defines a named flow input variable.',
     outputs: [{ id: 'output', label: 'Output', type: 'any' }],

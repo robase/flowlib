@@ -18,7 +18,7 @@ export function ConnectFlowForm({ flowId, onCancel }: ConnectFlowFormProps) {
   const [branch, setBranch] = useState('main');
   const [filePath, setFilePath] = useState('');
   const [mode, setMode] = useState<VcSyncMode>('direct-commit');
-  const [syncDirection, setSyncDirection] = useState<VcSyncDirection>('push');
+  const [syncDirection, setSyncDirection] = useState<VcSyncDirection>('write');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -107,9 +107,9 @@ export function ConnectFlowForm({ flowId, onCancel }: ConnectFlowFormProps) {
           onChange={(e) => setSyncDirection(e.target.value as VcSyncDirection)}
           className="w-full rounded-md border border-fl-border bg-fl-background px-2.5 py-1.5 text-sm focus:border-fl-primary focus:outline-none"
         >
-          <option value="push">Push (Flowlib → Git)</option>
-          <option value="pull">Pull (Git → Flowlib)</option>
-          <option value="bidirectional">Bidirectional</option>
+          <option value="write">Write (Flowlib → Git)</option>
+          <option value="read">Read (Git → Flowlib)</option>
+          <option value="read-write">Read / Write</option>
         </select>
       </div>
 

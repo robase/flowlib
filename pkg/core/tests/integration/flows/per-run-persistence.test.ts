@@ -114,10 +114,10 @@ const TWO_NODE_FLOW: FlowlibDefinition = {
   nodes: [
     {
       id: 'input-1',
-      type: 'core.input',
+      type: 'trigger.manual',
       label: 'Data',
       referenceId: 'data',
-      params: { variableName: 'data', defaultValue: JSON.stringify({ count: 5 }) },
+      params: { inputs: [{ name: 'data', type: 'json', defaultValue: { count: 5 } }] },
       position: { x: 0, y: 0 },
     },
     {
@@ -137,10 +137,10 @@ const FAILING_FLOW: FlowlibDefinition = {
   nodes: [
     {
       id: 'input-1',
-      type: 'core.input',
+      type: 'trigger.manual',
       label: 'Data',
       referenceId: 'data',
-      params: { variableName: 'data', defaultValue: JSON.stringify({ count: 7 }) },
+      params: { inputs: [{ name: 'data', type: 'json', defaultValue: { count: 7 } }] },
       position: { x: 0, y: 0 },
     },
     {

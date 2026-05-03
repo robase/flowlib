@@ -174,13 +174,31 @@ const runLayout = async (
       // Merge only the new positions back onto the original nodes — otherwise
       // the inflated agent `measured.height` leaks into the store and
       // compounds on every subsequent realign.
+      //
+      // Agent alignment shift: ELK aligns connected siblings to the *center*
+      // of each node's bounding box. Because we inflate the agent's height
+      // to reserve space for the absolute-positioned tools dropzone, that
+      // center sits (gap + tools) / 2 below the visible header card, leaving
+      // the header looking shifted up relative to its neighbors. Pushing the
+      // agent down by that half-inflation lands its header at the sibling
+      // alignment line; the tools box hangs into space ELK already reserved
+      // below for same-column collision avoidance.
+      const AGENT_HEADER_ALIGN_OFFSET = (AGENT_TOOLS_GAP + AGENT_TOOLS_HEIGHT) / 2;
       const originalById = new Map(nodes.map((n) => [n.id, n]));
       const restored = (layoutedNodes as Node[]).map((n) => {
         const original = originalById.get(n.id);
         if (!original) {
           return n;
         }
-        return { ...original, position: n.position };
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const data = original.data as Record<string, any> | undefined;
+        const nodeType = data?.type ?? original.type;
+        const isAgent = nodeType === 'core.agent' || nodeType === 'primitives.agent';
+        const yOffset = isAgent ? AGENT_HEADER_ALIGN_OFFSET : 0;
+        return {
+          ...original,
+          position: { x: n.position.x, y: n.position.y + yOffset },
+        };
       });
       return { nodes: restored, edges };
     }

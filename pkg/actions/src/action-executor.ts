@@ -136,10 +136,9 @@ export async function executeActionAsNode(
   const logger = nodeContext.logger;
 
   // Try the params as-is first — this preserves JSON-encoded strings for
-  // actions whose schema expects a string (e.g. core.input.defaultValue).
-  // Only fall back to JSON coercion when the raw shape fails validation,
-  // which is what UI-stored JSON fields (e.g. triggers.manual.defaultInputs)
-  // need.
+  // actions whose schema expects a string. Only fall back to JSON coercion
+  // when the raw shape fails validation, which is what UI-stored JSON
+  // fields (e.g. triggers.manual.inputs) need.
   let parseResult = action.params.schema.safeParse(params);
   if (!parseResult.success) {
     const coercedParams = coerceJsonStringParams(params);

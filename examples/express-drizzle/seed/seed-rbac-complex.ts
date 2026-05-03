@@ -381,7 +381,7 @@ function simpleFlow(name: string, description: string): FlowlibDefinition {
     nodes: [
       {
         id: 'input-1',
-        type: 'core.input',
+        type: 'trigger.manual',
         label: 'Input',
         referenceId: 'input',
         params: { variableName: 'data', defaultValue: '{}' },

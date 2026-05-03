@@ -772,56 +772,6 @@
     ]
   },
   {
-    "type": "core.input",
-    "label": "Input",
-    "description": "Define a flow input variable with an optional default value. Use as the entry point of a flow to accept runtime data. If the caller supplies the named variable, that value is used; otherwise the configured default is emitted.",
-    "category": "Common",
-    "icon": "LogIn",
-    "provider": {
-      "id": "core",
-      "name": "Flowlib Core",
-      "icon": "Blocks"
-    },
-    "input": {
-      "id": "input",
-      "label": "Input",
-      "type": "object"
-    },
-    "outputs": [
-      {
-        "id": "output",
-        "label": "Output",
-        "type": "object"
-      }
-    ],
-    "paramFields": [
-      {
-        "name": "variableName",
-        "label": "Variable Name",
-        "type": "text",
-        "description": "Flow input key to read from runtime inputs",
-        "placeholder": "user_data",
-        "required": true
-      },
-      {
-        "name": "defaultValue",
-        "label": "Default Value",
-        "type": "textarea",
-        "description": "Fallback value when runtime input is missing (JSON allowed)",
-        "placeholder": "{\"name\":\"Alice\"}",
-        "required": false
-      }
-    ],
-    "defaultParams": {},
-    "searchTerms": [
-      "input",
-      "entry",
-      "variable",
-      "flow",
-      "seed"
-    ]
-  },
-  {
     "type": "core.javascript",
     "label": "JavaScript",
     "description": "Transform and process data using JavaScript in a sandboxed QuickJS runtime. Use when you need to filter, map, reshape, or compute values from upstream node outputs. Upstream variables are available by their reference ID; `$input` holds the full context object. Single expressions auto-return; use explicit `return` for multi-line code.",
@@ -15740,7 +15690,7 @@
   {
     "type": "trigger.manual",
     "label": "Manual Trigger",
-    "description": "Start this flow manually from the UI, REST API, or programmatically via startFlowRun(). Optionally set Default Inputs — a JSON object of key/value pairs used when the flow is triggered manually. When triggered from code, the caller's values are used instead (merged on top of defaults). This is a flow entry-point node — AI agents should not invoke it directly.\n\nExample default inputs:\n```json\n{ \"topic\": \"hello world\", \"severity\": \"medium\" }\n```",
+    "description": "Start this flow manually from the UI, REST API, or programmatically via startFlowRun(). Declare the flow's inputs as a structured list — each entry has a name, type, and optional default value. Caller-supplied inputs override defaults; missing required inputs fail the run. Downstream nodes reference values via `{{ manual_trigger.<name> }}`. This is a flow entry-point node — AI agents should not invoke it directly.",
     "category": "Triggers",
     "icon": "Play",
     "provider": {
@@ -15757,11 +15707,11 @@
     ],
     "paramFields": [
       {
-        "name": "defaultInputs",
-        "label": "Default Inputs",
+        "name": "inputs",
+        "label": "Inputs",
         "type": "json",
-        "description": "Default input values used when running the flow manually. A plain JSON object — e.g. { \"topic\": \"hello world\" }. When triggered from code, the caller's values take precedence.",
-        "placeholder": "{ \"topic\": \"hello world\", \"severity\": \"medium\" }"
+        "description": "Declared inputs for this flow. Array of objects: { name, type (\"string\"|\"number\"|\"boolean\"|\"json\"), defaultValue?, description?, required? }. Caller-supplied values override defaults; missing required inputs fail the run.",
+        "placeholder": "[\n  { \"name\": \"topic\", \"type\": \"string\", \"defaultValue\": \"hello world\" },\n  { \"name\": \"count\", \"type\": \"number\", \"required\": true }\n]"
       }
     ],
     "defaultParams": {},

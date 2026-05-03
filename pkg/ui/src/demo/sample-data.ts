@@ -16,7 +16,7 @@ import type { Node, Edge } from '@xyflow/react';
 
 export const sampleNodeDefinitions: NodeDefinition[] = [
   {
-    type: 'core.input',
+    type: 'trigger.manual',
     label: 'Flow Input',
     description: 'Entry point for the flow. Defines input variables.',
     icon: 'ArrowRightToLine',
@@ -309,11 +309,11 @@ export const sampleNodeDefinitions: NodeDefinition[] = [
 export const simpleFlowNodes: Node<ReactFlowNodeData>[] = [
   {
     id: 'node-input',
-    type: 'core.input',
+    type: 'trigger.manual',
     position: { x: 0, y: 100 },
     data: {
       id: 'node-input',
-      type: 'core.input',
+      type: 'trigger.manual',
       display_name: 'User Query',
       reference_id: 'user_query',
       status: 'idle',
@@ -380,11 +380,11 @@ export const simpleFlowEdges: Edge[] = [
 export const branchingFlowNodes: Node<ReactFlowNodeData>[] = [
   {
     id: 'b-input',
-    type: 'core.input',
+    type: 'trigger.manual',
     position: { x: 0, y: 150 },
     data: {
       id: 'b-input',
-      type: 'core.input',
+      type: 'trigger.manual',
       display_name: 'Webhook Data',
       reference_id: 'webhook_data',
       status: 'idle',

@@ -58,6 +58,7 @@ export * from './stores';
 export * from './api';
 
 // UI primitives
+export { Skeleton } from './components/ui/skeleton';
 export { TreeView, type TreeDataItem, type TreeRenderItemParams } from './components/ui/tree-view';
 export {
   Dialog,

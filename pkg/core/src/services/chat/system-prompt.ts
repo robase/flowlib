@@ -338,7 +338,7 @@ interface FlowContextData {
     flowNotes: string[];
     workspaceNotes: string[];
   };
-  /** Input fields derived from the manual trigger's defaultInputs (if any) */
+  /** Input fields derived from the manual trigger's declared inputs (if any) */
   inputFields?: Array<{
     name: string;
     defaultValue?: unknown;
@@ -532,7 +532,6 @@ const CORE_ACTION_IDS = [
   'trigger.manual',
   'trigger.cron',
   'trigger.webhook',
-  'core.input',
   'core.output',
   'core.model',
   'core.agent',
@@ -558,7 +557,7 @@ const FORMAT_HINTS: Record<string, string> = {
   'core.agent':
     'Tools live in params.addedTools (each entry: { instanceId, toolId, name, description, params }). DO NOT edit addedTools directly via update_node_config or update_flow_definition — use add_tool_to_agent / remove_tool_from_agent / update_agent_tool, which manage instanceIds correctly.',
   'trigger.manual':
-    'defaultInputs is a record keyed by input name — e.g. { topic: "Sales", count: 5 }. At runtime the trigger node outputs the merged { ...defaultInputs, ...runtimeInputs }, so downstream nodes access fields via {{ manual_trigger.topic }} / {{ manual_trigger.count }} (NOT bare {{ topic }}).',
+    'inputs is a structured array of input declarations: [{ name, type ("string"|"number"|"boolean"|"json"), defaultValue?, description?, required? }]. At runtime the trigger node outputs the merged { ...declaredDefaults, ...runtimeInputs }, so downstream nodes access fields via {{ manual_trigger.<name> }} (NOT bare {{ <name> }}). Caller-supplied values override defaults; missing required inputs fail the run.',
   'trigger.cron': 'Standard 5-field cron (minute hour day month weekday)',
 };
 

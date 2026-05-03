@@ -25,11 +25,30 @@ import type { FlowlibInstance } from 'src/api/types';
 // Plugin Manager
 // =============================================================================
 
+type ManagerLogger = {
+  debug: (...args: unknown[]) => void;
+  info: (...args: unknown[]) => void;
+  warn: (...args: unknown[]) => void;
+  error: (...args: unknown[]) => void;
+};
+
+const noop = (): void => undefined;
+const noopLogger: ManagerLogger = {
+  debug: noop,
+  info: noop,
+  warn: noop,
+  error: noop,
+};
+
 export class PluginManager implements PluginHookRunner {
   private plugins: FlowlibPlugin[] = [];
   private pluginMap = new Map<string, FlowlibPlugin>();
   private pluginStores = new Map<string, Map<string, unknown>>();
   private _initialized = false;
+  // Logger captured during initializePlugins so hooks called outside the
+  // init path (e.g. runOnAuthorize on every request) can log without a
+  // logger being threaded through the call site.
+  private logger: ManagerLogger = noopLogger;
 
   constructor(plugins: FlowlibPlugin[] = []) {
     // Validate: no duplicate IDs
@@ -51,15 +70,11 @@ export class PluginManager implements PluginHookRunner {
    */
   async initializePlugins(opts: {
     config: Record<string, unknown>;
-    logger: {
-      debug: (...args: unknown[]) => void;
-      info: (...args: unknown[]) => void;
-      warn: (...args: unknown[]) => void;
-      error: (...args: unknown[]) => void;
-    };
+    logger: ManagerLogger;
     registerAction: (action: ActionDefinition) => void;
     getFlowlib: () => FlowlibInstance;
   }): Promise<FlowlibPluginInitResult[]> {
+    this.logger = opts.logger;
     const results: FlowlibPluginInitResult[] = [];
 
     for (const plugin of this.plugins) {
@@ -333,22 +348,52 @@ export class PluginManager implements PluginHookRunner {
     resource?: { type: string; id?: string };
     database?: PluginDatabaseApi;
   }): Promise<AuthorizationResult | null> {
+    // Deny-wins, fail-closed.
+    //
+    // Previously this was first-match-wins with errors silently swallowed,
+    // so a permissive plugin loaded after a restrictive one (e.g. RBAC)
+    // could shadow its denial, and a restrictive plugin throwing in its
+    // deny path would simply be skipped — letting the next plugin allow.
+    //
+    // New semantics:
+    //   - Any plugin returning {allowed:false} → deny immediately.
+    //   - A plugin throwing → treat as deny (fail closed) and stop.
+    //   - Any plugin returning {allowed:true} → remember it, but keep
+    //     checking later plugins for a deny.
+    //   - If we reach the end with an allow remembered, return it.
+    //   - If no plugin had an opinion, return null (caller's default applies).
+    let allow: AuthorizationResult | null = null;
     for (const plugin of this.plugins) {
       const hook = plugin.hooks?.onAuthorize;
       if (!hook) {
         continue;
       }
 
+      let result: AuthorizationResult | void;
       try {
-        const result = await hook(context);
-        if (result && typeof result.allowed === 'boolean') {
-          return result;
-        }
-      } catch {
-        // Don't let plugin errors crash authorization
+        result = await hook(context);
+      } catch (error) {
+        // Fail closed: a hook that throws while computing authorization
+        // cannot be trusted to have allowed the request.
+        this.logger.error(
+          `[plugin-manager] onAuthorize hook for plugin "${plugin.id}" threw — denying`,
+          error,
+        );
+        return { allowed: false, reason: 'authorization_hook_error' };
+      }
+
+      if (!result || typeof result.allowed !== 'boolean') {
+        continue;
+      }
+      if (result.allowed === false) {
+        return result;
+      }
+      // Remember the first allow; later denies still win.
+      if (!allow) {
+        allow = result;
       }
     }
 
-    return null; // No plugin overrode authorization
+    return allow;
   }
 }

@@ -29,7 +29,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/
 import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
 import { Card, CardContent } from '../ui/card';
-import { FlowlibLoader } from '../shared/FlowlibLoader';
+import { Skeleton } from '../ui/skeleton';
 
 // Execution status constants with proper typing
 const EXECUTION_STATUSES = [
@@ -356,8 +356,56 @@ export const FlowRunsTable: React.FC<FlowRunsTableProps> = ({ basePath = '' }) =
 
   if (executionsLoading || flowsLoading) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <FlowlibLoader iconClassName="h-14" label="Loading flow runs..." />
+      <div className="space-y-6">
+        {/* Filter row skeleton */}
+        <div className="flex items-center gap-2">
+          <Skeleton className="h-9 w-full max-w-sm" />
+          <Skeleton className="h-9 w-40" />
+        </div>
+        {/* Table skeleton */}
+        <div className="overflow-hidden bg-card border border-border rounded-lg">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-[200px]">Flow</TableHead>
+                <TableHead className="w-[120px]">Status</TableHead>
+                <TableHead className="w-[120px]">Last ran</TableHead>
+                <TableHead className="w-[80px]">Duration</TableHead>
+                <TableHead className="w-[200px]">Input</TableHead>
+                <TableHead className="w-[200px]">Output</TableHead>
+                <TableHead className="w-[100px]">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {Array.from({ length: 8 }).map((_, i) => (
+                <TableRow key={i}>
+                  <TableCell>
+                    <Skeleton className="h-3.5 w-32" />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className="h-5 w-20 rounded-full" />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className="h-3 w-16 mb-1" />
+                    <Skeleton className="h-3 w-20" />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className="h-3 w-12" />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className="h-3 w-full max-w-[180px]" />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className="h-3 w-full max-w-[180px]" />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className="h-8 w-16" />
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
       </div>
     );
   }

@@ -17,20 +17,24 @@ export function defineFlow(def: PrimitiveFlowDefinition): PrimitiveFlowDefinitio
 
 // ─── Node builders ────────────────────────────────────────────────────────────
 
-export function input(
+export interface ManualTriggerInputDef {
+  name: string;
+  type?: 'string' | 'number' | 'boolean' | 'json';
+  defaultValue?: unknown;
+  description?: string;
+  required?: boolean;
+}
+
+export function triggerManual(
   referenceId: string,
   params?: {
-    variableName?: string;
-    defaultValue?: ParamValue<unknown>;
+    inputs?: ManualTriggerInputDef[];
   },
 ): PrimitiveNode {
   return {
     referenceId,
-    type: 'core.input',
-    params: {
-      variableName: params?.variableName ?? referenceId,
-      ...(params?.defaultValue !== undefined ? { defaultValue: params.defaultValue } : {}),
-    },
+    type: 'trigger.manual',
+    params: { inputs: (params?.inputs ?? []) as unknown as ParamValue<unknown> },
   };
 }
 

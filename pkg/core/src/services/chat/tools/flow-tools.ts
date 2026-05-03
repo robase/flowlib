@@ -226,7 +226,9 @@ export const runFlowTool: ChatToolDefinition = {
     }
 
     try {
-      // Read trigger defaultInputs and merge for any missing fields
+      // Read trigger declared inputs and merge defaults for any missing fields.
+      // The runtime applies the same merge — this lets the chat tool surface
+      // the resolved inputs in its return payload.
       const mergedInputs = { ...inputs };
       try {
         const version = await flowlib.versions.get(flowId, 'latest');
@@ -238,12 +240,16 @@ export const runFlowTool: ChatToolDefinition = {
           const triggerNode = (def?.nodes ?? []).find(
             (n: { type?: string }) => n.type === 'trigger.manual',
           );
-          const defaultInputs = (triggerNode?.params as Record<string, unknown> | undefined)
-            ?.defaultInputs as Record<string, unknown> | undefined;
-          if (defaultInputs) {
-            for (const [key, value] of Object.entries(defaultInputs)) {
-              if (mergedInputs[key] === undefined && value !== undefined && value !== null) {
-                mergedInputs[key] = value;
+          const declaredInputs = (triggerNode?.params as Record<string, unknown> | undefined)
+            ?.inputs as Array<{ name: string; defaultValue?: unknown }> | undefined;
+          if (Array.isArray(declaredInputs)) {
+            for (const def of declaredInputs) {
+              if (
+                mergedInputs[def.name] === undefined &&
+                def.defaultValue !== undefined &&
+                def.defaultValue !== null
+              ) {
+                mergedInputs[def.name] = def.defaultValue;
               }
             }
           }

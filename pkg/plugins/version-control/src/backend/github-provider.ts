@@ -8,7 +8,10 @@
 // =============================================================================
 
 import type {
+  BranchComparison,
+  BranchComparisonFile,
   CreatePullRequestOptions,
+  CreateTreeCommitOptions,
   GitBranchInfo,
   GitCommitResult,
   GitFileContent,
@@ -16,7 +19,10 @@ import type {
   GitProvider,
   GitPullRequestInfo,
   GitPullRequestResult,
+  GitTreeEntry,
+  TreeCommitResult,
 } from './git-provider';
+import { StaleHeadError } from './git-provider';
 import type { GitProviderAuth } from '../shared/types';
 
 interface GitHubProviderOptions {
@@ -204,6 +210,7 @@ export function githubProvider(options: GitHubProviderOptions): GitProvider {
     method: string,
     path: string,
     body?: unknown,
+    opts?: { allowStatuses?: number[] },
   ): Promise<{ status: number; data: T }> {
     const token = await getToken();
     const url = `https://api.github.com${path}`;
@@ -224,7 +231,17 @@ export function githubProvider(options: GitHubProviderOptions): GitProvider {
       body: body ? JSON.stringify(body) : undefined,
     });
 
-    if (!response.ok && response.status !== 404) {
+    // 404 is universally tolerated (callers handle "not found" by checking
+    // status). Callers can pass `allowStatuses` to also tolerate specific
+    // non-OK responses — used by `createTreeCommit` for 422 non-fast-forward
+    // ref updates, which are translated to `StaleHeadError` rather than
+    // generic API errors.
+    const tolerated =
+      response.ok ||
+      response.status === 404 ||
+      (opts?.allowStatuses?.includes(response.status) ?? false);
+
+    if (!tolerated) {
       const text = await response.text();
       throw new Error(`GitHub API error ${response.status}: ${text}`);
     }
@@ -244,6 +261,12 @@ export function githubProvider(options: GitHubProviderOptions): GitProvider {
   const provider: GitProvider = {
     id: 'github',
     name: 'GitHub',
+    security: {
+      authType: options.auth.type,
+      supportsAppAuth: true,
+      supportsSignedCommits: false,
+      signedCommitsConfigured: false,
+    },
 
     async getFileContent(repo: string, path: string, ref?: string): Promise<GitFileContent | null> {
       const { owner, repo: name } = parseRepo(repo);
@@ -339,6 +362,208 @@ export function githubProvider(options: GitHubProviderOptions): GitProvider {
         return null;
       }
       return { sha: data.commit.sha };
+    },
+
+    async listTree(repo: string, ref: string, opts?: { path?: string }): Promise<GitTreeEntry[]> {
+      const { owner, repo: name } = parseRepo(repo);
+
+      // Recursive=1 returns the whole tree at the commit. The ref may be a
+      // branch name (resolved server-side) or a commit/tree SHA. GitHub's
+      // Trees API doesn't accept a branch name directly — we resolve it
+      // first via the branches API to keep the contract simple for callers.
+      let treeSha = ref;
+      if (!/^[a-f0-9]{40}$/.test(ref)) {
+        const branchInfo = await this.getBranch(repo, ref);
+        if (!branchInfo) {
+          return [];
+        }
+        treeSha = branchInfo.sha;
+      }
+
+      const { status, data } = await request<{
+        tree: Array<{ path: string; type: string; sha: string; size?: number }>;
+        truncated?: boolean;
+      }>('GET', `/repos/${owner}/${name}/git/trees/${treeSha}?recursive=1`);
+
+      if (status === 404) {
+        return [];
+      }
+
+      // GitHub truncates trees > 100k entries or > 7 MB. We don't paginate
+      // here — at that size the version-control plugin isn't the right tool.
+      // Surface the truncation to logs via the result so callers can warn.
+      if (data.truncated) {
+        // No structured way to bubble this up via the GitProvider contract.
+        // Loggers in the reconciler will note when the entry count is at the
+        // GitHub cap, which is the practical signal for this case.
+      }
+
+      const pathPrefix = opts?.path
+        ? opts.path.endsWith('/')
+          ? opts.path
+          : `${opts.path}/`
+        : null;
+
+      const entries: GitTreeEntry[] = [];
+      for (const item of data.tree) {
+        const t = item.type === 'blob' ? 'blob' : 'tree';
+        if (pathPrefix && !item.path.startsWith(pathPrefix)) {
+          continue;
+        }
+        entries.push({ path: item.path, type: t, sha: item.sha, size: item.size });
+      }
+      return entries;
+    },
+
+    async compareBranches(repo: string, base: string, head: string): Promise<BranchComparison> {
+      const { owner, repo: name } = parseRepo(repo);
+
+      // GitHub's compare API: GET /repos/:owner/:repo/compare/:base...:head
+      // The `...` (three dots) is "compare" semantics — gives ahead/behind
+      // counts AND the file diff in one call.
+      const path = `/repos/${owner}/${name}/compare/${encodeURIComponent(base)}...${encodeURIComponent(head)}`;
+      const { status, data } = await request<{
+        ahead_by: number;
+        behind_by: number;
+        files?: Array<{
+          filename: string;
+          status: string;
+          previous_filename?: string;
+        }>;
+      }>('GET', path);
+
+      if (status === 404) {
+        // Branch doesn't exist — return empty comparison rather than throw,
+        // so the promotion endpoint can surface a clean "branch not found"
+        // error to the caller.
+        return { aheadBy: 0, behindBy: 0, files: [] };
+      }
+
+      const files: BranchComparisonFile[] = (data.files ?? []).map((f) => {
+        // Map GitHub's status strings to our union. Anything we don't
+        // recognize falls through as `'changed'` so the contract stays
+        // forward-compatible with future GitHub additions.
+        const s = f.status;
+        const status: BranchComparisonFile['status'] =
+          s === 'added' || s === 'modified' || s === 'removed' || s === 'renamed' ? s : 'changed';
+        const out: BranchComparisonFile = { path: f.filename, status };
+        if (status === 'renamed' && f.previous_filename) {
+          out.previousPath = f.previous_filename;
+        }
+        return out;
+      });
+
+      return { aheadBy: data.ahead_by, behindBy: data.behind_by, files };
+    },
+
+    async createTreeCommit(repo: string, opts: CreateTreeCommitOptions): Promise<TreeCommitResult> {
+      const { owner, repo: name } = parseRepo(repo);
+
+      // 1. Resolve the branch head. If the caller passed an expectedParentSha,
+      //    enforce it BEFORE we upload anything — otherwise we'd write blobs
+      //    we'd then have to abandon as garbage.
+      const branchInfo = await this.getBranch(repo, opts.branch);
+      if (!branchInfo) {
+        throw new Error(`Branch ${opts.branch} not found in ${repo}`);
+      }
+      if (opts.expectedParentSha && branchInfo.sha !== opts.expectedParentSha) {
+        throw new StaleHeadError(opts.expectedParentSha, branchInfo.sha);
+      }
+      const parentCommitSha = branchInfo.sha;
+
+      // 2. Get the parent commit's tree SHA — needed as base_tree so deletes
+      //    work and unchanged files aren't dropped.
+      const { data: parentCommit } = await request<{ tree: { sha: string } }>(
+        'GET',
+        `/repos/${owner}/${name}/git/commits/${parentCommitSha}`,
+      );
+      const baseTreeSha = parentCommit.tree.sha;
+
+      // 3. Upload blobs for each file. Done sequentially to keep the failure
+      //    semantics simple — parallel uploads would all need to abort on the
+      //    first failure, but since unreferenced blobs are GC'd by GitHub it
+      //    doesn't change correctness either way.
+      const fileResults: { path: string; blobSha: string }[] = [];
+      const treeEntries: Array<{
+        path: string;
+        mode: '100644';
+        type: 'blob';
+        sha: string;
+      }> = [];
+
+      for (const file of opts.files) {
+        const { data: blob } = await request<{ sha: string }>(
+          'POST',
+          `/repos/${owner}/${name}/git/blobs`,
+          {
+            content: Buffer.from(file.content).toString('base64'),
+            encoding: 'base64',
+          },
+        );
+        fileResults.push({ path: file.path, blobSha: blob.sha });
+        treeEntries.push({ path: file.path, mode: '100644', type: 'blob', sha: blob.sha });
+      }
+
+      // Deletes: the GitHub Trees API removes a path from the new tree when
+      // the entry's `sha` is null. `mode` and `type` are still required.
+      const deleteEntries: Array<{
+        path: string;
+        mode: '100644';
+        type: 'blob';
+        sha: null;
+      }> = (opts.deletes ?? []).map((path) => ({
+        path,
+        mode: '100644',
+        type: 'blob',
+        sha: null,
+      }));
+
+      // 4. Build the new tree.
+      const { data: tree } = await request<{ sha: string }>(
+        'POST',
+        `/repos/${owner}/${name}/git/trees`,
+        {
+          base_tree: baseTreeSha,
+          tree: [...treeEntries, ...deleteEntries],
+        },
+      );
+
+      // 5. Build the commit pointing at the new tree.
+      const commitBody: Record<string, unknown> = {
+        message: opts.message,
+        tree: tree.sha,
+        parents: [parentCommitSha],
+      };
+      if (opts.author) {
+        commitBody.author = opts.author;
+      }
+      const { data: newCommit } = await request<{ sha: string }>(
+        'POST',
+        `/repos/${owner}/${name}/git/commits`,
+        commitBody,
+      );
+
+      // 6. Advance the branch ref. This is the ONLY step that mutates the
+      //    branch — until this PATCH lands, the new commit and tree are
+      //    constructed but not visible. A failure here means zero files
+      //    landed (the atomicity guarantee). A 422 from GitHub indicates
+      //    a non-fast-forward — surface as StaleHeadError so callers can
+      //    retry with a fresh parent.
+      const { status: refStatus } = await request(
+        'PATCH',
+        `/repos/${owner}/${name}/git/refs/heads/${encodeURIComponent(opts.branch)}`,
+        { sha: newCommit.sha, force: false },
+        // Don't throw on 422 — handle it as a stale-head conflict.
+        { allowStatuses: [200, 201, 422] },
+      );
+
+      if (refStatus === 422) {
+        // Re-read branch head to surface the actual current SHA.
+        const after = await this.getBranch(repo, opts.branch);
+        throw new StaleHeadError(parentCommitSha, after?.sha ?? 'unknown');
+      }
+
+      return { commitSha: newCommit.sha, files: fileResults };
     },
 
     async createPullRequest(

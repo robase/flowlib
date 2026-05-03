@@ -20,11 +20,6 @@ export const lazyCoreActions: LazyActionDefinition[] = [
     load: async () => (await import('./javascript')).javascriptAction,
   },
   {
-    id: 'core.input',
-    provider: coreProvider,
-    load: async () => (await import('./input')).inputAction,
-  },
-  {
     id: 'core.template_string',
     provider: coreProvider,
     load: async () => (await import('./template-string')).templateStringAction,

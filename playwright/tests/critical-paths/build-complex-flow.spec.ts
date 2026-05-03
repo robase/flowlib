@@ -423,7 +423,7 @@ test.describe('Build a Complex Flow — End-to-End User Journey', () => {
           nodes: [
             {
               id: 'mega-input',
-              type: 'core.input',
+              type: 'trigger.manual',
               label: 'Customer Data',
               referenceId: 'customer_data',
               params: {

@@ -25,7 +25,7 @@ describe('Sync plugin push/pull round-trip', () => {
         nodes: [
           {
             id: 'node_alpha',
-            type: 'core.input',
+            type: 'trigger.manual',
             referenceId: 'q',
             label: 'Query',
             position: { x: 100, y: 50 },
@@ -69,7 +69,7 @@ describe('Sync plugin push/pull round-trip', () => {
 
     it('footer survives even if the TS body is hand-edited into nonsense', () => {
       const definition = {
-        nodes: [{ id: 'node_a', type: 'core.input', referenceId: 'x', params: {} }],
+        nodes: [{ id: 'node_a', type: 'trigger.manual', referenceId: 'x', params: {} }],
         edges: [],
       };
       const { code } = emitSdkSource(definition, {
@@ -163,7 +163,7 @@ describe('Sync plugin push/pull round-trip', () => {
     it('footer preserves switch cases with source handles', () => {
       const definition = {
         nodes: [
-          { id: 'n1', type: 'core.input', referenceId: 'kind', params: {} },
+          { id: 'n1', type: 'trigger.manual', referenceId: 'kind', params: {} },
           {
             id: 'n2',
             type: 'core.switch',
@@ -235,7 +235,7 @@ export default defineFlow({
         nodes: [
           {
             id: 'node_a1',
-            type: 'core.input',
+            type: 'trigger.manual',
             referenceId: 'q',
             label: 'Q',
             position: { x: 100, y: 100 },
@@ -299,7 +299,7 @@ export default defineFlow({
 
     it('subsequent pushes of the same definition produce identical content', () => {
       const definition = {
-        nodes: [{ id: 'stable', type: 'core.input', referenceId: 'x', params: {} }],
+        nodes: [{ id: 'stable', type: 'trigger.manual', referenceId: 'x', params: {} }],
         edges: [],
         metadata: { name: 'Stable flow' },
       };
@@ -320,7 +320,7 @@ export default defineFlow({
         nodes: [
           {
             id: 'stable_a',
-            type: 'core.input',
+            type: 'trigger.manual',
             referenceId: 'q',
             position: { x: 0, y: 0 },
             params: { variableName: 'q' },
@@ -356,7 +356,7 @@ export default defineFlow({
   describe('tags + metadata', () => {
     it('metadata flows through emit → parse round-trip', () => {
       const definition = {
-        nodes: [{ id: 'n1', type: 'core.input', referenceId: 'x', params: {} }],
+        nodes: [{ id: 'n1', type: 'trigger.manual', referenceId: 'x', params: {} }],
         edges: [],
         metadata: { name: 'Tagged', description: 'Test', tags: ['prod', 'v2'] },
       };

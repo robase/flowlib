@@ -2,7 +2,8 @@
 // Version Control Sync Service — orchestrates push/pull/publish operations
 // =============================================================================
 
-import type { GitProvider } from './git-provider';
+import type { GitProvider, TreeCommitFile } from './git-provider';
+import { StaleHeadError } from './git-provider';
 import type { PluginDatabaseApi } from '@flowlib/core';
 import type { VersionControlPluginOptions } from './types';
 import type {
@@ -11,9 +12,22 @@ import type {
   VcSyncResult,
   VcSyncStatus,
   ConfigureSyncInput,
+  VcFlowDiffResponse,
 } from '../shared/types';
+import { normalizeSyncDirection } from '../shared/types';
 import { emitSdkSource } from '@flowlib/sdk';
 import { substituteCredentialEnvs } from './credential-env-substitution';
+import {
+  buildAggregateManifest,
+  buildFlowManifestEntry,
+  decorateWithRequires,
+  extractRequiredEnvs,
+  manifestFilePath,
+  serializeManifest,
+  type FlowManifestEntry,
+} from './manifest';
+import { LockManager, LockBusyError } from './lock-manager';
+import { buildSideBySideDiff } from './diff';
 
 interface FlowRow {
   id: string;
@@ -35,7 +49,39 @@ type Logger = {
   error(msg: string, meta?: Record<string, unknown>): void;
 };
 
+/**
+ * Result for one flow inside a batch push. Per-flow status because the
+ * outcome is per-flow even though the underlying commit is atomic — e.g.
+ * a flow can be `'unchanged'` (no diff vs. last push) while others in the
+ * batch are `'pushed'`.
+ */
+export interface BatchPushFlowResult {
+  flowId: string;
+  status: 'pushed' | 'unchanged' | 'error';
+  filePath?: string;
+  blobSha?: string;
+  version?: number;
+  error?: string;
+}
+
+export interface BatchPushResult {
+  /** True iff a commit landed (some flows may still be `'unchanged'`). */
+  success: boolean;
+  /** New commit SHA when at least one flow was pushed. */
+  commitSha?: string;
+  /** Per-flow outcome. */
+  results: BatchPushFlowResult[];
+  /** Top-level error when the whole batch fails (e.g. stale head, no flows). */
+  error?: string;
+}
+
 export class VcSyncService {
+  /**
+   * Per-flow lock manager. Public for tests; production callers should go
+   * through the service methods which acquire locks correctly.
+   */
+  readonly locks = new LockManager();
+
   constructor(
     private provider: GitProvider,
     private options: VersionControlPluginOptions,
@@ -66,7 +112,7 @@ export class VcSyncService {
     const repo = input.repo ?? this.options.repo;
     const branch = input.branch ?? this.options.defaultBranch ?? 'main';
     const mode = input.mode ?? this.options.mode ?? 'direct-commit';
-    const syncDirection = input.syncDirection ?? this.options.syncDirection ?? 'push';
+    const syncDirection = input.syncDirection ?? this.options.syncDirection ?? 'write';
     const filePath = input.filePath ?? this.buildFilePath(flow.name);
 
     // Upsert — delete existing config for this flow first
@@ -127,13 +173,280 @@ export class VcSyncService {
   // Push (DB → Remote)
   // =========================================================================
 
-  async pushFlow(db: PluginDatabaseApi, flowId: string, identity?: string): Promise<VcSyncResult> {
-    const config = await this.requireConfig(db, flowId);
+  /**
+   * Atomically push N flows in a single Git Trees commit.
+   *
+   * Atomicity guarantee (the §C / Phase 0c promise):
+   *   - All N files land in one commit, OR
+   *   - No files land at all (failure mid-construction).
+   *
+   * Never a partial state. Even a network kill between blob uploads and the
+   * final ref-advance leaves the branch unchanged — the unreferenced blobs
+   * become GitHub-side garbage and are GC'd.
+   *
+   * Concurrency:
+   *   - Acquires a per-flow lock for every flowId in the batch up front. If
+   *     ANY flow is currently locked (concurrent push or pull), throws
+   *     `LockBusyError` immediately — the batch never partially executes.
+   *   - Captures the branch head SHA as `expectedParentSha`. If another
+   *     writer races and advances the branch between capture and ref-update,
+   *     the provider throws `StaleHeadError` and we surface a 409-equivalent
+   *     `success: false` with the stale-SHA detail.
+   *
+   * Per-flow direction enforcement: any flow whose `syncDirection === 'read'`
+   * is excluded from the batch with `status: 'error'` and the rest proceed
+   * normally — one read-only flow doesn't poison the batch.
+   */
+  async pushFlowsAtomic(
+    db: PluginDatabaseApi,
+    flowIds: string[],
+    options: { commitMessage: string; identity?: string },
+  ): Promise<BatchPushResult> {
+    if (flowIds.length === 0) {
+      return { success: false, error: 'No flows specified', results: [] };
+    }
 
-    if (config.syncDirection === 'pull') {
+    // Dedup — caller may pass the same id twice; locks would block themselves.
+    const unique = Array.from(new Set(flowIds));
+
+    try {
+      return await this.locks.withMultipleTryLocks(unique, async () => {
+        return this.runBatchPushUnderLock(db, unique, options);
+      });
+    } catch (err) {
+      if (err instanceof LockBusyError) {
+        return {
+          success: false,
+          error: `Push contention: ${err.lockKey} is already being pushed or pulled`,
+          results: [],
+        };
+      }
+      throw err;
+    }
+  }
+
+  /**
+   * Inner batch-push routine — runs with all per-flow locks held. Separated
+   * so the lock-acquisition wrapper stays small and the unhappy-path branches
+   * are easy to follow.
+   */
+  private async runBatchPushUnderLock(
+    db: PluginDatabaseApi,
+    flowIds: string[],
+    options: { commitMessage: string; identity?: string },
+  ): Promise<BatchPushResult> {
+    // 1. Resolve config + render content for each flow. Skip read-only flows
+    //    with an error result — they don't reach the commit.
+    const items: Array<{
+      flowId: string;
+      config: VcSyncConfig;
+      filePath: string;
+      content: string;
+      version: number;
+    }> = [];
+    const results: BatchPushFlowResult[] = [];
+
+    for (const flowId of flowIds) {
+      const config = await this.getSyncConfig(db, flowId);
+      if (!config || !config.enabled) {
+        results.push({
+          flowId,
+          status: 'error',
+          error: 'Flow is not connected to version control',
+        });
+        continue;
+      }
+      if (config.syncDirection === 'read') {
+        results.push({
+          flowId,
+          status: 'error',
+          error: 'Read-only flow excluded from batch',
+        });
+        continue;
+      }
+
+      try {
+        const { content, version } = await this.exportFlow(db, flowId);
+        items.push({ flowId, config, filePath: config.filePath, content, version });
+      } catch (err) {
+        results.push({
+          flowId,
+          status: 'error',
+          error: `Export failed: ${(err as Error).message}`,
+        });
+      }
+    }
+
+    if (items.length === 0) {
       return {
         success: false,
-        error: 'Push is not allowed — this flow is configured for pull-only sync.',
+        error: 'No flows survived pre-flight; nothing to commit',
+        results,
+      };
+    }
+
+    // 2. Determine the branch we're committing to. Single-branch-per-instance
+    //    for v1 (D10): every flow in the batch must be configured for the
+    //    same repo + branch, otherwise we'd need a multi-commit fan-out.
+    const repo = items[0].config.repo;
+    const branch = items[0].config.branch;
+    for (const item of items) {
+      if (item.config.repo !== repo || item.config.branch !== branch) {
+        return {
+          success: false,
+          error: `Mixed repo/branch in batch (${item.flowId} targets ${item.config.repo}@${item.config.branch}, expected ${repo}@${branch}). v1 supports single-branch batches only.`,
+          results,
+        };
+      }
+    }
+
+    // 3. Capture the branch head as our expected parent SHA. Any concurrent
+    //    writer that advances the branch between this read and our ref-update
+    //    will trigger a StaleHeadError below.
+    const branchInfo = await this.provider.getBranch(repo, branch);
+    if (!branchInfo) {
+      return {
+        success: false,
+        error: `Branch ${branch} not found in ${repo}`,
+        results,
+      };
+    }
+
+    // 4. Build the file list and call the Trees-API atomic primitive.
+    const files: TreeCommitFile[] = items.map((i) => ({ path: i.filePath, content: i.content }));
+
+    // Phase 4 — regenerate the aggregate manifest from the latest source of
+    // every flow in the batch. Each flow's substituted content was prepared
+    // in step 1; we extract its requires and key the entry by flowId. The
+    // serialized manifest joins the same Trees commit so it lands atomically
+    // with the flows it describes.
+    //
+    // For batch pushes, only the flows being pushed contribute their entries.
+    // A more complete manifest would also include flows not in this batch
+    // but already on the branch — Phase 5 (operator UX) handles that via a
+    // dedicated maintenance refresh.
+    const manifestEntries: FlowManifestEntry[] = items.map((i) =>
+      buildFlowManifestEntry({
+        content: i.content,
+        flowId: i.flowId,
+        name: '',
+        filePath: i.filePath,
+      }),
+    );
+    // Hydrate names from flow rows so the manifest entry is human-readable.
+    const itemFlowIds = items.map((i) => i.flowId);
+    if (itemFlowIds.length > 0) {
+      const placeholders = itemFlowIds.map(() => '?').join(', ');
+      const flowMeta = await db.query<{ id: string; name: string }>(
+        `SELECT id, name FROM flowlib_flows WHERE id IN (${placeholders})`,
+        itemFlowIds,
+      );
+      const nameById = new Map(flowMeta.map((r) => [r.id, r.name]));
+      for (const e of manifestEntries) {
+        e.name = nameById.get(e.flowId) ?? '';
+      }
+    }
+    const aggregate = buildAggregateManifest(manifestEntries);
+    const manifestPath = manifestFilePath(this.options.path ?? 'workflows/');
+    files.push({ path: manifestPath, content: serializeManifest(aggregate) });
+
+    let commitSha: string;
+    let perFileBlob: Record<string, string>;
+
+    try {
+      const tree = await this.provider.createTreeCommit(repo, {
+        branch,
+        message: options.commitMessage,
+        files,
+        expectedParentSha: branchInfo.sha,
+      });
+      commitSha = tree.commitSha;
+      perFileBlob = Object.fromEntries(tree.files.map((f) => [f.path, f.blobSha]));
+    } catch (err) {
+      if (err instanceof StaleHeadError) {
+        // No commit landed. Surface as a clean conflict so callers can refresh + retry.
+        for (const item of items) {
+          results.push({
+            flowId: item.flowId,
+            status: 'error',
+            error: 'Branch advanced concurrently — refresh and retry',
+          });
+          await this.recordHistory(db, item.flowId, 'conflict', {
+            version: item.version,
+            message: `Stale parent ${err.expectedSha} (branch is now ${err.actualSha})`,
+            createdBy: options.identity,
+          });
+        }
+        return {
+          success: false,
+          error: err.message,
+          results,
+        };
+      }
+      throw err;
+    }
+
+    // 5. Persist per-flow state and history. Each item gets its blob SHA as
+    //    `lastCommitSha` — semantically "the file blob we last knew about" —
+    //    which matches how the reconciler / pull path compare incoming
+    //    blob SHAs.
+    for (const item of items) {
+      const blobSha = perFileBlob[item.filePath];
+      await this.updateConfigAfterSync(db, item.flowId, blobSha, item.version);
+      await this.recordHistory(db, item.flowId, 'push', {
+        commitSha,
+        version: item.version,
+        message: options.commitMessage,
+        createdBy: options.identity,
+      });
+      results.push({
+        flowId: item.flowId,
+        status: 'pushed',
+        filePath: item.filePath,
+        blobSha,
+        version: item.version,
+      });
+    }
+
+    this.logger.info('Atomic batch push committed', {
+      repo,
+      branch,
+      commitSha,
+      flowsPushed: items.length,
+      flowsErrored: results.filter((r) => r.status === 'error').length,
+    });
+
+    return { success: true, commitSha, results };
+  }
+
+  async pushFlow(db: PluginDatabaseApi, flowId: string, identity?: string): Promise<VcSyncResult> {
+    // Per-flow lock (Phase 0c) — concurrent push/pull on the same flow gets
+    // a clean error rather than racing on lastCommitSha.
+    if (!this.locks.tryAcquire(flowId)) {
+      return {
+        success: false,
+        error: 'Operation already in progress for this flow — try again shortly',
+        action: 'push',
+      };
+    }
+    try {
+      return await this.runPushFlow(db, flowId, identity);
+    } finally {
+      this.locks.release(flowId);
+    }
+  }
+
+  private async runPushFlow(
+    db: PluginDatabaseApi,
+    flowId: string,
+    identity?: string,
+  ): Promise<VcSyncResult> {
+    const config = await this.requireConfig(db, flowId);
+
+    if (config.syncDirection === 'read') {
+      return {
+        success: false,
+        error: 'Push is not allowed — this flow is configured for read-only sync.',
         action: 'push',
       };
     }
@@ -202,12 +515,34 @@ export class VcSyncService {
   // =========================================================================
 
   async pullFlow(db: PluginDatabaseApi, flowId: string, identity?: string): Promise<VcSyncResult> {
-    const config = await this.requireConfig(db, flowId);
-
-    if (config.syncDirection === 'push') {
+    // Per-flow lock (Phase 0c). Reconciler-driven pulls and manual pulls
+    // both serialize through this — second concurrent caller gets a clean
+    // error rather than competing for the version-row insert.
+    if (!this.locks.tryAcquire(flowId)) {
       return {
         success: false,
-        error: 'Pull is not allowed — this flow is configured for push-only sync.',
+        error: 'Operation already in progress for this flow — try again shortly',
+        action: 'pull',
+      };
+    }
+    try {
+      return await this.runPullFlow(db, flowId, identity);
+    } finally {
+      this.locks.release(flowId);
+    }
+  }
+
+  private async runPullFlow(
+    db: PluginDatabaseApi,
+    flowId: string,
+    identity?: string,
+  ): Promise<VcSyncResult> {
+    const config = await this.requireConfig(db, flowId);
+
+    if (config.syncDirection === 'write') {
+      return {
+        success: false,
+        error: 'Pull is not allowed — this flow is configured for write-only sync.',
         action: 'pull',
       };
     }
@@ -223,13 +558,24 @@ export class VcSyncService {
       return { success: true, action: 'pull' }; // Already up to date
     }
 
-    await this.importFlowContent(db, flowId, remote.content, identity);
-    await this.updateConfigAfterSync(db, flowId, remote.sha, null);
-    await this.recordHistory(db, flowId, 'pull', {
-      commitSha: remote.sha,
-      message: 'Pulled from remote',
-      createdBy: identity,
-    });
+    // Pass the remote blob SHA so importFlowContent can short-circuit on
+    // (flowId, commitSha) idempotency — replica HA and double-fired webhooks
+    // both produce duplicate calls; only one inserts a flow_versions row.
+    const result = await this.importFlowContent(db, flowId, remote.content, identity, remote.sha);
+    await this.updateConfigAfterSync(
+      db,
+      flowId,
+      remote.sha,
+      result.inserted ? result.version : null,
+    );
+    if (result.inserted) {
+      await this.recordHistory(db, flowId, 'pull', {
+        commitSha: remote.sha,
+        version: result.version,
+        message: 'Pulled from remote',
+        createdBy: identity,
+      });
+    }
 
     return { success: true, commitSha: remote.sha, action: 'pull' };
   }
@@ -239,7 +585,9 @@ export class VcSyncService {
     flowId: string,
     identity?: string,
   ): Promise<VcSyncResult> {
-    // Same as pull but ignores SHA check — always overwrites local
+    // Same as pull but ignores SHA check — always overwrites local.
+    // Force-pull intentionally skips idempotency: the operator may want to
+    // re-import the same SHA after a failed migration or DB restore.
     const config = await this.requireConfig(db, flowId);
     const remote = await this.provider.getFileContent(config.repo, config.filePath, config.branch);
 
@@ -389,6 +737,39 @@ export class VcSyncService {
        ORDER BY flowlib_vc_sync_config.updated_at DESC`,
     );
     return rows.map((r) => ({ ...mapSyncConfigRow(r), flowName: r.flow_name }));
+  }
+
+  /**
+   * Build the Phase 7 diff-viewer payload for one tracked flow.
+   *
+   * Remote (left side) is the configured branch file. Local (right side) is
+   * the latest DB version emitted through the same export pipeline used by
+   * push, so reviewers see the exact source that force-push would write.
+   */
+  async getFlowDiff(db: PluginDatabaseApi, flowId: string): Promise<VcFlowDiffResponse> {
+    const config = await this.requireConfig(db, flowId);
+    const local = await this.exportFlow(db, flowId);
+    const remote = await this.provider.getFileContent(config.repo, config.filePath, config.branch);
+    const remoteContent = remote?.content ?? '';
+    const lines = buildSideBySideDiff(remoteContent, local.content);
+
+    return {
+      flowId,
+      filePath: config.filePath,
+      repo: config.repo,
+      branch: config.branch,
+      hasRemote: Boolean(remote),
+      hasChanges: !remote || remote.content !== local.content,
+      local: {
+        version: local.version,
+        content: local.content,
+      },
+      remote: {
+        sha: remote?.sha ?? null,
+        content: remote?.content ?? null,
+      },
+      lines,
+    };
   }
 
   // =========================================================================
@@ -631,6 +1012,9 @@ export class VcSyncService {
       flowName,
       includeJsonFooter: true,
       metadata: {
+        // Embed flowId so the pull side can resolve by id, not file path.
+        // Renames change the path but the id is stable for the flow's lifetime.
+        flowId: flow.id,
         name: flow.name,
         ...(flow.description ? { description: flow.description } : {}),
         ...(tags && tags.length > 0 ? { tags } : {}),
@@ -641,7 +1025,13 @@ export class VcSyncService {
     // section to `{{env.XXX_CREDENTIAL}}` so committed flow files are
     // portable across Flowlib instances. The footer keeps the raw id for
     // authoritative round-trip on pull.
-    const content = substituteCredentialEnvs(code);
+    const substituted = substituteCredentialEnvs(code);
+
+    // Phase 4 — prepend the `@flowlib-requires` header listing the env
+    // credentials this flow needs. Reviewer sees deps at the top of the
+    // diff; the aggregate manifest in `_manifest.json` is the contract.
+    const required = extractRequiredEnvs(substituted);
+    const content = decorateWithRequires(substituted, required);
 
     return { content, version: fv.version };
   }
@@ -651,7 +1041,14 @@ export class VcSyncService {
     flowId: string,
     content: string,
     identity?: string,
-  ): Promise<void> {
+    /**
+     * Blob SHA of the remote file being imported. When provided, the import
+     * is gated by `flowlib_vc_pull_commits` — a duplicate `(flowId, sha)`
+     * means another replica already pulled this commit, so we no-op rather
+     * than insert a duplicate flow_versions row. Phase 0c idempotency.
+     */
+    commitSha?: string,
+  ): Promise<{ inserted: boolean; version: number }> {
     // Parse the .flow.ts content statically — no eval/jiti to avoid
     // arbitrary code execution from untrusted remote files.
     const definition = parseFlowTsContent(content);
@@ -668,6 +1065,39 @@ export class VcSyncService {
       );
     }
 
+    // If the file has an embedded flowId, it must match the one we're
+    // importing into. A mismatch means we'd silently overwrite the wrong
+    // flow's history — refuse rather than corrupt. Files without a footer
+    // (legacy or hand-written) skip this check.
+    const embeddedFlowId = definition.metadata?.flowId;
+    if (typeof embeddedFlowId === 'string' && embeddedFlowId !== flowId) {
+      throw new Error(
+        `Embedded flowId mismatch: file declares flowId=${embeddedFlowId} ` +
+          `but pull target is flowId=${flowId}. Refusing to import to avoid ` +
+          `corrupting flow history. Look up the flow by embedded id first.`,
+      );
+    }
+
+    // Replica idempotency (D8): if another replica/process already pulled
+    // this exact (flowId, commitSha) pair, the composite-PK insert below
+    // will conflict and we no-op. We check first so the no-op path is
+    // observable in the return value.
+    if (commitSha) {
+      const existing = await db.query<{ version_inserted: number | null }>(
+        'SELECT version_inserted FROM flowlib_vc_pull_commits WHERE flow_id = ? AND commit_sha = ?',
+        [flowId, commitSha],
+      );
+      if (existing.length > 0) {
+        const v = existing[0].version_inserted ?? 0;
+        this.logger.debug('Pull is idempotent — commit already imported', {
+          flowId,
+          commitSha,
+          version: v,
+        });
+        return { inserted: false, version: v };
+      }
+    }
+
     // Get current latest version number
     const versions = await db.query<{ version: number }>(
       'SELECT MAX(version) as version FROM flowlib_flow_versions WHERE flow_id = ?',
@@ -675,8 +1105,12 @@ export class VcSyncService {
     );
     const nextVersion = (versions[0]?.version ?? 0) + 1;
 
-    // Insert new flow version
-    const defJson = JSON.stringify(definition);
+    // Insert new flow version. Persist only the canonical fields; metadata
+    // is descriptive and lives on the flows row, not the version blob.
+    const defJson = JSON.stringify({
+      nodes: definition.nodes,
+      edges: definition.edges,
+    });
 
     await db.execute(
       `INSERT INTO flowlib_flow_versions (flow_id, version, flowlib_definition, created_at, created_by)
@@ -690,10 +1124,41 @@ export class VcSyncService {
       [nextVersion, new Date().toISOString(), flowId],
     );
 
+    // Record the idempotency token AFTER the version row exists — if the
+    // version insert fails, we don't lock out a future retry.
+    if (commitSha) {
+      await db.execute(
+        `INSERT INTO flowlib_vc_pull_commits (flow_id, commit_sha, version_inserted, pulled_at)
+         VALUES (?, ?, ?, ?)`,
+        [flowId, commitSha, nextVersion, new Date().toISOString()],
+      );
+    }
+
     this.logger.info('Flow imported from remote', {
       flowId,
       version: nextVersion,
     });
+    return { inserted: true, version: nextVersion };
+  }
+
+  /**
+   * Look up a sync config by the flowId embedded in a `.flow.ts` file's
+   * footer. Used by rename-aware pull paths and the reconciler (Phase 0b)
+   * to find the local row when the remote file path may have changed.
+   *
+   * Returns null when no row matches that flowId, indicating either a
+   * fresh flow being introduced (caller decides whether to create one)
+   * or a foreign flowId from an unrelated repo (caller may refuse).
+   */
+  async findFlowConfigByEmbeddedId(
+    db: PluginDatabaseApi,
+    embeddedFlowId: string,
+  ): Promise<VcSyncConfig | null> {
+    const rows = await db.query<VcSyncConfigRow>(
+      'SELECT * FROM flowlib_vc_sync_config WHERE flow_id = ? LIMIT 1',
+      [embeddedFlowId],
+    );
+    return rows.length > 0 ? mapSyncConfigRow(rows[0]) : null;
   }
 
   // =========================================================================
@@ -844,7 +1309,7 @@ function mapSyncConfigRow(r: VcSyncConfigRow): VcSyncConfig {
     branch: r.branch,
     filePath: r.file_path,
     mode: r.mode as VcSyncConfig['mode'],
-    syncDirection: r.sync_direction as VcSyncConfig['syncDirection'],
+    syncDirection: normalizeSyncDirection(r.sync_direction),
     lastSyncedAt: r.last_synced_at,
     lastCommitSha: r.last_commit_sha,
     lastSyncedVersion: r.last_synced_version,
@@ -874,6 +1339,19 @@ function mapHistoryRow(r: VcSyncHistoryRow): VcSyncHistoryRecord {
 // =============================================================================
 
 /**
+ * Parsed `.flow.ts` content.
+ *
+ * `metadata` is surfaced when the file carries a JSON footer (the emitted form),
+ * so callers can read embedded fields like `flowId` for identity-based pull
+ * lookup. Hand-written files without a footer return `metadata: undefined`.
+ */
+export interface ParsedFlowTsContent {
+  nodes: unknown[];
+  edges: unknown[];
+  metadata?: Record<string, unknown>;
+}
+
+/**
  * Parse a .flow.ts file content to extract the FlowlibDefinition.
  *
  * This is a static parser that does NOT evaluate the TypeScript file.
@@ -883,13 +1361,25 @@ function mapHistoryRow(r: VcSyncHistoryRow): VcSyncHistoryRecord {
  * Falls back to extracting raw `nodes` and `edges` arrays if defineFlow
  * wrapper is not found.
  */
-export function parseFlowTsContent(content: string): { nodes: unknown[]; edges: unknown[] } | null {
+export function parseFlowTsContent(content: string): ParsedFlowTsContent | null {
   // Strategy 1 (preferred): Look for the embedded JSON block comment.
   // The serializer embeds `/* @flowlib-definition {...} */` for reliable round-tripping.
   const jsonCommentMatch = content.match(/\/\*\s*@flowlib-definition\s+([\s\S]*?)\s*\*\//);
   if (jsonCommentMatch) {
     try {
-      return JSON.parse(jsonCommentMatch[1]);
+      const footer = JSON.parse(jsonCommentMatch[1]) as {
+        nodes: unknown[];
+        edges: unknown[];
+        metadata?: Record<string, unknown>;
+      };
+      if (Array.isArray(footer.nodes) && Array.isArray(footer.edges)) {
+        return {
+          nodes: footer.nodes,
+          edges: footer.edges,
+          metadata:
+            footer.metadata && typeof footer.metadata === 'object' ? footer.metadata : undefined,
+        };
+      }
     } catch {
       // Fall through to strategy 2
     }
@@ -914,6 +1404,25 @@ export function parseFlowTsContent(content: string): { nodes: unknown[]; edges: 
   }
 
   return null;
+}
+
+/**
+ * Extract the embedded flowId from a `.flow.ts` file's JSON footer, if any.
+ *
+ * The reconciler (Phase 0b) and rename-aware pull paths use this to find the
+ * local flow row by id rather than file path — paths can change on rename
+ * but flowId is stable for the lifetime of the flow.
+ *
+ * Returns null when:
+ *   - the file has no footer (legacy / hand-written file),
+ *   - the footer has no `metadata.flowId` field (file emitted by an older
+ *     version of the plugin before flowId embedding),
+ *   - the footer parse fails.
+ */
+export function extractFlowIdFromContent(content: string): string | null {
+  const parsed = parseFlowTsContent(content);
+  const id = parsed?.metadata?.flowId;
+  return typeof id === 'string' && id.length > 0 ? id : null;
 }
 
 /** Extract a balanced {} block from a string starting at the given { index */

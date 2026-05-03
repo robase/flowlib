@@ -132,34 +132,45 @@ function makeContext(overrides: Partial<ActionExecutionContext> = {}): ActionExe
   } as ActionExecutionContext;
 }
 
-describe('trigger.manual with coerced params', () => {
-  it('should use defaultInputs when no flowInputs are provided (manual run)', async () => {
+describe('trigger.manual with declared inputs', () => {
+  it('should use declared defaultValues when no flowInputs are provided (manual run)', async () => {
     const ctx = makeContext({ flowInputs: {} });
     const result = await manualTriggerAction.execute(
-      { defaultInputs: { topic: 'general', severity: 'medium' } },
+      {
+        inputs: [
+          { name: 'topic', type: 'string', defaultValue: 'general', required: false },
+          { name: 'severity', type: 'string', defaultValue: 'medium', required: false },
+        ],
+      },
       ctx,
     );
     expect(result.success).toBe(true);
     expect(result.output).toEqual({ topic: 'general', severity: 'medium' });
   });
 
-  it('should use flowInputs when provided, overriding defaults (code-triggered run)', async () => {
+  it('should use flowInputs when provided, overriding declared defaults', async () => {
     const ctx = makeContext({
       flowInputs: { email: 'test@example.com', topic: 'bug' },
     });
     const result = await manualTriggerAction.execute(
-      { defaultInputs: { topic: 'general', severity: 'medium' } },
+      {
+        inputs: [
+          { name: 'topic', type: 'string', defaultValue: 'general', required: false },
+          { name: 'severity', type: 'string', defaultValue: 'medium', required: false },
+        ],
+      },
       ctx,
     );
     expect(result.success).toBe(true);
-    // flowInputs override defaults; severity falls back to default
+    // flowInputs override defaults; severity falls back to default; undeclared email passes through
     expect(result.output).toEqual({ email: 'test@example.com', topic: 'bug', severity: 'medium' });
   });
 
-  it('should accept defaultInputs as a JSON string after coercion', async () => {
+  it('should accept inputs as a JSON string after coercion', async () => {
     const ctx = makeContext({ flowInputs: {} });
     const coerced = coerceJsonStringParams({
-      defaultInputs: '{ "topic": "general", "count": 5 }',
+      inputs:
+        '[{ "name": "topic", "type": "string", "defaultValue": "general" }, { "name": "count", "type": "number", "defaultValue": 5 }]',
     });
     const parsed = manualTriggerAction.params.schema.safeParse(coerced);
     expect(parsed.success).toBe(true);
@@ -169,20 +180,16 @@ describe('trigger.manual with coerced params', () => {
     expect(result.output).toEqual({ topic: 'general', count: 5 });
   });
 
-  it('should pass through all flowInputs when no defaultInputs are configured', async () => {
+  it('should pass through all flowInputs when no inputs are declared', async () => {
     const ctx = makeContext({ flowInputs: { anything: 'goes' } });
-    const coerced = coerceJsonStringParams({ defaultInputs: '' });
-    const parsed = manualTriggerAction.params.schema.safeParse(coerced);
-    expect(parsed.success).toBe(true);
-
-    const result = await manualTriggerAction.execute(parsed.data!, ctx);
+    const result = await manualTriggerAction.execute({ inputs: [] }, ctx);
     expect(result.success).toBe(true);
     expect(result.output).toEqual({ anything: 'goes' });
   });
 
-  it('should return empty output when no defaults and no flowInputs', async () => {
+  it('should return empty output when no inputs declared and no flowInputs', async () => {
     const ctx = makeContext({ flowInputs: {} });
-    const result = await manualTriggerAction.execute({}, ctx);
+    const result = await manualTriggerAction.execute({ inputs: [] }, ctx);
     expect(result.success).toBe(true);
     expect(result.output).toEqual({});
   });
@@ -191,11 +198,26 @@ describe('trigger.manual with coerced params', () => {
     const ctx = makeContext({
       flowInputs: { email: 'test@example.com', __triggerData: 'internal', __triggerNodeId: 'n1' },
     });
-    const result = await manualTriggerAction.execute({ defaultInputs: { severity: 'low' } }, ctx);
+    const result = await manualTriggerAction.execute(
+      {
+        inputs: [{ name: 'severity', type: 'string', defaultValue: 'low', required: false }],
+      },
+      ctx,
+    );
     expect(result.success).toBe(true);
     expect(result.output).toEqual({ severity: 'low', email: 'test@example.com' });
     expect(result.output).not.toHaveProperty('__triggerData');
     expect(result.output).not.toHaveProperty('__triggerNodeId');
+  });
+
+  it('should fail with a clear error when a required input is missing', async () => {
+    const ctx = makeContext({ flowInputs: {} });
+    const result = await manualTriggerAction.execute(
+      { inputs: [{ name: 'token', type: 'string', required: true }] },
+      ctx,
+    );
+    expect(result.success).toBe(false);
+    expect(result.error).toMatch(/missing required inputs.*token/i);
   });
 });
 

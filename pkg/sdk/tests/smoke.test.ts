@@ -3,7 +3,6 @@ import { z } from 'zod/v4';
 import {
   defineFlow,
   defineAction,
-  input,
   output,
   code,
   ifElse,
@@ -11,6 +10,7 @@ import {
   agent,
   tool,
   edge,
+  trigger,
   FlowValidationError,
 } from '../src';
 import type { ProviderDef } from '@flowlib/action-kit';
@@ -25,12 +25,15 @@ const TEST_PROVIDER: ProviderDef = {
 
 describe('@flowlib/sdk', () => {
   describe('core helpers', () => {
-    it('input() produces a valid SdkFlowNode', () => {
-      const node = input('query');
-      expect(node.referenceId).toBe('query');
-      expect(node.type).toBe('core.input');
-      // Default variableName = referenceId
-      expect(node.params).toMatchObject({ variableName: 'query' });
+    it('trigger.manual() produces a valid SdkFlowNode with declared inputs', () => {
+      const node = trigger.manual('start', {
+        inputs: [{ name: 'query', type: 'string' }] as const,
+      });
+      expect(node.referenceId).toBe('start');
+      expect(node.type).toBe('trigger.manual');
+      expect(node.params).toMatchObject({
+        inputs: [{ name: 'query', type: 'string' }],
+      });
     });
 
     it('output() maps `value` → `outputValue`', () => {
@@ -89,7 +92,7 @@ describe('@flowlib/sdk', () => {
     });
 
     it('NodeOptions (position, label) pass through', () => {
-      const node = input('query', undefined, {
+      const node = trigger.manual('start', undefined, {
         position: { x: 10, y: 20 },
         label: 'Custom Label',
       });
@@ -102,10 +105,13 @@ describe('@flowlib/sdk', () => {
     it('accepts tuple edges and normalizes them', () => {
       const flow = defineFlow({
         name: 'test',
-        nodes: [input('q'), output('r', { value: '{{ q }}' })],
-        edges: [{ from: 'q', to: 'r' }],
+        nodes: [
+          trigger.manual('start', { inputs: [{ name: 'q', type: 'string' }] as const }),
+          output('r', { value: '{{ start.q }}' }),
+        ],
+        edges: [{ from: 'start', to: 'r' }],
       });
-      expect(flow.edges).toEqual([{ from: 'q', to: 'r' }]);
+      expect(flow.edges).toEqual([{ from: 'start', to: 'r' }]);
     });
 
     it('accepts object edges with handles', () => {
@@ -129,7 +135,7 @@ describe('@flowlib/sdk', () => {
     it('rejects duplicate referenceIds', () => {
       expect(() =>
         defineFlow({
-          nodes: [input('q'), input('q')],
+          nodes: [output('q', { value: '1' }), output('q', { value: '2' })],
           edges: [],
         }),
       ).toThrow(FlowValidationError);
@@ -138,8 +144,8 @@ describe('@flowlib/sdk', () => {
     it('rejects edges pointing to nonexistent nodes', () => {
       expect(() =>
         defineFlow({
-          nodes: [input('q')],
-          edges: [{ from: 'q', to: 'nowhere' }],
+          nodes: [trigger.manual('start')],
+          edges: [{ from: 'start', to: 'nowhere' }],
         }),
       ).toThrow(/unknown target/);
     });
@@ -149,7 +155,7 @@ describe('@flowlib/sdk', () => {
         name: 'My Flow',
         description: 'Does stuff',
         tags: ['example'],
-        nodes: [input('x')],
+        nodes: [trigger.manual('start')],
         edges: [],
       });
       expect(flow.name).toBe('My Flow');
@@ -159,7 +165,7 @@ describe('@flowlib/sdk', () => {
   });
 
   describe('custom actions — same mechanics as built-ins', () => {
-    it('a user-defined action is callable in defineFlow just like input()', () => {
+    it('a user-defined action is callable in defineFlow just like the built-in helpers', () => {
       const myCustom = defineAction({
         id: 'myservice.custom_action',
         name: 'Custom',
@@ -173,7 +179,7 @@ describe('@flowlib/sdk', () => {
       });
 
       const flow = defineFlow({
-        nodes: [input('event'), myCustom('notify', { channel: '#alerts', summary: 'hi' })],
+        nodes: [trigger.manual('event'), myCustom('notify', { channel: '#alerts', summary: 'hi' })],
         edges: [{ from: 'event', to: 'notify' }],
       });
 

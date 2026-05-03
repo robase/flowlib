@@ -27,21 +27,21 @@ function makeSync(): FileSync {
 suite('FileSync.hash — canonical hashing', () => {
   test('identical definitions hash identically', () => {
     const sync = makeSync();
-    const a = { nodes: [{ id: 'n1', type: 'core.input' }], edges: [] };
-    const b = { nodes: [{ id: 'n1', type: 'core.input' }], edges: [] };
+    const a = { nodes: [{ id: 'n1', type: 'trigger.manual' }], edges: [] };
+    const b = { nodes: [{ id: 'n1', type: 'trigger.manual' }], edges: [] };
     assert.strictEqual(sync.hash(a), sync.hash(b));
   });
 
   test('different key order produces the same hash (canonical = sorted)', () => {
     const sync = makeSync();
-    const a = { nodes: [{ id: 'n1', type: 'core.input', referenceId: 'x' }], edges: [] };
-    const b = { edges: [], nodes: [{ referenceId: 'x', type: 'core.input', id: 'n1' }] };
+    const a = { nodes: [{ id: 'n1', type: 'trigger.manual', referenceId: 'x' }], edges: [] };
+    const b = { edges: [], nodes: [{ referenceId: 'x', type: 'trigger.manual', id: 'n1' }] };
     assert.strictEqual(sync.hash(a), sync.hash(b));
   });
 
   test('changing a value changes the hash', () => {
     const sync = makeSync();
-    const a = { nodes: [{ id: 'n1', type: 'core.input' }], edges: [] };
+    const a = { nodes: [{ id: 'n1', type: 'trigger.manual' }], edges: [] };
     const b = { nodes: [{ id: 'n1', type: 'core.output' }], edges: [] };
     assert.notStrictEqual(sync.hash(a), sync.hash(b));
   });

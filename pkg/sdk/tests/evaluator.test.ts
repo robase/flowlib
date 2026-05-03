@@ -22,7 +22,7 @@ beforeAll(() => {
 describe('scanImports', () => {
   describe('allowlist', () => {
     it('accepts @flowlib/sdk imports', () => {
-      const { errors } = scanImports(`import { defineFlow, input } from '@flowlib/sdk';`);
+      const { errors } = scanImports(`import { defineFlow, trigger } from '@flowlib/sdk';`);
       expect(errors).toEqual([]);
     });
 
@@ -99,7 +99,7 @@ import fs from 'node:fs';
   describe('mixed imports', () => {
     it('accepts allowed, rejects forbidden — returns only the forbidden as errors', () => {
       const src = `
-import { defineFlow, input } from '@flowlib/sdk';
+import { defineFlow, trigger } from '@flowlib/sdk';
 import { gmailSendMessageAction } from '@flowlib/actions/gmail';
 import fs from 'node:fs';
       `;
@@ -115,9 +115,9 @@ describe('evaluateSdkSource', () => {
   describe('security: import scan runs first', () => {
     it('rejects a source with forbidden imports before evaluating', async () => {
       const src = `
-import { defineFlow, input } from '@flowlib/sdk';
+import { defineFlow, trigger } from '@flowlib/sdk';
 import fs from 'node:fs';
-export default defineFlow({ nodes: [input('q')], edges: [] });
+export default defineFlow({ nodes: [trigger.manual('q')], edges: [] });
       `;
       const { ok, errors, flow } = await evaluateSdkSource(src);
       expect(ok).toBe(false);
@@ -127,9 +127,9 @@ export default defineFlow({ nodes: [input('q')], edges: [] });
 
     it('rejects dynamic import before evaluating', async () => {
       const src = `
-import { defineFlow, input } from '@flowlib/sdk';
+import { defineFlow, trigger } from '@flowlib/sdk';
 const _fs = await import('node:fs');
-export default defineFlow({ nodes: [input('q')], edges: [] });
+export default defineFlow({ nodes: [trigger.manual('q')], edges: [] });
       `;
       const { ok, errors } = await evaluateSdkSource(src);
       expect(ok).toBe(false);
@@ -140,9 +140,9 @@ export default defineFlow({ nodes: [input('q')], edges: [] });
   describe('evaluation', () => {
     it('evaluates a minimal flow', async () => {
       const src = `
-import { defineFlow, input, output } from '@flowlib/sdk';
+import { defineFlow, trigger, output } from '@flowlib/sdk';
 export default defineFlow({
-  nodes: [input('query'), output('result', { value: 'hello' })],
+  nodes: [trigger.manual('query'), output('result', { value: 'hello' })],
   edges: [{ from: 'query', to: 'result' }],
 });
       `;
@@ -152,16 +152,16 @@ export default defineFlow({
       expect(flow).not.toBeNull();
       expect(flow!.nodes).toHaveLength(2);
       expect(flow!.nodes[0].referenceId).toBe('query');
-      expect(flow!.nodes[0].type).toBe('core.input');
+      expect(flow!.nodes[0].type).toBe('trigger.manual');
       expect(flow!.edges).toEqual([{ from: 'query', to: 'result' }]);
     });
 
     it('preserves function-valued params (arrow bodies) for the transform step', async () => {
       const src = `
-import { defineFlow, input, code } from '@flowlib/sdk';
+import { defineFlow, trigger, code } from '@flowlib/sdk';
 export default defineFlow({
   nodes: [
-    input('x'),
+    trigger.manual('x'),
     code('double', { code: 'return x * 2' }),
   ],
   edges: [{ from: 'x', to: 'double' }],
@@ -175,12 +175,12 @@ export default defineFlow({
 
     it('preserves metadata', async () => {
       const src = `
-import { defineFlow, input } from '@flowlib/sdk';
+import { defineFlow, trigger } from '@flowlib/sdk';
 export default defineFlow({
   name: 'My Flow',
   description: 'A test flow',
   tags: ['test'],
-  nodes: [input('x')],
+  nodes: [trigger.manual('x')],
   edges: [],
 });
       `;
@@ -195,8 +195,8 @@ export default defineFlow({
 
     it('rejects sources without a default export', async () => {
       const src = `
-import { defineFlow, input } from '@flowlib/sdk';
-const notDefault = defineFlow({ nodes: [input('x')], edges: [] });
+import { defineFlow, trigger } from '@flowlib/sdk';
+const notDefault = defineFlow({ nodes: [trigger.manual('x')], edges: [] });
       `;
       const { ok, errors } = await evaluateSdkSource(src);
       expect(ok).toBe(false);
@@ -213,9 +213,9 @@ const notDefault = defineFlow({ nodes: [input('x')], edges: [] });
     it('returns eval-failed on runtime errors inside defineFlow', async () => {
       // defineFlow rejects duplicate referenceIds — this surfaces as eval-failed.
       const src = `
-import { defineFlow, input } from '@flowlib/sdk';
+import { defineFlow, output } from '@flowlib/sdk';
 export default defineFlow({
-  nodes: [input('q'), input('q')],
+  nodes: [output('q', { value: '1' }), output('q', { value: '2' })],
   edges: [],
 });
       `;
@@ -227,11 +227,11 @@ export default defineFlow({
 
     it('respects timeout for evaluation', async () => {
       const src = `
-import { defineFlow, input } from '@flowlib/sdk';
+import { defineFlow, trigger } from '@flowlib/sdk';
 // Force a long synchronous hang isn't feasible here without extra primitives,
 // so just use a Promise to simulate an await that never resolves.
 await new Promise(() => {});
-export default defineFlow({ nodes: [input('x')], edges: [] });
+export default defineFlow({ nodes: [trigger.manual('x')], edges: [] });
       `;
       const { ok, errors } = await evaluateSdkSource(src, {
         timeoutMs: 200,
@@ -246,11 +246,11 @@ export default defineFlow({ nodes: [input('x')], edges: [] });
       // Note: this imports a real package from the workspace. The action
       // callable has a strict Zod schema, so we pass valid params.
       const src = `
-import { defineFlow, input } from '@flowlib/sdk';
+import { defineFlow, trigger } from '@flowlib/sdk';
 import { gmailSendMessageAction } from '@flowlib/actions/gmail';
 export default defineFlow({
   nodes: [
-    input('event'),
+    trigger.manual('event'),
     gmailSendMessageAction('notify', {
       credentialId: 'cred_test',
       to: 'a@b.c',

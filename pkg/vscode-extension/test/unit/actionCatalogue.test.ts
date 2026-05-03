@@ -10,7 +10,7 @@ suite('actionCatalogue — resolver', () => {
     assert.ok(items.length > 0, 'static catalogue must be non-empty');
     // Sentinels — well-known core actions should always be present.
     const types = new Set(items.map((i) => i.type));
-    assert.ok(types.has('core.input'), 'expected core.input in catalogue');
+    assert.ok(types.has('trigger.manual'), 'expected trigger.manual in catalogue');
     assert.ok(types.has('core.output'), 'expected core.output in catalogue');
   });
 

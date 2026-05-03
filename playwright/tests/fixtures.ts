@@ -81,7 +81,7 @@ const TEST_FLOW_DEFINITIONS: Record<string, TestFlowDefinition> = {
     nodes: [
       {
         id: 'input-data',
-        type: 'core.input',
+        type: 'trigger.manual',
         label: 'User List',
         referenceId: 'data',
         params: {
@@ -131,7 +131,7 @@ const TEST_FLOW_DEFINITIONS: Record<string, TestFlowDefinition> = {
     nodes: [
       {
         id: 'input-topic',
-        type: 'core.input',
+        type: 'trigger.manual',
         label: 'Topic Input',
         referenceId: 'topic',
         params: {
@@ -157,7 +157,7 @@ const TEST_FLOW_DEFINITIONS: Record<string, TestFlowDefinition> = {
     nodes: [
       {
         id: 'input-user',
-        type: 'core.input',
+        type: 'trigger.manual',
         label: 'User Data',
         referenceId: 'user_data',
         params: {
@@ -237,7 +237,7 @@ const TEST_FLOW_DEFINITIONS: Record<string, TestFlowDefinition> = {
     nodes: [
       {
         id: 'input-order',
-        type: 'core.input',
+        type: 'trigger.manual',
         label: 'Order Data',
         referenceId: 'order',
         params: {
@@ -267,7 +267,7 @@ const TEST_FLOW_DEFINITIONS: Record<string, TestFlowDefinition> = {
       },
       {
         id: 'input-customer',
-        type: 'core.input',
+        type: 'trigger.manual',
         label: 'Customer Data',
         referenceId: 'customer',
         params: {
@@ -369,7 +369,7 @@ const TEST_FLOW_DEFINITIONS: Record<string, TestFlowDefinition> = {
     nodes: [
       {
         id: 'input-incident',
-        type: 'core.input',
+        type: 'trigger.manual',
         label: 'Incident Payload',
         referenceId: 'incident',
         params: {
@@ -392,7 +392,7 @@ const TEST_FLOW_DEFINITIONS: Record<string, TestFlowDefinition> = {
       },
       {
         id: 'input-account',
-        type: 'core.input',
+        type: 'trigger.manual',
         label: 'Account Context',
         referenceId: 'account',
         params: {

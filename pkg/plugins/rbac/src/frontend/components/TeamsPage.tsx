@@ -4,7 +4,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ChevronDown, ChevronRight, Plus, Search, Trash2, User, Users, X } from 'lucide-react';
-import { useApiClient, PageLayout } from '@flowlib/ui';
+import { useApiClient, PageLayout, Skeleton } from '@flowlib/ui';
 import { useRbac } from '../providers/RbacProvider';
 import {
   useTeams,
@@ -54,7 +54,7 @@ function useUsers() {
 // ─────────────────────────────────────────────────────────────
 
 export function TeamsPage() {
-  const { isAuthenticated, checkPermission } = useRbac();
+  const { isAuthenticated, isLoading: isAuthLoading, checkPermission } = useRbac();
   const teamsQuery = useTeams();
   const createTeam = useCreateTeam();
   const deleteTeam = useDeleteTeam();
@@ -106,6 +106,14 @@ export function TeamsPage() {
       setExpandedTeamId(null);
     }
   };
+
+  if (isAuthLoading) {
+    return (
+      <div className="flex items-center justify-center w-full h-full min-h-0 overflow-y-auto fl-page bg-fl-background text-fl-foreground">
+        <p className="text-sm text-fl-muted-foreground">Loading…</p>
+      </div>
+    );
+  }
 
   if (!isAuthenticated) {
     return (
@@ -201,7 +209,18 @@ export function TeamsPage() {
       {/* Teams list */}
       <div className="border rounded-lg border-fl-border bg-fl-card">
         {teamsQuery.isLoading ? (
-          <div className="px-4 py-8 text-sm text-center text-fl-muted-foreground">Loading…</div>
+          <div className="divide-y divide-fl-border">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="flex items-center gap-3 px-3 py-2">
+                <Skeleton className="h-3.5 w-3.5 shrink-0" />
+                <Skeleton className="h-3.5 w-3.5 shrink-0" />
+                <div className="flex-1 min-w-0 space-y-1.5">
+                  <Skeleton className="h-3.5 w-32" />
+                  <Skeleton className="h-3 w-48" />
+                </div>
+              </div>
+            ))}
+          </div>
         ) : teamsQuery.error ? (
           <div className="px-4 py-8 text-sm text-center text-red-500">
             {teamsQuery.error instanceof Error ? teamsQuery.error.message : 'Failed to load teams'}
@@ -312,7 +331,14 @@ function TeamMembersPanel({
   return (
     <div className="px-3 pt-2 pb-3 border-t border-fl-border bg-fl-muted/20">
       {isLoading ? (
-        <p className="py-3 text-xs text-center text-fl-muted-foreground">Loading…</p>
+        <div className="space-y-1 py-1">
+          {Array.from({ length: 2 }).map((_, i) => (
+            <div key={i} className="flex items-center gap-2 px-2 py-1">
+              <Skeleton className="h-5 w-5 rounded-full shrink-0" />
+              <Skeleton className="h-3 w-32 flex-1" />
+            </div>
+          ))}
+        </div>
       ) : members.length === 0 ? (
         <p className="py-2 text-xs text-fl-muted-foreground">No members yet.</p>
       ) : (
