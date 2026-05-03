@@ -26,6 +26,28 @@ describe('githubProvider', () => {
     });
   });
 
+  describe('security posture metadata', () => {
+    it('exposes the configured auth type for health hardening checks', () => {
+      expect(provider.security).toMatchObject({
+        authType: 'token',
+        supportsAppAuth: true,
+      });
+    });
+
+    it('marks GitHub App auth distinctly from PAT auth', () => {
+      const appProvider = githubProvider({
+        auth: {
+          type: 'app',
+          appId: '123',
+          privateKey: '-----BEGIN PRIVATE KEY-----\nabc\n-----END PRIVATE KEY-----',
+          installationId: 456,
+        },
+      });
+
+      expect(appProvider.security?.authType).toBe('app');
+    });
+  });
+
   describe('getFileContent', () => {
     it('returns file content when found', async () => {
       const content = Buffer.from('hello world').toString('base64');

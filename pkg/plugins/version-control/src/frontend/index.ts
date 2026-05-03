@@ -53,6 +53,9 @@ export type {
   VcSyncDirection,
   VcSyncResult,
   ConfigureSyncInput,
+  VcFlowDiffLine,
+  VcFlowDiffLineKind,
+  VcFlowDiffResponse,
 } from '../shared/types';
 
 // ─── Re-export hooks ───

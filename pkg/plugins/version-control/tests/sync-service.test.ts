@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { VcSyncService } from '../src/backend/sync-service';
+import { configureSyncInputSchema } from '../src/backend/validation';
 import type { GitProvider } from '../src/backend/git-provider';
 import type { PluginDatabaseApi } from '@flowlib/core';
 import type { VersionControlPluginOptions } from '../src/backend/types';
@@ -16,6 +17,9 @@ function createMockProvider(overrides: Partial<GitProvider> = {}): GitProvider {
     createBranch: vi.fn().mockResolvedValue(undefined),
     deleteBranch: vi.fn().mockResolvedValue(undefined),
     getBranch: vi.fn().mockResolvedValue(null),
+    listTree: vi.fn().mockResolvedValue([]),
+    compareBranches: vi.fn().mockResolvedValue({ aheadBy: 0, behindBy: 0, files: [] }),
+    createTreeCommit: vi.fn().mockResolvedValue({ commitSha: 'sha-tree', files: [] }),
     createPullRequest: vi.fn().mockResolvedValue({ number: 1, url: 'https://test/pr/1' }),
     updatePullRequest: vi.fn().mockResolvedValue(undefined),
     getPullRequest: vi.fn().mockResolvedValue({ state: 'open' }),
@@ -97,7 +101,7 @@ describe('VcSyncService', () => {
               branch: 'main',
               file_path: 'workflows/test-flow.flow.ts',
               mode: 'direct-commit',
-              sync_direction: 'push',
+              sync_direction: 'write',
               last_synced_at: null,
               last_commit_sha: null,
               last_synced_version: null,
@@ -128,6 +132,11 @@ describe('VcSyncService', () => {
         expect.stringContaining('INSERT INTO flowlib_vc_sync_config'),
         expect.any(Array),
       );
+      const insertCall = (db.execute as ReturnType<typeof vi.fn>).mock.calls.find((call) =>
+        (call[0] as string).includes('INSERT INTO flowlib_vc_sync_config'),
+      );
+      const insertParams = insertCall?.[1] as unknown[] | undefined;
+      expect(insertParams?.[7]).toBe('write');
     });
 
     it('throws if flow not found', async () => {
@@ -144,6 +153,45 @@ describe('VcSyncService', () => {
       const config = await service.getSyncConfig(db, 'flow-1');
       expect(config).toBeNull();
     });
+
+    it('normalizes legacy direction rows to the Phase 8 vocabulary', async () => {
+      db = createMockDb({
+        vc_sync_config: [
+          {
+            id: 'cfg-legacy',
+            flow_id: 'flow-legacy',
+            provider: 'mock',
+            repo: 'acme/workflows',
+            branch: 'main',
+            file_path: 'workflows/legacy.flow.ts',
+            mode: 'direct-commit',
+            sync_direction: 'bidirectional',
+            last_synced_at: null,
+            last_commit_sha: null,
+            last_synced_version: null,
+            draft_branch: null,
+            active_pr_number: null,
+            active_pr_url: null,
+            enabled: 1,
+            created_at: '2024-01-01',
+            updated_at: '2024-01-01',
+          },
+        ],
+      });
+
+      const config = await service.getSyncConfig(db, 'flow-legacy');
+
+      expect(config?.syncDirection).toBe('read-write');
+    });
+  });
+
+  describe('configureSyncInputSchema', () => {
+    it('accepts read/write directions and rejects the removed bidirectional value', () => {
+      expect(configureSyncInputSchema.parse({ syncDirection: 'read-write' }).syncDirection).toBe(
+        'read-write',
+      );
+      expect(() => configureSyncInputSchema.parse({ syncDirection: 'bidirectional' })).toThrow();
+    });
   });
 
   describe('pushFlow', () => {
@@ -158,7 +206,7 @@ describe('VcSyncService', () => {
             branch: 'main',
             file_path: 'workflows/test.flow.ts',
             mode: 'direct-commit',
-            sync_direction: 'push',
+            sync_direction: 'write',
             last_synced_at: null,
             last_commit_sha: null,
             last_synced_version: null,
@@ -228,7 +276,7 @@ describe('VcSyncService', () => {
             branch: 'main',
             file_path: 'workflows/test.flow.ts',
             mode: 'direct-commit',
-            sync_direction: 'push',
+            sync_direction: 'write',
             last_synced_at: null,
             last_commit_sha: 'old-sha',
             last_synced_version: null,
@@ -287,7 +335,7 @@ describe('VcSyncService', () => {
             branch: 'main',
             file_path: 'workflows/test.flow.ts',
             mode: 'direct-commit',
-            sync_direction: 'push',
+            sync_direction: 'write',
             last_synced_at: '2024-01-01T00:00:00Z',
             last_commit_sha: 'sha-1',
             last_synced_version: 1,
@@ -315,7 +363,7 @@ describe('VcSyncService', () => {
               branch: 'main',
               file_path: 'workflows/test.flow.ts',
               mode: 'direct-commit',
-              sync_direction: 'push',
+              sync_direction: 'write',
               last_synced_at: '2024-01-01T00:00:00Z',
               last_commit_sha: 'sha-1',
               last_synced_version: 1,
@@ -355,7 +403,7 @@ describe('VcSyncService', () => {
             branch: 'main',
             file_path: 'workflows/test.flow.ts',
             mode: 'direct-commit',
-            sync_direction: 'push',
+            sync_direction: 'write',
             last_synced_at: null,
             last_commit_sha: null,
             last_synced_version: null,
