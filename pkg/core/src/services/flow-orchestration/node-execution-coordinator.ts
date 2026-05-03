@@ -154,7 +154,24 @@ export class NodeExecutionCoordinator {
 
       const slug = this.getNodeSlug(sourceNode);
       const outputValue = this.extractNodeOutputValue(sourceOutput);
-      incomingData[slug] = outputValue;
+
+      // trigger.manual declares the flow's named inputs and outputs them as
+      // a flat object — { topic: 'hello', count: 5 }. Each declared input
+      // becomes a top-level key in the downstream incoming data so templates
+      // and JS expressions can reference them directly as `{{ topic }}`.
+      // We do NOT also expose the trigger's slug as a key — that would
+      // collide if a declared input shares a name with the trigger's
+      // referenceId (a common pattern after migrating from core.input).
+      if (
+        sourceNode.type === 'trigger.manual' &&
+        outputValue !== null &&
+        typeof outputValue === 'object' &&
+        !Array.isArray(outputValue)
+      ) {
+        Object.assign(incomingData, outputValue);
+      } else {
+        incomingData[slug] = outputValue;
+      }
     }
 
     // Collect indirect ancestors (all transitive upstream nodes not directly connected)

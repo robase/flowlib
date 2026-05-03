@@ -11,7 +11,7 @@ describe('compileFlow', () => {
       nodes: [
         {
           id: 'n1',
-          type: 'core.input',
+          type: 'trigger.manual',
           label: 'User Input',
           referenceId: 'user_input',
           params: {},
@@ -75,7 +75,7 @@ describe('compileFlow', () => {
     expect(result.metadata.flowName).toBe('My Test Flow');
     expect(result.metadata.version).toBe(1);
     expect(result.metadata.nodeCount).toBe(4);
-    expect(result.metadata.actionIds).toContain('core.input');
+    expect(result.metadata.actionIds).toContain('trigger.manual');
     expect(result.metadata.actionIds).toContain('http.request');
     expect(result.metadata.actionIds).toContain('core.jq');
     expect(result.metadata.usesAI).toBe(false);
@@ -87,7 +87,7 @@ describe('compileFlow', () => {
       ...baseInput,
       definition: {
         nodes: [
-          { id: 'n1', type: 'core.input', label: 'Input', referenceId: 'input', params: {} },
+          { id: 'n1', type: 'trigger.manual', label: 'Input', referenceId: 'input', params: {} },
           {
             id: 'n2',
             type: 'core.model',
@@ -122,7 +122,7 @@ describe('compileFlow', () => {
       ...baseInput,
       definition: {
         nodes: [
-          { id: 'n1', type: 'core.input', label: 'Input', referenceId: 'input', params: {} },
+          { id: 'n1', type: 'trigger.manual', label: 'Input', referenceId: 'input', params: {} },
           {
             id: 'n2',
             type: 'core.if_else',
@@ -161,7 +161,7 @@ describe('compileFlow', () => {
       ...baseInput,
       definition: {
         nodes: [
-          { id: 'n1', type: 'core.input', label: 'Input', referenceId: 'input', params: {} },
+          { id: 'n1', type: 'trigger.manual', label: 'Input', referenceId: 'input', params: {} },
           {
             id: 'n2',
             type: 'gmail.send_message',
@@ -190,7 +190,7 @@ describe('compileFlow', () => {
       ...baseInput,
       definition: {
         nodes: [
-          { id: 'n1', type: 'core.input', label: 'A', referenceId: 'a', params: {} },
+          { id: 'n1', type: 'trigger.manual', label: 'A', referenceId: 'a', params: {} },
           { id: 'n2', type: 'core.jq', label: 'B', referenceId: 'b', params: { query: '.' } },
         ],
         edges: [
@@ -223,7 +223,7 @@ describe('scaffoldProject', () => {
       version: 1,
       definition: {
         nodes: [
-          { id: 'n1', type: 'core.input', label: 'Input', referenceId: 'input', params: {} },
+          { id: 'n1', type: 'trigger.manual', label: 'Input', referenceId: 'input', params: {} },
           { id: 'n2', type: 'core.output', label: 'Output', referenceId: 'output', params: {} },
         ],
         edges: [{ id: 'e1', source: 'n1', target: 'n2' }],
@@ -270,7 +270,7 @@ describe('scaffoldProject', () => {
       target: 'standalone-workflow',
       definition: {
         nodes: [
-          { id: 'n1', type: 'core.input', label: 'Input', referenceId: 'input', params: {} },
+          { id: 'n1', type: 'trigger.manual', label: 'Input', referenceId: 'input', params: {} },
           { id: 'n2', type: 'core.output', label: 'Output', referenceId: 'output', params: {} },
         ],
         edges: [{ id: 'e1', source: 'n1', target: 'n2' }],

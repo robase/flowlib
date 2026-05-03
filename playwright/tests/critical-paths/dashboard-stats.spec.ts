@@ -135,7 +135,7 @@ test.describe('Dashboard Stats & Overview', () => {
           nodes: [
             {
               id: 'input-1',
-              type: 'core.input',
+              type: 'trigger.manual',
               label: 'User List',
               referenceId: 'user_list',
               params: {
@@ -170,7 +170,7 @@ test.describe('Dashboard Stats & Overview', () => {
           nodes: [
             {
               id: 'input-1',
-              type: 'core.input',
+              type: 'trigger.manual',
               label: 'Topic Input',
               referenceId: 'topic_input',
               params: { variableName: 'topic_input', defaultValue: '"hello"' },

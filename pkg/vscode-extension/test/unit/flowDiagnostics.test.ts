@@ -60,14 +60,14 @@ suite('produceDiagnostics — validation', () => {
   test('duplicate referenceId surfaces as flow-validation diagnostic', () => {
     const doc = fakeDoc(`defineFlow({
       nodes: [
-        { referenceId: 'dup', type: 'core.input', params: {} },
+        { referenceId: 'dup', type: 'trigger.manual', params: {} },
         { referenceId: 'dup', type: 'core.output', params: {} },
       ],
       edges: [],
     });`);
     const flow = {
       nodes: [
-        { referenceId: 'dup', type: 'core.input', params: {} },
+        { referenceId: 'dup', type: 'trigger.manual', params: {} },
         { referenceId: 'dup', type: 'core.output', params: {} },
       ],
       edges: [],
@@ -89,12 +89,12 @@ suite('produceDiagnostics — validation', () => {
 
   test('edge to nonexistent target maps to the offending literal', () => {
     const src = `defineFlow({
-  nodes: [{ referenceId: 'src', type: 'core.input', params: {} }],
+  nodes: [{ referenceId: 'src', type: 'trigger.manual', params: {} }],
   edges: [{ from: 'src', to: 'missing' }],
 });`;
     const doc = fakeDoc(src);
     const flow = {
-      nodes: [{ referenceId: 'src', type: 'core.input', params: {} }],
+      nodes: [{ referenceId: 'src', type: 'trigger.manual', params: {} }],
       edges: [{ from: 'src', to: 'missing' }],
     } as unknown as Parameters<typeof produceDiagnostics>[0]['parseResult'] extends {
       ok: true;

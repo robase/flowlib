@@ -13,7 +13,10 @@
  * Use the exported sets + predicates instead of hard-coded string equality.
  */
 
-export const INPUT_TYPES: ReadonlySet<string> = new Set(['core.input', 'primitives.input']);
+export const TRIGGER_MANUAL_TYPES: ReadonlySet<string> = new Set([
+  'trigger.manual',
+  'primitives.trigger_manual',
+]);
 export const OUTPUT_TYPES: ReadonlySet<string> = new Set(['core.output', 'primitives.output']);
 export const MODEL_TYPES: ReadonlySet<string> = new Set(['core.model', 'primitives.model']);
 export const JAVASCRIPT_TYPES: ReadonlySet<string> = new Set([
@@ -24,7 +27,7 @@ export const IF_ELSE_TYPES: ReadonlySet<string> = new Set(['core.if_else', 'prim
 export const SWITCH_TYPES: ReadonlySet<string> = new Set(['core.switch', 'primitives.switch']);
 export const AGENT_TYPES: ReadonlySet<string> = new Set(['core.agent', 'primitives.agent']);
 
-export const isInputType = (t: string): boolean => INPUT_TYPES.has(t);
+export const isTriggerManualType = (t: string): boolean => TRIGGER_MANUAL_TYPES.has(t);
 export const isOutputType = (t: string): boolean => OUTPUT_TYPES.has(t);
 export const isModelType = (t: string): boolean => MODEL_TYPES.has(t);
 export const isJavascriptType = (t: string): boolean => JAVASCRIPT_TYPES.has(t);
@@ -34,7 +37,7 @@ export const isAgentType = (t: string): boolean => AGENT_TYPES.has(t);
 
 /** Every primitive type alias across all categories. */
 export const ALL_PRIMITIVE_TYPES: ReadonlySet<string> = new Set<string>([
-  ...INPUT_TYPES,
+  ...TRIGGER_MANUAL_TYPES,
   ...OUTPUT_TYPES,
   ...MODEL_TYPES,
   ...JAVASCRIPT_TYPES,

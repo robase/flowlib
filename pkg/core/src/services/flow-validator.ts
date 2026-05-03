@@ -10,10 +10,10 @@ import { GraphService } from './graph.service';
 
 /**
  * Checks whether a node type is an entry point (receives external data, not flow data).
- * Entry points: trigger actions and legacy core.input / INPUT nodes.
+ * Entry points: trigger actions.
  */
 function isEntryPointNode(nodeType: string): boolean {
-  return nodeType === 'INPUT' || nodeType === 'core.input' || nodeType.startsWith('trigger.');
+  return nodeType.startsWith('trigger.');
 }
 
 /**

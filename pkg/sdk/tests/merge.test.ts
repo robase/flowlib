@@ -7,7 +7,7 @@ describe('mergeParsedIntoDefinition', () => {
     it('preserves original DB node ids when referenceId matches', () => {
       const prior: DbFlowDefinition = {
         nodes: [
-          { id: 'node_opaque_abc', type: 'core.input', referenceId: 'query', params: {} },
+          { id: 'node_opaque_abc', type: 'trigger.manual', referenceId: 'query', params: {} },
           { id: 'node_opaque_def', type: 'core.output', referenceId: 'out', params: {} },
         ],
         edges: [{ id: 'e_opaque', source: 'node_opaque_abc', target: 'node_opaque_def' }],
@@ -15,7 +15,7 @@ describe('mergeParsedIntoDefinition', () => {
       const merged = mergeParsedIntoDefinition(
         {
           nodes: [
-            { referenceId: 'query', type: 'core.input', params: {} },
+            { referenceId: 'query', type: 'trigger.manual', params: {} },
             { referenceId: 'out', type: 'core.output', params: { outputValue: 'hello' } },
           ],
           edges: [{ from: 'query', to: 'out' }],
@@ -32,14 +32,14 @@ describe('mergeParsedIntoDefinition', () => {
 
     it('generates new ids for truly new nodes', () => {
       const prior: DbFlowDefinition = {
-        nodes: [{ id: 'node_existing', type: 'core.input', referenceId: 'query', params: {} }],
+        nodes: [{ id: 'node_existing', type: 'trigger.manual', referenceId: 'query', params: {} }],
         edges: [],
       };
       let counter = 0;
       const merged = mergeParsedIntoDefinition(
         {
           nodes: [
-            { referenceId: 'query', type: 'core.input', params: {} },
+            { referenceId: 'query', type: 'trigger.manual', params: {} },
             { referenceId: 'new_node', type: 'core.javascript', params: { code: 'return 1' } },
           ],
           edges: [],
@@ -57,7 +57,7 @@ describe('mergeParsedIntoDefinition', () => {
       const merged = mergeParsedIntoDefinition(
         {
           nodes: [
-            { referenceId: 'a', type: 'core.input', params: {} },
+            { referenceId: 'a', type: 'trigger.manual', params: {} },
             { referenceId: 'b', type: 'core.output', params: {} },
           ],
           edges: [{ from: 'a', to: 'b' }],
@@ -75,7 +75,7 @@ describe('mergeParsedIntoDefinition', () => {
     it('respects explicit ids provided in parsed nodes', () => {
       const merged = mergeParsedIntoDefinition(
         {
-          nodes: [{ referenceId: 'q', type: 'core.input', params: {}, id: 'explicit_abc' }],
+          nodes: [{ referenceId: 'q', type: 'trigger.manual', params: {}, id: 'explicit_abc' }],
           edges: [],
         },
         null,
@@ -90,7 +90,7 @@ describe('mergeParsedIntoDefinition', () => {
         nodes: [
           {
             id: 'n1',
-            type: 'core.input',
+            type: 'trigger.manual',
             referenceId: 'q',
             params: {},
             position: { x: 100, y: 200 },
@@ -99,7 +99,7 @@ describe('mergeParsedIntoDefinition', () => {
         edges: [],
       };
       const merged = mergeParsedIntoDefinition(
-        { nodes: [{ referenceId: 'q', type: 'core.input', params: {} }], edges: [] },
+        { nodes: [{ referenceId: 'q', type: 'trigger.manual', params: {} }], edges: [] },
         prior,
       );
       expect(merged.nodes[0].position).toEqual({ x: 100, y: 200 });
@@ -110,7 +110,7 @@ describe('mergeParsedIntoDefinition', () => {
         nodes: [
           {
             id: 'n1',
-            type: 'core.input',
+            type: 'trigger.manual',
             referenceId: 'q',
             params: {},
             position: { x: 100, y: 200 },
@@ -123,7 +123,7 @@ describe('mergeParsedIntoDefinition', () => {
           nodes: [
             {
               referenceId: 'q',
-              type: 'core.input',
+              type: 'trigger.manual',
               params: {},
               position: { x: 999, y: 888 },
             },
@@ -139,11 +139,13 @@ describe('mergeParsedIntoDefinition', () => {
   describe('label preservation', () => {
     it('keeps prior label when parsed has none', () => {
       const prior: DbFlowDefinition = {
-        nodes: [{ id: 'n1', type: 'core.input', referenceId: 'q', params: {}, label: 'My Query' }],
+        nodes: [
+          { id: 'n1', type: 'trigger.manual', referenceId: 'q', params: {}, label: 'My Query' },
+        ],
         edges: [],
       };
       const merged = mergeParsedIntoDefinition(
-        { nodes: [{ referenceId: 'q', type: 'core.input', params: {} }], edges: [] },
+        { nodes: [{ referenceId: 'q', type: 'trigger.manual', params: {} }], edges: [] },
         prior,
       );
       expect(merged.nodes[0].label).toBe('My Query');
@@ -151,12 +153,14 @@ describe('mergeParsedIntoDefinition', () => {
 
     it('parsed label overrides prior', () => {
       const prior: DbFlowDefinition = {
-        nodes: [{ id: 'n1', type: 'core.input', referenceId: 'q', params: {}, label: 'Old Label' }],
+        nodes: [
+          { id: 'n1', type: 'trigger.manual', referenceId: 'q', params: {}, label: 'Old Label' },
+        ],
         edges: [],
       };
       const merged = mergeParsedIntoDefinition(
         {
-          nodes: [{ referenceId: 'q', type: 'core.input', params: {}, label: 'New Label' }],
+          nodes: [{ referenceId: 'q', type: 'trigger.manual', params: {}, label: 'New Label' }],
           edges: [],
         },
         prior,
@@ -456,7 +460,7 @@ describe('mergeParsedIntoDefinition', () => {
     it('rewrites edge endpoints from referenceIds to node ids', () => {
       const prior: DbFlowDefinition = {
         nodes: [
-          { id: 'node_a', type: 'core.input', referenceId: 'q', params: {} },
+          { id: 'node_a', type: 'trigger.manual', referenceId: 'q', params: {} },
           { id: 'node_b', type: 'core.output', referenceId: 'out', params: {} },
         ],
         edges: [],
@@ -464,7 +468,7 @@ describe('mergeParsedIntoDefinition', () => {
       const merged = mergeParsedIntoDefinition(
         {
           nodes: [
-            { referenceId: 'q', type: 'core.input', params: {} },
+            { referenceId: 'q', type: 'trigger.manual', params: {} },
             { referenceId: 'out', type: 'core.output', params: {} },
           ],
           edges: [{ from: 'q', to: 'out' }],
@@ -494,7 +498,7 @@ describe('mergeParsedIntoDefinition', () => {
       expect(() =>
         mergeParsedIntoDefinition(
           {
-            nodes: [{ referenceId: 'q', type: 'core.input', params: {} }],
+            nodes: [{ referenceId: 'q', type: 'trigger.manual', params: {} }],
             edges: [{ from: 'q', to: 'nowhere' }],
           },
           null,
@@ -507,7 +511,7 @@ describe('mergeParsedIntoDefinition', () => {
     it('uses parsed metadata when provided', () => {
       const merged = mergeParsedIntoDefinition(
         {
-          nodes: [{ referenceId: 'q', type: 'core.input', params: {} }],
+          nodes: [{ referenceId: 'q', type: 'trigger.manual', params: {} }],
           edges: [],
           metadata: { name: 'New Name' },
         },
@@ -518,13 +522,13 @@ describe('mergeParsedIntoDefinition', () => {
 
     it('falls back to prior metadata when parsed has none', () => {
       const prior: DbFlowDefinition = {
-        nodes: [{ id: 'n1', type: 'core.input', referenceId: 'q', params: {} }],
+        nodes: [{ id: 'n1', type: 'trigger.manual', referenceId: 'q', params: {} }],
         edges: [],
         metadata: { name: 'Old Name', description: 'old' },
       };
       const merged = mergeParsedIntoDefinition(
         {
-          nodes: [{ referenceId: 'q', type: 'core.input', params: {} }],
+          nodes: [{ referenceId: 'q', type: 'trigger.manual', params: {} }],
           edges: [],
         },
         prior,
@@ -539,7 +543,7 @@ describe('mergeParsedIntoDefinition', () => {
         nodes: [
           {
             id: 'node_abc',
-            type: 'core.input',
+            type: 'trigger.manual',
             referenceId: 'query',
             params: { variableName: 'query' },
             label: 'Query Input',

@@ -1,13 +1,13 @@
 'use client';
 
-import { memo, useCallback, useState } from 'react';
+import { memo } from 'react';
 import { Handle, Position, type NodeProps } from '@xyflow/react';
 import { Card } from '../ui/card';
 import { useNodeRegistry } from '../../contexts/NodeRegistryContext';
 import { NodeExecutionStatus } from '@flowlib/core/types';
 import { cn } from '../../lib/utils';
 import { Loader2, Bot } from 'lucide-react';
-import { NodeAppendix, type AppendixPosition } from './NodeAppendix';
+import { NodeAppendix } from './NodeAppendix';
 import { AgentToolsBox } from './AgentToolsBox';
 import type { ToolDefinition, AddedToolInstance } from './ToolSelectorModal';
 import { useAgentToolCallbacks } from '../../contexts/AgentToolCallbacksContext';
@@ -28,7 +28,6 @@ interface AgentNodeData extends Record<string, unknown> {
     addedTools?: AddedToolInstance[];
     /** All available tools (populated by parent for tool resolution) */
     availableTools?: ToolDefinition[];
-    toolsPosition?: AppendixPosition;
     [key: string]: unknown;
   };
   // Event handlers (injected by FlowEditor)
@@ -40,7 +39,6 @@ interface AgentNodeData extends Record<string, unknown> {
   onRemoveTool?: (instanceId: string) => void;
   /** Called when user clicks on a tool (to configure it) */
   onToolClick?: (tool: AddedToolInstance) => void;
-  onToolsPositionChange?: (position: AppendixPosition) => void;
 }
 
 /**
@@ -111,25 +109,12 @@ export const AgentNode = memo(({ id, data, selected }: NodeProps) => {
   // This avoids the parent having to remap ALL nodes just to inject these into Agent data.
   const toolCallbacks = useAgentToolCallbacks();
 
-  // Local state for tools position (can be controlled externally via data.params.toolsPosition)
-  const [localToolsPosition, setLocalToolsPosition] = useState<AppendixPosition>('bottom');
-  const toolsPosition = typedData.params?.toolsPosition ?? localToolsPosition;
-
   // Available tools from context (provided by FlowEditor), falling back to data injection for non-editor views
   const availableTools: ToolDefinition[] =
     toolCallbacks?.availableTools ?? typedData.params?.availableTools ?? [];
 
   // Get added tool instances from params
   const addedTools: AddedToolInstance[] = typedData.params?.addedTools ?? [];
-
-  // Handle position change
-  const handlePositionChange = useCallback(
-    (position: AppendixPosition) => {
-      setLocalToolsPosition(position);
-      typedData.onToolsPositionChange?.(position);
-    },
-    [typedData],
-  );
 
   // Show loading placeholder if registry is still loading or definition not found
   if (registryLoading || !definition) {
@@ -270,12 +255,7 @@ export const AgentNode = memo(({ id, data, selected }: NodeProps) => {
       </Card>
 
       {/* Tools Appendix - attached to the node */}
-      <NodeAppendix
-        position={toolsPosition}
-        onPositionChange={handlePositionChange}
-        showPositionToggle={true}
-        borderClassName={appendixBorderClass}
-      >
+      <NodeAppendix position="bottom" borderClassName={appendixBorderClass}>
         <AgentToolsBox
           tools={addedTools}
           availableTools={availableTools}

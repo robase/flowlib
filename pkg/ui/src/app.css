@@ -552,6 +552,21 @@
       font-family: var(--font-mono);
     }
 
+    /* Form inputs inside the node config panel use a slightly different surface
+       than the panel background so the editable area stands out from the
+       surrounding chrome (the panel itself sits on bg-background). */
+    .fl-node-config-form [data-slot='input'],
+    .fl-node-config-form [data-slot='textarea'],
+    .fl-node-config-form [data-slot='select-trigger'],
+    .fl-node-config-form [role='combobox'],
+    .fl-node-config-form .cm-editor {
+      background-color: var(--muted) !important;
+    }
+    .fl-node-config-form input[type='text'][class*='bg-transparent'],
+    .fl-node-config-form textarea[class*='bg-transparent'] {
+      background-color: var(--muted) !important;
+    }
+
     .fl-sidebar-shell {
       background-color: var(--fl-sidebar) !important;
       color: var(--fl-sidebar-foreground) !important;

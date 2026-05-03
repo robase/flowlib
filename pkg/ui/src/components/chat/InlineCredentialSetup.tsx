@@ -232,11 +232,11 @@ function CreateCredentialForm({ onBack }: { onBack?: () => void }) {
       className="mx-2 flex w-full max-w-88 flex-col gap-3 rounded-xl border border-border/60 bg-card p-4 shadow-sm"
     >
       {/* Header */}
-      <div className="flex flex-col gap-2 pb-0.5">
-        <div className="flex size-9 items-center justify-center rounded-full bg-primary/10">
+      <div className="flex items-center gap-3 pb-0.5">
+        <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary/10">
           <KeyRound className="size-4.5 text-primary" />
         </div>
-        <div className="text-center">
+        <div className="text-left">
           <p className="text-sm font-semibold text-foreground">Connect an LLM provider</p>
           <p className="mt-0.5 text-xs text-muted-foreground">
             Add an API key to start chatting with the assistant.

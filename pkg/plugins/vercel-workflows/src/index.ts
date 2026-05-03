@@ -9,7 +9,6 @@ export type { VercelWorkflowsPluginOptions } from './plugin';
 // ─── Re-export primitives for convenience ────────────────────────────────────
 export {
   defineFlow,
-  input,
   output,
   model,
   ifElse,

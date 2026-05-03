@@ -55,7 +55,7 @@ describe('Full pipeline: emit → parse → transform → merge', () => {
         nodes: [
           {
             id: 'node_abc',
-            type: 'core.input',
+            type: 'trigger.manual',
             referenceId: 'query',
             label: 'Query Input',
             position: { x: 100, y: 50 },
@@ -140,7 +140,7 @@ describe('Full pipeline: emit → parse → transform → merge', () => {
     it('preserves branching flows with switch cases', () => {
       const initial: DbFlowDefinition = {
         nodes: [
-          { id: 'n1', type: 'core.input', referenceId: 'kind', params: {} },
+          { id: 'n1', type: 'trigger.manual', referenceId: 'kind', params: {} },
           {
             id: 'n2',
             type: 'core.switch',
@@ -216,7 +216,7 @@ describe('Full pipeline: emit → parse → transform → merge', () => {
         nodes: [
           {
             id: 'node_x',
-            type: 'core.input',
+            type: 'trigger.manual',
             referenceId: 'q',
             label: 'Old Label',
             position: { x: 50, y: 50 },
@@ -251,18 +251,23 @@ describe('Full pipeline: emit → parse → transform → merge', () => {
     it('adding a new node mints a fresh id while keeping existing ids', () => {
       const prior: DbFlowDefinition = {
         nodes: [
-          { id: 'node_orig', type: 'core.input', referenceId: 'q', params: { variableName: 'q' } },
+          {
+            id: 'node_orig',
+            type: 'trigger.manual',
+            referenceId: 'q',
+            params: { variableName: 'q' },
+          },
         ],
         edges: [],
       };
 
       // Emit + parse the authored source for a flow with a new node added.
       const { code } = emitSdkSource(prior);
-      // Phase 9 emitter produces named-record `nodes: { q: input(), }`.
+      // Phase 9 emitter produces named-record `nodes: { q: trigger.manual(), }`.
       // Inject a sibling entry alongside `q`.
       const editedSource = code.replace(
-        '    q: input(),\n',
-        '    q: input(),\n    double: code({ code: (ctx) => ctx.q }),\n',
+        '    q: trigger.manual(),\n',
+        '    q: trigger.manual(),\n    double: code({ code: (ctx) => ctx.q }),\n',
       );
       // The edit also needs an edge to the new node — add one.
       const withEdge = editedSource.replace(
@@ -287,7 +292,7 @@ describe('Full pipeline: emit → parse → transform → merge', () => {
     it('removing a node drops its edges cleanly', () => {
       const prior: DbFlowDefinition = {
         nodes: [
-          { id: 'a', type: 'core.input', referenceId: 'first', params: {} },
+          { id: 'a', type: 'trigger.manual', referenceId: 'first', params: {} },
           {
             id: 'b',
             type: 'core.javascript',
@@ -310,7 +315,7 @@ describe('Full pipeline: emit → parse → transform → merge', () => {
       // Rewrite the flow without the middle node (just input → output).
       const newSource = `
         nodes: [
-          input('first'),
+          trigger.manual('first'),
           output('end', { value: '{{ first }}' }),
         ],
         edges: [
@@ -333,7 +338,7 @@ describe('Full pipeline: emit → parse → transform → merge', () => {
     it('emitting twice from the same definition produces identical source', () => {
       const def: DbFlowDefinition = {
         nodes: [
-          { id: 'n1', type: 'core.input', referenceId: 'x', params: {} },
+          { id: 'n1', type: 'trigger.manual', referenceId: 'x', params: {} },
           { id: 'n2', type: 'core.javascript', referenceId: 'y', params: { code: 'return x + 1' } },
           { id: 'n3', type: 'core.output', referenceId: 'z', params: { outputValue: '{{ y }}' } },
         ],
@@ -353,7 +358,7 @@ describe('Full pipeline: emit → parse → transform → merge', () => {
         nodes: [
           {
             id: 'stable_id',
-            type: 'core.input',
+            type: 'trigger.manual',
             referenceId: 'q',
             position: { x: 75, y: 125 },
             params: { variableName: 'q', defaultValue: 'hello' },
@@ -391,7 +396,7 @@ describe('Full pipeline: emit → parse → transform → merge', () => {
     it('emits correct imports for provider actions (emit-only, not parse)', () => {
       const prior: DbFlowDefinition = {
         nodes: [
-          { id: 'n1', type: 'core.input', referenceId: 'event', params: {} },
+          { id: 'n1', type: 'trigger.manual', referenceId: 'event', params: {} },
           {
             id: 'n2',
             type: 'gmail.send_message',

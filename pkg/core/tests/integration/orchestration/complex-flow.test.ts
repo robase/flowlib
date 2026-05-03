@@ -195,11 +195,16 @@ describe('Complex end-to-end flows', () => {
         nodes: [
           {
             id: 'input',
-            type: 'core.input',
+            type: 'trigger.manual',
             referenceId: 'req',
             params: {
-              variableName: 'req',
-              defaultValue: JSON.stringify({ endpoint: 'https://api.example.com/users' }),
+              inputs: [
+                {
+                  name: 'req',
+                  type: 'json',
+                  defaultValue: { endpoint: 'https://api.example.com/users' },
+                },
+              ],
             },
             position: { x: 0, y: 0 },
           },
@@ -419,11 +424,16 @@ describe('Complex end-to-end flows', () => {
           nodes: [
             {
               id: 'input',
-              type: 'core.input',
+              type: 'trigger.manual',
               referenceId: 'ticket',
               params: {
-                variableName: 'ticket',
-                defaultValue: JSON.stringify({ priority: 'high', body: 'server down' }),
+                inputs: [
+                  {
+                    name: 'ticket',
+                    type: 'json',
+                    defaultValue: { priority: 'high', body: 'server down' },
+                  },
+                ],
               },
               position: { x: 0, y: 0 },
             },

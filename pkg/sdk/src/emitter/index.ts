@@ -48,7 +48,6 @@ export { SdkEmitError };
  * actions like `gmail.send_message`) or the generic `node()` fallback.
  */
 const SDK_HELPERS: Record<string, string> = {
-  'core.input': 'input',
   'core.output': 'output',
   'core.javascript': 'code',
   'core.if_else': 'ifElse',
@@ -63,7 +62,6 @@ const SDK_HELPERS: Record<string, string> = {
 
 /** SDK-helper names that need a top-level import from `@flowlib/sdk`. */
 const SDK_IMPORT_NAMES: Record<string, string> = {
-  'core.input': 'input',
   'core.output': 'output',
   'core.javascript': 'code',
   'core.if_else': 'ifElse',
@@ -277,25 +275,6 @@ function emitKnownNode(
   const params = node.params ?? {};
 
   switch (node.type) {
-    case 'core.input': {
-      const variableName = params.variableName;
-      const defaultValue = params.defaultValue;
-      const p: string[] = [];
-      // Helper auto-defaults variableName to the referenceId at runtime, so
-      // omit the field when it equals the ref.
-      if (typeof variableName === 'string' && variableName !== ref) {
-        p.push(`variableName: ${JSON.stringify(variableName)}`);
-      }
-      if (typeof defaultValue === 'string' && defaultValue !== '') {
-        p.push(`defaultValue: ${JSON.stringify(defaultValue)}`);
-      }
-      if (p.length === 0 && !nodeOptions) {
-        return `input()`;
-      }
-      const paramsLit = p.length === 0 ? '{}' : `{ ${p.join(', ')} }`;
-      return `input(${paramsLit}${optionsSuffix})`;
-    }
-
     case 'core.output': {
       // Output value: may be `outputValue` (preferred), `output`, `value`, or `template`.
       const raw = params.outputValue ?? params.output ?? params.value ?? params.template ?? '';
@@ -380,10 +359,11 @@ function emitKnownNode(
     }
 
     case 'trigger.manual': {
-      const di = params.defaultInputs;
-      if (di && typeof di === 'object' && !Array.isArray(di) && Object.keys(di).length > 0) {
-        const lit = toTsLiteral({ defaultInputs: di });
-        return `trigger.manual(${lit}${optionsSuffix})`;
+      const inputs = params.inputs;
+      if (Array.isArray(inputs) && inputs.length > 0) {
+        // Emit `as const` so the SDK helper's generic narrows input names/types.
+        const lit = `${toTsLiteral(inputs)} as const`;
+        return `trigger.manual({ inputs: ${lit} }${optionsSuffix})`;
       }
       return nodeOptions === null
         ? `trigger.manual()`

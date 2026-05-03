@@ -251,9 +251,9 @@ describe('Node failure modes', () => {
         nodes: [
           {
             id: 'in',
-            type: 'core.input',
+            type: 'trigger.manual',
             referenceId: 'user',
-            params: { variableName: 'user', defaultValue: '{"id":1}' },
+            params: { inputs: [{ name: 'user', type: 'json', defaultValue: '{"id":1}' }] },
             position: { x: 0, y: 0 },
           },
           {
@@ -283,9 +283,9 @@ describe('Node failure modes', () => {
         nodes: [
           {
             id: 'in',
-            type: 'core.input',
+            type: 'trigger.manual',
             referenceId: 'data',
-            params: { variableName: 'data', defaultValue: '{"x":1}' },
+            params: { inputs: [{ name: 'data', type: 'json', defaultValue: '{"x":1}' }] },
             position: { x: 0, y: 0 },
           },
           {
@@ -334,9 +334,9 @@ describe('Node failure modes', () => {
         nodes: [
           {
             id: 'in',
-            type: 'core.input',
+            type: 'trigger.manual',
             referenceId: 'data',
-            params: { variableName: 'data', defaultValue: '{"x":1}' },
+            params: { inputs: [{ name: 'data', type: 'json', defaultValue: '{"x":1}' }] },
             position: { x: 0, y: 0 },
           },
           {
@@ -468,9 +468,9 @@ describe('Node failure modes', () => {
         nodes: [
           {
             id: 'in',
-            type: 'core.input',
+            type: 'trigger.manual',
             referenceId: 'data',
-            params: { variableName: 'data', defaultValue: '{"x":1}' },
+            params: { inputs: [{ name: 'data', type: 'json', defaultValue: '{"x":1}' }] },
             position: { x: 0, y: 0 },
           },
           {

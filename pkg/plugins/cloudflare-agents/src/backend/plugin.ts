@@ -185,7 +185,7 @@ function _backendPlugin(options?: CloudflareAgentsPluginOptions): FlowlibPlugin 
             status: 200,
             body: {
               nativeSupport: [
-                'core.input',
+                'trigger.manual',
                 'core.output',
                 'core.model',
                 'core.jq',

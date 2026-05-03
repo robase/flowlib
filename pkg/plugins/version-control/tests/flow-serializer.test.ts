@@ -16,7 +16,7 @@ describe('sync plugin flow serialisation (via @flowlib/sdk emitter)', () => {
       nodes: [
         {
           id: 'node-query',
-          type: 'core.input',
+          type: 'trigger.manual',
           label: 'Query Input',
           referenceId: 'query',
           position: { x: 0, y: 0 },
@@ -62,7 +62,7 @@ describe('sync plugin flow serialisation (via @flowlib/sdk emitter)', () => {
     expect(code).toContain(`name: "Question Answering"`);
     expect(code).toContain(`description: "A simple Q&A flow"`);
     // Core helpers in named-record form (key: helper(...)).
-    expect(code).toContain(`query: input(`);
+    expect(code).toContain(`query: trigger.manual(`);
     expect(code).toContain(`answer: model(`);
     expect(code).toContain(`result: output(`);
     // Edges use object form with preserved referenceIds.
@@ -140,7 +140,7 @@ describe('sync plugin flow serialisation (via @flowlib/sdk emitter)', () => {
       nodes: [
         {
           id: 'node-x',
-          type: 'core.input',
+          type: 'trigger.manual',
           referenceId: 'x',
           position: { x: 0, y: 0 },
           params: {},
@@ -163,7 +163,7 @@ describe('sync plugin flow serialisation (via @flowlib/sdk emitter)', () => {
       nodes: [
         {
           id: 'node_abc',
-          type: 'core.input',
+          type: 'trigger.manual',
           referenceId: 'q',
           label: 'Query',
           position: { x: 100, y: 50 },

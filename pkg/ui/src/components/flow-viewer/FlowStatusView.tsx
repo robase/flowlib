@@ -19,7 +19,7 @@ import { FlowRunStatus, NodeExecutionStatus, ReactFlowNodeData } from '@flowlib/
 import { FlowRun } from '@flowlib/core/types';
 import { Node } from '@xyflow/react';
 import { useTheme } from '~/contexts/ThemeProvider';
-import { FlowlibLoader } from '../shared/FlowlibLoader';
+import { Skeleton } from '../ui/skeleton';
 
 // Import shared hook
 import { useFlowData } from '../../hooks/use-flow-data';
@@ -288,7 +288,23 @@ export function FlowStatusView({
 
   // Loading state
   if (loading) {
-    return <FlowlibLoader className="w-full h-full" iconClassName="h-16" label="Loading flow..." />;
+    return (
+      <div className="relative w-full h-full bg-background">
+        <div className="absolute top-4 left-4 flex items-center gap-2">
+          <Skeleton className="h-8 w-24" />
+          <Skeleton className="h-8 w-32" />
+        </div>
+        <div className="absolute left-1/4 top-1/3">
+          <Skeleton className="h-20 w-48 rounded-lg" />
+        </div>
+        <div className="absolute left-1/2 top-1/2">
+          <Skeleton className="h-20 w-48 rounded-lg" />
+        </div>
+        <div className="absolute right-1/4 bottom-1/3">
+          <Skeleton className="h-20 w-48 rounded-lg" />
+        </div>
+      </div>
+    );
   }
 
   // Error state

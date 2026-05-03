@@ -70,6 +70,26 @@ export function useListAccounts(options?: OmitKeys<ReturnType<typeof listAccount
 
 // ── Auth flow mutations ───────────────────────────────────────
 
+/**
+ * Reset every query in the cache.
+ *
+ * Auth-state transitions (sign-in, sign-out, sign-up, account deletion)
+ * change WHO the caller is, which invalidates the result of every
+ * identity-scoped query — not just `['auth','getSession']`. RbacProvider's
+ * `['rbac','auth','me']`, any flow lists, credentials, runs, plugin
+ * dashboards, etc. are all keyed implicitly by the session cookie. Without
+ * a global reset, an active observer (e.g. RbacProvider mounted at the
+ * root) will keep its last snapshot — typically `isAuthenticated:false`
+ * cached during the unauthenticated state — and the post-sign-in UI shows
+ * stale data until the user hard-refreshes.
+ *
+ * `resetQueries()` (no filter) drops every query's data AND refetches every
+ * active observer, which is exactly the desired behavior on transition.
+ */
+function resetAllOnAuthTransition(queryClient: ReturnType<typeof useQueryClient>) {
+  return queryClient.resetQueries();
+}
+
 export function useSignInEmail(options?: OmitKeys<ReturnType<typeof signInEmailOptions>>) {
   const { authClient } = useAuth();
   const queryClient = useQueryClient();
@@ -77,7 +97,7 @@ export function useSignInEmail(options?: OmitKeys<ReturnType<typeof signInEmailO
     ...signInEmailOptions(authClient),
     ...options,
     onSuccess: async (...args) => {
-      queryClient.resetQueries({ queryKey: sessionOptions(authClient).queryKey });
+      await resetAllOnAuthTransition(queryClient);
       await options?.onSuccess?.(...args);
     },
   });
@@ -90,7 +110,7 @@ export function useSignUpEmail(options?: OmitKeys<ReturnType<typeof signUpEmailO
     ...signUpEmailOptions(authClient),
     ...options,
     onSuccess: async (...args) => {
-      queryClient.resetQueries({ queryKey: sessionOptions(authClient).queryKey });
+      await resetAllOnAuthTransition(queryClient);
       await options?.onSuccess?.(...args);
     },
   });
@@ -103,10 +123,7 @@ export function useSignInSocial(options?: OmitKeys<ReturnType<typeof signInSocia
     ...signInSocialOptions(authClient),
     ...options,
     onSuccess: async (...args) => {
-      // Match useSignInEmail / useSignUpEmail — reset the session query so
-      // the AuthProvider picks up the new identity instead of holding a
-      // stale snapshot from a prior user in the same tab.
-      queryClient.resetQueries({ queryKey: sessionOptions(authClient).queryKey });
+      await resetAllOnAuthTransition(queryClient);
       await options?.onSuccess?.(...args);
     },
   });
@@ -132,11 +149,13 @@ export function useSignOut(options?: OmitKeys<ReturnType<typeof signOutOptions>>
     onSuccess: async (...args) => {
       // resetQueries (not removeQueries) is required: removeQueries wipes the
       // cache but does NOT cause active observers to refetch, so AuthProvider's
-      // useQuery keeps its last `{user,...}` snapshot and AuthGate stays on
-      // the authenticated branch. resetQueries removes the data AND triggers
-      // an immediate refetch — getSession then returns null and the gate
-      // flips to its unauthenticated fallback.
-      await queryClient.resetQueries({ queryKey: ['auth'] });
+      // useQuery would keep its last `{user,...}` snapshot and AuthGate would
+      // stay on the authenticated branch. resetQueries (with no filter) drops
+      // every query's data AND triggers refetches on active observers —
+      // including rbac/me, flow lists, etc., so post-sign-out UI shows the
+      // unauthenticated state across the whole app instead of leaking the
+      // previous user's data.
+      await resetAllOnAuthTransition(queryClient);
       await options?.onSuccess?.(...args);
     },
   });
@@ -240,10 +259,10 @@ export function useDeleteUser(options?: OmitKeys<ReturnType<typeof deleteUserOpt
     ...deleteUserOptions(authClient),
     ...options,
     onSuccess: async (...args) => {
-      // See useSignOut for why resetQueries (not removeQueries) — we need
-      // the AuthProvider's session observer to actually refetch and flip
-      // AuthGate to its unauthenticated branch.
-      await queryClient.resetQueries({ queryKey: ['auth'] });
+      // Account deletion is the strongest auth transition — every cached
+      // query was scoped to the now-defunct user. Reset everything so no
+      // observer keeps a stale identity-scoped snapshot.
+      await resetAllOnAuthTransition(queryClient);
       await options?.onSuccess?.(...args);
     },
   });

@@ -62,10 +62,10 @@ function tmplNode(id: string, template: string, position = { x: 0, y: 0 }) {
 function inputNode(id: string, value: unknown) {
   return {
     id,
-    type: 'core.input',
+    type: 'trigger.manual',
     referenceId: id,
     label: id,
-    params: { variableName: id, defaultValue: JSON.stringify(value) },
+    params: { inputs: [{ name: id, type: 'json', defaultValue: value }] },
     position: { x: 0, y: 0 },
   };
 }

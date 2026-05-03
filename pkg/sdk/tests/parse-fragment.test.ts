@@ -6,7 +6,7 @@ describe('parseSDKText', () => {
     it('parses nodes + edges fragments', () => {
       const { nodes, edges } = parseSDKText(`
         nodes: [
-          input('query'),
+          trigger.manual('query'),
           output('result', { value: '{{ query }}' }),
         ],
         edges: [
@@ -16,7 +16,7 @@ describe('parseSDKText', () => {
 
       expect(nodes).toHaveLength(2);
       expect(nodes[0].referenceId).toBe('query');
-      expect(nodes[0].type).toBe('core.input');
+      expect(nodes[0].type).toBe('trigger.manual');
       expect(nodes[1].referenceId).toBe('result');
       expect(edges).toEqual([{ from: 'query', to: 'result' }]);
     });
@@ -52,13 +52,13 @@ describe('parseSDKText', () => {
   describe('full-file form (emitter output)', () => {
     it('unwraps `export const ... = defineFlow(...)` (emitter default)', () => {
       const source = `
-import { defineFlow, input, output } from '@flowlib/sdk';
+import { defineFlow, trigger, output } from '@flowlib/sdk';
 import { gmailSendMessageAction } from '@flowlib/actions/gmail';
 
 export const myFlow = defineFlow({
   name: 'My Flow',
   nodes: [
-    input('query'),
+    trigger.manual('query'),
     output('result', { value: '{{ query }}' }),
   ],
   edges: [
@@ -74,9 +74,9 @@ export const myFlow = defineFlow({
 
     it('unwraps `export default defineFlow(...)`', () => {
       const source = `
-import { defineFlow, input } from '@flowlib/sdk';
+import { defineFlow, trigger } from '@flowlib/sdk';
 export default defineFlow({
-  nodes: [input('q')],
+  nodes: [trigger.manual('q')],
   edges: [],
 });
       `;
@@ -87,11 +87,11 @@ export default defineFlow({
 
     it('strips single-line + block comments', () => {
       const source = `
-import { defineFlow, input } from '@flowlib/sdk';
+import { defineFlow, trigger } from '@flowlib/sdk';
 export default defineFlow({
   // this is a comment
   /* block comment */
-  nodes: [input('q')],
+  nodes: [trigger.manual('q')],
   edges: [],
 });
       `;
@@ -114,7 +114,7 @@ export default defineFlow({
       // Tuple-form edges are now garbage too (Phase 6 removed tuple support).
       const { nodes, edges } = parseSDKText(`
         nodes: [
-          input('x'),
+          trigger.manual('x'),
           { notANode: true },
           42,
         ],
@@ -135,7 +135,12 @@ export default defineFlow({
       const { emitSdkSource } = await import('../src/emitter');
       const definition = {
         nodes: [
-          { id: 'n1', type: 'core.input', referenceId: 'name', params: { variableName: 'name' } },
+          {
+            id: 'n1',
+            type: 'trigger.manual',
+            referenceId: 'name',
+            params: { variableName: 'name' },
+          },
           {
             id: 'n2',
             type: 'core.output',

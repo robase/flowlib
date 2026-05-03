@@ -494,10 +494,12 @@ export class ChatStreamService {
       const triggerParams = (triggerNode?.params ?? triggerNode?.data?.params) as
         | Record<string, unknown>
         | undefined;
-      const defaultInputs = triggerParams?.defaultInputs as Record<string, unknown> | undefined;
+      const declaredInputs = triggerParams?.inputs as
+        | Array<{ name: string; type?: string; defaultValue?: unknown }>
+        | undefined;
       const inputFields =
-        defaultInputs && Object.keys(defaultInputs).length > 0
-          ? Object.entries(defaultInputs).map(([name, defaultValue]) => ({ name, defaultValue }))
+        Array.isArray(declaredInputs) && declaredInputs.length > 0
+          ? declaredInputs.map((i) => ({ name: i.name, defaultValue: i.defaultValue }))
           : undefined;
 
       // When a run is selected (runs view), load its error context

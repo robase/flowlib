@@ -532,18 +532,18 @@ export const writeFlowSourceTool: ChatToolDefinition = {
     'For flows that already have a version, this tool REQUIRES a prior `get_flow_source` call in this turn. ' +
     'The source must be a complete `@flowlib/sdk` flow file. Use the **named-record** form for nodes — keys are referenceIds, edges narrow `from`/`to`/`handle` against them. Example:\n\n' +
     '```ts\n' +
-    "import { defineFlow, input, output, ifElse } from '@flowlib/sdk';\n" +
+    "import { defineFlow, trigger, output, ifElse } from '@flowlib/sdk';\n" +
     "import { gmail } from '@flowlib/sdk/actions';\n\n" +
     'export default defineFlow({\n' +
     '  name: "Triage email",\n' +
     '  nodes: {\n' +
-    '    event:    input(),\n' +
-    '    classify: ifElse({ condition: "{{ event.priority > 5 }}" }),\n' +
-    '    notify:   gmail.sendMessage({ credentialId: "{{ env.GMAIL }}", to: "x@y.z", subject: "Alert", body: "{{ event.message }}" }),\n' +
+    "    start:    trigger.manual({ inputs: [{ name: 'priority', type: 'number' }, { name: 'message', type: 'string' }] as const }),\n" +
+    '    classify: ifElse({ condition: "{{ start.priority > 5 }}" }),\n' +
+    '    notify:   gmail.sendMessage({ credentialId: "{{ env.GMAIL }}", to: "x@y.z", subject: "Alert", body: "{{ start.message }}" }),\n' +
     '    log:      output({ value: "logged" }),\n' +
     '  },\n' +
     '  edges: [\n' +
-    '    { from: "event",    to: "classify" },\n' +
+    '    { from: "start",    to: "classify" },\n' +
     '    { from: "classify", to: "notify", handle: "true_output" },\n' +
     '    { from: "classify", to: "log",    handle: "false_output" },\n' +
     '  ],\n' +

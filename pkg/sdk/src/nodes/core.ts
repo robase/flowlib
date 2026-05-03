@@ -26,7 +26,6 @@
  */
 
 import {
-  inputAction,
   outputAction,
   javascriptAction,
   ifElseAction,
@@ -82,45 +81,6 @@ function splitArgs<P>(
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type CodeExpression<T = unknown> = string | ((ctx: any) => T);
-
-// ═══════════════════════════════════════════════════════════════════════════
-// input
-// ═══════════════════════════════════════════════════════════════════════════
-
-interface InputParams {
-  variableName?: string;
-  defaultValue?: string;
-}
-
-/**
- * Flow input node.
- *
- * With no params, uses the referenceId as the runtime variable name.
- *   `input()` (named form, key = ref) — reads `inputs.<key>` at runtime.
- *   `input('query')` (positional)     — reads `inputs.query` at runtime.
- *   `input({ variableName: 'current_user' })` — explicit variable name.
- */
-export function input(params?: InputParams, options?: NodeOptions): SdkFlowNode;
-export function input(
-  referenceId: string,
-  params?: InputParams,
-  options?: NodeOptions,
-): SdkFlowNode;
-export function input(
-  arg0?: string | InputParams,
-  arg1?: InputParams | NodeOptions,
-  arg2?: NodeOptions,
-): SdkFlowNode {
-  const { referenceId, params, options } = splitArgs<InputParams | undefined>(arg0, arg1, arg2);
-  return inputAction(
-    referenceId,
-    {
-      variableName: params?.variableName ?? referenceId,
-      defaultValue: params?.defaultValue ?? '',
-    },
-    options,
-  );
-}
 
 // ═══════════════════════════════════════════════════════════════════════════
 // output

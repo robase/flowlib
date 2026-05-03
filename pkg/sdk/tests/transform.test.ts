@@ -323,7 +323,7 @@ describe('transformArrowsToStrings', () => {
     it('passes through nodes without function params unchanged', () => {
       const input: SdkFlowNode = {
         referenceId: 'q',
-        type: 'core.input',
+        type: 'trigger.manual',
         params: { variableName: 'query' },
       };
       const { nodes, ok } = transformArrowsToStrings([input]);

@@ -26,7 +26,7 @@
  * `evaluateSdkSource` with import-scan enforcement.
  */
 
-import { input, output, code, javascript, ifElse, switchNode, model, agent } from './nodes/core';
+import { output, code, javascript, ifElse, switchNode, model, agent } from './nodes/core';
 import { template } from './nodes/template';
 import { httpRequest } from './nodes/http';
 import { trigger } from './nodes/trigger';
@@ -44,7 +44,6 @@ export interface ParsedFragment {
  * public `@flowlib/sdk` surface one-to-one.
  */
 const SDK_HELPERS: Record<string, unknown> = {
-  input,
   output,
   code,
   javascript,
@@ -158,10 +157,18 @@ function unwrapFullFile(text: string): string {
  * surface this to users should wrap the call.
  */
 export function parseSDKText(text: string): ParsedFragment {
-  const cleaned = unwrapFullFile(stripComments(text)).trim();
+  let cleaned = unwrapFullFile(stripComments(text)).trim();
   if (!cleaned) {
     return { nodes: [], edges: [] };
   }
+
+  // Strip TypeScript-only `as const` / `as <type>` annotations — the browser
+  // parser is plain JavaScript and can't tolerate them. The emitter writes
+  // `[{...}] as const` on trigger.manual inputs to feed the SDK helper's
+  // generic at compile time; for runtime parsing we just need the literal.
+  cleaned = cleaned.replace(/\)\s+as\s+const\b/g, ')');
+  cleaned = cleaned.replace(/\]\s+as\s+const\b/g, ']');
+  cleaned = cleaned.replace(/\}\s+as\s+const\b/g, '}');
 
   // Wrap the body in an object literal so `nodes:` and `edges:` become keys.
   const wrapped = `"use strict"; return ({\n${cleaned}\n})`;

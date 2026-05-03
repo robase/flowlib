@@ -29,7 +29,7 @@ export { outputAction } from './actions/output';
 // ─── Helpers / builders ───────────────────────────────────────────────────────
 export {
   defineFlow,
-  input,
+  triggerManual,
   output,
   model,
   ifElse,
@@ -41,6 +41,7 @@ export {
   node,
   edge,
 } from './helpers';
+export type { ManualTriggerInputDef } from './helpers';
 export type { ToolInstance } from './helpers';
 
 // ─── Executor ─────────────────────────────────────────────────────────────────
@@ -54,7 +55,7 @@ export type { FetchPromptClientOptions } from './fetch-prompt';
 
 // ─── Node-type aliases (core.X ⇄ primitives.X) ────────────────────────────────
 export {
-  INPUT_TYPES,
+  TRIGGER_MANUAL_TYPES,
   OUTPUT_TYPES,
   MODEL_TYPES,
   JAVASCRIPT_TYPES,
@@ -62,7 +63,7 @@ export {
   SWITCH_TYPES,
   AGENT_TYPES,
   ALL_PRIMITIVE_TYPES,
-  isInputType,
+  isTriggerManualType,
   isOutputType,
   isModelType,
   isJavascriptType,

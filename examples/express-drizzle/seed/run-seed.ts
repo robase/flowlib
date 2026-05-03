@@ -36,7 +36,7 @@ function buildComplexBranchingFlow(isAdult: boolean): FlowlibDefinition {
     nodes: [
       {
         id: 'input-user',
-        type: 'core.input',
+        type: 'trigger.manual',
         label: 'User Data',
         referenceId: 'user_data',
         params: {
@@ -122,7 +122,7 @@ function buildSimpleTemplateFlow(): FlowlibDefinition {
     nodes: [
       {
         id: 'input-topic',
-        type: 'core.input',
+        type: 'trigger.manual',
         label: 'Topic Input',
         referenceId: 'topic',
         params: {
@@ -171,7 +171,7 @@ function buildJqTransformFlow(): FlowlibDefinition {
     nodes: [
       {
         id: 'input-data',
-        type: 'core.input',
+        type: 'trigger.manual',
         label: 'User List',
         referenceId: 'data',
         params: {
@@ -276,7 +276,7 @@ function buildComprehensiveOrderFlow(): FlowlibDefinition {
       // ============ INPUTS ============
       {
         id: 'input-order',
-        type: 'core.input',
+        type: 'trigger.manual',
         label: 'Order Data',
         referenceId: 'order',
         params: {
@@ -287,7 +287,7 @@ function buildComprehensiveOrderFlow(): FlowlibDefinition {
       },
       {
         id: 'input-customer',
-        type: 'core.input',
+        type: 'trigger.manual',
         label: 'Customer Data',
         referenceId: 'customer',
         params: {
@@ -517,7 +517,7 @@ function buildAiChatFlow(): FlowlibDefinition {
     nodes: [
       {
         id: 'input-topic',
-        type: 'core.input',
+        type: 'trigger.manual',
         label: 'Topic',
         referenceId: 'topic',
         params: {
@@ -617,7 +617,7 @@ function buildComprehensiveMultiStageFlow(
       // STAGE 1: Input Collection
       {
         id: 'input-request',
-        type: 'core.input',
+        type: 'trigger.manual',
         label: 'User Request',
         referenceId: 'user_request',
         params: {
@@ -947,7 +947,7 @@ function buildOperationsEscalationFlow(): FlowlibDefinition {
     nodes: [
       {
         id: 'input-incident',
-        type: 'core.input',
+        type: 'trigger.manual',
         label: 'Incident Payload',
         referenceId: 'incident',
         params: {
@@ -958,7 +958,7 @@ function buildOperationsEscalationFlow(): FlowlibDefinition {
       },
       {
         id: 'input-account',
-        type: 'core.input',
+        type: 'trigger.manual',
         label: 'Account Context',
         referenceId: 'account',
         params: {
@@ -1286,7 +1286,7 @@ function buildArchitectureStylesFlow(credentialId: string): FlowlibDefinition {
       // ============ STAGE 1: INPUT ============
       {
         id: 'input-drawings',
-        type: 'core.input',
+        type: 'trigger.manual',
         label: 'Architecture Drawings Collection',
         referenceId: 'drawings_input',
         params: {
@@ -1844,7 +1844,7 @@ function buildAgentGmailFlow(aiCredentialId: string): FlowlibDefinition {
       // Input: The user's question about their emails
       {
         id: 'input-question',
-        type: 'core.input',
+        type: 'trigger.manual',
         label: 'User Question',
         referenceId: 'user_question',
         params: {

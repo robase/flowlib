@@ -179,7 +179,7 @@ describe('VcSyncService', () => {
               nodes: [
                 {
                   id: 'node-x',
-                  type: 'core.input',
+                  type: 'trigger.manual',
                   referenceId: 'x',
                   position: { x: 0, y: 0 },
                   params: {},
@@ -249,7 +249,7 @@ describe('VcSyncService', () => {
               nodes: [
                 {
                   id: 'node-x',
-                  type: 'core.input',
+                  type: 'trigger.manual',
                   referenceId: 'x',
                   position: { x: 0, y: 0 },
                   params: {},

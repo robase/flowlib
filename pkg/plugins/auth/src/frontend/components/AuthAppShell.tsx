@@ -10,6 +10,7 @@
 
 import type { ReactNode } from 'react';
 import { useLocation } from 'react-router';
+import { FlowlibLoader } from '@flowlib/ui';
 import { AuthProvider, useAuth } from '../providers/AuthProvider';
 import { useAuthPublicConfig } from '../hooks';
 import { AuthGate } from './AuthGate';
@@ -117,7 +118,7 @@ function UnauthenticatedRoutes({
 function LoadingSpinner() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background">
-      <div className="h-8 w-8 animate-spin rounded-full border-4 border-muted border-t-primary" />
+      <FlowlibLoader label="" iconClassName="h-16" />
     </div>
   );
 }

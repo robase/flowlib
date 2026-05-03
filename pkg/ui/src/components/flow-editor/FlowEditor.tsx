@@ -34,7 +34,7 @@ import { useFlowActions } from '../../routes/flow-route-layout';
 import { useUIStore } from '~/stores/uiStore';
 import { useTheme } from '~/contexts/ThemeProvider';
 import { AgentToolCallbacksProvider } from '~/contexts/AgentToolCallbacksContext';
-import { FlowlibLoader } from '../shared/FlowlibLoader';
+import { Skeleton } from '../ui/skeleton';
 import { useCopyPaste } from './use-copy-paste';
 import { useKeyboardShortcuts } from './use-keyboard-shortcuts';
 import { FlowCommandPalette } from './FlowCommandPalette';
@@ -103,7 +103,54 @@ export function FlowEditor({ flowId, flowVersion, basePath = '' }: FlowEditorPro
   const [rightPanelElement, setRightPanelElement] = useState<React.ReactNode>(null);
 
   if (loading) {
-    return <FlowlibLoader className="w-full h-full" iconClassName="h-16" label="Loading flow..." />;
+    return (
+      <div className="flex w-full h-full min-h-0">
+        {/* Sidebar skeleton */}
+        <div className="flex flex-col w-96 border-r border-border bg-fl-background">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+            <Skeleton className="h-4 w-12" />
+            <Skeleton className="h-7 w-7" />
+          </div>
+          <div className="px-4 pt-3 pb-2 border-b border-border">
+            <Skeleton className="h-8 w-full" />
+          </div>
+          <div className="flex-1 p-3 space-y-4">
+            {Array.from({ length: 3 }).map((_, groupIdx) => (
+              <div key={groupIdx} className="space-y-2">
+                <Skeleton className="h-3 w-24 mb-2" />
+                {Array.from({ length: 4 }).map((_, itemIdx) => (
+                  <div key={itemIdx} className="flex items-center gap-2 px-2 py-1.5">
+                    <Skeleton className="h-6 w-6 rounded shrink-0" />
+                    <Skeleton className="h-3 flex-1 max-w-40" />
+                  </div>
+                ))}
+              </div>
+            ))}
+          </div>
+        </div>
+        {/* Canvas skeleton */}
+        <div className="flex-1 relative bg-background">
+          <div className="absolute top-4 left-4 flex items-center gap-2">
+            <Skeleton className="h-8 w-24" />
+            <Skeleton className="h-8 w-32" />
+          </div>
+          <div className="absolute top-4 right-4 flex items-center gap-2">
+            <Skeleton className="h-8 w-20" />
+            <Skeleton className="h-8 w-8" />
+          </div>
+          {/* Faux node placeholders */}
+          <div className="absolute left-1/4 top-1/3">
+            <Skeleton className="h-20 w-48 rounded-lg" />
+          </div>
+          <div className="absolute left-1/2 top-1/2">
+            <Skeleton className="h-20 w-48 rounded-lg" />
+          </div>
+          <div className="absolute right-1/4 bottom-1/3">
+            <Skeleton className="h-20 w-48 rounded-lg" />
+          </div>
+        </div>
+      </div>
+    );
   }
 
   if (queryError) {

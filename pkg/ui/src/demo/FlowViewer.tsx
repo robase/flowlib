@@ -14,8 +14,8 @@
  *
  * <FlowViewer
  *   nodes={[
- *     { id: '1', type: 'core.input', position: { x: 0, y: 0 },
- *       data: { id: '1', type: 'core.input', display_name: 'Input', reference_id: 'input', status: 'default', params: {} } },
+ *     { id: '1', type: 'trigger.manual', position: { x: 0, y: 0 },
+ *       data: { id: '1', type: 'trigger.manual', display_name: 'Input', reference_id: 'input', status: 'default', params: {} } },
  *     { id: '2', type: 'core.model', position: { x: 300, y: 0 },
  *       data: { id: '2', type: 'core.model', display_name: 'GPT-4', reference_id: 'gpt4', status: 'default', params: {} } },
  *   ]}

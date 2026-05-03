@@ -36,7 +36,7 @@ function edgeId(): string {
 
 const TEMPLATES: Record<string, Template> = {
   blank: {
-    label: 'Blank — input → output',
+    label: 'Blank — manual trigger → output',
     description: 'Two-node skeleton you can build on',
     build: (name) => {
       const inId = nodeId();
@@ -45,16 +45,16 @@ const TEMPLATES: Record<string, Template> = {
         nodes: [
           {
             id: inId,
-            type: 'core.input',
-            referenceId: 'payload',
-            params: {},
+            type: 'trigger.manual',
+            referenceId: 'start',
+            params: { inputs: [{ name: 'payload', type: 'string' }] },
             position: { x: 0, y: 0 },
           },
           {
             id: outId,
             type: 'core.output',
             referenceId: 'result',
-            params: { value: 'ctx.payload' },
+            params: { value: 'ctx.start.payload' },
             position: { x: 280, y: 0 },
           },
         ],
@@ -74,9 +74,9 @@ const TEMPLATES: Record<string, Template> = {
         nodes: [
           {
             id: inId,
-            type: 'core.input',
-            referenceId: 'task',
-            params: {},
+            type: 'trigger.manual',
+            referenceId: 'start',
+            params: { inputs: [{ name: 'task', type: 'string' }] },
             position: { x: 0, y: 0 },
           },
           {
@@ -86,7 +86,7 @@ const TEMPLATES: Record<string, Template> = {
             params: {
               credentialId: 'TODO_FILL_IN',
               model: 'claude-sonnet-4-0',
-              taskPrompt: 'ctx.task',
+              taskPrompt: 'ctx.start.task',
               enabledTools: ['gmail.send_message'],
               maxIterations: 5,
               stopCondition: 'tool_result',
@@ -110,7 +110,7 @@ const TEMPLATES: Record<string, Template> = {
     },
   },
   branch: {
-    label: 'Branch — input → if/else → outputs',
+    label: 'Branch — manual trigger → if/else → outputs',
     description: 'Conditional routing example',
     build: (name) => {
       const inId = nodeId();
@@ -121,30 +121,30 @@ const TEMPLATES: Record<string, Template> = {
         nodes: [
           {
             id: inId,
-            type: 'core.input',
-            referenceId: 'event',
-            params: {},
+            type: 'trigger.manual',
+            referenceId: 'start',
+            params: { inputs: [{ name: 'event', type: 'json' }] },
             position: { x: 0, y: 0 },
           },
           {
             id: ifId,
             type: 'core.if_else',
             referenceId: 'check',
-            params: { condition: "ctx.event.priority === 'high'" },
+            params: { condition: "ctx.start.event.priority === 'high'" },
             position: { x: 280, y: 0 },
           },
           {
             id: alertId,
             type: 'core.output',
             referenceId: 'alert',
-            params: { value: "'High priority: ' + ctx.event.id" },
+            params: { value: "'High priority: ' + ctx.start.event.id" },
             position: { x: 560, y: -100 },
           },
           {
             id: logId,
             type: 'core.output',
             referenceId: 'log',
-            params: { value: "'Logged: ' + ctx.event.id" },
+            params: { value: "'Logged: ' + ctx.start.event.id" },
             position: { x: 560, y: 100 },
           },
         ],

@@ -18,7 +18,10 @@ import {
   ChevronDown,
   ChevronsUpDown,
   Check,
+  Info,
 } from 'lucide-react';
+import { InlineEdit } from '../../inline-edit';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../../../ui/tooltip';
 import { ProviderIcon } from '../../../shared/ProviderIcon';
 import { ToolParamField, type AddCredentialRequest } from '../../../nodes/ToolParamField';
 import { CreateCredentialModal } from '../../../credentials/CreateCredentialModal';
@@ -342,7 +345,7 @@ export const AgentToolsPanel = memo(function AgentToolsPanel({
 
       {/* ── Detail Area ─────────────────────────────────────── */}
       <ScrollArea className="flex-1 min-h-0">
-        <div className="p-3">
+        <div className="fl-node-config-form p-3">
           {activeView === 'discovery' ? (
             <ToolDiscoveryView
               searchQuery={searchQuery}
@@ -712,9 +715,9 @@ function ToolInstanceView({
   return (
     <div className="space-y-4">
       {/* Header */}
-      <div className="flex items-start justify-between">
+      <div className="flex items-start justify-between gap-2">
         <div className="space-y-1 min-w-0 flex-1">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 min-w-0">
             {tool?.provider?.id && (
               <ProviderIcon
                 providerId={tool.provider.id}
@@ -723,7 +726,14 @@ function ToolInstanceView({
                 className="w-4 h-4 text-muted-foreground shrink-0"
               />
             )}
-            <span className="text-sm font-semibold truncate">{instance.name}</span>
+            <InlineEdit
+              value={instance.name}
+              onChange={(name) => onUpdate(instance.instanceId, { name })}
+              placeholder="Tool name"
+              className="min-w-0 flex-1"
+              displayClassName="text-sm font-semibold truncate"
+              inputClassName="text-sm font-semibold h-7 py-0.5 px-1"
+            />
           </div>
           <p className="text-[10px] text-muted-foreground font-mono">
             {tool?.id ?? instance.toolId}
@@ -740,31 +750,36 @@ function ToolInstanceView({
         </Button>
       </div>
 
-      {/* Instance name & description */}
-      <div className="space-y-3">
-        <div className="space-y-1.5">
+      {/* Tool description */}
+      <div className="space-y-1.5">
+        <div className="flex items-center gap-1.5">
           <label className="text-[10px] font-semibold tracking-wider uppercase text-muted-foreground">
-            Instance Name
+            Tool Description
           </label>
-          <input
-            type="text"
-            value={instance.name}
-            onChange={(e) => onUpdate(instance.instanceId, { name: e.target.value })}
-            className="h-7 w-full rounded-md border border-border bg-transparent px-2 text-xs outline-none placeholder:text-muted-foreground focus:border-primary/50"
-          />
+          <TooltipProvider delayDuration={200}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  type="button"
+                  className="text-muted-foreground hover:text-foreground transition-colors"
+                  aria-label="What is the tool description?"
+                >
+                  <Info className="w-3 h-3" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="right" className="max-w-xs">
+                What the agent reads to decide whether to call this tool. Write it like an
+                instruction: when to use it and what it does.
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </div>
-
-        <div className="space-y-1.5">
-          <label className="text-[10px] font-semibold tracking-wider uppercase text-muted-foreground">
-            Instance Description
-          </label>
-          <textarea
-            value={instance.description}
-            onChange={(e) => onUpdate(instance.instanceId, { description: e.target.value })}
-            rows={2}
-            className="w-full rounded-md border border-border bg-transparent px-2 py-1.5 text-xs outline-none placeholder:text-muted-foreground focus:border-primary/50 resize-none"
-          />
-        </div>
+        <textarea
+          value={instance.description}
+          onChange={(e) => onUpdate(instance.instanceId, { description: e.target.value })}
+          rows={8}
+          className="w-full rounded-md border border-border bg-transparent px-2 py-1.5 text-xs outline-none placeholder:text-muted-foreground focus:border-primary/50 resize-y"
+        />
       </div>
 
       {/* Parameters */}
@@ -816,17 +831,36 @@ function ToolInstanceView({
         </div>
       )}
 
-      {/* Effective Schema */}
+      {/* Tool Schema */}
       {tool?.inputSchema && (
         <Collapsible open={showSchema} onOpenChange={setShowSchema}>
-          <CollapsibleTrigger className="flex items-center gap-1.5 text-[10px] font-semibold tracking-wider uppercase text-muted-foreground hover:text-foreground transition-colors">
-            {showSchema ? (
-              <ChevronDown className="w-3 h-3" />
-            ) : (
-              <ChevronRight className="w-3 h-3" />
-            )}
-            Effective Schema
-          </CollapsibleTrigger>
+          <div className="flex items-center gap-1.5">
+            <CollapsibleTrigger className="flex items-center gap-1.5 text-[10px] font-semibold tracking-wider uppercase text-muted-foreground hover:text-foreground transition-colors">
+              {showSchema ? (
+                <ChevronDown className="w-3 h-3" />
+              ) : (
+                <ChevronRight className="w-3 h-3" />
+              )}
+              Tool Schema
+            </CollapsibleTrigger>
+            <TooltipProvider delayDuration={200}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    className="text-muted-foreground hover:text-foreground transition-colors"
+                    aria-label="What is the tool schema?"
+                  >
+                    <Info className="w-3 h-3" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent side="right" className="max-w-xs">
+                  The exact JSON shape the agent will produce when calling this tool. Fields you
+                  pinned to a static value are removed; the rest are filled in by the agent.
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
           <CollapsibleContent className="mt-2">
             <pre className="p-2.5 rounded-md bg-muted/50 border border-border text-[10px] font-mono text-muted-foreground overflow-auto max-h-48">
               {JSON.stringify(effectiveInputSchema, null, 2)}

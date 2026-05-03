@@ -9,9 +9,9 @@ import { ProviderIcon } from '../shared/ProviderIcon';
 import { useFlowEditorStore } from './flow-editor.store';
 import { useUIStore } from '../../stores/uiStore';
 import { ActionsSidebar } from './ActionsSidebar';
-import { Search, Plus, X, ChevronRight, PanelLeftClose } from 'lucide-react';
+import { Search, Plus, X, ChevronRight, PanelLeftClose, ArrowLeft } from 'lucide-react';
 import { cn } from '../../lib/utils';
-import { FlowlibLoader } from '../shared/FlowlibLoader';
+import { Skeleton } from '../ui/skeleton';
 
 // ─── Types ─────────────────────────────────────────────────────────
 
@@ -167,8 +167,30 @@ function NodesSidebar({
 
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center border-r w-96 border-border bg-fl-background text-card-foreground">
-        <FlowlibLoader iconClassName="h-14" label="Loading nodes..." />
+      <div className="flex flex-col min-h-0 overflow-hidden border-r w-96 border-border bg-fl-background text-card-foreground">
+        {/* Header */}
+        <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+          <Skeleton className="h-4 w-12" />
+          <Skeleton className="h-7 w-7" />
+        </div>
+        {/* Search */}
+        <div className="px-4 pt-3 pb-2 border-b border-border">
+          <Skeleton className="h-8 w-full" />
+        </div>
+        {/* Provider groups */}
+        <div className="flex-1 p-3 space-y-4">
+          {Array.from({ length: 3 }).map((_, groupIdx) => (
+            <div key={groupIdx} className="space-y-2">
+              <Skeleton className="h-3 w-24 mb-2" />
+              {Array.from({ length: 4 }).map((_, itemIdx) => (
+                <div key={itemIdx} className="flex items-center gap-2 px-2 py-1.5">
+                  <Skeleton className="h-6 w-6 rounded shrink-0" />
+                  <Skeleton className="h-3 flex-1 max-w-40" />
+                </div>
+              ))}
+            </div>
+          ))}
+        </div>
       </div>
     );
   }
@@ -186,13 +208,13 @@ function NodesSidebar({
             onClick={onCollapse}
             title="Collapse sidebar"
           >
-            <PanelLeftClose className="w-4 h-4" />
+            <ArrowLeft className="w-4 h-4" />
           </Button>
         )}
       </div>
 
       {/* Search & Filters */}
-      <div className="px-4 pt-3 pb-2 space-y-2 border-b border-border">
+      <div className="px-3 pt-3 pb-2 space-y-2">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 pointer-events-none text-muted-foreground" />
           <input
@@ -259,10 +281,6 @@ function NodesSidebar({
           )}
         </div>
       </ScrollArea>
-
-      <div className="px-4 py-2 text-xs border-t border-border text-muted-foreground">
-        {totalFiltered} of {totalVisible} nodes
-      </div>
     </div>
   );
 }
@@ -294,7 +312,7 @@ function NodeCard({
   return (
     <div
       className={cn(
-        'relative flex items-center gap-2.5 p-2.5 transition-all border rounded-lg group border-border',
+        'relative flex items-center gap-2.5 p-2.5 transition-all border rounded-lg group border-border bg-fl-card',
         isAtLimit
           ? 'opacity-50 cursor-not-allowed'
           : 'cursor-pointer hover:border-muted-foreground/50 hover:bg-muted/50',

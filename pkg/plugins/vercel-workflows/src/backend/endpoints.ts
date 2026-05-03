@@ -292,12 +292,11 @@ export function buildBackendPlugin(options: VercelWorkflowsBackendOptions = {}):
           status: 200,
           body: {
             nativeSupport: [
-              'core.input',
+              'trigger.manual',
               'core.output',
               'core.javascript',
               'core.if_else',
               'core.switch',
-              'primitives.input',
               'primitives.output',
               'primitives.javascript',
               'primitives.if_else',

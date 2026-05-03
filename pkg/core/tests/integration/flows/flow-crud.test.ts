@@ -71,10 +71,10 @@ describe('Flow CRUD', () => {
           nodes: [
             {
               id: 'input-1',
-              type: 'core.input',
+              type: 'trigger.manual',
               label: 'Input',
               referenceId: 'data',
-              params: { variableName: 'x', defaultValue: '42' },
+              params: { inputs: [{ name: 'x', type: 'json', defaultValue: '42' }] },
               position: { x: 0, y: 0 },
             },
           ],
@@ -95,10 +95,10 @@ describe('Flow CRUD', () => {
           nodes: [
             {
               id: 'n1',
-              type: 'core.input',
+              type: 'trigger.manual',
               label: 'V1',
               referenceId: 'v1',
-              params: { variableName: 'x', defaultValue: '1' },
+              params: { inputs: [{ name: 'x', type: 'json', defaultValue: '1' }] },
               position: { x: 0, y: 0 },
             },
           ],
@@ -111,10 +111,10 @@ describe('Flow CRUD', () => {
           nodes: [
             {
               id: 'n2',
-              type: 'core.input',
+              type: 'trigger.manual',
               label: 'V2',
               referenceId: 'v2',
-              params: { variableName: 'x', defaultValue: '2' },
+              params: { inputs: [{ name: 'x', type: 'json', defaultValue: '2' }] },
               position: { x: 0, y: 0 },
             },
           ],

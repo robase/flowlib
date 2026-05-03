@@ -162,7 +162,7 @@ export async function runApiContract(request: APIRequestContext, apiBase: string
 
 /**
  * Build the smallest valid FlowlibDefinition we can run end-to-end:
- * one input → one output. Uses the canonical action IDs ("core.input",
+ * one input → one output. Uses the canonical action IDs ("trigger.manual",
  * "core.output") so it works against any backend that ships the default
  * action catalogue.
  */
@@ -175,7 +175,7 @@ function buildTrivialFlowlibDefinition(): {
     nodes: [
       {
         id: 'node_input',
-        type: 'core.input',
+        type: 'trigger.manual',
         referenceId: 'event',
         label: 'Input',
         params: { variableName: 'hello', defaultValue: 'world' },
@@ -345,7 +345,7 @@ async function runEphemeralAndStreamContract(
         nodes: [
           {
             id: 'a',
-            type: 'core.input',
+            type: 'trigger.manual',
             referenceId: 'a',
             label: 'A',
             params: {},

@@ -26,7 +26,7 @@ export const SEED_FLOWS = {
       nodes: [
         {
           id: 'n1',
-          type: 'core.input',
+          type: 'trigger.manual',
           label: 'User Data',
           referenceId: 'user_data',
           params: {
@@ -69,7 +69,7 @@ export const SEED_FLOWS = {
       nodes: [
         {
           id: 'n1',
-          type: 'core.input',
+          type: 'trigger.manual',
           label: 'Question',
           referenceId: 'question',
           params: { variableName: 'query', defaultValue: 'What is workflow orchestration?' },
@@ -117,7 +117,7 @@ export const SEED_FLOWS = {
       nodes: [
         {
           id: 'n1',
-          type: 'core.input',
+          type: 'trigger.manual',
           label: 'Topic',
           referenceId: 'topic',
           params: { variableName: 'subject', defaultValue: 'artificial intelligence' },
@@ -159,7 +159,7 @@ export const SEED_FLOWS = {
       nodes: [
         {
           id: 'n1',
-          type: 'core.input',
+          type: 'trigger.manual',
           label: 'Task',
           referenceId: 'task',
           params: {

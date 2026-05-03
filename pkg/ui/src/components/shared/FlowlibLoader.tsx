@@ -3,7 +3,8 @@
 import { memo } from 'react';
 import { cn } from '../../lib/utils';
 import { useOptionalTheme } from '../../contexts/ThemeProvider';
-import { FLOWLIB_LOADER_DARK_SVG, FLOWLIB_LOADER_LIGHT_SVG } from '../../assets/flowlib-branding';
+import smallLoaderDark from '../../assets/small-loader-dark.svg?raw';
+import smallLoaderLight from '../../assets/small-loader-light.svg?raw';
 
 export interface FlowlibLoaderProps {
   className?: string;
@@ -15,14 +16,14 @@ export interface FlowlibLoaderProps {
 
 function resolveLoaderMarkup(variant: 'theme' | 'dark' | 'light', resolvedTheme: 'dark' | 'light') {
   if (variant === 'dark') {
-    return FLOWLIB_LOADER_DARK_SVG;
+    return smallLoaderDark;
   }
 
   if (variant === 'light') {
-    return FLOWLIB_LOADER_LIGHT_SVG;
+    return smallLoaderLight;
   }
 
-  return resolvedTheme === 'dark' ? FLOWLIB_LOADER_DARK_SVG : FLOWLIB_LOADER_LIGHT_SVG;
+  return resolvedTheme === 'dark' ? smallLoaderDark : smallLoaderLight;
 }
 
 export const FlowlibLoader = memo(function FlowlibLoader({

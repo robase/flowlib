@@ -51,13 +51,10 @@ describe('Branching Flows', () => {
       nodes: [
         {
           id: 'input-1',
-          type: 'core.input',
+          type: 'trigger.manual',
           label: 'Input',
           referenceId: 'data',
-          params: {
-            variableName: 'data',
-            defaultValue: JSON.stringify({ value }),
-          },
+          params: { inputs: [{ name: 'data', type: 'json', defaultValue: { value } }] },
           position: { x: 0, y: 0 },
         },
         {
@@ -130,13 +127,10 @@ describe('Branching Flows', () => {
       nodes: [
         {
           id: 'input-1',
-          type: 'core.input',
+          type: 'trigger.manual',
           label: 'Flags',
           referenceId: 'flags',
-          params: {
-            variableName: 'flags',
-            defaultValue: JSON.stringify({ isEnabled: true }),
-          },
+          params: { inputs: [{ name: 'flags', type: 'json', defaultValue: { isEnabled: true } }] },
           position: { x: 0, y: 0 },
         },
         {
@@ -184,12 +178,11 @@ describe('Branching Flows', () => {
       nodes: [
         {
           id: 'input-1',
-          type: 'core.input',
+          type: 'trigger.manual',
           label: 'User',
           referenceId: 'user',
           params: {
-            variableName: 'user',
-            defaultValue: JSON.stringify({ name: 'Alice', age: 21 }),
+            inputs: [{ name: 'user', type: 'json', defaultValue: { name: 'Alice', age: 21 } }],
           },
           position: { x: 0, y: 0 },
         },
@@ -236,13 +229,10 @@ describe('Branching Flows', () => {
       nodes: [
         {
           id: 'input-1',
-          type: 'core.input',
+          type: 'trigger.manual',
           label: 'Input',
           referenceId: 'data',
-          params: {
-            variableName: 'data',
-            defaultValue: JSON.stringify({ priority }),
-          },
+          params: { inputs: [{ name: 'data', type: 'json', defaultValue: { priority } }] },
           position: { x: 0, y: 0 },
         },
         {
@@ -340,13 +330,10 @@ describe('Branching Flows', () => {
       nodes: [
         {
           id: 'input-1',
-          type: 'core.input',
+          type: 'trigger.manual',
           label: 'Input',
           referenceId: 'data',
-          params: {
-            variableName: 'data',
-            defaultValue: JSON.stringify({ value: 'A' }),
-          },
+          params: { inputs: [{ name: 'data', type: 'json', defaultValue: { value: 'A' } }] },
           position: { x: 0, y: 0 },
         },
         {
@@ -391,13 +378,10 @@ describe('Branching Flows', () => {
       nodes: [
         {
           id: 'input-1',
-          type: 'core.input',
+          type: 'trigger.manual',
           label: 'Input',
           referenceId: 'data',
-          params: {
-            variableName: 'data',
-            defaultValue: JSON.stringify({ score: 85 }),
-          },
+          params: { inputs: [{ name: 'data', type: 'json', defaultValue: { score: 85 } }] },
           position: { x: 0, y: 0 },
         },
         {

@@ -30,7 +30,7 @@ import { useOAuth2Providers } from '../../api/credentials.api';
 import { buildOAuthCallbackUri, useFrontendPath } from '../../contexts/FrontendPathContext';
 import { OAuth2ConnectButton } from './OAuth2ConnectButton';
 import type { OAuth2ProviderDefinition, Credential } from '../../api/types';
-import { FlowlibLoader } from '../shared/FlowlibLoader';
+import { Skeleton } from '../ui/skeleton';
 
 // Icon mapping for providers
 const providerIcons: Record<string, React.ElementType> = {
@@ -181,8 +181,34 @@ export function OAuth2ProviderSelector({
         </DialogHeader>
 
         {isLoading ? (
-          <div className="flex items-center justify-center py-8">
-            <FlowlibLoader iconClassName="h-14" label="Loading providers..." />
+          <div className="flex flex-col flex-1 min-h-0">
+            {/* Search bar skeleton */}
+            <div className="px-6 pt-2 pb-3">
+              <Skeleton className="h-8 w-full" />
+            </div>
+            {/* Categorized provider list skeleton */}
+            <div className="flex-1 px-6 space-y-4 pb-4">
+              {Array.from({ length: 2 }).map((_, groupIdx) => (
+                <div key={groupIdx}>
+                  <Skeleton className="h-3 w-20 mb-2" />
+                  <div className="space-y-2">
+                    {Array.from({ length: 3 }).map((_, itemIdx) => (
+                      <div
+                        key={itemIdx}
+                        className="flex items-center w-full gap-3 p-3 border rounded-lg"
+                      >
+                        <Skeleton className="h-9 w-9 rounded-lg shrink-0" />
+                        <div className="flex-1 min-w-0 space-y-1.5">
+                          <Skeleton className="h-3.5 w-28" />
+                          <Skeleton className="h-3 w-48" />
+                        </div>
+                        <Skeleton className="h-5 w-20 rounded-full shrink-0" />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         ) : selectedProvider ? (
           // Configuration form for selected provider

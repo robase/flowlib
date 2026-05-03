@@ -50,14 +50,19 @@ describe('Template Resolution', () => {
       nodes: [
         {
           id: 'input-1',
-          type: 'core.input',
+          type: 'trigger.manual',
           label: 'User',
           referenceId: 'user',
           params: {
-            variableName: 'user',
-            defaultValue: JSON.stringify({
-              profile: { firstName: 'Jane', lastName: 'Doe' },
-            }),
+            inputs: [
+              {
+                name: 'user',
+                type: 'json',
+                defaultValue: {
+                  profile: { firstName: 'Jane', lastName: 'Doe' },
+                },
+              },
+            ],
           },
           position: { x: 0, y: 0 },
         },
@@ -84,24 +89,18 @@ describe('Template Resolution', () => {
       nodes: [
         {
           id: 'input-first',
-          type: 'core.input',
+          type: 'trigger.manual',
           label: 'First',
           referenceId: 'first',
-          params: {
-            variableName: 'first',
-            defaultValue: JSON.stringify({ value: 'Hello' }),
-          },
+          params: { inputs: [{ name: 'first', type: 'json', defaultValue: { value: 'Hello' } }] },
           position: { x: 0, y: 0 },
         },
         {
           id: 'input-second',
-          type: 'core.input',
+          type: 'trigger.manual',
           label: 'Second',
           referenceId: 'second',
-          params: {
-            variableName: 'second',
-            defaultValue: JSON.stringify({ value: 'World' }),
-          },
+          params: { inputs: [{ name: 'second', type: 'json', defaultValue: { value: 'World' } }] },
           position: { x: 0, y: 200 },
         },
         {
@@ -130,12 +129,13 @@ describe('Template Resolution', () => {
       nodes: [
         {
           id: 'input-1',
-          type: 'core.input',
+          type: 'trigger.manual',
           label: 'Data',
           referenceId: 'data',
           params: {
-            variableName: 'data',
-            defaultValue: JSON.stringify({ items: ['a', 'b', 'c'], count: 3 }),
+            inputs: [
+              { name: 'data', type: 'json', defaultValue: { items: ['a', 'b', 'c'], count: 3 } },
+            ],
           },
           position: { x: 0, y: 0 },
         },

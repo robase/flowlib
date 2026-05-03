@@ -160,7 +160,7 @@ const TWO_NODE_FLOW = {
   nodes: [
     {
       id: 'cp-input',
-      type: 'core.input',
+      type: 'trigger.manual',
       label: 'Data Source',
       referenceId: 'data_source',
       params: { variableName: 'data', defaultValue: '{"x": 1}' },
@@ -183,7 +183,7 @@ const CHAIN_FLOW = {
   nodes: [
     {
       id: 'chain-input',
-      type: 'core.input',
+      type: 'trigger.manual',
       label: 'Source',
       referenceId: 'source',
       params: { variableName: 'source', defaultValue: '{"value": 42}' },
@@ -226,7 +226,7 @@ const BRANCHING_FLOW = {
   nodes: [
     {
       id: 'br-input',
-      type: 'core.input',
+      type: 'trigger.manual',
       label: 'User Info',
       referenceId: 'user_info',
       params: { variableName: 'user_info', defaultValue: JSON.stringify({ age: 25 }) },

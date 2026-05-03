@@ -1,16 +1,18 @@
 import { describe, it, expect } from 'vitest';
-import { createFlowRunner, defineFlow, input, output, ifElse, code } from '../src/index';
+import { createFlowRunner, defineFlow, triggerManual, output, ifElse, code } from '../src/index';
 
 describe('flow executor smoke tests', () => {
-  it('runs a linear input → transform → output flow', async () => {
+  it('runs a linear trigger → transform → output flow', async () => {
     const flow = defineFlow({
       nodes: [
-        input('name'),
-        code('greet', { code: (ctx) => `Hello, ${ctx.name}!` }),
+        triggerManual('start', { inputs: [{ name: 'name', type: 'string' }] }),
+        code('greet', {
+          code: (ctx) => `Hello, ${(ctx.start as { name: string }).name}!`,
+        }),
         output('result', { value: (ctx) => ctx.greet }),
       ],
       edges: [
-        ['name', 'greet'],
+        ['start', 'greet'],
         ['greet', 'result'],
       ],
     });
@@ -25,13 +27,15 @@ describe('flow executor smoke tests', () => {
   it('routes true branch when condition is truthy', async () => {
     const flow = defineFlow({
       nodes: [
-        input('value'),
-        ifElse('check', { condition: (ctx) => (ctx.value as number) > 0 }),
+        triggerManual('start', { inputs: [{ name: 'value', type: 'number' }] }),
+        ifElse('check', {
+          condition: (ctx) => ((ctx.start as { value: number }).value as number) > 0,
+        }),
         output('positive', { value: (ctx) => ctx.check }),
         output('negative', { value: (ctx) => ctx.check }),
       ],
       edges: [
-        ['value', 'check'],
+        ['start', 'check'],
         ['check', 'positive', 'true_output'],
         ['check', 'negative', 'false_output'],
       ],
@@ -41,7 +45,6 @@ describe('flow executor smoke tests', () => {
     const result = await runner.run(flow, { value: 5 });
 
     expect(result.status).toBe('success');
-    // positive output collected, negative was skipped
     expect(result.outputs).toHaveProperty('positive');
     expect(result.outputs).not.toHaveProperty('negative');
   });
@@ -49,13 +52,15 @@ describe('flow executor smoke tests', () => {
   it('routes false branch when condition is falsy', async () => {
     const flow = defineFlow({
       nodes: [
-        input('value'),
-        ifElse('check', { condition: (ctx) => (ctx.value as number) > 0 }),
+        triggerManual('start', { inputs: [{ name: 'value', type: 'number' }] }),
+        ifElse('check', {
+          condition: (ctx) => ((ctx.start as { value: number }).value as number) > 0,
+        }),
         output('positive', { value: (ctx) => ctx.check }),
         output('negative', { value: (ctx) => ctx.check }),
       ],
       edges: [
-        ['value', 'check'],
+        ['start', 'check'],
         ['check', 'positive', 'true_output'],
         ['check', 'negative', 'false_output'],
       ],
@@ -72,7 +77,7 @@ describe('flow executor smoke tests', () => {
   it('validates reserved key "previous_nodes"', () => {
     expect(() =>
       defineFlow({
-        nodes: [input('previous_nodes')],
+        nodes: [triggerManual('previous_nodes')],
         edges: [],
       }),
     ).toThrow('reserved');
@@ -81,7 +86,7 @@ describe('flow executor smoke tests', () => {
   it('validates duplicate referenceIds', () => {
     expect(() =>
       defineFlow({
-        nodes: [input('x'), input('x')],
+        nodes: [output('x', { value: '1' }), output('x', { value: '2' })],
         edges: [],
       }),
     ).toThrow('Duplicate');
@@ -90,7 +95,7 @@ describe('flow executor smoke tests', () => {
   it('validates colon in referenceId', () => {
     expect(() =>
       defineFlow({
-        nodes: [input('bad:id')],
+        nodes: [triggerManual('bad:id')],
         edges: [],
       }),
     ).toThrow('colon');
@@ -99,8 +104,8 @@ describe('flow executor smoke tests', () => {
   it('exposes previous_nodes with all ancestor outputs', async () => {
     const flow = defineFlow({
       nodes: [
-        input('a'),
-        code('b', { code: (ctx) => String(ctx.a) + '_b' }),
+        triggerManual('start', { inputs: [{ name: 'a', type: 'string' }] }),
+        code('b', { code: (ctx) => String((ctx.start as { a: string }).a) + '_b' }),
         code('c', { code: (ctx) => String(ctx.b) + '_c' }),
         output('result', {
           value: (ctx) => ({
@@ -110,7 +115,7 @@ describe('flow executor smoke tests', () => {
         }),
       ],
       edges: [
-        ['a', 'b'],
+        ['start', 'b'],
         ['b', 'c'],
         ['c', 'result'],
       ],
@@ -122,9 +127,8 @@ describe('flow executor smoke tests', () => {
     expect(result.status).toBe('success');
     const resultValue = result.outputs.result as Record<string, unknown>;
     expect(resultValue.direct).toBe('start_b_c');
-    // previous_nodes includes all completed outputs
     const prev = resultValue.previous as Record<string, unknown>;
-    expect(prev.a).toBe('start');
+    expect((prev.start as { a: string }).a).toBe('start');
     expect(prev.b).toBe('start_b');
     expect(prev.c).toBe('start_b_c');
   });
@@ -132,7 +136,7 @@ describe('flow executor smoke tests', () => {
   it('switch routes first matching case', async () => {
     const flow = defineFlow({
       nodes: [
-        input('score'),
+        triggerManual('start', { inputs: [{ name: 'score', type: 'number' }] }),
         {
           referenceId: 'route',
           type: 'primitives.switch',
@@ -141,23 +145,27 @@ describe('flow executor smoke tests', () => {
               {
                 slug: 'high',
                 label: 'High',
-                condition: (ctx: never) => ((ctx as Record<string, unknown>).score as number) >= 90,
+                condition: (ctx: never) =>
+                  (((ctx as Record<string, unknown>).start as { score: number }).score as number) >=
+                  90,
               },
               {
                 slug: 'mid',
                 label: 'Mid',
-                condition: (ctx: never) => ((ctx as Record<string, unknown>).score as number) >= 50,
+                condition: (ctx: never) =>
+                  (((ctx as Record<string, unknown>).start as { score: number }).score as number) >=
+                  50,
               },
             ],
             matchMode: 'first',
           },
         },
-        output('tier_high', { value: (ctx) => 'high' }),
-        output('tier_mid', { value: (ctx) => 'mid' }),
-        output('tier_low', { value: (ctx) => 'low' }),
+        output('tier_high', { value: (_ctx) => 'high' }),
+        output('tier_mid', { value: (_ctx) => 'mid' }),
+        output('tier_low', { value: (_ctx) => 'low' }),
       ],
       edges: [
-        ['score', 'route'],
+        ['start', 'route'],
         ['route', 'tier_high', 'high'],
         ['route', 'tier_mid', 'mid'],
         ['route', 'tier_low', 'default'],
@@ -194,15 +202,18 @@ describe('flow executor smoke tests', () => {
   it('mapper reshapes context before params are resolved', async () => {
     const flow = defineFlow({
       nodes: [
-        input('raw'),
+        triggerManual('start', { inputs: [{ name: 'raw', type: 'string' }] }),
         code('process', {
           code: (ctx) => (ctx.uppercased as string).toUpperCase(),
-          mapper: (ctx) => ({ ...ctx, uppercased: String(ctx.raw) }),
+          mapper: (ctx) => ({
+            ...ctx,
+            uppercased: String((ctx.start as { raw: string }).raw),
+          }),
         }),
         output('result', { value: (ctx) => ctx.process }),
       ],
       edges: [
-        ['raw', 'process'],
+        ['start', 'process'],
         ['process', 'result'],
       ],
     });

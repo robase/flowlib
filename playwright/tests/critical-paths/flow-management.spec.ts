@@ -103,7 +103,7 @@ test.describe('Flow Management', () => {
             nodes: [
               {
                 id: 'node-1',
-                type: 'core.input',
+                type: 'trigger.manual',
                 label: 'User List',
                 referenceId: 'user_list',
                 params: {},
@@ -147,7 +147,7 @@ test.describe('Flow Management', () => {
             nodes: [
               {
                 id: 'node-1',
-                type: 'core.input',
+                type: 'trigger.manual',
                 label: 'Topic Input',
                 referenceId: 'topic_input',
                 params: {},

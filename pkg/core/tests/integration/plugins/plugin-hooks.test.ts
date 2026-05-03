@@ -20,10 +20,10 @@ const simpleFlowDef = {
   nodes: [
     {
       id: 'input-1',
-      type: 'core.input' as const,
+      type: 'trigger.manual' as const,
       label: 'Data',
       referenceId: 'data',
-      params: { variableName: 'x', defaultValue: '"hello"' },
+      params: { inputs: [{ name: 'x', type: 'json', defaultValue: '"hello"' }] },
       position: { x: 0, y: 0 },
     },
   ],
