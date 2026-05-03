@@ -121,7 +121,7 @@ export const flowlibConfig = defineConfig({
       defaultBranch: 'main',
       path: 'flows/',
       mode: 'direct-commit',
-      syncDirection: 'push',
+      syncDirection: 'write',
     }),
     mcp(),
     vercelWorkflowsPlugin({
