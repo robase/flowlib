@@ -1,6 +1,6 @@
 {
   "name": "@flowlib/cloudflare-agents",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Compile Flowlib flows to Cloudflare Agents & Workflows — deploy visual flows as durable, globally-distributed Workers",
   "license": "MIT",
   "author": "robase <team@flowlib.dev>",
