@@ -8,6 +8,7 @@
   "baseBranch": "main",
   "updateInternalDependencies": "patch",
   "ignore": [
+    "@flowlib/docs",
     "flowlib-express-simple",
     "nest-prisma",
     "flowlib-nextjs-example",
