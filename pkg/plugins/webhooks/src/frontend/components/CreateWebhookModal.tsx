@@ -61,7 +61,10 @@ export const CreateWebhookModal: FC<CreateWebhookModalProps> = ({
 
     try {
       const result = await createMutation.mutateAsync(input);
-      setCreatedUrl(result.fullUrl ?? `/plugins/webhooks/receive/${result.webhookPath}`);
+      const url = result.fullUrl ?? `/plugins/webhooks/receive/${result.webhookPath}`;
+      const hasAbsoluteBase = /^https?:\/\//i.test(url);
+      const path = hasAbsoluteBase ? url : url.startsWith('/') ? url : `/${url}`;
+      setCreatedUrl(hasAbsoluteBase ? url : `<YOUR_FLOWLIB_URL>${path}`);
     } catch {
       // Error handled by mutation state
     }
