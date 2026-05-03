@@ -96,6 +96,7 @@ jobs:
         if: steps.changesets.outputs.published == 'true' || steps.manual-publish.outputs.published == 'true'
         env:
           PUBLISHED_PACKAGES: ${{ steps.changesets.outputs.publishedPackages || steps.manual-publish.outputs.publishedPackages }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           echo "$PUBLISHED_PACKAGES" | jq -c '.[]' | while read -r pkg; do
             name=$(echo "$pkg" | jq -r '.name')
@@ -115,5 +116,3 @@ jobs:
               --latest=false \
               2>/dev/null || true
           done
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
