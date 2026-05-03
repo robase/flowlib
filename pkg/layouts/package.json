@@ -1,6 +1,6 @@
 {
   "name": "@flowlib/layouts",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Shared layout utilities for Flowlib graph positioning",
   "keywords": [
     "dagre",

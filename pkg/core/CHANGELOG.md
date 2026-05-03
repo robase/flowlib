@@ -1,5 +1,17 @@
 # @flowlib/core
 
+## 0.0.3
+
+### Patch Changes
+
+- [#7](https://github.com/robase/flowlib/pull/7) [`4dee9d6`](https://github.com/robase/flowlib/commit/4dee9d67222426ee5ce16ab1c8a87f1b33144870) Thanks [@robase](https://github.com/robase)! - fix: ci test ([#7](https://github.com/robase/flowlib/issues/7))
+
+- Updated dependencies []:
+  - @flowlib/action-kit@0.0.3
+  - @flowlib/actions@0.0.3
+  - @flowlib/layouts@0.0.3
+  - @flowlib/sdk@0.0.3
+
 ## 0.0.2
 
 ### Patch Changes
