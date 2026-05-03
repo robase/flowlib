@@ -1,6 +1,6 @@
 {
   "name": "@flowlib/mcp",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "MCP (Model Context Protocol) plugin for Flowlib — exposes flow building, editing, execution, and debugging as MCP tools for Claude Desktop, VS Code Copilot, and other MCP clients",
   "keywords": [
     "ai-agent",

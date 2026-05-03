@@ -1,5 +1,14 @@
 # @flowlib/actions
 
+## 0.0.4
+
+### Patch Changes
+
+- version control overhaul
+
+- Updated dependencies []:
+  - @flowlib/action-kit@0.0.4
+
 ## 0.0.3
 
 ### Patch Changes

@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.0.4
+
+### Patch Changes
+
+- version control overhaul
+
+- Updated dependencies []:
+  - @flowlib/action-kit@0.0.4
+  - @flowlib/core@0.0.4
+  - @flowlib/express@0.0.4
+  - @flowlib/mcp@0.0.4
+  - @flowlib/webhooks@0.0.4
+  - @flowlib/sdk@0.0.4
+  - @flowlib/ui@0.0.4
+
 ## 0.0.3
 
 ### Patch Changes

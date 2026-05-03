@@ -1,6 +1,6 @@
 {
   "name": "flowlib-cli",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "CLI for managing Flowlib workflow projects. Thin wrapper around @flowlib/cli.",
   "keywords": [
     "automation",

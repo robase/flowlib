@@ -1,5 +1,16 @@
 # @flowlib/version-control
 
+## 0.0.4
+
+### Patch Changes
+
+- version control overhaul
+
+- Updated dependencies []:
+  - @flowlib/core@0.0.4
+  - @flowlib/sdk@0.0.4
+  - @flowlib/ui@0.0.4
+
 ## 0.0.3
 
 ### Patch Changes
