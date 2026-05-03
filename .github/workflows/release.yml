@@ -3,6 +3,12 @@ name: Release
 on:
   push:
     branches: [main]
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: 'Reason for manual patch release (optional)'
+        required: false
+        type: string
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -17,6 +23,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
 
       - uses: pnpm/action-setup@v5
       - uses: actions/setup-node@v6
@@ -31,7 +39,47 @@ jobs:
       - name: Build packages
         run: pnpm build
 
+      # ----- Manual dispatch: force patch bump + publish in one step -----
+      - name: Configure git
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Create patch changeset
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          cat > .changeset/manual-patch-release.md <<'EOF'
+          ---
+          '@flowlib/core': patch
+          ---
+
+          ${{ inputs.reason || 'Manual patch release' }}
+          EOF
+
+      - name: Version, commit, and publish
+        if: github.event_name == 'workflow_dispatch'
+        id: manual-publish
+        run: |
+          pnpm version-packages
+          git add -A
+          git commit -m "chore: version packages [skip ci]"
+          git push origin HEAD:${{ github.ref_name }}
+
+          pnpm publish -r --access public --no-git-checks
+
+          PUBLISHED=$(find pkg -name package.json -not -path '*/node_modules/*' \
+            -exec jq -c 'select(.name and (.private != true)) | {name: .name, version: .version}' {} \; \
+            | jq -s -c '.')
+          echo "publishedPackages=$PUBLISHED" >> "$GITHUB_OUTPUT"
+          echo "published=true" >> "$GITHUB_OUTPUT"
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_PUB_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_PUB_TOKEN }}
+
+      # ----- Push: standard changesets PR/publish flow -----
       - name: Create release PR or publish
+        if: github.event_name == 'push'
         id: changesets
         uses: changesets/action@v1
         with:
@@ -45,9 +93,11 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_PUB_TOKEN }}
 
       - name: Create GitHub releases
-        if: steps.changesets.outputs.published == 'true'
+        if: steps.changesets.outputs.published == 'true' || steps.manual-publish.outputs.published == 'true'
+        env:
+          PUBLISHED_PACKAGES: ${{ steps.changesets.outputs.publishedPackages || steps.manual-publish.outputs.publishedPackages }}
         run: |
-          echo '${{ steps.changesets.outputs.publishedPackages }}' | jq -c '.[]' | while read -r pkg; do
+          echo "$PUBLISHED_PACKAGES" | jq -c '.[]' | while read -r pkg; do
             name=$(echo "$pkg" | jq -r '.name')
             version=$(echo "$pkg" | jq -r '.version')
             tag="${name}@${version}"
