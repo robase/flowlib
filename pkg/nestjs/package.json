@@ -1,6 +1,6 @@
 {
   "name": "@flowlib/nestjs",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "private": false,
   "description": "A NestJS module for executing Flowlib workflows with batch processing capabilities",
   "keywords": [
