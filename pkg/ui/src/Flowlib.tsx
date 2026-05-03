@@ -100,9 +100,9 @@ function useHasRouterContext(): boolean {
 const FlowlibAppContent = React.memo(({ basePath }: { basePath?: string }) => (
   <ValidationProvider>
     <NodeRegistryProvider>
-      <div className="imp-shell flex w-full h-screen font-sans antialiased bg-imp-background text-imp-foreground">
+      <div className="fl-shell flex w-full h-screen font-sans antialiased bg-fl-background text-fl-foreground">
         <AppSideMenu basePath={basePath} />
-        <div className="imp-page flex flex-1 h-full min-w-0 min-h-0 bg-imp-background">
+        <div className="fl-page flex flex-1 h-full min-w-0 min-h-0 bg-fl-background">
           <Outlet />
         </div>
       </div>

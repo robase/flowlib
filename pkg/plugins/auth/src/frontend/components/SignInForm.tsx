@@ -11,7 +11,12 @@ import { useState, type FormEvent } from 'react';
 import { Link } from 'react-router';
 import { useAuth } from '../providers/AuthProvider';
 import { useAuthPublicConfig, useSignInEmail } from '../hooks';
-import { AuthCard, ErrorMessage, Field, SubmitButton, TextInput } from './ui/auth-form';
+import { AuthCard, Divider, ErrorMessage, Field, SubmitButton, TextInput } from './ui/auth-form';
+import {
+  SocialAuthButtons,
+  type SocialDisclosure,
+  type SocialProviderConfig,
+} from './ui/SocialAuthButtons';
 
 export interface SignInFormProps {
   /** Called after successful (no-2FA) sign-in */
@@ -21,9 +26,28 @@ export interface SignInFormProps {
    * when the server-side public config reports `signUpEnabled: false`.
    */
   hideSignUp?: boolean;
+  /**
+   * Social providers shown above the email block. Pass `[]` to hide.
+   * @default ['google', 'github']
+   */
+  socialProviders?: ReadonlyArray<SocialProviderConfig>;
+  /** Where to redirect after a successful OAuth round-trip. */
+  socialCallbackURL?: string;
+  /**
+   * How the social block is presented. Sign-in defaults to `collapsed-default`
+   * because most returning users sign in with email + password.
+   * @default 'collapsed-default'
+   */
+  socialDisclosure?: SocialDisclosure;
 }
 
-export function SignInForm({ onSuccess, hideSignUp = false }: SignInFormProps) {
+export function SignInForm({
+  onSuccess,
+  hideSignUp = false,
+  socialProviders = ['google', 'github'],
+  socialCallbackURL,
+  socialDisclosure = 'collapsed-default',
+}: SignInFormProps) {
   const { setTwoFactorRequired } = useAuth();
   const config = useAuthPublicConfig();
   const signUpDisabled = hideSignUp || config.data?.signUpEnabled === false;
@@ -73,48 +97,61 @@ export function SignInForm({ onSuccess, hideSignUp = false }: SignInFormProps) {
         ) : undefined
       }
     >
-      <form onSubmit={handleSubmit} className="flex flex-col gap-5">
-        <Field label="Email" htmlFor="auth-signin-email">
-          <TextInput
-            id="auth-signin-email"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="you@example.com"
-            autoComplete="email"
-            required
-          />
-        </Field>
+      <div className="flex flex-col gap-5">
+        {socialProviders.length > 0 && (
+          <>
+            <SocialAuthButtons
+              providers={socialProviders}
+              callbackURL={socialCallbackURL}
+              disclosure={socialDisclosure}
+            />
+            <Divider>or sign in with email</Divider>
+          </>
+        )}
 
-        <Field
-          label="Password"
-          htmlFor="auth-signin-password"
-          trailing={
-            <Link
-              to="/forgot-password"
-              className="text-xs font-normal text-muted-foreground underline-offset-4 hover:underline"
-            >
-              Forgot password?
-            </Link>
-          }
-        >
-          <TextInput
-            id="auth-signin-password"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="••••••••"
-            autoComplete="current-password"
-            required
-          />
-        </Field>
+        <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+          <Field label="Email" htmlFor="auth-signin-email">
+            <TextInput
+              id="auth-signin-email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="you@example.com"
+              autoComplete="email"
+              required
+            />
+          </Field>
 
-        <ErrorMessage>{localError}</ErrorMessage>
+          <Field
+            label="Password"
+            htmlFor="auth-signin-password"
+            trailing={
+              <Link
+                to="/forgot-password"
+                className="text-xs font-normal text-muted-foreground underline-offset-4 hover:underline"
+              >
+                Forgot password?
+              </Link>
+            }
+          >
+            <TextInput
+              id="auth-signin-password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="••••••••"
+              autoComplete="current-password"
+              required
+            />
+          </Field>
 
-        <SubmitButton loading={signIn.isPending}>
-          {signIn.isPending ? 'Signing in…' : 'Sign in'}
-        </SubmitButton>
-      </form>
+          <ErrorMessage>{localError}</ErrorMessage>
+
+          <SubmitButton loading={signIn.isPending}>
+            {signIn.isPending ? 'Signing in…' : 'Sign in'}
+          </SubmitButton>
+        </form>
+      </div>
     </AuthCard>
   );
 }

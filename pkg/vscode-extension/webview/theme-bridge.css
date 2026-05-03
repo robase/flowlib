@@ -1,11 +1,11 @@
 /**
  * VSCode theme → Flowlib canvas token bridge.
  *
- * The `<FlowCanvas>` reads `--imp-*` tokens for every colored surface. Inside
+ * The `<FlowCanvas>` reads `--fl-*` tokens for every colored surface. Inside
  * a VSCode webview those tokens are unset by default, so the canvas would
  * render unstyled (and look wrong against the surrounding editor chrome).
  *
- * Mapping each `--imp-*` to a `var(--vscode-*)` equivalent makes the canvas
+ * Mapping each `--fl-*` to a `var(--vscode-*)` equivalent makes the canvas
  * inherit the user's chosen VSCode theme — light / dark / high contrast all
  * just work, including when the user switches themes mid-session
  * (`themeChanged` from the host re-renders the React tree which re-applies
@@ -16,30 +16,30 @@
  */
 
 :root {
-  --imp-background: var(--vscode-editor-background);
-  --imp-foreground: var(--vscode-editor-foreground);
+  --fl-background: var(--vscode-editor-background);
+  --fl-foreground: var(--vscode-editor-foreground);
 
-  --imp-muted: var(--vscode-editorWidget-background, var(--vscode-editor-background));
-  --imp-muted-foreground: var(--vscode-descriptionForeground, var(--vscode-editor-foreground));
+  --fl-muted: var(--vscode-editorWidget-background, var(--vscode-editor-background));
+  --fl-muted-foreground: var(--vscode-descriptionForeground, var(--vscode-editor-foreground));
 
-  --imp-border: var(--vscode-panel-border, var(--vscode-editorWidget-border, transparent));
+  --fl-border: var(--vscode-panel-border, var(--vscode-editorWidget-border, transparent));
 
-  --imp-card: var(--vscode-editorWidget-background, var(--vscode-editor-background));
-  --imp-card-foreground: var(--vscode-editor-foreground);
+  --fl-card: var(--vscode-editorWidget-background, var(--vscode-editor-background));
+  --fl-card-foreground: var(--vscode-editor-foreground);
 
-  --imp-primary: var(--vscode-button-background, var(--vscode-textLink-foreground));
-  --imp-primary-foreground: var(--vscode-button-foreground, var(--vscode-editor-background));
+  --fl-primary: var(--vscode-button-background, var(--vscode-textLink-foreground));
+  --fl-primary-foreground: var(--vscode-button-foreground, var(--vscode-editor-background));
 
-  --imp-accent: var(--vscode-list-activeSelectionBackground, var(--vscode-button-background));
-  --imp-accent-foreground: var(
+  --fl-accent: var(--vscode-list-activeSelectionBackground, var(--vscode-button-background));
+  --fl-accent-foreground: var(
     --vscode-list-activeSelectionForeground,
     var(--vscode-button-foreground)
   );
 
-  --imp-destructive: var(--vscode-errorForeground, var(--vscode-editorError-foreground));
-  --imp-destructive-foreground: var(--vscode-editor-background);
+  --fl-destructive: var(--vscode-errorForeground, var(--vscode-editorError-foreground));
+  --fl-destructive-foreground: var(--vscode-editor-background);
 
-  --imp-ring: var(--vscode-focusBorder, var(--vscode-button-background));
+  --fl-ring: var(--vscode-focusBorder, var(--vscode-button-background));
 }
 
 /*
@@ -49,10 +49,10 @@
  * weight and steals horizontal space.
  *
  * `AppSideMenu` renders as `<div class="relative w-16 shrink-0">`
- * containing `.imp-sidebar-shell`. We collapse the wrapper too so the
+ * containing `.fl-sidebar-shell`. We collapse the wrapper too so the
  * `<Outlet />` slot reclaims the full width.
  */
-.imp-shell > div:has(> .imp-sidebar-shell) {
+.fl-shell > div:has(> .fl-sidebar-shell) {
   display: none !important;
 }
 
@@ -101,8 +101,8 @@ body,
  * known-needed scrolls back on. (The sidebar list and the chat log are the
  * two places we've seen this matter.)
  */
-.imp-flow-canvas [data-scroll-region],
-.imp-flow-canvas .overflow-y-auto {
+.fl-flow-canvas [data-scroll-region],
+.fl-flow-canvas .overflow-y-auto {
   overflow-y: auto !important;
   min-height: 0 !important;
 }

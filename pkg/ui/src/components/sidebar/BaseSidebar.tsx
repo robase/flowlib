@@ -47,7 +47,7 @@ export const BaseSidebar: React.FC<BaseSidebarProps> = ({
   return (
     <div
       className={cn(
-        'flex h-full shrink-0 flex-col overflow-hidden bg-imp-background text-card-foreground border-r border-border shadow-[var(--imp-shadow-sidebar)]',
+        'flex h-full shrink-0 flex-col overflow-hidden bg-fl-background text-card-foreground border-r border-border shadow-[var(--fl-shadow-sidebar)]',
         widthClasses[width],
         className,
       )}

@@ -13,7 +13,7 @@ export function FormDialog({
 }) {
   return (
     <Dialog open={open} onOpenChange={(nextOpen) => !nextOpen && onClose()}>
-      <DialogContent className="max-w-md p-4 border-imp-border bg-imp-background text-imp-foreground sm:max-w-md">
+      <DialogContent className="max-w-md p-4 border-fl-border bg-fl-background text-fl-foreground sm:max-w-md">
         <DialogHeader className="mb-1">
           <DialogTitle className="text-sm font-semibold">{title}</DialogTitle>
         </DialogHeader>

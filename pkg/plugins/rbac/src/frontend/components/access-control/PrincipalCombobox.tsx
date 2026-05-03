@@ -75,18 +75,18 @@ export function PrincipalCombobox({
       }}
     >
       <div
-        className="flex min-h-[2.5rem] w-full cursor-text flex-wrap gap-1.5 rounded-md border border-imp-border bg-imp-background px-2 py-1.5 focus-within:border-imp-primary/50"
+        className="flex min-h-[2.5rem] w-full cursor-text flex-wrap gap-1.5 rounded-md border border-fl-border bg-fl-background px-2 py-1.5 focus-within:border-fl-primary/50"
         onClick={() => setOpen(true)}
       >
         {selections.map((sel) => (
           <span
             key={`${sel.type}:${sel.id}`}
-            className="inline-flex items-center gap-1 rounded-md border border-imp-border bg-imp-muted px-2 py-0.5 text-xs font-medium text-imp-foreground"
+            className="inline-flex items-center gap-1 rounded-md border border-fl-border bg-fl-muted px-2 py-0.5 text-xs font-medium text-fl-foreground"
           >
             {sel.type === 'user' ? (
-              <User className="h-3 w-3 shrink-0 text-imp-muted-foreground" />
+              <User className="h-3 w-3 shrink-0 text-fl-muted-foreground" />
             ) : (
-              <Users className="h-3 w-3 shrink-0 text-imp-muted-foreground" />
+              <Users className="h-3 w-3 shrink-0 text-fl-muted-foreground" />
             )}
             <span className="max-w-[140px] truncate">{getLabel(sel)}</span>
             <button
@@ -96,7 +96,7 @@ export function PrincipalCombobox({
                 e.stopPropagation();
                 toggle(sel);
               }}
-              className="ml-0.5 text-imp-muted-foreground hover:text-imp-foreground"
+              className="ml-0.5 text-fl-muted-foreground hover:text-fl-foreground"
             >
               <X className="h-3 w-3" />
             </button>
@@ -110,20 +110,20 @@ export function PrincipalCombobox({
           }}
           onFocus={() => setOpen(true)}
           placeholder={selections.length === 0 ? 'Search users or teams…' : 'Add more…'}
-          className="min-w-[120px] flex-1 bg-transparent text-sm outline-none placeholder:text-imp-muted-foreground"
+          className="min-w-[120px] flex-1 bg-transparent text-sm outline-none placeholder:text-fl-muted-foreground"
         />
       </div>
       {open && (
-        <div className="absolute left-0 z-20 mt-1 w-full overflow-y-auto rounded-md border border-imp-border bg-imp-background shadow-lg top-full max-h-52">
+        <div className="absolute left-0 z-20 mt-1 w-full overflow-y-auto rounded-md border border-fl-border bg-fl-background shadow-lg top-full max-h-52">
           {filteredTeams.length === 0 && filteredUsers.length === 0 ? (
-            <div className="px-3 py-2 text-xs text-imp-muted-foreground">
+            <div className="px-3 py-2 text-xs text-fl-muted-foreground">
               {query ? 'No matches.' : 'No more users or teams to add.'}
             </div>
           ) : (
             <>
               {filteredTeams.length > 0 && (
                 <>
-                  <div className="px-3 py-1 text-[10px] font-medium uppercase tracking-wider text-imp-muted-foreground">
+                  <div className="px-3 py-1 text-[10px] font-medium uppercase tracking-wider text-fl-muted-foreground">
                     Teams
                   </div>
                   {filteredTeams.map((team) => (
@@ -135,9 +135,9 @@ export function PrincipalCombobox({
                         toggle({ type: 'team', id: team.id });
                         setQuery('');
                       }}
-                      className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-imp-muted/50"
+                      className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-fl-muted/50"
                     >
-                      <Users className="h-4 w-4 shrink-0 text-imp-muted-foreground" />
+                      <Users className="h-4 w-4 shrink-0 text-fl-muted-foreground" />
                       <span className="truncate font-medium">{team.name}</span>
                     </button>
                   ))}
@@ -145,7 +145,7 @@ export function PrincipalCombobox({
               )}
               {filteredUsers.length > 0 && (
                 <>
-                  <div className="px-3 py-1 text-[10px] font-medium uppercase tracking-wider text-imp-muted-foreground">
+                  <div className="px-3 py-1 text-[10px] font-medium uppercase tracking-wider text-fl-muted-foreground">
                     Users
                   </div>
                   {filteredUsers.map((user) => (
@@ -157,15 +157,15 @@ export function PrincipalCombobox({
                         toggle({ type: 'user', id: user.id });
                         setQuery('');
                       }}
-                      className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-imp-muted/50"
+                      className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-fl-muted/50"
                     >
-                      <User className="h-4 w-4 shrink-0 text-imp-muted-foreground" />
+                      <User className="h-4 w-4 shrink-0 text-fl-muted-foreground" />
                       <div className="min-w-0 flex-1">
                         <div className="truncate font-medium">
                           {user.name || user.email || user.id}
                         </div>
                         {user.name && user.email && (
-                          <div className="truncate text-xs text-imp-muted-foreground">
+                          <div className="truncate text-xs text-fl-muted-foreground">
                             {user.email}
                           </div>
                         )}

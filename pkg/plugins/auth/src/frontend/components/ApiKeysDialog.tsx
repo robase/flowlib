@@ -159,7 +159,7 @@ export function ApiKeysDialog({ open, onOpenChange, apiBaseUrl }: ApiKeysDialogP
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="max-w-lg border-imp-border bg-imp-background text-imp-foreground sm:max-w-lg">
+      <DialogContent className="max-w-lg border-fl-border bg-fl-background text-fl-foreground sm:max-w-lg">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-sm font-semibold">
             <Key className="h-4 w-4" />
@@ -211,7 +211,7 @@ export function ApiKeysDialog({ open, onOpenChange, apiBaseUrl }: ApiKeysDialogP
             <button
               type="button"
               onClick={() => setShowCreateForm(true)}
-              className="flex items-center gap-1.5 rounded-lg border border-imp-border px-3 py-1.5 text-xs font-medium text-imp-muted-foreground transition-colors hover:border-imp-primary/50 hover:text-imp-foreground"
+              className="flex items-center gap-1.5 rounded-lg border border-fl-border px-3 py-1.5 text-xs font-medium text-fl-muted-foreground transition-colors hover:border-fl-primary/50 hover:text-fl-foreground"
             >
               <Plus className="h-3.5 w-3.5" /> Create API Key
             </button>
@@ -233,14 +233,14 @@ export function ApiKeysDialog({ open, onOpenChange, apiBaseUrl }: ApiKeysDialogP
           {/* API Keys list */}
           <div className="max-h-[300px] space-y-1.5 overflow-y-auto">
             {isLoading && !hasFetched && (
-              <div className="flex items-center justify-center py-8 text-xs text-imp-muted-foreground">
+              <div className="flex items-center justify-center py-8 text-xs text-fl-muted-foreground">
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 Loading…
               </div>
             )}
 
             {hasFetched && apiKeys.length === 0 && (
-              <div className="py-8 text-center text-xs text-imp-muted-foreground">
+              <div className="py-8 text-center text-xs text-fl-muted-foreground">
                 No API keys yet. Create one to get started.
               </div>
             )}
@@ -253,12 +253,12 @@ export function ApiKeysDialog({ open, onOpenChange, apiBaseUrl }: ApiKeysDialogP
                   className={`flex items-center justify-between rounded-lg border px-3 py-2.5 ${
                     expired
                       ? 'border-red-300/50 bg-red-50/50 dark:border-red-800/30 dark:bg-red-950/10'
-                      : 'border-imp-border bg-imp-muted/10'
+                      : 'border-fl-border bg-fl-muted/10'
                   }`}
                 >
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium text-imp-foreground truncate">
+                      <span className="text-sm font-medium text-fl-foreground truncate">
                         {key.name || 'Unnamed key'}
                       </span>
                       {expired && (
@@ -272,7 +272,7 @@ export function ApiKeysDialog({ open, onOpenChange, apiBaseUrl }: ApiKeysDialogP
                         </span>
                       )}
                     </div>
-                    <div className="mt-0.5 flex items-center gap-2 text-[11px] text-imp-muted-foreground">
+                    <div className="mt-0.5 flex items-center gap-2 text-[11px] text-fl-muted-foreground">
                       {key.start && (
                         <span className="font-mono">
                           {key.prefix ? `${key.prefix}_` : ''}
@@ -298,7 +298,7 @@ export function ApiKeysDialog({ open, onOpenChange, apiBaseUrl }: ApiKeysDialogP
                       <button
                         type="button"
                         onClick={() => setPendingDeleteId(null)}
-                        className="rounded-md border border-imp-border px-2 py-1 text-[11px] hover:bg-imp-muted"
+                        className="rounded-md border border-fl-border px-2 py-1 text-[11px] hover:bg-fl-muted"
                       >
                         Cancel
                       </button>
@@ -307,7 +307,7 @@ export function ApiKeysDialog({ open, onOpenChange, apiBaseUrl }: ApiKeysDialogP
                     <button
                       type="button"
                       onClick={() => setPendingDeleteId(key.id)}
-                      className="shrink-0 ml-2 rounded-md p-1.5 text-imp-muted-foreground transition-colors hover:bg-imp-destructive/10 hover:text-imp-destructive"
+                      className="shrink-0 ml-2 rounded-md p-1.5 text-fl-muted-foreground transition-colors hover:bg-fl-destructive/10 hover:text-fl-destructive"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                     </button>
@@ -322,7 +322,7 @@ export function ApiKeysDialog({ open, onOpenChange, apiBaseUrl }: ApiKeysDialogP
           <button
             type="button"
             onClick={() => handleOpenChange(false)}
-            className="rounded-md border border-imp-border px-3 py-1.5 text-sm hover:bg-imp-muted"
+            className="rounded-md border border-fl-border px-3 py-1.5 text-sm hover:bg-fl-muted"
           >
             Close
           </button>
@@ -405,27 +405,27 @@ function CreateApiKeyForm({
   return (
     <form
       onSubmit={handleSubmit}
-      className="space-y-3 rounded-lg border border-imp-border bg-imp-muted/10 p-3"
+      className="space-y-3 rounded-lg border border-fl-border bg-fl-muted/10 p-3"
     >
-      <div className="text-xs font-medium text-imp-foreground">Create API Key</div>
+      <div className="text-xs font-medium text-fl-foreground">Create API Key</div>
 
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="mb-1 block text-xs font-medium text-imp-foreground">Name</label>
+          <label className="mb-1 block text-xs font-medium text-fl-foreground">Name</label>
           <input
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="e.g. Production API"
-            className="w-full rounded-md border border-imp-border bg-imp-background px-3 py-1.5 text-sm placeholder:text-imp-muted-foreground focus:border-imp-primary/50 focus:outline-none"
+            className="w-full rounded-md border border-fl-border bg-fl-background px-3 py-1.5 text-sm placeholder:text-fl-muted-foreground focus:border-fl-primary/50 focus:outline-none"
           />
         </div>
         <div>
-          <label className="mb-1 block text-xs font-medium text-imp-foreground">Expiry</label>
+          <label className="mb-1 block text-xs font-medium text-fl-foreground">Expiry</label>
           <select
             value={expiresIn}
             onChange={(e) => setExpiresIn(e.target.value)}
-            className="w-full rounded-md border border-imp-border bg-imp-background px-3 py-1.5 text-sm focus:border-imp-primary/50 focus:outline-none"
+            className="w-full rounded-md border border-fl-border bg-fl-background px-3 py-1.5 text-sm focus:border-fl-primary/50 focus:outline-none"
           >
             {EXPIRY_OPTIONS.map((option) => (
               <option key={option.value} value={option.value}>
@@ -446,14 +446,14 @@ function CreateApiKeyForm({
         <button
           type="button"
           onClick={onCancel}
-          className="rounded-md border border-imp-border px-3 py-1.5 text-xs hover:bg-imp-muted"
+          className="rounded-md border border-fl-border px-3 py-1.5 text-xs hover:bg-fl-muted"
         >
           Cancel
         </button>
         <button
           type="submit"
           disabled={isSubmitting}
-          className="rounded-md bg-imp-primary px-3 py-1.5 text-xs font-semibold text-imp-primary-foreground hover:bg-imp-primary/90 disabled:opacity-50"
+          className="rounded-md bg-fl-primary px-3 py-1.5 text-xs font-semibold text-fl-primary-foreground hover:bg-fl-primary/90 disabled:opacity-50"
         >
           {isSubmitting ? 'Creating…' : 'Create'}
         </button>

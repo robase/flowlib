@@ -128,9 +128,9 @@ export function ScopeDetailPanel({
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
-      <div className="px-5 py-4 overflow-hidden border-b shrink-0 border-imp-border">
+      <div className="px-5 py-4 overflow-hidden border-b shrink-0 border-fl-border">
         <div className="flex items-start gap-3">
-          <div className="flex items-center justify-center flex-none w-10 h-10 rounded-xl bg-imp-primary/10 text-imp-primary">
+          <div className="flex items-center justify-center flex-none w-10 h-10 rounded-xl bg-fl-primary/10 text-fl-primary">
             <Users className="w-5 h-5" />
           </div>
           <div className="flex-1 min-w-0">
@@ -141,20 +141,20 @@ export function ScopeDetailPanel({
                   <button
                     type="button"
                     onClick={() => setShowDeleteConfirm(true)}
-                    className="flex items-center gap-1.5 rounded-md border border-imp-destructive/30 px-3 py-1.5 text-xs font-medium text-imp-destructive transition-colors hover:bg-imp-destructive/10"
+                    className="flex items-center gap-1.5 rounded-md border border-fl-destructive/30 px-3 py-1.5 text-xs font-medium text-fl-destructive transition-colors hover:bg-fl-destructive/10"
                   >
                     <Trash2 className="w-4 h-4" /> Delete team
                   </button>
                 </div>
               ) : null}
             </div>
-            <div className="flex flex-wrap items-center gap-1 mt-1 text-[11px] text-imp-muted-foreground">
+            <div className="flex flex-wrap items-center gap-1 mt-1 text-[11px] text-fl-muted-foreground">
               <span>Root</span>
               {scopePath.map((team) => (
                 <div key={team.id} className="flex items-center gap-1">
                   <ChevronRight className="w-3 h-3" />
                   <span
-                    className={team.id === scopeId ? 'font-medium text-imp-foreground' : undefined}
+                    className={team.id === scopeId ? 'font-medium text-fl-foreground' : undefined}
                   >
                     {team.name}
                   </span>
@@ -164,7 +164,7 @@ export function ScopeDetailPanel({
           </div>
         </div>
         <div className="flex items-center justify-between">
-          <p className="mt-3 text-xs text-imp-muted-foreground">
+          <p className="mt-3 text-xs text-fl-muted-foreground">
             Access applies to all flows inside this team and its child teams.
           </p>
         </div>
@@ -175,10 +175,10 @@ export function ScopeDetailPanel({
           <section>
             <div className="flex items-center justify-between gap-4">
               <div className="min-w-0">
-                <h3 className="text-sm font-semibold text-imp-foreground">
+                <h3 className="text-sm font-semibold text-fl-foreground">
                   Team Role on Child Flows
                 </h3>
-                <p className="mt-0.5 text-xs text-imp-muted-foreground">
+                <p className="mt-0.5 text-xs text-fl-muted-foreground">
                   Base role applied to every flow inside this team.
                 </p>
               </div>
@@ -206,36 +206,36 @@ export function ScopeDetailPanel({
 
           <section className="space-y-2">
             <div className="flex items-center justify-between">
-              <h3 className="text-sm font-semibold text-imp-foreground">Members</h3>
+              <h3 className="text-sm font-semibold text-fl-foreground">Members</h3>
               {isAdmin ? (
                 <button
                   type="button"
                   onClick={() => setShowMemberDialog(true)}
-                  className="flex items-center gap-1.5 rounded-md border border-imp-border px-3 py-1.5 text-xs font-medium text-imp-muted-foreground transition-colors hover:border-imp-primary/50 hover:text-imp-foreground"
+                  className="flex items-center gap-1.5 rounded-md border border-fl-border px-3 py-1.5 text-xs font-medium text-fl-muted-foreground transition-colors hover:border-fl-primary/50 hover:text-fl-foreground"
                 >
                   <Plus className="w-4 h-4" /> Add Member
                 </button>
               ) : null}
             </div>
-            <div className="overflow-hidden border rounded-xl border-imp-border bg-imp-background/40">
+            <div className="overflow-hidden border rounded-xl border-fl-border bg-fl-background/40">
               <AccessTable rows={memberRows} isLoading={isLoading} emptyLabel="No members" />
             </div>
           </section>
 
           {childTeams.length > 0 ? (
             <section className="space-y-2">
-              <h3 className="text-sm font-semibold text-imp-foreground">Sub-teams</h3>
+              <h3 className="text-sm font-semibold text-fl-foreground">Sub-teams</h3>
               <div className="space-y-2">
                 {childTeams.map((team) => (
                   <div
                     key={team.id}
-                    className="flex items-center gap-2 px-3 py-2 border rounded-xl border-imp-border bg-imp-background/40"
+                    className="flex items-center gap-2 px-3 py-2 border rounded-xl border-fl-border bg-fl-background/40"
                   >
-                    <Users className="w-3.5 h-3.5 text-imp-muted-foreground" />
-                    <span className="flex-1 min-w-0 text-sm font-medium truncate text-imp-foreground">
+                    <Users className="w-3.5 h-3.5 text-fl-muted-foreground" />
+                    <span className="flex-1 min-w-0 text-sm font-medium truncate text-fl-foreground">
                       {team.name}
                     </span>
-                    <span className="text-[11px] text-imp-muted-foreground">Child team</span>
+                    <span className="text-[11px] text-fl-muted-foreground">Child team</span>
                   </div>
                 ))}
               </div>
@@ -271,7 +271,7 @@ export function ScopeDetailPanel({
                 setShowGrantDialog(false);
               }}
               disabled={grantUserIds.length === 0 || grantScopeAccess.isPending}
-              className="ml-auto rounded-md bg-imp-primary px-4 py-2 text-sm font-semibold text-imp-primary-foreground hover:bg-imp-primary/90 disabled:opacity-50"
+              className="ml-auto rounded-md bg-fl-primary px-4 py-2 text-sm font-semibold text-fl-primary-foreground hover:bg-fl-primary/90 disabled:opacity-50"
             >
               Grant
             </button>
@@ -304,7 +304,7 @@ export function ScopeDetailPanel({
               setShowMemberDialog(false);
             }}
             disabled={memberUserIds.length === 0 || addTeamMember.isPending}
-            className="rounded-md bg-imp-primary px-4 py-2 text-sm font-semibold text-imp-primary-foreground hover:bg-imp-primary/90 disabled:opacity-50"
+            className="rounded-md bg-fl-primary px-4 py-2 text-sm font-semibold text-fl-primary-foreground hover:bg-fl-primary/90 disabled:opacity-50"
           >
             Add
           </button>
@@ -315,13 +315,13 @@ export function ScopeDetailPanel({
         open={showDeleteConfirm}
         onOpenChange={(open) => !open && setShowDeleteConfirm(false)}
       >
-        <DialogContent className="max-w-sm border-imp-border bg-imp-background text-imp-foreground sm:max-w-sm">
+        <DialogContent className="max-w-sm border-fl-border bg-fl-background text-fl-foreground sm:max-w-sm">
           <DialogHeader>
             <DialogTitle className="text-sm font-semibold">Delete team</DialogTitle>
           </DialogHeader>
-          <p className="text-sm text-imp-muted-foreground">
+          <p className="text-sm text-fl-muted-foreground">
             Are you sure you want to delete{' '}
-            <strong className="text-imp-foreground">{scopeName}</strong>? Flows directly inside this
+            <strong className="text-fl-foreground">{scopeName}</strong>? Flows directly inside this
             team will move to the parent team when one exists, and this team's access grants will be
             removed.
           </p>
@@ -329,7 +329,7 @@ export function ScopeDetailPanel({
             <button
               type="button"
               onClick={() => setShowDeleteConfirm(false)}
-              className="rounded-md border border-imp-border px-3 py-1.5 text-xs font-medium text-imp-muted-foreground hover:text-imp-foreground"
+              className="rounded-md border border-fl-border px-3 py-1.5 text-xs font-medium text-fl-muted-foreground hover:text-fl-foreground"
             >
               Cancel
             </button>

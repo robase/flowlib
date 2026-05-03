@@ -32,7 +32,7 @@ export function ShareButton({ flowId }: HeaderActionProps) {
     <>
       <button
         onClick={() => setIsOpen(true)}
-        className="inline-flex items-center gap-2 rounded-md border border-imp-border px-3 py-1.5 text-sm font-medium text-imp-foreground transition-colors hover:border-imp-primary/50 hover:bg-imp-muted"
+        className="inline-flex items-center gap-2 rounded-md border border-fl-border px-3 py-1.5 text-sm font-medium text-fl-foreground transition-colors hover:border-fl-primary/50 hover:bg-fl-muted"
       >
         <Share2 className="h-4 w-4" />
         Share

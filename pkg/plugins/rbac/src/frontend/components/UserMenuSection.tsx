@@ -23,7 +23,7 @@ export function UserMenuSection({ collapsed = false }: { collapsed?: boolean }) 
         className="flex justify-center px-2 py-2"
         title={`${user.name ?? user.id} (${user.role ?? 'user'})`}
       >
-        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-imp-primary/10 text-xs font-medium text-imp-primary">
+        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-fl-primary/10 text-xs font-medium text-fl-primary">
           {initials}
         </div>
       </div>
@@ -32,12 +32,12 @@ export function UserMenuSection({ collapsed = false }: { collapsed?: boolean }) 
 
   return (
     <div className="flex items-center gap-3 px-3 py-2">
-      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-imp-primary/10 text-xs font-medium text-imp-primary">
+      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-fl-primary/10 text-xs font-medium text-fl-primary">
         {initials}
       </div>
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-medium">{user.name ?? user.id}</p>
-        <p className="truncate text-xs text-imp-muted-foreground capitalize">
+        <p className="truncate text-xs text-fl-muted-foreground capitalize">
           {user.role ?? 'user'}
         </p>
       </div>
@@ -56,7 +56,7 @@ export function UserAvatar({ className }: { className?: string }) {
 
   return (
     <div
-      className={`flex items-center justify-center rounded-full bg-imp-primary/10 text-xs font-medium text-imp-primary ${className ?? 'h-6 w-6'}`}
+      className={`flex items-center justify-center rounded-full bg-fl-primary/10 text-xs font-medium text-fl-primary ${className ?? 'h-6 w-6'}`}
       title={user.name ?? user.id}
     >
       {initials}

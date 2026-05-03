@@ -92,7 +92,7 @@ function VcHeaderButtonInner({ flowId, basePath }: { flowId: string; basePath: s
         ? 'text-yellow-500'
         : status === 'conflict'
           ? 'text-red-500'
-          : 'text-imp-muted-foreground';
+          : 'text-fl-muted-foreground';
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>

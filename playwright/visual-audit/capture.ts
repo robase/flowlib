@@ -73,11 +73,11 @@ async function takeScreenshot(page: Page, screen: ScreenDefinition, currentUrl: 
 // ─── Helpers ──────────────────────────────────────────────────────────────
 
 function getSidebarToggle(page: Page) {
-  return page.locator('.imp-sidebar-shell button.absolute').first();
+  return page.locator('.fl-sidebar-shell button.absolute').first();
 }
 
 async function ensureSidebarExpanded(page: Page) {
-  const label = page.locator('.imp-sidebar-shell nav span').filter({ hasText: 'Flow Runs' });
+  const label = page.locator('.fl-sidebar-shell nav span').filter({ hasText: 'Flow Runs' });
   if (!(await label.isVisible().catch(() => false))) {
     await getSidebarToggle(page).click();
     await expect(label).toBeVisible({ timeout: 3_000 });
@@ -86,7 +86,7 @@ async function ensureSidebarExpanded(page: Page) {
 
 async function enableDarkMode(page: Page) {
   await ensureSidebarExpanded(page);
-  const btn = page.locator('.imp-sidebar-shell button').filter({ hasText: 'Dark Mode' });
+  const btn = page.locator('.fl-sidebar-shell button').filter({ hasText: 'Dark Mode' });
   if (await btn.isVisible().catch(() => false)) {
     await btn.click();
     await expect(page.locator('.flowlib').first()).toHaveClass(/\bdark\b/, { timeout: 3_000 });
@@ -95,7 +95,7 @@ async function enableDarkMode(page: Page) {
 
 async function enableLightMode(page: Page) {
   await ensureSidebarExpanded(page);
-  const btn = page.locator('.imp-sidebar-shell button').filter({ hasText: 'Light Mode' });
+  const btn = page.locator('.fl-sidebar-shell button').filter({ hasText: 'Light Mode' });
   if (await btn.isVisible().catch(() => false)) {
     await btn.click();
     await expect(page.locator('.flowlib').first()).not.toHaveClass(/\bdark\b/, { timeout: 3_000 });
@@ -203,21 +203,21 @@ test.describe('Visual Audit — Screenshot Capture', () => {
     await takeScreenshot(page, screensById['02-dashboard-expanded']!, '/flowlib');
 
     // ── 03: Flow Runs (executions) page ───────────────────────────────────
-    await page.locator('.imp-sidebar-shell').getByRole('link', { name: 'Flow Runs' }).click();
+    await page.locator('.fl-sidebar-shell').getByRole('link', { name: 'Flow Runs' }).click();
     await expect(page.getByRole('heading', { level: 1, name: 'Flow Runs' })).toBeVisible({
       timeout: 15_000,
     });
     await takeScreenshot(page, screensById['03-executions-page']!, '/flowlib/flow-runs');
 
     // ── 04: Credentials page ──────────────────────────────────────────────
-    await page.locator('.imp-sidebar-shell').getByRole('link', { name: 'Credentials' }).click();
+    await page.locator('.fl-sidebar-shell').getByRole('link', { name: 'Credentials' }).click();
     await expect(page.getByRole('heading', { level: 1, name: 'Credentials' })).toBeVisible({
       timeout: 15_000,
     });
     await takeScreenshot(page, screensById['04-credentials-page']!, '/flowlib/credentials');
 
     // ── 05: Add Flow modal ────────────────────────────────────────────────
-    await page.locator('.imp-sidebar-shell').getByRole('link', { name: 'Home' }).click();
+    await page.locator('.fl-sidebar-shell').getByRole('link', { name: 'Home' }).click();
     await waitForDashboard(page);
     // Look for a "New Flow" button
     const newFlowBtn = page.getByRole('button', { name: /new flow/i }).first();
@@ -230,7 +230,7 @@ test.describe('Visual Audit — Screenshot Capture', () => {
     }
 
     // ── 06: Add Credential modal ──────────────────────────────────────────
-    await page.locator('.imp-sidebar-shell').getByRole('link', { name: 'Credentials' }).click();
+    await page.locator('.fl-sidebar-shell').getByRole('link', { name: 'Credentials' }).click();
     await expect(page.getByRole('heading', { level: 1, name: 'Credentials' })).toBeVisible({
       timeout: 15_000,
     });
@@ -1068,7 +1068,7 @@ test.describe('Visual Audit — Screenshot Capture', () => {
     await waitForDashboard(page);
     await ensureSidebarExpanded(page);
     const userMenuLink = page
-      .locator('.imp-sidebar-shell')
+      .locator('.fl-sidebar-shell')
       .locator('a, button')
       .filter({ hasText: /Test User/i })
       .first();

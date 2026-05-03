@@ -109,8 +109,8 @@ export function TeamsPage() {
 
   if (!isAuthenticated) {
     return (
-      <div className="flex items-center justify-center w-full h-full min-h-0 overflow-y-auto imp-page bg-imp-background text-imp-foreground">
-        <p className="text-sm text-imp-muted-foreground">Please sign in to access this page.</p>
+      <div className="flex items-center justify-center w-full h-full min-h-0 overflow-y-auto fl-page bg-fl-background text-fl-foreground">
+        <p className="text-sm text-fl-muted-foreground">Please sign in to access this page.</p>
       </div>
     );
   }
@@ -121,14 +121,14 @@ export function TeamsPage() {
       icon={Users}
       actions={
         <div className="flex items-center gap-2">
-          <span className="text-xs text-imp-muted-foreground">
+          <span className="text-xs text-fl-muted-foreground">
             {filteredTeams.length} team{filteredTeams.length !== 1 ? 's' : ''}
           </span>
           {isAdmin && (
             <button
               type="button"
               onClick={() => setShowCreateForm(!showCreateForm)}
-              className="flex items-center gap-1 px-2 py-1 text-xs font-medium rounded bg-imp-primary text-imp-primary-foreground hover:bg-imp-primary/90"
+              className="flex items-center gap-1 px-2 py-1 text-xs font-medium rounded bg-fl-primary text-fl-primary-foreground hover:bg-fl-primary/90"
             >
               <Plus className="w-3 h-3" />
               New Team
@@ -139,15 +139,15 @@ export function TeamsPage() {
     >
       {/* Create team form */}
       {showCreateForm && (
-        <div className="p-3 border rounded-lg border-imp-border bg-imp-card">
-          <div className="mb-2 text-xs font-medium text-imp-foreground">Create Team</div>
+        <div className="p-3 border rounded-lg border-fl-border bg-fl-card">
+          <div className="mb-2 text-xs font-medium text-fl-foreground">Create Team</div>
           <div className="space-y-2">
             <input
               type="text"
               value={newTeamName}
               onChange={(e) => setNewTeamName(e.target.value)}
               placeholder="Team name"
-              className="w-full rounded border border-imp-border bg-imp-background px-2 py-1.5 text-sm placeholder:text-imp-muted-foreground"
+              className="w-full rounded border border-fl-border bg-fl-background px-2 py-1.5 text-sm placeholder:text-fl-muted-foreground"
               onKeyDown={(e) => {
                 if (e.key === 'Enter') {
                   handleCreate();
@@ -159,7 +159,7 @@ export function TeamsPage() {
               value={newTeamDescription}
               onChange={(e) => setNewTeamDescription(e.target.value)}
               placeholder="Description (optional)"
-              className="w-full rounded border border-imp-border bg-imp-background px-2 py-1.5 text-sm placeholder:text-imp-muted-foreground"
+              className="w-full rounded border border-fl-border bg-fl-background px-2 py-1.5 text-sm placeholder:text-fl-muted-foreground"
               onKeyDown={(e) => {
                 if (e.key === 'Enter') {
                   handleCreate();
@@ -171,14 +171,14 @@ export function TeamsPage() {
                 type="button"
                 onClick={handleCreate}
                 disabled={createTeam.isPending || !newTeamName.trim()}
-                className="px-3 py-1 text-xs font-medium rounded bg-imp-primary text-imp-primary-foreground hover:bg-imp-primary/90 disabled:opacity-50"
+                className="px-3 py-1 text-xs font-medium rounded bg-fl-primary text-fl-primary-foreground hover:bg-fl-primary/90 disabled:opacity-50"
               >
                 {createTeam.isPending ? 'Creating…' : 'Create'}
               </button>
               <button
                 type="button"
                 onClick={() => setShowCreateForm(false)}
-                className="px-3 py-1 text-xs rounded text-imp-muted-foreground hover:text-imp-foreground"
+                className="px-3 py-1 text-xs rounded text-fl-muted-foreground hover:text-fl-foreground"
               >
                 Cancel
               </button>
@@ -189,31 +189,31 @@ export function TeamsPage() {
 
       {/* Search */}
       <div className="relative">
-        <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-imp-muted-foreground" />
+        <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-fl-muted-foreground" />
         <input
           value={teamSearch}
           onChange={(e) => setTeamSearch(e.target.value)}
           placeholder="Search teams…"
-          className="w-full rounded-lg border border-imp-border bg-transparent py-2 pl-9 pr-3 text-sm outline-none placeholder:text-imp-muted-foreground focus:border-imp-primary/50"
+          className="w-full rounded-lg border border-fl-border bg-transparent py-2 pl-9 pr-3 text-sm outline-none placeholder:text-fl-muted-foreground focus:border-fl-primary/50"
         />
       </div>
 
       {/* Teams list */}
-      <div className="border rounded-lg border-imp-border bg-imp-card">
+      <div className="border rounded-lg border-fl-border bg-fl-card">
         {teamsQuery.isLoading ? (
-          <div className="px-4 py-8 text-sm text-center text-imp-muted-foreground">Loading…</div>
+          <div className="px-4 py-8 text-sm text-center text-fl-muted-foreground">Loading…</div>
         ) : teamsQuery.error ? (
           <div className="px-4 py-8 text-sm text-center text-red-500">
             {teamsQuery.error instanceof Error ? teamsQuery.error.message : 'Failed to load teams'}
           </div>
         ) : filteredTeams.length === 0 ? (
-          <div className="px-4 py-8 text-sm text-center text-imp-muted-foreground">
+          <div className="px-4 py-8 text-sm text-center text-fl-muted-foreground">
             {teamSearch
               ? 'No teams match this search.'
               : 'No teams yet. Create one to get started.'}
           </div>
         ) : (
-          <div className="divide-y divide-imp-border">
+          <div className="divide-y divide-fl-border">
             {filteredTeams.map((team) => {
               const isExpanded = expandedTeamId === team.id;
               return (
@@ -225,15 +225,15 @@ export function TeamsPage() {
                       onClick={() => setExpandedTeamId(isExpanded ? null : team.id)}
                     >
                       {isExpanded ? (
-                        <ChevronDown className="h-3.5 w-3.5 shrink-0 text-imp-muted-foreground" />
+                        <ChevronDown className="h-3.5 w-3.5 shrink-0 text-fl-muted-foreground" />
                       ) : (
-                        <ChevronRight className="h-3.5 w-3.5 shrink-0 text-imp-muted-foreground" />
+                        <ChevronRight className="h-3.5 w-3.5 shrink-0 text-fl-muted-foreground" />
                       )}
-                      <Users className="h-3.5 w-3.5 shrink-0 text-imp-primary" />
+                      <Users className="h-3.5 w-3.5 shrink-0 text-fl-primary" />
                       <div className="flex-1 min-w-0">
                         <span className="block text-sm font-medium truncate">{team.name}</span>
                         {team.description && (
-                          <span className="block text-xs truncate text-imp-muted-foreground">
+                          <span className="block text-xs truncate text-fl-muted-foreground">
                             {team.description}
                           </span>
                         )}
@@ -243,7 +243,7 @@ export function TeamsPage() {
                       <button
                         type="button"
                         onClick={() => handleDelete(team.id)}
-                        className="p-1 rounded shrink-0 text-imp-muted-foreground hover:text-red-500"
+                        className="p-1 rounded shrink-0 text-fl-muted-foreground hover:text-red-500"
                         title="Delete team"
                       >
                         <Trash2 className="h-3.5 w-3.5" />
@@ -310,24 +310,24 @@ function TeamMembersPanel({
   };
 
   return (
-    <div className="px-3 pt-2 pb-3 border-t border-imp-border bg-imp-muted/20">
+    <div className="px-3 pt-2 pb-3 border-t border-fl-border bg-fl-muted/20">
       {isLoading ? (
-        <p className="py-3 text-xs text-center text-imp-muted-foreground">Loading…</p>
+        <p className="py-3 text-xs text-center text-fl-muted-foreground">Loading…</p>
       ) : members.length === 0 ? (
-        <p className="py-2 text-xs text-imp-muted-foreground">No members yet.</p>
+        <p className="py-2 text-xs text-fl-muted-foreground">No members yet.</p>
       ) : (
         <div className="mb-2 space-y-1">
           {members.map((member) => (
             <div key={member.id} className="flex items-center gap-2 px-2 py-1 text-xs rounded">
-              <div className="flex items-center justify-center w-5 h-5 rounded-full shrink-0 bg-imp-primary/10">
-                <User className="w-3 h-3 text-imp-primary" />
+              <div className="flex items-center justify-center w-5 h-5 rounded-full shrink-0 bg-fl-primary/10">
+                <User className="w-3 h-3 text-fl-primary" />
               </div>
               <span className="flex-1 min-w-0 truncate">{getUserLabel(member.userId)}</span>
               {isAdmin && (
                 <button
                   type="button"
                   onClick={() => handleRemove(member.userId)}
-                  className="shrink-0 rounded p-0.5 text-imp-muted-foreground hover:text-red-500"
+                  className="shrink-0 rounded p-0.5 text-fl-muted-foreground hover:text-red-500"
                   title="Remove member"
                 >
                   <Trash2 className="w-3 h-3" />
@@ -350,7 +350,7 @@ function TeamMembersPanel({
             type="button"
             onClick={handleAdd}
             disabled={addMember.isPending || !selectedUserId}
-            className="shrink-0 rounded bg-imp-primary px-2.5 py-1 text-xs font-medium text-imp-primary-foreground hover:bg-imp-primary/90 disabled:opacity-50"
+            className="shrink-0 rounded bg-fl-primary px-2.5 py-1 text-xs font-medium text-fl-primary-foreground hover:bg-fl-primary/90 disabled:opacity-50"
           >
             {addMember.isPending ? '…' : 'Add'}
           </button>
@@ -420,17 +420,17 @@ function MemberSearchCombobox({
             onSelect(null);
             setQuery('');
           }}
-          className="flex w-full items-center gap-1.5 rounded border border-imp-border bg-imp-background px-2 py-1 text-xs text-left"
+          className="flex w-full items-center gap-1.5 rounded border border-fl-border bg-fl-background px-2 py-1 text-xs text-left"
         >
-          <User className="w-3 h-3 shrink-0 text-imp-muted-foreground" />
+          <User className="w-3 h-3 shrink-0 text-fl-muted-foreground" />
           <span className="flex-1 min-w-0 truncate">
             {selectedUser.name || selectedUser.email || selectedUser.id}
           </span>
-          <X className="w-3 h-3 shrink-0 text-imp-muted-foreground" />
+          <X className="w-3 h-3 shrink-0 text-fl-muted-foreground" />
         </button>
       ) : (
         <div className="relative">
-          <Search className="absolute w-3 h-3 -translate-y-1/2 pointer-events-none left-2 top-1/2 text-imp-muted-foreground" />
+          <Search className="absolute w-3 h-3 -translate-y-1/2 pointer-events-none left-2 top-1/2 text-fl-muted-foreground" />
           <input
             ref={inputRef}
             type="text"
@@ -443,16 +443,16 @@ function MemberSearchCombobox({
             }}
             onFocus={() => setOpen(true)}
             placeholder="Search users…"
-            className="w-full py-1 pl-6 pr-2 text-xs border rounded border-imp-border bg-imp-background placeholder:text-imp-muted-foreground"
+            className="w-full py-1 pl-6 pr-2 text-xs border rounded border-fl-border bg-fl-background placeholder:text-fl-muted-foreground"
           />
         </div>
       )}
 
       {open && !selectedUser && (
-        <div className="absolute left-0 z-50 w-full mt-1 border rounded-md shadow-lg top-full border-imp-border bg-imp-background">
+        <div className="absolute left-0 z-50 w-full mt-1 border rounded-md shadow-lg top-full border-fl-border bg-fl-background">
           <div className="py-1 overflow-y-auto max-h-40">
             {filtered.length === 0 ? (
-              <p className="px-3 py-2 text-xs text-imp-muted-foreground">No users found.</p>
+              <p className="px-3 py-2 text-xs text-fl-muted-foreground">No users found.</p>
             ) : (
               filtered.map((u) => (
                 <button
@@ -463,9 +463,9 @@ function MemberSearchCombobox({
                     setQuery('');
                     setOpen(false);
                   }}
-                  className="flex w-full items-center gap-2 px-2 py-1.5 text-left text-xs hover:bg-imp-muted/50 transition-colors"
+                  className="flex w-full items-center gap-2 px-2 py-1.5 text-left text-xs hover:bg-fl-muted/50 transition-colors"
                 >
-                  <User className="h-3.5 w-3.5 shrink-0 text-imp-muted-foreground" />
+                  <User className="h-3.5 w-3.5 shrink-0 text-fl-muted-foreground" />
                   <span className="flex-1 min-w-0 truncate">{u.name || u.email || u.id}</span>
                 </button>
               ))

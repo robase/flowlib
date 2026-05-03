@@ -17,6 +17,7 @@ import { SignInPage } from '../components/SignInPage';
 import { SignUpPage } from '../components/SignUpPage';
 import { ForgotPasswordPage } from '../components/ForgotPasswordPage';
 import { ResetPasswordPage } from '../components/ResetPasswordPage';
+import { PasswordSetupPage } from '../components/PasswordSetupPage';
 import type { FlowlibFrontendPlugin } from '@flowlib/ui';
 
 export const authFrontend: FlowlibFrontendPlugin = {
@@ -53,6 +54,10 @@ export const authFrontend: FlowlibFrontendPlugin = {
     { path: '/sign-up', component: SignUpPage },
     { path: '/forgot-password', component: ForgotPasswordPage },
     { path: '/reset-password', component: ResetPasswordPage },
+    // First-time magic-link sign-up lands here so the user can opt into a
+    // password (skippable). Configure the BA magicLink plugin's
+    // `newUserCallbackURL` to point at this path.
+    { path: '/welcome/set-password', component: PasswordSetupPage },
     { path: '/profile', component: ProfilePage },
     { path: '/users', component: UserManagementPage },
   ],

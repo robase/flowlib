@@ -41,5 +41,5 @@ export function formatPermissionLabel(permission: FlowAccessPermission): string 
 }
 
 export function getPermissionBadgeClasses(_permission: FlowAccessPermission): string {
-  return 'border-imp-border text-imp-muted-foreground';
+  return 'border-fl-border text-fl-muted-foreground';
 }

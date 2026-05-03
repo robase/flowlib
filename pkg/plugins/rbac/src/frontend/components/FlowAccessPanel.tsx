@@ -23,11 +23,11 @@ export function FlowAccessPanel({ flowId }: PanelTabProps) {
       {/* Header */}
       <div className="mb-4 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Shield className="h-4 w-4 text-imp-muted-foreground" />
+          <Shield className="h-4 w-4 text-fl-muted-foreground" />
           <h3 className="text-sm font-medium">Access Control</h3>
         </div>
         {myRecord && (
-          <span className="rounded-full border border-imp-border px-2 py-0.5 text-xs font-medium capitalize">
+          <span className="rounded-full border border-fl-border px-2 py-0.5 text-xs font-medium capitalize">
             {myRecord.permission}
           </span>
         )}
@@ -36,7 +36,7 @@ export function FlowAccessPanel({ flowId }: PanelTabProps) {
       {/* Content */}
       {isLoading ? (
         <div className="flex flex-1 items-center justify-center">
-          <span className="text-sm text-imp-muted-foreground">Loading access records...</span>
+          <span className="text-sm text-fl-muted-foreground">Loading access records...</span>
         </div>
       ) : error ? (
         <div className="flex flex-1 items-center justify-center">
@@ -46,38 +46,38 @@ export function FlowAccessPanel({ flowId }: PanelTabProps) {
         </div>
       ) : accessRecords.length === 0 ? (
         <div className="flex flex-1 flex-col items-center justify-center gap-2">
-          <Users className="h-8 w-8 text-imp-muted-foreground/50" />
-          <p className="text-sm text-imp-muted-foreground">No access records</p>
-          <p className="text-xs text-imp-muted-foreground">Use the Share button to grant access.</p>
+          <Users className="h-8 w-8 text-fl-muted-foreground/50" />
+          <p className="text-sm text-fl-muted-foreground">No access records</p>
+          <p className="text-xs text-fl-muted-foreground">Use the Share button to grant access.</p>
         </div>
       ) : (
         <div className="flex-1 space-y-1 overflow-y-auto">
           {accessRecords.map((record) => (
             <div
               key={record.id}
-              className="flex items-center gap-3 rounded-md px-3 py-2 bg-imp-muted/30"
+              className="flex items-center gap-3 rounded-md px-3 py-2 bg-fl-muted/30"
             >
-              <div className="flex h-7 w-7 items-center justify-center rounded-full bg-imp-primary/10">
+              <div className="flex h-7 w-7 items-center justify-center rounded-full bg-fl-primary/10">
                 {record.teamId ? (
-                  <Users className="h-3.5 w-3.5 text-imp-primary" />
+                  <Users className="h-3.5 w-3.5 text-fl-primary" />
                 ) : (
-                  <User className="h-3.5 w-3.5 text-imp-primary" />
+                  <User className="h-3.5 w-3.5 text-fl-primary" />
                 )}
               </div>
               <div className="flex-1 min-w-0">
                 <p className="truncate text-sm">
                   {record.userId ?? record.teamId}
                   {record.userId === user?.id && (
-                    <span className="ml-1 text-imp-muted-foreground">(you)</span>
+                    <span className="ml-1 text-fl-muted-foreground">(you)</span>
                   )}
                 </p>
                 {record.expiresAt && (
-                  <p className="text-xs text-imp-muted-foreground">
+                  <p className="text-xs text-fl-muted-foreground">
                     Expires {new Date(record.expiresAt).toLocaleDateString()}
                   </p>
                 )}
               </div>
-              <span className="rounded-full bg-imp-muted px-2 py-0.5 text-xs font-medium capitalize">
+              <span className="rounded-full bg-fl-muted px-2 py-0.5 text-xs font-medium capitalize">
                 {record.permission}
               </span>
             </div>
@@ -87,8 +87,8 @@ export function FlowAccessPanel({ flowId }: PanelTabProps) {
 
       {/* Footer — summary */}
       {accessRecords.length > 0 && (
-        <div className="mt-3 border-t border-imp-border pt-3">
-          <p className="text-xs text-imp-muted-foreground">
+        <div className="mt-3 border-t border-fl-border pt-3">
+          <p className="text-xs text-fl-muted-foreground">
             {accessRecords.length} {accessRecords.length === 1 ? 'person' : 'people'} with access
           </p>
         </div>

@@ -796,36 +796,37 @@ async function createInternalBetterAuth(
     logger.info?.('Better Auth API Key plugin enabled');
   }
 
-  // 7b. Optionally load the Email OTP plugin (powers passwordless sign-up).
-  const emailOtpOpt = options.emailOtp;
-  if (emailOtpOpt) {
-    let emailOtpPluginFn: (config: Record<string, unknown>) => unknown;
+  // 7b. Optionally load the Magic Link plugin (powers passwordless sign-up).
+  const magicLinkOpt = options.magicLink;
+  if (magicLinkOpt) {
+    let magicLinkPluginFn: (config: Record<string, unknown>) => unknown;
     try {
-      const pluginsModule = await import('better-auth/plugins');
-      emailOtpPluginFn = pluginsModule.emailOTP as unknown as (
+      // The plugin lives at the subpath, not the root /plugins barrel.
+      const pluginsModule = await import('better-auth/plugins/magic-link');
+      magicLinkPluginFn = pluginsModule.magicLink as unknown as (
         config: Record<string, unknown>,
       ) => unknown;
     } catch {
       throw new Error(
-        'Could not import emailOTP from "better-auth/plugins". Ensure better-auth is properly installed.',
+        'Could not import magicLink from "better-auth/plugins/magic-link". Ensure better-auth is properly installed.',
       );
     }
 
-    const emailOtpConfig: Record<string, unknown> =
-      typeof emailOtpOpt === 'object' ? { ...emailOtpOpt } : {};
-    // Without a sendVerificationOTP callback, codes are generated but never
+    const magicLinkConfig: Record<string, unknown> =
+      typeof magicLinkOpt === 'object' ? { ...magicLinkOpt } : {};
+    // Without a sendMagicLink callback, links are generated but never
     // delivered. Warn so the operator notices.
-    if (typeof emailOtpConfig.sendVerificationOTP !== 'function') {
-      emailOtpConfig.sendVerificationOTP = async () => {
-        // No-op delivery — codes are generated but never sent. Useful in
+    if (typeof magicLinkConfig.sendMagicLink !== 'function') {
+      magicLinkConfig.sendMagicLink = async () => {
+        // No-op delivery — links are generated but never sent. Useful in
         // tests; useless in production.
       };
       logger.warn?.(
-        'emailOTP enabled without a sendVerificationOTP callback — codes will not be delivered.',
+        'magicLink enabled without a sendMagicLink callback — links will not be delivered.',
       );
     }
-    betterAuthPlugins.push(emailOtpPluginFn(emailOtpConfig));
-    logger.info?.('Better Auth Email OTP plugin enabled');
+    betterAuthPlugins.push(magicLinkPluginFn(magicLinkConfig));
+    logger.info?.('Better Auth Magic Link plugin enabled');
   }
 
   // 8. Create the instance
@@ -1254,7 +1255,7 @@ export function authentication(options: AuthenticationPluginOptions): FlowlibPlu
 
       // ── Public sign-in page config ───────────────────────────
       // Returns flags the unauthenticated sign-in / sign-up pages need to
-      // know about (sign-up enabled? email-OTP enabled? configured social
+      // know about (sign-up enabled? magic-link enabled? configured social
       // providers?). Public — no session required.
       {
         method: 'GET' as const,
@@ -1264,11 +1265,11 @@ export function authentication(options: AuthenticationPluginOptions): FlowlibPlu
           const passthroughOpts = options.betterAuthOptions ?? {};
           const signUpDisabledViaPassword =
             passthroughOpts.emailAndPassword?.disableSignUp === true;
-          const signUpDisabledViaOtp =
-            typeof options.emailOtp === 'object' &&
-            options.emailOtp !== null &&
-            (options.emailOtp as { disableSignUp?: boolean }).disableSignUp === true;
-          const signUpEnabled = !signUpDisabledViaPassword && !signUpDisabledViaOtp;
+          const signUpDisabledViaMagicLink =
+            typeof options.magicLink === 'object' &&
+            options.magicLink !== null &&
+            (options.magicLink as { disableSignUp?: boolean }).disableSignUp === true;
+          const signUpEnabled = !signUpDisabledViaPassword && !signUpDisabledViaMagicLink;
 
           const socialProviders = Object.keys(
             (passthroughOpts.socialProviders as Record<string, unknown> | undefined) ?? {},
@@ -1278,7 +1279,8 @@ export function authentication(options: AuthenticationPluginOptions): FlowlibPlu
             status: 200,
             body: {
               signUpEnabled,
-              emailOtpEnabled: !!options.emailOtp,
+              magicLinkEnabled: !!options.magicLink,
+              passwordEnabled: passthroughOpts.emailAndPassword?.enabled !== false,
               socialProviders,
             },
           };

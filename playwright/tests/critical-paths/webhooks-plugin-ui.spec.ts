@@ -93,7 +93,7 @@ async function goToWebhooksPage(page: Page) {
   await page.goto('/flowlib');
   await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible({ timeout: 15_000 });
 
-  await page.locator('.imp-sidebar-shell').getByRole('link', { name: 'Webhooks' }).click();
+  await page.locator('.fl-sidebar-shell').getByRole('link', { name: 'Webhooks' }).click();
   await expect(page.getByRole('heading', { name: 'Webhooks', exact: true })).toBeVisible({
     timeout: 15_000,
   });

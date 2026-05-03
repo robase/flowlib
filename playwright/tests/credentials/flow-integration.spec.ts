@@ -63,7 +63,7 @@ test.describe('Credential Usage in Flow Execution', () => {
 
     // 3. Click the 'Credentials' button in the dashboard header area
     //    Scope to main content area to avoid matching the sidebar's aria-labeled link
-    const credsHeaderLink = page.locator('.imp-page').getByRole('link', { name: 'Credentials' });
+    const credsHeaderLink = page.locator('.fl-page').getByRole('link', { name: 'Credentials' });
     await expect(credsHeaderLink).toBeVisible();
     await credsHeaderLink.click();
 

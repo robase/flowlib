@@ -140,7 +140,7 @@ export function ChatPanel({
     >
       <div
         className={cn(
-          'relative flex flex-col h-full border-l border-border bg-imp-background text-card-foreground',
+          'relative flex flex-col h-full border-l border-border bg-fl-background text-card-foreground',
           className,
         )}
         style={{ width: panelWidth, minWidth: MIN_WIDTH, maxWidth: MAX_WIDTH }}
@@ -182,7 +182,7 @@ export function ChatPanel({
 
         {/* Settings Panel (slide-over) */}
         {isSettingsPanelOpen && (
-          <div className="absolute inset-0 z-30 flex flex-col bg-imp-background">
+          <div className="absolute inset-0 z-30 flex flex-col bg-fl-background">
             <ChatSettingsPanel onClose={toggleSettingsPanel} />
           </div>
         )}

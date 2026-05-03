@@ -313,32 +313,24 @@ export interface TwoFactorPluginOptions {
 }
 
 /**
- * Options forwarded to the `emailOTP()` Better Auth plugin.
+ * Options forwarded to the `magicLink()` Better Auth plugin.
  *
- * The plugin needs `sendVerificationOTP` to actually deliver codes — typically
- * via Resend / Postmark / SES. Other fields tune OTP length, expiry, rate
- * limit, and whether sign-up via OTP is allowed.
+ * The plugin needs `sendMagicLink` to actually deliver the email — typically
+ * via Resend / Postmark / SES. Other fields tune the link expiry, sign-up
+ * behavior on first use, and rate limit.
  *
- * @see https://better-auth.com/docs/plugins/email-otp
+ * @see https://better-auth.com/docs/plugins/magic-link
  */
-export interface EmailOtpPluginOptions {
-  /** Deliver an OTP to the user's email address. Required for OTP flows to work. */
-  sendVerificationOTP: (data: {
-    email: string;
-    otp: string;
-    type: 'sign-in' | 'email-verification' | 'forget-password' | 'change-email';
-  }) => Promise<void> | void;
-  /** Length of the OTP. @default 6 */
-  otpLength?: number;
-  /** Expiry time of the OTP in seconds. @default 300 */
+export interface MagicLinkPluginOptions {
+  /** Deliver a magic-link URL to the user's email address. Required for magic-link sign-in to work. */
+  sendMagicLink: (data: { email: string; url: string; token: string }) => Promise<void> | void;
+  /** Time in seconds until the magic link expires. @default 900 (15 min) */
   expiresIn?: number;
-  /** Send email verification on sign-up. @default false */
-  sendVerificationOnSignUp?: boolean;
+  /** Allowed attempts for verifying a magic-link token. @default 1 */
+  allowedAttempts?: number;
   /** Block automatic sign-up when the user is not registered. @default false */
   disableSignUp?: boolean;
-  /** Allowed code attempts before the OTP is invalidated. @default 3 */
-  allowedAttempts?: number;
-  /** Rate limit for OTP requests. @default { window: 60, max: 3 } */
+  /** Rate limit for magic-link requests. @default { window: 60, max: 5 } */
   rateLimit?: { window: number; max: number };
 }
 
@@ -506,19 +498,19 @@ export interface AuthenticationPluginOptions {
   twoFactor?: TwoFactorPluginOptions;
 
   /**
-   * Email OTP plugin — enables passwordless sign-up and sign-in via a one-time
-   * code emailed to the user. Required for the OTP-based sign-up form to
-   * actually deliver codes; without this, the SignUp form's "Continue with
-   * Email" step will fail.
+   * Magic link plugin — enables passwordless sign-up and sign-in via a one-
+   * click link emailed to the user. Required for the magic-link sign-up form
+   * to actually deliver emails; without this, the SignUp form's "Continue
+   * with Email" step will fail.
    *
-   * Pass an options object with at least `sendVerificationOTP` so the plugin
-   * knows how to deliver the email. Pass `true` to enable with defaults
-   * (note: with no `sendVerificationOTP` callback, codes are generated
-   * server-side but never delivered — only useful in tests).
+   * Pass an options object with at least `sendMagicLink` so the plugin knows
+   * how to deliver the email. Pass `true` to enable with defaults (note: with
+   * no `sendMagicLink` callback, links are generated server-side but never
+   * delivered — only useful in tests).
    *
-   * @see https://better-auth.com/docs/plugins/email-otp
+   * @see https://better-auth.com/docs/plugins/magic-link
    */
-  emailOtp?: boolean | EmailOtpPluginOptions;
+  magicLink?: boolean | MagicLinkPluginOptions;
 
   /**
    * Frontend plugin (sidebar, routes, providers) for the auth UI.

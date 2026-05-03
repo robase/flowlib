@@ -49,7 +49,7 @@ export function MemberCombobox({
       }}
     >
       <div
-        className="flex min-h-[2.5rem] w-full cursor-text flex-wrap gap-1.5 rounded-md border border-imp-border bg-imp-background px-2 py-1.5 focus-within:border-imp-primary/50"
+        className="flex min-h-[2.5rem] w-full cursor-text flex-wrap gap-1.5 rounded-md border border-fl-border bg-fl-background px-2 py-1.5 focus-within:border-fl-primary/50"
         onClick={() => setOpen(true)}
       >
         {selectedUserIds.map((userId) => {
@@ -58,9 +58,9 @@ export function MemberCombobox({
           return (
             <span
               key={userId}
-              className="inline-flex items-center gap-1 rounded-md border border-imp-border bg-imp-muted px-2 py-0.5 text-xs font-medium text-imp-foreground"
+              className="inline-flex items-center gap-1 rounded-md border border-fl-border bg-fl-muted px-2 py-0.5 text-xs font-medium text-fl-foreground"
             >
-              <User className="h-3 w-3 shrink-0 text-imp-muted-foreground" />
+              <User className="h-3 w-3 shrink-0 text-fl-muted-foreground" />
               <span className="max-w-[140px] truncate">{label}</span>
               <button
                 type="button"
@@ -69,7 +69,7 @@ export function MemberCombobox({
                   e.stopPropagation();
                   toggle(userId);
                 }}
-                className="ml-0.5 text-imp-muted-foreground hover:text-imp-foreground"
+                className="ml-0.5 text-fl-muted-foreground hover:text-fl-foreground"
               >
                 <X className="h-3 w-3" />
               </button>
@@ -84,13 +84,13 @@ export function MemberCombobox({
           }}
           onFocus={() => setOpen(true)}
           placeholder={selectedUserIds.length === 0 ? 'Search users…' : 'Add more…'}
-          className="min-w-[120px] flex-1 bg-transparent text-sm outline-none placeholder:text-imp-muted-foreground"
+          className="min-w-[120px] flex-1 bg-transparent text-sm outline-none placeholder:text-fl-muted-foreground"
         />
       </div>
       {open && (
-        <div className="absolute left-0 z-20 mt-1 w-full overflow-y-auto rounded-md border border-imp-border bg-imp-background shadow-lg top-full max-h-52">
+        <div className="absolute left-0 z-20 mt-1 w-full overflow-y-auto rounded-md border border-fl-border bg-fl-background shadow-lg top-full max-h-52">
           {filteredUsers.length === 0 ? (
-            <div className="px-3 py-2 text-xs text-imp-muted-foreground">
+            <div className="px-3 py-2 text-xs text-fl-muted-foreground">
               {query ? 'No matches.' : 'No more users to add.'}
             </div>
           ) : (
@@ -103,13 +103,13 @@ export function MemberCombobox({
                   toggle(user.id);
                   setQuery('');
                 }}
-                className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-imp-muted/50"
+                className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-fl-muted/50"
               >
-                <User className="h-4 w-4 shrink-0 text-imp-muted-foreground" />
+                <User className="h-4 w-4 shrink-0 text-fl-muted-foreground" />
                 <div className="min-w-0 flex-1">
                   <div className="truncate font-medium">{user.name || user.email || user.id}</div>
                   {user.name && user.email && (
-                    <div className="truncate text-xs text-imp-muted-foreground">{user.email}</div>
+                    <div className="truncate text-xs text-fl-muted-foreground">{user.email}</div>
                   )}
                 </div>
               </button>

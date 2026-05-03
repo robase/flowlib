@@ -141,7 +141,7 @@ export function LogsPanel({
   return (
     <div
       className={cn(
-        'border-t border-border bg-imp-background text-card-foreground flex flex-col',
+        'border-t border-border bg-fl-background text-card-foreground flex flex-col',
         isExpanded ? 'h-full' : 'h-8',
       )}
     >
@@ -165,7 +165,7 @@ export function LogsPanel({
 
       {isExpanded && (
         <div className="flex flex-1 min-h-0 border-t border-border">
-          <div className="imp-page border-r border-imp-border bg-imp-background text-imp-foreground w-[280px] shrink-0 flex flex-col">
+          <div className="fl-page border-r border-fl-border bg-fl-background text-fl-foreground w-[280px] shrink-0 flex flex-col">
             {runs && onSelectRun && (
               <div className="px-2 pt-2 pb-1 shrink-0">
                 <RunSelector
@@ -290,7 +290,7 @@ export function LogsPanel({
             </ScrollArea>
           </div>
 
-          <div className="flex-1 min-w-0 overflow-hidden bg-imp-background text-imp-foreground">
+          <div className="flex-1 min-w-0 overflow-hidden bg-fl-background text-fl-foreground">
             <ScrollArea className="h-full">
               {/* Tool Call Detail View */}
               {selectedToolCall ? (
@@ -324,7 +324,7 @@ function ToolCallDetailView({ tool }: { tool: ExecutionLogToolCall }) {
 
   return (
     <div className="max-w-full">
-      <div className="sticky top-0 z-10 bg-imp-background px-4 py-2 border-b border-border">
+      <div className="sticky top-0 z-10 bg-fl-background px-4 py-2 border-b border-border">
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-2">
             <Wrench className="h-4 w-4 text-muted-foreground" />
@@ -431,7 +431,7 @@ function NodeAttemptDetailView({
 
   return (
     <div className="max-w-full">
-      <div className="sticky top-0 z-10 bg-imp-background px-4 py-2 border-b border-border">
+      <div className="sticky top-0 z-10 bg-fl-background px-4 py-2 border-b border-border">
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-2">
             <StatusIcon status={attempt.status} size={16} />

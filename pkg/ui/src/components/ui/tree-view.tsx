@@ -7,16 +7,16 @@ import { cn } from '~/lib/utils';
 
 function getTreeItemStyle(isSelected: boolean, isDragOver: boolean): React.CSSProperties {
   if (isDragOver) {
-    return { backgroundColor: 'color-mix(in srgb, var(--imp-primary, #5B5BD6) 15%, transparent)' };
+    return { backgroundColor: 'color-mix(in srgb, var(--fl-primary, #5B5BD6) 15%, transparent)' };
   }
   if (isSelected) {
-    return { backgroundColor: 'var(--imp-accent, #ededf7)' };
+    return { backgroundColor: 'var(--fl-accent, #ededf7)' };
   }
   return {};
 }
 
 const TREE_ITEM_BASE = 'group relative rounded-md px-2 cursor-pointer transition-colors';
-const TREE_ITEM_HOVER = 'imp-tree-item-hover';
+const TREE_ITEM_HOVER = 'fl-tree-item-hover';
 const TREE_ITEM_SELECTED_TEXT = 'font-medium';
 
 interface TreeDataItem {
@@ -350,7 +350,7 @@ const TreeNode = ({
           )}
         </AccordionTrigger>
         <AccordionContent
-          className={cn('ml-4 pl-1 border-l border-imp-border', item.childContainerClassName)}
+          className={cn('ml-4 pl-1 border-l border-fl-border', item.childContainerClassName)}
         >
           <TreeItem
             data={item.children ? item.children : item}

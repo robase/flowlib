@@ -280,7 +280,7 @@ export function DemoPage() {
 
       {/* Inset Flowlib component — override h-screen from Flowlib root */}
       <div
-        className="[&_.imp-shell]:!h-full"
+        className="[&_.fl-shell]:!h-full"
         style={{
           flex: 1,
           minHeight: 0,

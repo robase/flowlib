@@ -954,7 +954,7 @@ test.describe('Build a Complex Flow — End-to-End User Journey', () => {
     });
 
     // The sidebar should have navigation links
-    const sidebar = page.locator('.imp-sidebar-shell');
+    const sidebar = page.locator('.fl-sidebar-shell');
 
     // Click Credentials link
     const credLink = sidebar.getByRole('link', { name: /credentials/i }).first();

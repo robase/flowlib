@@ -1,7 +1,7 @@
 /**
  * FlowlibShell — Lightweight CSS scope + theme wrapper.
  *
- * Establishes the `.flowlib` CSS scope so that all `imp-*` theme
+ * Establishes the `.flowlib` CSS scope so that all `fl-*` theme
  * tokens and Tailwind utilities work inside it. Use this when you
  * need Flowlib theming around content that renders OUTSIDE the
  * full `<Flowlib />` component — for example, auth gates, plugin

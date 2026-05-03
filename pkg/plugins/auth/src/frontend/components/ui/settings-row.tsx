@@ -1,7 +1,7 @@
 /**
  * Two-column settings row: title/description on the left, content on the
  * right. Layout cribbed from the user-supplied screenshot — flowlib
- * `imp-*` theming.
+ * `fl-*` theming.
  */
 
 import type { ReactNode } from 'react';

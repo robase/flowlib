@@ -152,7 +152,7 @@ export function FlowCommandPalette({ open, onOpenChange, actions }: FlowCommandP
                     null}
                   <span>{action.label}</span>
                   {action.description && (
-                    <span className="text-imp-muted-foreground ml-2 truncate text-xs">
+                    <span className="text-fl-muted-foreground ml-2 truncate text-xs">
                       {action.description}
                     </span>
                   )}

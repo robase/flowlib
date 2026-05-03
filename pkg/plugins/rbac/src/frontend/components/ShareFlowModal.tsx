@@ -43,7 +43,7 @@ function getPermissionColor(permission: FlowAccessPermission): string {
       return 'border-emerald-500/30 bg-emerald-500/5 text-emerald-600 dark:text-emerald-400';
     case 'viewer':
     default:
-      return 'border-imp-border bg-imp-muted/50 text-imp-muted-foreground';
+      return 'border-fl-border bg-fl-muted/50 text-fl-muted-foreground';
   }
 }
 
@@ -170,15 +170,15 @@ export function ShareFlowModal({ flowId, onClose }: ShareFlowModalProps) {
       onClick={onClose}
     >
       <div
-        className="w-full max-w-md rounded-xl border border-imp-border bg-imp-background p-5 shadow-2xl"
+        className="w-full max-w-md rounded-xl border border-fl-border bg-fl-background p-5 shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-base font-semibold text-imp-foreground">Share Flow</h2>
+          <h2 className="text-base font-semibold text-fl-foreground">Share Flow</h2>
           <button
             onClick={onClose}
-            className="rounded-lg p-1.5 text-imp-muted-foreground transition-colors hover:bg-imp-muted hover:text-imp-foreground"
+            className="rounded-lg p-1.5 text-fl-muted-foreground transition-colors hover:bg-fl-muted hover:text-fl-foreground"
           >
             <X className="h-4 w-4" />
           </button>
@@ -193,13 +193,13 @@ export function ShareFlowModal({ flowId, onClose }: ShareFlowModalProps) {
 
         {/* Current access records */}
         <div className="mb-4">
-          <h3 className="mb-2 text-xs font-medium uppercase tracking-wide text-imp-muted-foreground">
+          <h3 className="mb-2 text-xs font-medium uppercase tracking-wide text-fl-muted-foreground">
             People with access
           </h3>
           {isLoading ? (
-            <div className="py-4 text-center text-sm text-imp-muted-foreground">Loading...</div>
+            <div className="py-4 text-center text-sm text-fl-muted-foreground">Loading...</div>
           ) : accessRecords.length === 0 ? (
-            <div className="py-4 text-center text-sm text-imp-muted-foreground">
+            <div className="py-4 text-center text-sm text-fl-muted-foreground">
               No flow-specific access records yet.
             </div>
           ) : (
@@ -215,7 +215,7 @@ export function ShareFlowModal({ flowId, onClose }: ShareFlowModalProps) {
                 return (
                   <div
                     key={record.id}
-                    className="flex items-center justify-between rounded-lg px-2.5 py-2 transition-colors hover:bg-imp-muted/30"
+                    className="flex items-center justify-between rounded-lg px-2.5 py-2 transition-colors hover:bg-fl-muted/30"
                   >
                     <div className="flex min-w-0 items-center gap-2.5">
                       <div
@@ -225,17 +225,17 @@ export function ShareFlowModal({ flowId, onClose }: ShareFlowModalProps) {
                       </div>
                       <div className="min-w-0">
                         <div className="flex items-center gap-1.5">
-                          <span className="truncate text-sm font-medium text-imp-foreground">
+                          <span className="truncate text-sm font-medium text-fl-foreground">
                             {label}
                           </span>
                           {isCurrentUser && (
-                            <span className="font-normal text-xs text-imp-muted-foreground">
+                            <span className="font-normal text-xs text-fl-muted-foreground">
                               (you)
                             </span>
                           )}
                         </div>
                         {secondary && secondary !== label && (
-                          <div className="truncate text-xs text-imp-muted-foreground">
+                          <div className="truncate text-xs text-fl-muted-foreground">
                             {secondary}
                           </div>
                         )}
@@ -255,7 +255,7 @@ export function ShareFlowModal({ flowId, onClose }: ShareFlowModalProps) {
                             onClick={() =>
                               setOpenRoleDropdown(isRoleDropdownOpen ? null : record.id)
                             }
-                            className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs font-medium capitalize transition-colors hover:bg-imp-muted/50 ${getPermissionColor(record.permission)}`}
+                            className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs font-medium capitalize transition-colors hover:bg-fl-muted/50 ${getPermissionColor(record.permission)}`}
                           >
                             {record.permission}
                             <ChevronDown className="h-3 w-3" />
@@ -266,25 +266,25 @@ export function ShareFlowModal({ flowId, onClose }: ShareFlowModalProps) {
                                 className="fixed inset-0 z-10"
                                 onClick={() => setOpenRoleDropdown(null)}
                               />
-                              <div className="absolute right-0 top-full z-20 mt-1 w-36 rounded-lg border border-imp-border bg-imp-background py-1 shadow-lg">
+                              <div className="absolute right-0 top-full z-20 mt-1 w-36 rounded-lg border border-fl-border bg-fl-background py-1 shadow-lg">
                                 {PERMISSION_OPTIONS.map((opt) => (
                                   <button
                                     key={opt.value}
                                     type="button"
                                     className={`w-full px-3 py-1.5 text-left text-xs ${
                                       record.permission === opt.value
-                                        ? 'bg-imp-muted font-medium text-imp-foreground'
-                                        : 'text-imp-foreground hover:bg-imp-muted/50'
+                                        ? 'bg-fl-muted font-medium text-fl-foreground'
+                                        : 'text-fl-foreground hover:bg-fl-muted/50'
                                     }`}
                                     onClick={() => handleChangeRole(record.id, record, opt.value)}
                                   >
                                     {opt.label}
                                   </button>
                                 ))}
-                                <div className="my-1 border-t border-imp-border" />
+                                <div className="my-1 border-t border-fl-border" />
                                 <button
                                   type="button"
-                                  className="w-full px-3 py-1.5 text-left text-xs text-imp-destructive hover:bg-imp-destructive/10"
+                                  className="w-full px-3 py-1.5 text-left text-xs text-fl-destructive hover:bg-fl-destructive/10"
                                   onClick={() => {
                                     handleRevoke(record.id);
                                     setOpenRoleDropdown(null);
@@ -306,8 +306,8 @@ export function ShareFlowModal({ flowId, onClose }: ShareFlowModalProps) {
         </div>
 
         {/* Grant new access */}
-        <div className="border-t border-imp-border pt-4">
-          <h3 className="mb-2.5 text-xs font-medium uppercase tracking-wide text-imp-muted-foreground">
+        <div className="border-t border-fl-border pt-4">
+          <h3 className="mb-2.5 text-xs font-medium uppercase tracking-wide text-fl-muted-foreground">
             Add people
           </h3>
           <div className="flex flex-col gap-2">
@@ -334,7 +334,7 @@ export function ShareFlowModal({ flowId, onClose }: ShareFlowModalProps) {
               <button
                 onClick={handleGrant}
                 disabled={grantAccess.isPending || selections.length === 0}
-                className="ml-auto inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-imp-primary px-3.5 py-1.5 text-sm font-medium text-imp-primary-foreground transition-colors hover:bg-imp-primary/90 disabled:opacity-50"
+                className="ml-auto inline-flex shrink-0 items-center gap-1.5 rounded-lg bg-fl-primary px-3.5 py-1.5 text-sm font-medium text-fl-primary-foreground transition-colors hover:bg-fl-primary/90 disabled:opacity-50"
               >
                 <Share2 className="h-3.5 w-3.5" />
                 Share

@@ -18,8 +18,8 @@ export function UserManagementPage() {
 
   if (!isAuthenticated) {
     return (
-      <div className="imp-page w-full h-full min-h-0 overflow-y-auto bg-imp-background text-imp-foreground flex items-center justify-center">
-        <p className="text-sm text-imp-muted-foreground">Please sign in to access this page.</p>
+      <div className="fl-page w-full h-full min-h-0 overflow-y-auto bg-fl-background text-fl-foreground flex items-center justify-center">
+        <p className="text-sm text-fl-muted-foreground">Please sign in to access this page.</p>
       </div>
     );
   }

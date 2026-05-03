@@ -47,7 +47,7 @@ function App() {
   }, []);
 
   const tokens: Partial<Record<string, string>> | undefined = tokensEnabled
-    ? { '--imp-background': '#3f2b1a' }
+    ? { '--fl-background': '#3f2b1a' }
     : undefined;
 
   return (
@@ -74,7 +74,7 @@ function App() {
             checked={tokensEnabled}
             onChange={(e) => setTokensEnabled(e.target.checked)}
           />{' '}
-          Override --imp-background → #3f2b1a
+          Override --fl-background → #3f2b1a
         </label>
       </div>
       <div style={{ flex: 1, minHeight: 0 }}>

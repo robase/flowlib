@@ -15,22 +15,52 @@ import { useAuthPublicConfig } from '../hooks';
 import { AuthGate } from './AuthGate';
 import { ForgotPasswordPage } from './ForgotPasswordPage';
 import { ResetPasswordPage } from './ResetPasswordPage';
-import { SignInPage } from './SignInPage';
-import { SignUpPage } from './SignUpPage';
+import { SignInPage, type SignInPageProps } from './SignInPage';
+import { SignUpPage, type SignUpPageProps } from './SignUpPage';
 import { TwoFactorVerifyPage } from './TwoFactorVerifyPage';
 
 export interface AuthAppShellProps {
   children: ReactNode;
   apiBaseUrl: string;
   basePath: string;
+  /**
+   * Brand mark (e.g. wordmark + logo SVG) rendered above every auth card.
+   * Forwarded to SignInPage / SignUpPage / etc. via their `brand` prop.
+   * Override per-page via `signInPageProps.brand` / `signUpPageProps.brand`.
+   */
+  brand?: ReactNode;
+  /**
+   * Props forwarded to the internal `<SignInPage />` rendered when the
+   * unauthenticated user is on the sign-in path. Use this to inject
+   * `socialProviders`, `socialDisclosure`, etc.
+   */
+  signInPageProps?: Omit<SignInPageProps, 'basePath'>;
+  /** Props forwarded to the internal `<SignUpPage />`. */
+  signUpPageProps?: Omit<SignUpPageProps, 'basePath'>;
 }
 
-export function AuthAppShell({ children, apiBaseUrl, basePath }: AuthAppShellProps) {
+export function AuthAppShell({
+  children,
+  apiBaseUrl,
+  basePath,
+  brand,
+  signInPageProps,
+  signUpPageProps,
+}: AuthAppShellProps) {
+  // Resolve brand fallback: per-page brand wins, otherwise top-level.
+  const signIn = { brand, ...signInPageProps };
+  const signUp = { brand, ...signUpPageProps };
   return (
     <AuthProvider baseUrl={apiBaseUrl}>
       <AuthGate
         loading={<LoadingSpinner />}
-        fallback={<UnauthenticatedRoutes basePath={basePath} />}
+        fallback={
+          <UnauthenticatedRoutes
+            basePath={basePath}
+            signInPageProps={signIn}
+            signUpPageProps={signUp}
+          />
+        }
       >
         {children}
       </AuthGate>
@@ -40,7 +70,15 @@ export function AuthAppShell({ children, apiBaseUrl, basePath }: AuthAppShellPro
 
 // ── Internal: unauthenticated path-based routing ────────────────
 
-function UnauthenticatedRoutes({ basePath }: { basePath: string }) {
+function UnauthenticatedRoutes({
+  basePath,
+  signInPageProps,
+  signUpPageProps,
+}: {
+  basePath: string;
+  signInPageProps?: Omit<SignInPageProps, 'basePath'>;
+  signUpPageProps?: Omit<SignUpPageProps, 'basePath'>;
+}) {
   const { twoFactorRequired } = useAuth();
   const { pathname } = useLocation();
   const config = useAuthPublicConfig();
@@ -62,7 +100,7 @@ function UnauthenticatedRoutes({ basePath }: { basePath: string }) {
       : pathname;
 
   if (stripped.startsWith('/sign-up') && !signUpDisabled) {
-    return <SignUpPage />;
+    return <SignUpPage {...signUpPageProps} />;
   }
   if (stripped.startsWith('/forgot-password')) {
     return <ForgotPasswordPage />;
@@ -71,7 +109,7 @@ function UnauthenticatedRoutes({ basePath }: { basePath: string }) {
     return <ResetPasswordPage />;
   }
 
-  return <SignInPage />;
+  return <SignInPage {...signInPageProps} />;
 }
 
 // ── Internal: loading spinner ───────────────────────────────────

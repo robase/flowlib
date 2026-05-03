@@ -28,7 +28,7 @@ export function FlowHeader({
   const flowHeaderActions = registry.headerActions.flowHeader ?? [];
 
   return (
-    <header className="flex items-center justify-between px-6 border-b h-14 border-border bg-imp-background text-card-foreground">
+    <header className="flex items-center justify-between px-6 border-b h-14 border-border bg-fl-background text-card-foreground">
       <div className="flex items-center gap-4">
         <InlineEdit
           value={flowName}

@@ -171,38 +171,38 @@
     @tailwind utilities;
 
     /* Theme CSS variables - light mode */
-    --imp-background: #fafafa;
-    --imp-canvas-background: #f8f9fb;
-    --imp-foreground: #1a1a2e;
-    --imp-card: #ffffff;
-    --imp-shadow-sidebar: 1px 0 3px rgba(0, 0, 0, 0.06);
-    --imp-shadow-card: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
-    --imp-shadow-card-hover: 0 4px 12px rgba(0, 0, 0, 0.08), 0 2px 4px rgba(0, 0, 0, 0.04);
-    --imp-shadow-floating: 0 16px 48px -12px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(0, 0, 0, 0.05);
-    --imp-card-foreground: #1a1a2e;
-    --imp-popover: #ffffff;
-    --imp-popover-foreground: #1a1a2e;
-    --imp-primary: #5b5bd6;
-    --imp-primary-foreground: #ffffff;
-    --imp-secondary: #f0f0f8;
-    --imp-secondary-foreground: #1a1a2e;
-    --imp-muted: #f4f4f8;
-    --imp-muted-foreground: #6e6e80;
-    --imp-accent: #ededf7;
-    --imp-accent-foreground: #1a1a2e;
-    --imp-destructive: #e5484d;
-    --imp-destructive-foreground: #ffffff;
-    --imp-border: #e0e0ec;
-    --imp-input: #dcdce4;
-    --imp-ring: #5b5bd6;
-    --imp-sidebar: #fafafe;
-    --imp-sidebar-foreground: #1a1a2e;
-    --imp-sidebar-primary: #1a1a2e;
-    --imp-sidebar-primary-foreground: #ffffff;
-    --imp-sidebar-accent: #ededf7;
-    --imp-sidebar-accent-foreground: #5b5bd6;
-    --imp-sidebar-border: #e0e0ec;
-    --imp-sidebar-ring: #5b5bd6;
+    --fl-background: #fafafa;
+    --fl-canvas-background: #f8f9fb;
+    --fl-foreground: #1a1a2e;
+    --fl-card: #ffffff;
+    --fl-shadow-sidebar: 1px 0 3px rgba(0, 0, 0, 0.06);
+    --fl-shadow-card: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+    --fl-shadow-card-hover: 0 4px 12px rgba(0, 0, 0, 0.08), 0 2px 4px rgba(0, 0, 0, 0.04);
+    --fl-shadow-floating: 0 16px 48px -12px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(0, 0, 0, 0.05);
+    --fl-card-foreground: #1a1a2e;
+    --fl-popover: #ffffff;
+    --fl-popover-foreground: #1a1a2e;
+    --fl-primary: #5b5bd6;
+    --fl-primary-foreground: #ffffff;
+    --fl-secondary: #f0f0f8;
+    --fl-secondary-foreground: #1a1a2e;
+    --fl-muted: #f4f4f8;
+    --fl-muted-foreground: #6e6e80;
+    --fl-accent: #ededf7;
+    --fl-accent-foreground: #1a1a2e;
+    --fl-destructive: #e5484d;
+    --fl-destructive-foreground: #ffffff;
+    --fl-border: #e0e0ec;
+    --fl-input: #dcdce4;
+    --fl-ring: #5b5bd6;
+    --fl-sidebar: #fafafe;
+    --fl-sidebar-foreground: #1a1a2e;
+    --fl-sidebar-primary: #1a1a2e;
+    --fl-sidebar-primary-foreground: #ffffff;
+    --fl-sidebar-accent: #ededf7;
+    --fl-sidebar-accent-foreground: #5b5bd6;
+    --fl-sidebar-border: #e0e0ec;
+    --fl-sidebar-ring: #5b5bd6;
     --background: #ffffff;
     --canvas-background: #f8f9fb;
     --foreground: #1a1a2e;
@@ -249,44 +249,44 @@
     --node-selected-border: #60a5fa;
     --node-hover-bg: #f7f7fd;
     /* Semantic colors */
-    --imp-success: #30a46c;
-    --imp-success-foreground: #ffffff;
-    --imp-success-muted: #d4f4e2;
-    --imp-warning: #e5a100;
-    --imp-warning-foreground: #ffffff;
-    --imp-warning-muted: #fef3cd;
-    --imp-info: #3b82f6;
-    --imp-info-foreground: #ffffff;
-    --imp-info-muted: #dbeafe;
+    --fl-success: #30a46c;
+    --fl-success-foreground: #ffffff;
+    --fl-success-muted: #d4f4e2;
+    --fl-warning: #e5a100;
+    --fl-warning-foreground: #ffffff;
+    --fl-warning-muted: #fef3cd;
+    --fl-info: #3b82f6;
+    --fl-info-foreground: #ffffff;
+    --fl-info-muted: #dbeafe;
 
-    --background: var(--imp-background);
-    --canvas-background: var(--imp-canvas-background);
-    --foreground: var(--imp-foreground);
-    --card: var(--imp-card);
-    --card-foreground: var(--imp-card-foreground);
-    --popover: var(--imp-popover);
-    --popover-foreground: var(--imp-popover-foreground);
-    --primary: var(--imp-primary);
-    --primary-foreground: var(--imp-primary-foreground);
-    --secondary: var(--imp-secondary);
-    --secondary-foreground: var(--imp-secondary-foreground);
-    --muted: var(--imp-muted);
-    --muted-foreground: var(--imp-muted-foreground);
-    --accent: var(--imp-accent);
-    --accent-foreground: var(--imp-accent-foreground);
-    --destructive: var(--imp-destructive);
-    --destructive-foreground: var(--imp-destructive-foreground);
-    --border: var(--imp-border);
-    --input: var(--imp-input);
-    --ring: var(--imp-ring);
-    --sidebar: var(--imp-sidebar);
-    --sidebar-foreground: var(--imp-sidebar-foreground);
-    --sidebar-primary: var(--imp-sidebar-primary);
-    --sidebar-primary-foreground: var(--imp-sidebar-primary-foreground);
-    --sidebar-accent: var(--imp-sidebar-accent);
-    --sidebar-accent-foreground: var(--imp-sidebar-accent-foreground);
-    --sidebar-border: var(--imp-sidebar-border);
-    --sidebar-ring: var(--imp-sidebar-ring);
+    --background: var(--fl-background);
+    --canvas-background: var(--fl-canvas-background);
+    --foreground: var(--fl-foreground);
+    --card: var(--fl-card);
+    --card-foreground: var(--fl-card-foreground);
+    --popover: var(--fl-popover);
+    --popover-foreground: var(--fl-popover-foreground);
+    --primary: var(--fl-primary);
+    --primary-foreground: var(--fl-primary-foreground);
+    --secondary: var(--fl-secondary);
+    --secondary-foreground: var(--fl-secondary-foreground);
+    --muted: var(--fl-muted);
+    --muted-foreground: var(--fl-muted-foreground);
+    --accent: var(--fl-accent);
+    --accent-foreground: var(--fl-accent-foreground);
+    --destructive: var(--fl-destructive);
+    --destructive-foreground: var(--fl-destructive-foreground);
+    --border: var(--fl-border);
+    --input: var(--fl-input);
+    --ring: var(--fl-ring);
+    --sidebar: var(--fl-sidebar);
+    --sidebar-foreground: var(--fl-sidebar-foreground);
+    --sidebar-primary: var(--fl-sidebar-primary);
+    --sidebar-primary-foreground: var(--fl-sidebar-primary-foreground);
+    --sidebar-accent: var(--fl-sidebar-accent);
+    --sidebar-accent-foreground: var(--fl-sidebar-accent-foreground);
+    --sidebar-border: var(--fl-sidebar-border);
+    --sidebar-ring: var(--fl-sidebar-ring);
 
     /* Apply Geist Sans for UI text within .flowlib and reserve Iosevka for code-oriented surfaces. */
     font-family: 'Geist Variable', 'Geist', ui-sans-serif, system-ui, sans-serif;
@@ -332,15 +332,15 @@
       --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
       --color-sidebar-border: var(--sidebar-border);
       --color-sidebar-ring: var(--sidebar-ring);
-      --color-success: var(--imp-success);
-      --color-success-foreground: var(--imp-success-foreground);
-      --color-success-muted: var(--imp-success-muted);
-      --color-warning: var(--imp-warning);
-      --color-warning-foreground: var(--imp-warning-foreground);
-      --color-warning-muted: var(--imp-warning-muted);
-      --color-info: var(--imp-info);
-      --color-info-foreground: var(--imp-info-foreground);
-      --color-info-muted: var(--imp-info-muted);
+      --color-success: var(--fl-success);
+      --color-success-foreground: var(--fl-success-foreground);
+      --color-success-muted: var(--fl-success-muted);
+      --color-warning: var(--fl-warning);
+      --color-warning-foreground: var(--fl-warning-foreground);
+      --color-warning-muted: var(--fl-warning-muted);
+      --color-info: var(--fl-info);
+      --color-info-foreground: var(--fl-info-foreground);
+      --color-info-muted: var(--fl-info-muted);
       --font-serif:
         'Geist Variable', 'Geist', ui-serif, Georgia, Cambria, 'Times New Roman', Times, serif;
       /* computed shadow variables below - do not modify */
@@ -376,49 +376,49 @@
 
     /* Dark mode design */
     &.dark {
-      --imp-background: #111114;
-      --imp-canvas-background: #17171c;
-      --imp-foreground: #ececf0;
-      --imp-card: #1e1e24;
-      --imp-card-foreground: #ececf0;
-      --imp-popover: #222228;
-      --imp-popover-foreground: #ececf0;
-      --imp-primary: #7b7bde;
-      --imp-primary-foreground: #ffffff;
-      --imp-secondary: #22222c;
-      --imp-secondary-foreground: #ececf0;
-      --imp-muted: #22222c;
-      --imp-muted-foreground: #8b8b9e;
-      --imp-accent: #2c2c3a;
-      --imp-accent-foreground: #ececf0;
-      --imp-destructive: #e5484d;
-      --imp-destructive-foreground: #ffffff;
-      --imp-border: #2e2e3c;
-      --imp-input: #3a3a4a;
-      --imp-ring: #7b7bde;
+      --fl-background: #111114;
+      --fl-canvas-background: #17171c;
+      --fl-foreground: #ececf0;
+      --fl-card: #1e1e24;
+      --fl-card-foreground: #ececf0;
+      --fl-popover: #222228;
+      --fl-popover-foreground: #ececf0;
+      --fl-primary: #7b7bde;
+      --fl-primary-foreground: #ffffff;
+      --fl-secondary: #22222c;
+      --fl-secondary-foreground: #ececf0;
+      --fl-muted: #22222c;
+      --fl-muted-foreground: #8b8b9e;
+      --fl-accent: #2c2c3a;
+      --fl-accent-foreground: #ececf0;
+      --fl-destructive: #e5484d;
+      --fl-destructive-foreground: #ffffff;
+      --fl-border: #2e2e3c;
+      --fl-input: #3a3a4a;
+      --fl-ring: #7b7bde;
       --chart-1: #7b7bde;
       --chart-2: #9b9be8;
       --chart-3: #5a7de8;
       --chart-4: #3dd68c;
       --chart-5: #ff6369;
-      --imp-sidebar: #111114;
-      --imp-sidebar-foreground: #ececf0;
-      --imp-sidebar-primary: #ececf0;
-      --imp-sidebar-primary-foreground: #131316;
-      --imp-sidebar-accent: #26263a;
-      --imp-sidebar-accent-foreground: #7b7bde;
-      --imp-sidebar-border: #2e2e3c;
-      --imp-sidebar-ring: #9b9bb8;
+      --fl-sidebar: #111114;
+      --fl-sidebar-foreground: #ececf0;
+      --fl-sidebar-primary: #ececf0;
+      --fl-sidebar-primary-foreground: #131316;
+      --fl-sidebar-accent: #26263a;
+      --fl-sidebar-accent-foreground: #7b7bde;
+      --fl-sidebar-border: #2e2e3c;
+      --fl-sidebar-ring: #9b9bb8;
       --shadow-x: 0px;
       --shadow-y: 1px;
       --shadow-blur: 3px;
       --shadow-spread: 0px;
       --shadow-opacity: 0.2;
       --shadow-color: #000000;
-      --imp-shadow-sidebar: 1px 0 3px rgba(0, 0, 0, 0.2);
-      --imp-shadow-card: 0 1px 3px rgba(0, 0, 0, 0.2), 0 1px 2px rgba(0, 0, 0, 0.15);
-      --imp-shadow-card-hover: 0 4px 12px rgba(0, 0, 0, 0.3), 0 2px 4px rgba(0, 0, 0, 0.15);
-      --imp-shadow-floating:
+      --fl-shadow-sidebar: 1px 0 3px rgba(0, 0, 0, 0.2);
+      --fl-shadow-card: 0 1px 3px rgba(0, 0, 0, 0.2), 0 1px 2px rgba(0, 0, 0, 0.15);
+      --fl-shadow-card-hover: 0 4px 12px rgba(0, 0, 0, 0.3), 0 2px 4px rgba(0, 0, 0, 0.15);
+      --fl-shadow-floating:
         0 16px 48px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05);
       /* Edge selection colors - dark mode */
       --edge-selected-stroke: #7b7bde;
@@ -426,15 +426,15 @@
       --node-selected-border: #60a5fa;
       --node-hover-bg: rgba(30, 30, 36, 0.8);
       /* Semantic colors - dark mode */
-      --imp-success: #3dd68c;
-      --imp-success-foreground: #0d2118;
-      --imp-success-muted: #1a3a2a;
-      --imp-warning: #f5c518;
-      --imp-warning-foreground: #1a1500;
-      --imp-warning-muted: #3a3000;
-      --imp-info: #60a5fa;
-      --imp-info-foreground: #0c1929;
-      --imp-info-muted: #1e3a5f;
+      --fl-success: #3dd68c;
+      --fl-success-foreground: #0d2118;
+      --fl-success-muted: #1a3a2a;
+      --fl-warning: #f5c518;
+      --fl-warning-foreground: #1a1500;
+      --fl-warning-muted: #3a3000;
+      --fl-info: #60a5fa;
+      --fl-info-foreground: #0c1929;
+      --fl-info-muted: #1e3a5f;
     }
 
     /* Base styles scoped to .flowlib */
@@ -447,59 +447,114 @@
     background-color: var(--background);
     color: var(--foreground);
 
-    .bg-imp-background {
-      background-color: var(--imp-background) !important;
+    .bg-fl-background {
+      background-color: var(--fl-background) !important;
     }
 
-    .text-imp-foreground {
-      color: var(--imp-foreground) !important;
+    .text-fl-foreground {
+      color: var(--fl-foreground) !important;
     }
 
-    .bg-imp-card {
-      background-color: var(--imp-card) !important;
+    .bg-fl-card {
+      background-color: var(--fl-card) !important;
     }
 
-    .bg-imp-sidebar {
-      background-color: var(--imp-sidebar) !important;
+    .bg-fl-sidebar {
+      background-color: var(--fl-sidebar) !important;
     }
 
-    .text-imp-sidebar-foreground {
-      color: var(--imp-sidebar-foreground) !important;
+    .text-fl-sidebar-foreground {
+      color: var(--fl-sidebar-foreground) !important;
     }
 
-    .border-imp-border {
-      border-color: var(--imp-border) !important;
+    .border-fl-border {
+      border-color: var(--fl-border) !important;
     }
 
-    &.imp-shell,
-    .imp-shell {
-      background-color: var(--imp-background) !important;
-      color: var(--imp-foreground) !important;
+    /* ── Auth UI utilities ────────────────────────────────────────
+       Used by @flowlib/user-auth/ui components (SignInForm, SignUpForm,
+       PasswordSetupForm, EmailSentNotice, SocialAuthButtons). Defined
+       here as explicit utilities so they're guaranteed to ship in the
+       generated CSS even when the consuming app's Tailwind doesn't
+       scan node_modules. */
+    .bg-fl-primary {
+      background-color: var(--fl-primary) !important;
+    }
+    .text-fl-primary {
+      color: var(--fl-primary) !important;
+    }
+    .text-fl-primary-foreground {
+      color: var(--fl-primary-foreground) !important;
+    }
+    .hover\:bg-fl-primary\/90:hover {
+      background-color: color-mix(in srgb, var(--fl-primary) 90%, transparent) !important;
+    }
+    .bg-fl-muted {
+      background-color: var(--fl-muted) !important;
+    }
+    .text-fl-muted-foreground {
+      color: var(--fl-muted-foreground) !important;
+    }
+    .hover\:bg-fl-muted\/40:hover {
+      background-color: color-mix(in srgb, var(--fl-muted) 40%, transparent) !important;
+    }
+    .hover\:text-fl-foreground:hover {
+      color: var(--fl-foreground) !important;
+    }
+    .bg-fl-input {
+      background-color: var(--fl-input) !important;
+    }
+    .border-fl-input {
+      border-color: var(--fl-input) !important;
+    }
+    .bg-fl-destructive\/10 {
+      background-color: color-mix(in srgb, var(--fl-destructive) 10%, transparent) !important;
+    }
+    .text-fl-destructive {
+      color: var(--fl-destructive) !important;
+    }
+    .border-fl-destructive\/30 {
+      border-color: color-mix(in srgb, var(--fl-destructive) 30%, transparent) !important;
+    }
+    .focus-visible\:ring-fl-ring:focus-visible {
+      --tw-ring-color: var(--fl-ring) !important;
+    }
+    .placeholder\:text-fl-muted-foreground::placeholder {
+      color: var(--fl-muted-foreground) !important;
+    }
+    .bg-fl-primary\/10 {
+      background-color: color-mix(in srgb, var(--fl-primary) 10%, transparent) !important;
     }
 
-    .imp-page {
-      background-color: var(--imp-background) !important;
+    &.fl-shell,
+    .fl-shell {
+      background-color: var(--fl-background) !important;
+      color: var(--fl-foreground) !important;
+    }
+
+    .fl-page {
+      background-color: var(--fl-background) !important;
     }
 
     /* Tree view: hover highlight for all items */
-    .imp-tree-item-hover:hover {
-      background-color: var(--imp-muted);
+    .fl-tree-item-hover:hover {
+      background-color: var(--fl-muted);
       border-radius: 0.375rem;
     }
 
-    .imp-node-config-form [data-slot='input'],
-    .imp-node-config-form [data-slot='textarea'],
-    .imp-node-config-form [data-slot='select-trigger'],
-    .imp-node-config-form [role='combobox'],
-    .imp-node-config-form .cm-editor,
-    .imp-node-config-form .cm-scroller,
-    .imp-node-config-form .cm-content {
+    .fl-node-config-form [data-slot='input'],
+    .fl-node-config-form [data-slot='textarea'],
+    .fl-node-config-form [data-slot='select-trigger'],
+    .fl-node-config-form [role='combobox'],
+    .fl-node-config-form .cm-editor,
+    .fl-node-config-form .cm-scroller,
+    .fl-node-config-form .cm-content {
       font-family: var(--font-mono);
     }
 
-    .imp-sidebar-shell {
-      background-color: var(--imp-sidebar) !important;
-      color: var(--imp-sidebar-foreground) !important;
+    .fl-sidebar-shell {
+      background-color: var(--fl-sidebar) !important;
+      color: var(--fl-sidebar-foreground) !important;
     }
 
     /* React Flow styles */

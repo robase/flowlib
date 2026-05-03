@@ -109,16 +109,16 @@ export function FlowDetailPanel({
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
-      <div className="px-5 py-4 overflow-hidden border-b shrink-0 border-imp-border">
+      <div className="px-5 py-4 overflow-hidden border-b shrink-0 border-fl-border">
         <div className="flex items-start gap-3">
-          <div className="flex items-center justify-center flex-none w-10 h-10 rounded-xl bg-imp-primary/10 text-imp-primary">
+          <div className="flex items-center justify-center flex-none w-10 h-10 rounded-xl bg-fl-primary/10 text-fl-primary">
             <Workflow className="w-5 h-5" />
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
               <h2 className="flex-1 min-w-0 text-base font-semibold truncate">{flowName}</h2>
             </div>
-            <div className="mt-1 flex flex-wrap items-center gap-1 text-[11px] text-imp-muted-foreground">
+            <div className="mt-1 flex flex-wrap items-center gap-1 text-[11px] text-fl-muted-foreground">
               <span>Root</span>
               {scopePath.map((team) => (
                 <div key={team.id} className="flex items-center gap-1">
@@ -128,7 +128,7 @@ export function FlowDetailPanel({
               ))}
               <div className="flex items-center gap-1">
                 <ChevronRight className="w-3 h-3" />
-                <span className="font-medium text-imp-foreground">{flowName}</span>
+                <span className="font-medium text-fl-foreground">{flowName}</span>
               </div>
             </div>
           </div>
@@ -136,13 +136,13 @@ export function FlowDetailPanel({
             <button
               type="button"
               onClick={openFlow}
-              className="flex items-center gap-1.5 rounded-md border border-imp-border px-3 py-1.5 text-xs font-medium text-imp-muted-foreground transition-colors hover:border-imp-primary/50 hover:text-imp-foreground"
+              className="flex items-center gap-1.5 rounded-md border border-fl-border px-3 py-1.5 text-xs font-medium text-fl-muted-foreground transition-colors hover:border-fl-primary/50 hover:text-fl-foreground"
             >
               <ExternalLink className="w-4 h-4" /> Open in Editor
             </button>
           </div>
         </div>
-        <p className="mt-3 text-xs text-imp-muted-foreground">
+        <p className="mt-3 text-xs text-fl-muted-foreground">
           All principals with access and how they got it.
         </p>
       </div>
@@ -151,18 +151,18 @@ export function FlowDetailPanel({
         <div className="space-y-6">
           <section className="space-y-2">
             <div className="flex items-center justify-between">
-              <h3 className="text-sm font-semibold text-imp-foreground">Direct Access</h3>
+              <h3 className="text-sm font-semibold text-fl-foreground">Direct Access</h3>
               {isAdmin ? (
                 <button
                   type="button"
                   onClick={() => setShowGrantDialog(true)}
-                  className="flex items-center gap-1.5 rounded-md border border-imp-border px-3 py-1.5 text-xs font-medium text-imp-muted-foreground transition-colors hover:border-imp-primary/50 hover:text-imp-foreground"
+                  className="flex items-center gap-1.5 rounded-md border border-fl-border px-3 py-1.5 text-xs font-medium text-fl-muted-foreground transition-colors hover:border-fl-primary/50 hover:text-fl-foreground"
                 >
                   <Plus className="w-4 h-4" /> Grant Access
                 </button>
               ) : null}
             </div>
-            <div className="overflow-hidden border rounded-xl border-imp-border bg-imp-background/40">
+            <div className="overflow-hidden border rounded-xl border-fl-border bg-fl-background/40">
               <AccessTable
                 rows={directRows}
                 isLoading={effectiveFlowAccessQuery.isLoading}
@@ -172,8 +172,8 @@ export function FlowDetailPanel({
           </section>
 
           <section className="space-y-2">
-            <h3 className="text-sm font-semibold text-imp-foreground">Inherited Access</h3>
-            <div className="overflow-hidden border rounded-xl border-imp-border bg-imp-background/40">
+            <h3 className="text-sm font-semibold text-fl-foreground">Inherited Access</h3>
+            <div className="overflow-hidden border rounded-xl border-fl-border bg-fl-background/40">
               <AccessTable
                 rows={inheritedRows}
                 isLoading={effectiveFlowAccessQuery.isLoading}
@@ -216,7 +216,7 @@ export function FlowDetailPanel({
                 setShowGrantDialog(false);
               }}
               disabled={principalSelections.length === 0 || grantFlowAccess.isPending}
-              className="ml-auto rounded-md bg-imp-primary px-4 py-2 text-sm font-semibold text-imp-primary-foreground hover:bg-imp-primary/90 disabled:opacity-50"
+              className="ml-auto rounded-md bg-fl-primary px-4 py-2 text-sm font-semibold text-fl-primary-foreground hover:bg-fl-primary/90 disabled:opacity-50"
             >
               Grant
             </button>

@@ -10,7 +10,8 @@ import { useAuth } from '../providers/AuthProvider';
 
 export interface AuthPublicConfig {
   signUpEnabled: boolean;
-  emailOtpEnabled: boolean;
+  magicLinkEnabled: boolean;
+  passwordEnabled: boolean;
   socialProviders: string[];
 }
 

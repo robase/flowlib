@@ -92,7 +92,7 @@ function ThemeTokenOverride({
 
   return (
     <div
-      className={['imp-shell imp-flow-canvas relative w-full h-full', className]
+      className={['fl-shell fl-flow-canvas relative w-full h-full', className]
         .filter(Boolean)
         .join(' ')}
       style={style}

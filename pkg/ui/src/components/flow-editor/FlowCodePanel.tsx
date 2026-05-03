@@ -139,7 +139,7 @@ export function FlowCodePanel({ flowId, source = 'editor', className }: FlowCode
     >
       <div
         className={cn(
-          'relative flex flex-col h-full border-l border-border bg-imp-background text-card-foreground',
+          'relative flex flex-col h-full border-l border-border bg-fl-background text-card-foreground',
           className,
         )}
         style={{ width: panelWidth, minWidth: MIN_WIDTH, maxWidth: MAX_WIDTH }}

@@ -96,14 +96,14 @@ export function AppSideMenu({ basePath = '' }: AppSideMenuProps) {
       <div
         ref={sidebarRef}
         className={cn(
-          'imp-sidebar-shell absolute left-0 top-0 z-50 flex h-full flex-col border-r border-imp-border bg-imp-sidebar text-imp-sidebar-foreground transition-all duration-300',
+          'fl-sidebar-shell absolute left-0 top-0 z-50 flex h-full flex-col border-r border-fl-border bg-fl-sidebar text-fl-sidebar-foreground transition-all duration-300',
           isCollapsed ? 'w-16' : 'w-64',
         )}
       >
         <Button
           variant="ghost"
           size="icon"
-          className="absolute z-10 w-6 h-6 border rounded-full -right-3 top-4 border-imp-border bg-imp-background"
+          className="absolute z-10 w-6 h-6 border rounded-full -right-3 top-4 border-fl-border bg-fl-background"
           onClick={() => setIsCollapsed(!isCollapsed)}
         >
           {isCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}

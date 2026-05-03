@@ -172,7 +172,7 @@ export function ConfigurationPanel({
 
   return (
     <ResizablePanel defaultSize={30} minSize={20} className="h-full">
-      <div className="flex flex-col h-full overflow-hidden imp-node-config-root bg-background">
+      <div className="flex flex-col h-full overflow-hidden fl-node-config-root bg-background">
         {/* Node identity header */}
         {headerLabel !== undefined && (
           <div className="flex items-center gap-2 px-3 py-2 border-b border-border shrink-0">
@@ -275,7 +275,7 @@ export function ConfigurationPanel({
           <ScrollArea className="flex-1 min-h-0">
             <div
               className={cn(
-                'imp-node-config-form min-h-full p-3 text-xs flex flex-col gap-4',
+                'fl-node-config-form min-h-full p-3 text-xs flex flex-col gap-4',
                 hasExpandableParameterFields && 'h-full',
               )}
             >

@@ -38,21 +38,21 @@ export type NodeRunStatus = 'pending' | 'running' | 'success' | 'failed' | 'skip
  * like `var(--vscode-editor-background)`.
  */
 export type ThemeTokenName =
-  | '--imp-background'
-  | '--imp-foreground'
-  | '--imp-muted'
-  | '--imp-muted-foreground'
-  | '--imp-border'
-  | '--imp-card'
-  | '--imp-card-foreground'
-  | '--imp-primary'
-  | '--imp-primary-foreground'
-  | '--imp-accent'
-  | '--imp-accent-foreground'
-  | '--imp-destructive'
-  | '--imp-destructive-foreground'
-  | '--imp-ring'
-  // Allow arbitrary --imp-* tokens without losing IntelliSense on the
+  | '--fl-background'
+  | '--fl-foreground'
+  | '--fl-muted'
+  | '--fl-muted-foreground'
+  | '--fl-border'
+  | '--fl-card'
+  | '--fl-card-foreground'
+  | '--fl-primary'
+  | '--fl-primary-foreground'
+  | '--fl-accent'
+  | '--fl-accent-foreground'
+  | '--fl-destructive'
+  | '--fl-destructive-foreground'
+  | '--fl-ring'
+  // Allow arbitrary --fl-* tokens without losing IntelliSense on the
   // known ones above.
   | (string & {});
 
@@ -103,7 +103,7 @@ export interface FlowCanvasProps {
   nodeRunStatus?: Record<string, NodeRunStatus>;
 
   /**
-   * Override any `--imp-*` theme token. Values can be any CSS value,
+   * Override any `--fl-*` theme token. Values can be any CSS value,
    * e.g. `'var(--vscode-editor-background)'` or `'red'`. Tokens not
    * listed here fall back to the default theme.
    */

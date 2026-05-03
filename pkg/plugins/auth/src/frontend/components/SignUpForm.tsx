@@ -1,67 +1,108 @@
 /**
- * SignUpForm — passwordless sign-up via social provider or email OTP.
+ * SignUpForm — passwordless sign-up via social provider or magic link.
  *
- * Four-step state machine (modeled after Vercel's sign-up flow + an
- * optional password set):
- *   chooser → email → otp → password
+ * State machine:
+ *   chooser → magic-link-email   →  email-sent  ⟶ (user clicks link)
+ *           ↘ password (if 'password' mode is enabled)
  *
- * - chooser: social provider buttons + "Continue with Email" link
- * - email: collects the email address, calls
- *   `authClient.emailOtp.sendVerificationOtp({ type: 'sign-in' })`
- * - otp: 6-digit code input, calls `authClient.signIn.emailOtp({ email, otp })`
- *   which auto-creates the account on first verification (when the
- *   server-side `emailOTP` plugin has `disableSignUp: false`, the default).
- *   On verify success, the user is signed in.
- * - password: prompts the user to set a password (so they can sign in via
- *   email + password later, without going through OTP each time). Skippable;
- *   skipping completes sign-up with the OTP-only account.
+ * - chooser: social provider buttons + "Continue with Email" (and optionally
+ *   "Use a password instead" when both modes are enabled).
+ * - magic-link-email: collects the email address, calls
+ *   `authClient.signIn.magicLink({ email, callbackURL })`. On success flips
+ *   to `email-sent`.
+ * - email-sent: <EmailSentNotice /> — "Check your email", resend, change
+ *   address. The user clicks the link in their inbox; the BA magic-link
+ *   verify endpoint signs them in. Configure the plugin's
+ *   `newUserCallbackURL` to `/welcome/set-password` so first-time users land
+ *   on the password setup page.
+ * - password: classic email + password form, only rendered when 'password'
+ *   is in `signUpModes`. Calls `authClient.signUp.email`.
  *
- * Requires the `emailOTP` better-auth plugin to be enabled server-side via
- * the auth plugin's `emailOtp` option, with a `sendVerificationOTP`
- * callback that actually delivers the email.
+ * Server requirements per mode:
+ *   - 'magic-link' → Better Auth `magicLink` plugin enabled + sendMagicLink.
+ *   - 'password'   → emailAndPassword.enabled (default true).
+ *
+ * @see https://better-auth.com/docs/plugins/magic-link
  */
 
 import { useState, type FormEvent } from 'react';
 import { ArrowLeft, ArrowRight, Loader2, Mail } from 'lucide-react';
 import { Link } from 'react-router';
-import { useSendVerificationOtp, useSetPassword, useSignInEmailOtp } from '../hooks';
-import { AuthCard, ErrorMessage, Field, TextInput } from './ui/auth-form';
-import { OtpInput } from './ui/OtpInput';
-import { SocialAuthButtons, type SocialProviderId } from './ui/SocialAuthButtons';
+import { useAuth } from '../providers/AuthProvider';
+import { useAuthPublicConfig, useSendMagicLink, useSignUpEmail } from '../hooks';
+import {
+  AuthCard,
+  Divider,
+  ErrorMessage,
+  Field,
+  LinkButton,
+  SubmitButton,
+  TextInput,
+} from './ui/auth-form';
+import { EmailSentNotice } from './EmailSentNotice';
+import {
+  SocialAuthButtons,
+  type SocialDisclosure,
+  type SocialProviderConfig,
+} from './ui/SocialAuthButtons';
+
+export type SignUpMode = 'magic-link' | 'password';
 
 export interface SignUpFormProps {
-  /** Called after a successful (signed-in) sign-up */
+  /** Called after a successful (signed-in) sign-up. Magic-link sign-up does NOT trigger this — it triggers post-link-click on the other tab. */
   onSuccess?: () => void;
   /**
-   * Social providers to show on the chooser step. Pass `[]` to hide.
+   * Sign-up flows offered after the user clicks "Continue with Email".
+   * First entry is the primary path. When omitted, auto-detected from the
+   * server's public-config endpoint (`magicLinkEnabled` + `passwordEnabled`).
+   */
+  signUpModes?: ReadonlyArray<SignUpMode>;
+  /**
+   * Social providers shown above the email block. Pass `[]` to hide.
    * @default ['google', 'github']
    */
-  socialProviders?: ReadonlyArray<SocialProviderId>;
+  socialProviders?: ReadonlyArray<SocialProviderConfig>;
   /** Where to redirect after a successful OAuth round-trip. */
   socialCallbackURL?: string;
+  /** Disclosure mode for the social block. @default 'always-visible' */
+  socialDisclosure?: SocialDisclosure;
+  /**
+   * Where to redirect first-time magic-link users. Should match the BA
+   * magic-link plugin's `newUserCallbackURL`.
+   * @default `${origin}/welcome/set-password`
+   */
+  magicLinkNewUserCallbackURL?: string;
+  /** Where to redirect returning magic-link users. @default `window.location.origin` */
+  magicLinkCallbackURL?: string;
 }
 
-type Step = 'chooser' | 'email' | 'otp' | 'password';
+type Step =
+  | { kind: 'chooser' }
+  | { kind: 'magic-link-email' }
+  | { kind: 'email-sent'; email: string }
+  | { kind: 'password' };
 
 export function SignUpForm({
   onSuccess,
+  signUpModes,
   socialProviders = ['google', 'github'],
   socialCallbackURL,
+  socialDisclosure = 'always-visible',
+  magicLinkNewUserCallbackURL,
+  magicLinkCallbackURL,
 }: SignUpFormProps) {
-  const [step, setStep] = useState<Step>('chooser');
-  const [email, setEmail] = useState('');
-  const [otp, setOtp] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [error, setError] = useState<string | null>(null);
+  const config = useAuthPublicConfig();
+  const detectedModes = detectSignUpModes(config.data);
+  const modes = signUpModes ?? detectedModes;
+  const hasMagicLink = modes.includes('magic-link');
+  const hasPassword = modes.includes('password');
+  const primary: SignUpMode | undefined = modes[0];
 
-  const sendOtp = useSendVerificationOtp();
-  const signInOtp = useSignInEmailOtp();
-  const setPasswordMutation = useSetPassword();
+  const [step, setStep] = useState<Step>({ kind: 'chooser' });
 
-  // ── Chooser step ────────────────────────────────────────────
+  // ── Chooser ─────────────────────────────────────────────────
 
-  if (step === 'chooser') {
+  if (step.kind === 'chooser') {
     return (
       <AuthCard
         title="Let's create your account"
@@ -70,7 +111,7 @@ export function SignUpForm({
             Already have an account?{' '}
             <Link
               to="/sign-in"
-              className="font-medium text-foreground underline-offset-4 hover:underline"
+              className="text-fl-foreground cursor-pointer font-medium underline-offset-4 hover:underline"
             >
               Sign in
             </Link>
@@ -78,210 +119,252 @@ export function SignUpForm({
         }
       >
         <div className="flex flex-col gap-4">
-          <SocialAuthButtons providers={socialProviders} callbackURL={socialCallbackURL} />
-          <button
-            type="button"
-            onClick={() => {
-              setError(null);
-              setStep('email');
-            }}
-            className="inline-flex h-10 items-center justify-center gap-2 text-sm font-medium text-primary underline-offset-4 hover:underline"
-          >
-            Continue with Email <ArrowRight className="h-4 w-4" />
-          </button>
+          {socialProviders.length > 0 && (
+            <>
+              <SocialAuthButtons
+                providers={socialProviders}
+                callbackURL={socialCallbackURL}
+                disclosure={socialDisclosure}
+              />
+              <Divider />
+            </>
+          )}
+
+          {primary === 'magic-link' && (
+            <LinkButton onClick={() => setStep({ kind: 'magic-link-email' })}>
+              Continue with Email <ArrowRight className="h-4 w-4" />
+            </LinkButton>
+          )}
+          {primary === 'password' && (
+            <LinkButton onClick={() => setStep({ kind: 'password' })}>
+              Sign up with Email <ArrowRight className="h-4 w-4" />
+            </LinkButton>
+          )}
+
+          {hasMagicLink && hasPassword && primary === 'magic-link' && (
+            <LinkButton tone="muted" size="xs" onClick={() => setStep({ kind: 'password' })}>
+              Use a password instead
+            </LinkButton>
+          )}
+          {hasMagicLink && hasPassword && primary === 'password' && (
+            <LinkButton
+              tone="muted"
+              size="xs"
+              onClick={() => setStep({ kind: 'magic-link-email' })}
+            >
+              Email me a sign-in link instead
+            </LinkButton>
+          )}
         </div>
       </AuthCard>
     );
   }
 
-  // ── Email step ──────────────────────────────────────────────
+  // ── Magic-link email step ────────────────────────────────────
 
-  if (step === 'email') {
-    const submitEmail = async (e: FormEvent) => {
-      e.preventDefault();
-      setError(null);
-      if (!email.trim()) {
-        setError('Email is required');
-        return;
-      }
-      try {
-        await sendOtp.mutateAsync({ email: email.trim(), type: 'sign-in' });
-        setStep('otp');
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Could not send code');
-      }
-    };
-
+  if (step.kind === 'magic-link-email') {
     return (
-      <AuthCard
-        title="Sign up"
-        description="Enter your email to receive a verification code."
-        footer={
-          <button
-            type="button"
-            onClick={() => {
-              setError(null);
-              setStep('chooser');
-            }}
-            className="inline-flex items-center justify-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
-          >
-            <ArrowLeft className="h-3.5 w-3.5" />
-            Other sign up options
-          </button>
-        }
-      >
-        <form onSubmit={submitEmail} className="flex flex-col gap-4">
-          <Field label="Email" htmlFor="signup-email">
-            <TextInput
-              id="signup-email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@example.com"
-              autoComplete="email"
-              autoFocus
-              required
-            />
-          </Field>
-
-          <ErrorMessage>{error}</ErrorMessage>
-
-          <button
-            type="submit"
-            disabled={sendOtp.isPending}
-            className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90 disabled:pointer-events-none disabled:opacity-50"
-          >
-            <Mail className="h-4 w-4" />
-            {sendOtp.isPending ? 'Sending…' : 'Continue with Email'}
-          </button>
-        </form>
-      </AuthCard>
+      <MagicLinkEmailStep
+        onSent={(email) => setStep({ kind: 'email-sent', email })}
+        onBack={() => setStep({ kind: 'chooser' })}
+        newUserCallbackURL={magicLinkNewUserCallbackURL}
+        callbackURL={magicLinkCallbackURL}
+      />
     );
   }
 
-  // ── OTP step ────────────────────────────────────────────────
+  // ── Email-sent ──────────────────────────────────────────────
 
-  const verify = async (code: string) => {
-    setError(null);
-    try {
-      await signInOtp.mutateAsync({ email: email.trim(), otp: code });
-      // OTP verified — the user is now signed in. Advance to the optional
-      // "set a password" step so they can sign in with email+password later.
-      setStep('password');
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Invalid or expired code');
-    }
-  };
-
-  const handleVerifySubmit = (e: FormEvent) => {
-    e.preventDefault();
-    if (otp.length === 6) {
-      void verify(otp);
-    }
-  };
-
-  const handleResend = async () => {
-    setError(null);
-    try {
-      await sendOtp.mutateAsync({ email: email.trim(), type: 'sign-in' });
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not resend code');
-    }
-  };
-
-  if (step === 'otp') {
+  if (step.kind === 'email-sent') {
     return (
-      <AuthCard
-        title="Sign up"
-        footer={
-          <button
-            type="button"
-            onClick={() => {
-              setError(null);
-              setOtp('');
-              setStep('email');
-            }}
-            className="text-sm text-muted-foreground hover:text-foreground"
-          >
-            Use a different email
-          </button>
-        }
-      >
-        <form onSubmit={handleVerifySubmit} className="flex flex-col gap-5">
-          <p className="text-center text-sm text-muted-foreground">
-            If you&apos;re new here, we sent a code to{' '}
-            <span className="font-medium text-foreground">{email}</span>.
-          </p>
-
-          <OtpInput
-            value={otp}
-            onChange={setOtp}
-            onComplete={(code) => void verify(code)}
-            autoFocus
-            disabled={signInOtp.isPending}
-          />
-
-          <ErrorMessage>{error}</ErrorMessage>
-
-          <button
-            type="submit"
-            disabled={otp.length !== 6 || signInOtp.isPending}
-            className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90 disabled:pointer-events-none disabled:opacity-50"
-          >
-            {signInOtp.isPending ? 'Verifying…' : 'Verify code'}
-          </button>
-
-          <button
-            type="button"
-            onClick={handleResend}
-            disabled={sendOtp.isPending}
-            className="text-center text-xs text-muted-foreground underline-offset-4 hover:text-foreground hover:underline disabled:opacity-50"
-          >
-            {sendOtp.isPending ? 'Sending…' : 'Resend code'}
-          </button>
-        </form>
-      </AuthCard>
+      <EmailSentNotice
+        email={step.email}
+        onBack={() => setStep({ kind: 'magic-link-email' })}
+        callbackURL={magicLinkCallbackURL}
+      />
     );
   }
 
-  // ── Password step (post-OTP) ────────────────────────────────
+  // ── Password step ───────────────────────────────────────────
 
-  const submitPassword = async (e: FormEvent) => {
+  return <PasswordSignUpStep onSuccess={onSuccess} onBack={() => setStep({ kind: 'chooser' })} />;
+}
+
+// ─────────────────────────────────────────────────────────────
+// Mode detection
+// ─────────────────────────────────────────────────────────────
+
+function detectSignUpModes(
+  config: { magicLinkEnabled?: boolean; passwordEnabled?: boolean } | undefined,
+): SignUpMode[] {
+  if (!config) {
+    // Optimistic default before the public-config query resolves: assume
+    // magic link is the primary path.
+    return ['magic-link'];
+  }
+  const modes: SignUpMode[] = [];
+  if (config.magicLinkEnabled) {
+    modes.push('magic-link');
+  }
+  if (config.passwordEnabled !== false) {
+    modes.push('password');
+  }
+  if (modes.length === 0) {
+    modes.push('password');
+  }
+  return modes;
+}
+
+// ─────────────────────────────────────────────────────────────
+// Magic-link email sub-step
+// ─────────────────────────────────────────────────────────────
+
+function MagicLinkEmailStep({
+  onSent,
+  onBack,
+  newUserCallbackURL,
+  callbackURL,
+}: {
+  onSent: (email: string) => void;
+  onBack: () => void;
+  newUserCallbackURL?: string;
+  callbackURL?: string;
+}) {
+  const sendMagicLink = useSendMagicLink();
+  const [email, setEmail] = useState('');
+  const [error, setError] = useState<string | null>(null);
+
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError(null);
-    if (password.length < 8) {
-      setError('Password must be at least 8 characters');
-      return;
-    }
-    // eslint-disable-next-line security/detect-possible-timing-attacks -- client-side equality check on user's own input, not a secret comparison
-    if (password !== confirmPassword) {
-      setError('Passwords do not match');
+    const trimmed = email.trim();
+    if (!trimmed) {
+      setError('Email is required');
       return;
     }
     try {
-      await setPasswordMutation.mutateAsync({ newPassword: password });
-      onSuccess?.();
+      await sendMagicLink.mutateAsync({
+        email: trimmed,
+        callbackURL: callbackURL ?? window.location.origin,
+        newUserCallbackURL: newUserCallbackURL ?? `${window.location.origin}/welcome/set-password`,
+      });
+      onSent(trimmed);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Could not set password');
+      setError(err instanceof Error ? err.message : 'Could not send sign-in link');
     }
   };
 
   return (
     <AuthCard
-      title="Set a password"
-      description="Pick a password so you can sign in with email and password next time."
+      title="Let's create your account"
       footer={
-        <button
-          type="button"
-          onClick={() => onSuccess?.()}
-          className="text-sm text-muted-foreground hover:text-foreground"
-        >
-          Skip for now
-        </button>
+        <LinkButton tone="muted" onClick={onBack}>
+          <ArrowLeft className="h-3.5 w-3.5" />
+          Other sign up options
+        </LinkButton>
       }
     >
-      <form onSubmit={submitPassword} className="flex flex-col gap-5">
-        <Field label="New password" htmlFor="signup-password" hint="At least 8 characters.">
+      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+        <Field label="Email" htmlFor="signup-email">
+          <TextInput
+            id="signup-email"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="you@example.com"
+            autoComplete="email"
+            autoFocus
+            required
+          />
+        </Field>
+
+        <ErrorMessage>{error}</ErrorMessage>
+
+        <SubmitButton loading={sendMagicLink.isPending}>
+          <Mail className="h-4 w-4" />
+          {sendMagicLink.isPending ? 'Sending…' : 'Send sign-in link'}
+        </SubmitButton>
+      </form>
+    </AuthCard>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// Email + password sign-up sub-step
+// ─────────────────────────────────────────────────────────────
+
+function PasswordSignUpStep({ onSuccess, onBack }: { onSuccess?: () => void; onBack: () => void }) {
+  const { setTwoFactorRequired } = useAuth();
+  const signUp = useSignUpEmail();
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState<string | null>(null);
+
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    if (!email.trim() || !password) {
+      setError('Email and password are required');
+      return;
+    }
+    if (password.length < 8) {
+      setError('Password must be at least 8 characters');
+      return;
+    }
+    try {
+      const trimmedEmail = email.trim();
+      const result = await signUp.mutateAsync({
+        email: trimmedEmail,
+        password,
+        name: name.trim() || trimmedEmail.split('@')[0] || trimmedEmail,
+      });
+      const data = (result as { twoFactorRedirect?: boolean }) ?? {};
+      if (data.twoFactorRedirect) {
+        setTwoFactorRequired(true);
+        return;
+      }
+      onSuccess?.();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Sign up failed');
+    }
+  };
+
+  return (
+    <AuthCard
+      title="Create your account"
+      footer={
+        <LinkButton tone="muted" onClick={onBack}>
+          <ArrowLeft className="h-3.5 w-3.5" />
+          Other sign up options
+        </LinkButton>
+      }
+    >
+      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+        <Field label="Name" htmlFor="signup-name">
+          <TextInput
+            id="signup-name"
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Your name"
+            autoComplete="name"
+          />
+        </Field>
+
+        <Field label="Email" htmlFor="signup-email">
+          <TextInput
+            id="signup-email"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="you@example.com"
+            autoComplete="email"
+            required
+          />
+        </Field>
+
+        <Field label="Password" htmlFor="signup-password" hint="At least 8 characters.">
           <TextInput
             id="signup-password"
             type="password"
@@ -289,34 +372,17 @@ export function SignUpForm({
             onChange={(e) => setPassword(e.target.value)}
             placeholder="••••••••"
             autoComplete="new-password"
-            autoFocus
             required
             minLength={8}
           />
         </Field>
 
-        <Field label="Confirm password" htmlFor="signup-password-confirm">
-          <TextInput
-            id="signup-password-confirm"
-            type="password"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            placeholder="••••••••"
-            autoComplete="new-password"
-            required
-          />
-        </Field>
-
         <ErrorMessage>{error}</ErrorMessage>
 
-        <button
-          type="submit"
-          disabled={setPasswordMutation.isPending}
-          className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90 disabled:pointer-events-none disabled:opacity-50"
-        >
-          {setPasswordMutation.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
-          {setPasswordMutation.isPending ? 'Saving…' : 'Save password'}
-        </button>
+        <SubmitButton loading={signUp.isPending}>
+          {signUp.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
+          {signUp.isPending ? 'Creating account…' : 'Create account'}
+        </SubmitButton>
       </form>
     </AuthCard>
   );

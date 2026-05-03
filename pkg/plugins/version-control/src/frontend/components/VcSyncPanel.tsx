@@ -56,7 +56,7 @@ export function VcSyncPanel({ flowId }: PanelTabProps) {
   if (isLoading) {
     return (
       <div className="flex h-full items-center justify-center p-4">
-        <span className="text-sm text-imp-muted-foreground">Loading sync status...</span>
+        <span className="text-sm text-fl-muted-foreground">Loading sync status...</span>
       </div>
     );
   }
@@ -87,11 +87,11 @@ export function VcSyncPanel({ flowId }: PanelTabProps) {
 
     return (
       <div className="flex h-full flex-col items-center justify-center gap-3 p-4">
-        <GitBranch className="h-8 w-8 text-imp-muted-foreground/50" />
-        <p className="text-sm text-imp-muted-foreground">Not connected to version control</p>
+        <GitBranch className="h-8 w-8 text-fl-muted-foreground/50" />
+        <p className="text-sm text-fl-muted-foreground">Not connected to version control</p>
         <button
           onClick={() => setShowConnect(true)}
-          className="rounded-md bg-imp-primary px-3 py-1.5 text-sm font-medium text-imp-primary-foreground hover:bg-imp-primary/90"
+          className="rounded-md bg-fl-primary px-3 py-1.5 text-sm font-medium text-fl-primary-foreground hover:bg-fl-primary/90"
         >
           Connect to Git
         </button>
@@ -104,44 +104,44 @@ export function VcSyncPanel({ flowId }: PanelTabProps) {
       {/* Status header */}
       <div className="mb-4 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <GitBranch className="h-4 w-4 text-imp-muted-foreground" />
+          <GitBranch className="h-4 w-4 text-fl-muted-foreground" />
           <h3 className="text-sm font-medium">Version Control</h3>
         </div>
         <StatusBadge status={status} />
       </div>
 
       {/* Config info */}
-      <div className="mb-4 space-y-1 rounded-md border border-imp-border bg-imp-muted/30 p-3 text-xs">
+      <div className="mb-4 space-y-1 rounded-md border border-fl-border bg-fl-muted/30 p-3 text-xs">
         <div className="flex justify-between">
-          <span className="text-imp-muted-foreground">Repo</span>
+          <span className="text-fl-muted-foreground">Repo</span>
           <span className="font-mono">{config.repo}</span>
         </div>
         <div className="flex justify-between">
-          <span className="text-imp-muted-foreground">Branch</span>
+          <span className="text-fl-muted-foreground">Branch</span>
           <span className="font-mono">{config.branch}</span>
         </div>
         <div className="flex justify-between">
-          <span className="text-imp-muted-foreground">File</span>
+          <span className="text-fl-muted-foreground">File</span>
           <span className="font-mono truncate max-w-[180px]" title={config.filePath}>
             {config.filePath}
           </span>
         </div>
         <div className="flex justify-between">
-          <span className="text-imp-muted-foreground">Mode</span>
+          <span className="text-fl-muted-foreground">Mode</span>
           <span>{config.mode}</span>
         </div>
         <div className="flex justify-between">
-          <span className="text-imp-muted-foreground">Direction</span>
+          <span className="text-fl-muted-foreground">Direction</span>
           <span>{config.syncDirection}</span>
         </div>
         {config.activePrUrl && (
           <div className="flex justify-between">
-            <span className="text-imp-muted-foreground">Active PR</span>
+            <span className="text-fl-muted-foreground">Active PR</span>
             <a
               href={config.activePrUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-1 text-imp-primary hover:underline"
+              className="flex items-center gap-1 text-fl-primary hover:underline"
             >
               #{config.activePrNumber}
               <ExternalLink className="h-3 w-3" />
@@ -156,7 +156,7 @@ export function VcSyncPanel({ flowId }: PanelTabProps) {
           <button
             onClick={() => pushMutation.mutate()}
             disabled={isBusy}
-            className="flex flex-1 items-center justify-center gap-1.5 rounded-md border border-imp-border bg-imp-background px-3 py-1.5 text-xs font-medium hover:bg-imp-muted disabled:opacity-50"
+            className="flex flex-1 items-center justify-center gap-1.5 rounded-md border border-fl-border bg-fl-background px-3 py-1.5 text-xs font-medium hover:bg-fl-muted disabled:opacity-50"
           >
             <ArrowUpFromLine className="h-3.5 w-3.5" />
             Push
@@ -166,7 +166,7 @@ export function VcSyncPanel({ flowId }: PanelTabProps) {
           <button
             onClick={() => pullMutation.mutate()}
             disabled={isBusy}
-            className="flex flex-1 items-center justify-center gap-1.5 rounded-md border border-imp-border bg-imp-background px-3 py-1.5 text-xs font-medium hover:bg-imp-muted disabled:opacity-50"
+            className="flex flex-1 items-center justify-center gap-1.5 rounded-md border border-fl-border bg-fl-background px-3 py-1.5 text-xs font-medium hover:bg-fl-muted disabled:opacity-50"
           >
             <ArrowDownToLine className="h-3.5 w-3.5" />
             Pull
@@ -176,7 +176,7 @@ export function VcSyncPanel({ flowId }: PanelTabProps) {
           <button
             onClick={() => publishMutation.mutate()}
             disabled={isBusy}
-            className="flex flex-1 items-center justify-center gap-1.5 rounded-md bg-imp-primary px-3 py-1.5 text-xs font-medium text-imp-primary-foreground hover:bg-imp-primary/90 disabled:opacity-50"
+            className="flex flex-1 items-center justify-center gap-1.5 rounded-md bg-fl-primary px-3 py-1.5 text-xs font-medium text-fl-primary-foreground hover:bg-fl-primary/90 disabled:opacity-50"
           >
             <Send className="h-3.5 w-3.5" />
             Publish
@@ -257,23 +257,23 @@ export function VcSyncPanel({ flowId }: PanelTabProps) {
 
       {/* Sync history */}
       <div className="flex items-center gap-2 mb-2">
-        <Clock className="h-3.5 w-3.5 text-imp-muted-foreground" />
-        <h4 className="text-xs font-medium text-imp-muted-foreground">Recent History</h4>
+        <Clock className="h-3.5 w-3.5 text-fl-muted-foreground" />
+        <h4 className="text-xs font-medium text-fl-muted-foreground">Recent History</h4>
       </div>
 
       <div className="flex-1 overflow-y-auto space-y-1">
         {history.length === 0 ? (
-          <p className="text-xs text-imp-muted-foreground">No sync history yet</p>
+          <p className="text-xs text-fl-muted-foreground">No sync history yet</p>
         ) : (
           history.slice(0, 10).map((entry) => (
             <div
               key={entry.id}
-              className="flex items-start gap-2 rounded-md px-2 py-1.5 bg-imp-muted/20 text-xs"
+              className="flex items-start gap-2 rounded-md px-2 py-1.5 bg-fl-muted/20 text-xs"
             >
               <ActionIcon action={entry.action} />
               <div className="flex-1 min-w-0">
                 <p className="truncate">{entry.message ?? entry.action}</p>
-                <p className="text-imp-muted-foreground">
+                <p className="text-fl-muted-foreground">
                   {new Date(entry.createdAt).toLocaleString()}
                   {entry.commitSha && (
                     <span className="ml-1 font-mono">{entry.commitSha.slice(0, 7)}</span>
@@ -286,7 +286,7 @@ export function VcSyncPanel({ flowId }: PanelTabProps) {
       </div>
 
       {/* Disconnect */}
-      <div className="mt-3 border-t border-imp-border pt-3">
+      <div className="mt-3 border-t border-fl-border pt-3">
         <button
           onClick={() => {
             if (window.confirm('Disconnect this flow from version control?')) {
@@ -294,7 +294,7 @@ export function VcSyncPanel({ flowId }: PanelTabProps) {
             }
           }}
           disabled={isBusy}
-          className="flex items-center gap-1.5 text-xs text-imp-muted-foreground hover:text-red-500 disabled:opacity-50"
+          className="flex items-center gap-1.5 text-xs text-fl-muted-foreground hover:text-red-500 disabled:opacity-50"
         >
           <Unplug className="h-3.5 w-3.5" />
           Disconnect
@@ -313,7 +313,7 @@ function StatusBadge({ status }: { status: VcSyncStatus }) {
     synced: 'border-green-500/30 bg-green-500/10 text-green-600',
     pending: 'border-yellow-500/30 bg-yellow-500/10 text-yellow-600',
     conflict: 'border-red-500/30 bg-red-500/10 text-red-600',
-    'not-connected': 'border-imp-border bg-imp-muted text-imp-muted-foreground',
+    'not-connected': 'border-fl-border bg-fl-muted text-fl-muted-foreground',
     error: 'border-red-500/30 bg-red-500/10 text-red-600',
   };
 
@@ -348,7 +348,7 @@ function ActionIcon({ action }: { action: string }) {
     case 'conflict':
       return <AlertTriangle className="mt-0.5 h-3 w-3 text-yellow-500 shrink-0" />;
     default:
-      return <Clock className="mt-0.5 h-3 w-3 text-imp-muted-foreground shrink-0" />;
+      return <Clock className="mt-0.5 h-3 w-3 text-fl-muted-foreground shrink-0" />;
   }
 }
 

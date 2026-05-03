@@ -181,7 +181,7 @@ export function FlowRunsView({ flowId, flowVersion, basePath }: FlowRunsViewProp
   const flowActions = useFlowActions();
 
   return (
-    <div className="flex flex-col flex-1 h-full min-h-0 imp-page bg-imp-background text-imp-foreground">
+    <div className="flex flex-col flex-1 h-full min-h-0 fl-page bg-fl-background text-fl-foreground">
       <FlowLayout
         modeSwitcher={<ModeSwitcher mode="runs" onModeChange={handleModeChange} />}
         viewportRef={viewportRef}

@@ -24,10 +24,9 @@ import {
   requestPasswordResetOptions,
   resetPasswordOptions,
   revokeSessionOptions,
-  sendVerificationOtpOptions,
+  sendMagicLinkOptions,
   setPasswordOptions,
   signInEmailOptions,
-  signInEmailOtpOptions,
   signInSocialOptions,
   signOutOptions,
   signUpEmailOptions,
@@ -102,24 +101,15 @@ export function useSignInSocial(options?: OmitKeys<ReturnType<typeof signInSocia
   return useMutation({ ...signInSocialOptions(authClient), ...options });
 }
 
-export function useSendVerificationOtp(
-  options?: OmitKeys<ReturnType<typeof sendVerificationOtpOptions>>,
-) {
+/**
+ * Send a passwordless magic-link email. The link auto-creates the user on
+ * first verification (`disableSignUp: false` server-side, the default) and
+ * issues a session when the user clicks it. Caller flips to a "Check your
+ * email" interstitial on success — see `<EmailSentNotice />`.
+ */
+export function useSendMagicLink(options?: OmitKeys<ReturnType<typeof sendMagicLinkOptions>>) {
   const { authClient } = useAuth();
-  return useMutation({ ...sendVerificationOtpOptions(authClient), ...options });
-}
-
-export function useSignInEmailOtp(options?: OmitKeys<ReturnType<typeof signInEmailOtpOptions>>) {
-  const { authClient } = useAuth();
-  const queryClient = useQueryClient();
-  return useMutation({
-    ...signInEmailOtpOptions(authClient),
-    ...options,
-    onSuccess: async (...args) => {
-      queryClient.resetQueries({ queryKey: sessionOptions(authClient).queryKey });
-      await options?.onSuccess?.(...args);
-    },
-  });
+  return useMutation({ ...sendMagicLinkOptions(authClient), ...options });
 }
 
 export function useSignOut(options?: OmitKeys<ReturnType<typeof signOutOptions>>) {

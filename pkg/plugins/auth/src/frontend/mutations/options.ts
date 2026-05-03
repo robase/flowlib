@@ -22,17 +22,10 @@ export function signUpEmailOptions(authClient: AuthClient) {
   return authMutationOptions(authClient.signUp.email, ['auth', 'signUp', 'email']);
 }
 
-// Email OTP — send a one-time code, then sign in (or auto sign-up) with it.
-export function sendVerificationOtpOptions(authClient: AuthClient) {
-  return authMutationOptions(authClient.emailOtp.sendVerificationOtp, [
-    'auth',
-    'emailOtp',
-    'sendVerificationOtp',
-  ]);
-}
-
-export function signInEmailOtpOptions(authClient: AuthClient) {
-  return authMutationOptions(authClient.signIn.emailOtp, ['auth', 'signIn', 'emailOtp']);
+// Magic link — send a one-click sign-in URL by email. The plugin auto-creates
+// the user on first verification (when `disableSignUp: false`, the default).
+export function sendMagicLinkOptions(authClient: AuthClient) {
+  return authMutationOptions(authClient.signIn.magicLink, ['auth', 'signIn', 'magicLink']);
 }
 
 export function signOutOptions(authClient: AuthClient) {

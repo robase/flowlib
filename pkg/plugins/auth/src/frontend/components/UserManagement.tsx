@@ -79,7 +79,7 @@ const ASSIGNABLE_ROLE_OPTIONS: Array<{
   { value: 'viewer', label: 'Viewer', description: 'Can inspect flows.' },
 ];
 
-const ROLE_BADGE_CLASSES = 'border-imp-border bg-imp-muted/50 text-imp-foreground';
+const ROLE_BADGE_CLASSES = 'border-fl-border bg-fl-muted/50 text-fl-foreground';
 
 function getInitials(user: ManagedUser): string {
   if (user.name) {
@@ -129,7 +129,7 @@ function SortHeader({
       <button
         type="button"
         onClick={() => onSort(field)}
-        className={`inline-flex items-center gap-1 rounded transition-colors hover:text-imp-foreground ${active ? 'text-imp-foreground' : ''}`}
+        className={`inline-flex items-center gap-1 rounded transition-colors hover:text-fl-foreground ${active ? 'text-fl-foreground' : ''}`}
       >
         {label}
         <Icon className="w-3 h-3 shrink-0" />
@@ -161,7 +161,7 @@ function RoleDropdown({
       <DropdownMenuTrigger asChild disabled={disabled}>
         <button
           type="button"
-          className={`inline-flex w-28 items-center justify-between gap-1.5 rounded-full border px-2.5 py-0.5 text-sm font-medium transition-colors hover:bg-imp-muted disabled:cursor-not-allowed disabled:opacity-50 ${ROLE_BADGE_CLASSES}`}
+          className={`inline-flex w-28 items-center justify-between gap-1.5 rounded-full border px-2.5 py-0.5 text-sm font-medium transition-colors hover:bg-fl-muted disabled:cursor-not-allowed disabled:opacity-50 ${ROLE_BADGE_CLASSES}`}
         >
           {currentLabel}
           {!disabled && <ChevronDown className="w-3 h-3 shrink-0" />}
@@ -359,7 +359,7 @@ export function UserManagement({ apiBaseUrl, className }: UserManagementProps) {
       {/* Search + Create User */}
       <div className="flex items-center gap-2">
         <div className="relative flex-1 max-w-sm">
-          <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 pointer-events-none text-imp-muted-foreground" />
+          <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 pointer-events-none text-fl-muted-foreground" />
           <input
             type="text"
             value={searchQuery}
@@ -368,14 +368,14 @@ export function UserManagement({ apiBaseUrl, className }: UserManagementProps) {
               setCurrentPage(1);
             }}
             placeholder="Search users…"
-            className="w-full py-2 pr-3 text-sm border rounded-lg outline-none border-imp-border bg-transparent pl-9 placeholder:text-imp-muted-foreground focus:border-imp-primary/50"
+            className="w-full py-2 pr-3 text-sm border rounded-lg outline-none border-fl-border bg-transparent pl-9 placeholder:text-fl-muted-foreground focus:border-fl-primary/50"
           />
         </div>
         {apiKeysEnabled && (
           <button
             type="button"
             onClick={() => setShowApiKeysDialog(true)}
-            className="flex items-center gap-1.5 rounded-lg border border-imp-border px-3 py-2 text-sm font-medium text-imp-muted-foreground transition-colors hover:border-imp-primary/50 hover:text-imp-foreground"
+            className="flex items-center gap-1.5 rounded-lg border border-fl-border px-3 py-2 text-sm font-medium text-fl-muted-foreground transition-colors hover:border-fl-primary/50 hover:text-fl-foreground"
           >
             <Key className="w-4 h-4" /> API Keys
           </button>
@@ -383,7 +383,7 @@ export function UserManagement({ apiBaseUrl, className }: UserManagementProps) {
         <button
           type="button"
           onClick={() => setShowCreateDialog(true)}
-          className="flex items-center gap-1.5 rounded-lg border border-imp-border px-3 py-2 text-sm font-medium text-imp-muted-foreground transition-colors hover:border-imp-primary/50 hover:text-imp-foreground"
+          className="flex items-center gap-1.5 rounded-lg border border-fl-border px-3 py-2 text-sm font-medium text-fl-muted-foreground transition-colors hover:border-fl-primary/50 hover:text-fl-foreground"
         >
           <UserPlus className="w-4 h-4" /> Create User
         </button>
@@ -403,7 +403,7 @@ export function UserManagement({ apiBaseUrl, className }: UserManagementProps) {
       )}
 
       {/* Users Table */}
-      <div className="overflow-hidden border rounded-xl border-imp-border bg-imp-background/40">
+      <div className="overflow-hidden border rounded-xl border-fl-border bg-fl-background/40">
         <table className="w-full text-sm table-fixed">
           <colgroup>
             <col className="w-[40%]" />
@@ -412,7 +412,7 @@ export function UserManagement({ apiBaseUrl, className }: UserManagementProps) {
             <col className="w-[20%]" />
           </colgroup>
           <thead>
-            <tr className="text-xs font-medium border-b border-imp-border bg-imp-muted/20 text-imp-muted-foreground">
+            <tr className="text-xs font-medium border-b border-fl-border bg-fl-muted/20 text-fl-muted-foreground">
               <SortHeader
                 label="User"
                 field="name"
@@ -438,10 +438,10 @@ export function UserManagement({ apiBaseUrl, className }: UserManagementProps) {
               <th className="px-4 py-2.5 text-right font-medium"></th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-imp-border">
+          <tbody className="divide-y divide-fl-border">
             {paginatedUsers.length === 0 && (
               <tr>
-                <td colSpan={4} className="px-4 py-8 text-sm text-center text-imp-muted-foreground">
+                <td colSpan={4} className="px-4 py-8 text-sm text-center text-fl-muted-foreground">
                   {!hasFetched || isLoading
                     ? 'Loading…'
                     : searchQuery
@@ -451,17 +451,17 @@ export function UserManagement({ apiBaseUrl, className }: UserManagementProps) {
               </tr>
             )}
             {paginatedUsers.map((u) => (
-              <tr key={u.id} className="group hover:bg-imp-muted/20">
+              <tr key={u.id} className="group hover:bg-fl-muted/20">
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-3">
-                    <div className="flex items-center justify-center w-8 h-8 text-xs font-semibold rounded-full shrink-0 bg-imp-primary/10 text-imp-primary">
+                    <div className="flex items-center justify-center w-8 h-8 text-xs font-semibold rounded-full shrink-0 bg-fl-primary/10 text-fl-primary">
                       {getInitials(u)}
                     </div>
                     <div className="min-w-0">
-                      <div className="font-medium truncate text-imp-foreground">
+                      <div className="font-medium truncate text-fl-foreground">
                         {u.name || 'Unnamed'}
                       </div>
-                      <div className="text-xs truncate text-imp-muted-foreground">{u.email}</div>
+                      <div className="text-xs truncate text-fl-muted-foreground">{u.email}</div>
                     </div>
                   </div>
                 </td>
@@ -481,17 +481,17 @@ export function UserManagement({ apiBaseUrl, className }: UserManagementProps) {
                     />
                   )}
                 </td>
-                <td className="px-4 py-3 text-xs text-right text-imp-muted-foreground">
+                <td className="px-4 py-3 text-xs text-right text-fl-muted-foreground">
                   {u.createdAt ? formatDate(u.createdAt) : '—'}
                 </td>
                 <td className="px-4 py-3 text-right">
                   {u.role === AUTH_ADMIN_ROLE ? (
-                    <span className="text-xs text-imp-muted-foreground">Config managed</span>
+                    <span className="text-xs text-fl-muted-foreground">Config managed</span>
                   ) : u.id !== user?.id ? (
                     <button
                       type="button"
                       onClick={() => setPendingDeleteUser(u)}
-                      className="rounded-md p-1.5 text-imp-muted-foreground opacity-0 transition-opacity hover:bg-imp-destructive/10 hover:text-imp-destructive group-hover:opacity-100"
+                      className="rounded-md p-1.5 text-fl-muted-foreground opacity-0 transition-opacity hover:bg-fl-destructive/10 hover:text-fl-destructive group-hover:opacity-100"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
@@ -505,7 +505,7 @@ export function UserManagement({ apiBaseUrl, className }: UserManagementProps) {
 
       {/* Pagination */}
       <div className="flex items-center justify-between text-sm">
-        <span className="text-xs text-imp-muted-foreground">
+        <span className="text-xs text-fl-muted-foreground">
           {filteredUsers.length} user{filteredUsers.length !== 1 ? 's' : ''}
           {searchQuery && ` matching "${searchQuery}"`}
         </span>
@@ -514,18 +514,18 @@ export function UserManagement({ apiBaseUrl, className }: UserManagementProps) {
             type="button"
             onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
             disabled={currentPage === 1}
-            className="rounded-md border border-imp-border px-2.5 py-1 text-xs hover:bg-imp-muted disabled:opacity-50"
+            className="rounded-md border border-fl-border px-2.5 py-1 text-xs hover:bg-fl-muted disabled:opacity-50"
           >
             Previous
           </button>
-          <span className="text-xs text-imp-muted-foreground">
+          <span className="text-xs text-fl-muted-foreground">
             {currentPage} / {totalPages}
           </span>
           <button
             type="button"
             onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
             disabled={currentPage === totalPages}
-            className="rounded-md border border-imp-border px-2.5 py-1 text-xs hover:bg-imp-muted disabled:opacity-50"
+            className="rounded-md border border-fl-border px-2.5 py-1 text-xs hover:bg-fl-muted disabled:opacity-50"
           >
             Next
           </button>
@@ -543,7 +543,7 @@ export function UserManagement({ apiBaseUrl, className }: UserManagementProps) {
 
       {/* Create User Dialog */}
       <Dialog open={showCreateDialog} onOpenChange={(open) => !open && setShowCreateDialog(false)}>
-        <DialogContent className="max-w-md border-imp-border bg-imp-background text-imp-foreground sm:max-w-md">
+        <DialogContent className="max-w-md border-fl-border bg-fl-background text-fl-foreground sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="text-sm font-semibold">Create New User</DialogTitle>
           </DialogHeader>
@@ -563,13 +563,13 @@ export function UserManagement({ apiBaseUrl, className }: UserManagementProps) {
         open={pendingDeleteUser !== null}
         onOpenChange={(open) => !open && setPendingDeleteUser(null)}
       >
-        <DialogContent className="max-w-sm border-imp-border bg-imp-background text-imp-foreground sm:max-w-sm">
+        <DialogContent className="max-w-sm border-fl-border bg-fl-background text-fl-foreground sm:max-w-sm">
           <DialogHeader>
             <DialogTitle className="text-sm font-semibold">Delete user</DialogTitle>
           </DialogHeader>
-          <p className="text-sm text-imp-muted-foreground">
+          <p className="text-sm text-fl-muted-foreground">
             Are you sure you want to delete{' '}
-            <span className="font-medium text-imp-foreground">
+            <span className="font-medium text-fl-foreground">
               {pendingDeleteUser?.name || pendingDeleteUser?.email || 'this user'}
             </span>
             ? This action cannot be undone.
@@ -578,7 +578,7 @@ export function UserManagement({ apiBaseUrl, className }: UserManagementProps) {
             <button
               type="button"
               onClick={() => setPendingDeleteUser(null)}
-              className="rounded-md border border-imp-border px-3 py-1.5 text-sm hover:bg-imp-muted"
+              className="rounded-md border border-fl-border px-3 py-1.5 text-sm hover:bg-fl-muted"
             >
               Cancel
             </button>
@@ -653,21 +653,21 @@ function CreateUserForm({
     <form onSubmit={handleSubmit} className="space-y-3">
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="block mb-1 text-xs font-medium text-imp-foreground">Name</label>
+          <label className="block mb-1 text-xs font-medium text-fl-foreground">Name</label>
           <input
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="User name"
-            className="w-full rounded-md border border-imp-border bg-imp-background px-3 py-1.5 text-sm placeholder:text-imp-muted-foreground focus:outline-none focus:border-imp-primary/50"
+            className="w-full rounded-md border border-fl-border bg-fl-background px-3 py-1.5 text-sm placeholder:text-fl-muted-foreground focus:outline-none focus:border-fl-primary/50"
           />
         </div>
         <div>
-          <label className="block mb-1 text-xs font-medium text-imp-foreground">Role</label>
+          <label className="block mb-1 text-xs font-medium text-fl-foreground">Role</label>
           <select
             value={role}
             onChange={(e) => setRole(e.target.value)}
-            className="w-full rounded-md border border-imp-border bg-imp-background px-3 py-1.5 text-sm focus:outline-none focus:border-imp-primary/50"
+            className="w-full rounded-md border border-fl-border bg-fl-background px-3 py-1.5 text-sm focus:outline-none focus:border-fl-primary/50"
           >
             {ASSIGNABLE_ROLE_OPTIONS.map((option) => (
               <option key={option.value} value={option.value}>
@@ -675,14 +675,14 @@ function CreateUserForm({
               </option>
             ))}
           </select>
-          <p className="mt-1 text-xs text-imp-muted-foreground">
+          <p className="mt-1 text-xs text-fl-muted-foreground">
             Flow access can still be granted via RBAC.
           </p>
         </div>
       </div>
 
       <div>
-        <label className="block mb-1 text-xs font-medium text-imp-foreground">
+        <label className="block mb-1 text-xs font-medium text-fl-foreground">
           Email <span className="text-red-500">*</span>
         </label>
         <input
@@ -692,12 +692,12 @@ function CreateUserForm({
           placeholder="user@example.com"
           required
           autoComplete="off"
-          className="w-full rounded-md border border-imp-border bg-imp-background px-3 py-1.5 text-sm placeholder:text-imp-muted-foreground focus:outline-none focus:border-imp-primary/50"
+          className="w-full rounded-md border border-fl-border bg-fl-background px-3 py-1.5 text-sm placeholder:text-fl-muted-foreground focus:outline-none focus:border-fl-primary/50"
         />
       </div>
 
       <div>
-        <label className="block mb-1 text-xs font-medium text-imp-foreground">
+        <label className="block mb-1 text-xs font-medium text-fl-foreground">
           Password <span className="text-red-500">*</span>
         </label>
         <input
@@ -708,7 +708,7 @@ function CreateUserForm({
           required
           minLength={8}
           autoComplete="new-password"
-          className="w-full rounded-md border border-imp-border bg-imp-background px-3 py-1.5 text-sm placeholder:text-imp-muted-foreground focus:outline-none focus:border-imp-primary/50"
+          className="w-full rounded-md border border-fl-border bg-fl-background px-3 py-1.5 text-sm placeholder:text-fl-muted-foreground focus:outline-none focus:border-fl-primary/50"
         />
       </div>
 
@@ -722,14 +722,14 @@ function CreateUserForm({
         <button
           type="button"
           onClick={onCancel}
-          className="rounded-md border border-imp-border px-3 py-1.5 text-sm hover:bg-imp-muted"
+          className="rounded-md border border-fl-border px-3 py-1.5 text-sm hover:bg-fl-muted"
         >
           Cancel
         </button>
         <button
           type="submit"
           disabled={isSubmitting}
-          className="px-4 py-2 text-sm font-semibold rounded-md bg-imp-primary text-imp-primary-foreground hover:bg-imp-primary/90 disabled:opacity-50"
+          className="px-4 py-2 text-sm font-semibold rounded-md bg-fl-primary text-fl-primary-foreground hover:bg-fl-primary/90 disabled:opacity-50"
         >
           {isSubmitting ? 'Creating…' : 'Create User'}
         </button>

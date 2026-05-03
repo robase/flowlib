@@ -28,12 +28,12 @@ async function waitForDashboard(page: Page) {
 /**
  * Return the sidebar collapse/expand toggle button.
  *
- * It is the only `button.absolute` inside `.imp-sidebar-shell`: a small
+ * It is the only `button.absolute` inside `.fl-sidebar-shell`: a small
  * `rounded-full` icon button anchored at `-right-3 top-4` that renders a
  * ChevronRight icon (collapsed) or ChevronLeft icon (expanded).
  */
 function getSidebarToggle(page: Page) {
-  return page.locator('.imp-sidebar-shell button.absolute').first();
+  return page.locator('.fl-sidebar-shell button.absolute').first();
 }
 
 /**
@@ -46,7 +46,7 @@ function getSidebarToggle(page: Page) {
  */
 async function ensureSidebarExpanded(page: Page) {
   const executionsLabel = page
-    .locator('.imp-sidebar-shell nav span')
+    .locator('.fl-sidebar-shell nav span')
     .filter({ hasText: 'Flow Runs' });
   const isAlreadyExpanded = await executionsLabel.isVisible().catch(() => false);
   if (!isAlreadyExpanded) {
@@ -168,12 +168,12 @@ test.describe('Navigation & App Shell', () => {
     await waitForDashboard(page);
 
     // Assert the sidebar shell is present on the dashboard
-    await expect(page.locator('.imp-sidebar-shell')).toBeVisible();
+    await expect(page.locator('.fl-sidebar-shell')).toBeVisible();
 
     // 2. Click the Executions sidebar link
     //    Each nav Link renders with aria-label={label}, so getByRole works even
     //    in collapsed (icon-only) mode — no need to expand the sidebar first.
-    await page.locator('.imp-sidebar-shell').getByRole('link', { name: 'Flow Runs' }).click();
+    await page.locator('.fl-sidebar-shell').getByRole('link', { name: 'Flow Runs' }).click();
 
     // Assert URL contains /executions
     await expect(page).toHaveURL(/\/flow-runs/);
@@ -182,10 +182,10 @@ test.describe('Navigation & App Shell', () => {
       timeout: 15_000,
     });
     // Assert the sidebar persists on the Executions page
-    await expect(page.locator('.imp-sidebar-shell')).toBeVisible();
+    await expect(page.locator('.fl-sidebar-shell')).toBeVisible();
 
     // 3. Click the Credentials sidebar link
-    await page.locator('.imp-sidebar-shell').getByRole('link', { name: 'Credentials' }).click();
+    await page.locator('.fl-sidebar-shell').getByRole('link', { name: 'Credentials' }).click();
 
     // Assert URL contains /credentials
     await expect(page).toHaveURL(/\/credentials/);
@@ -194,17 +194,17 @@ test.describe('Navigation & App Shell', () => {
       timeout: 15_000,
     });
     // Assert the sidebar persists on the Credentials page
-    await expect(page.locator('.imp-sidebar-shell')).toBeVisible();
+    await expect(page.locator('.fl-sidebar-shell')).toBeVisible();
 
     // 4. Click the Home/Dashboard sidebar link (aria-label="Home")
-    await page.locator('.imp-sidebar-shell').getByRole('link', { name: 'Home' }).click();
+    await page.locator('.fl-sidebar-shell').getByRole('link', { name: 'Home' }).click();
 
     // Assert URL is /flowlib or /flowlib/
     await expect(page).toHaveURL(/\/flowlib\/?$/);
     // Assert "Dashboard" heading is visible
     await waitForDashboard(page);
     // Assert the sidebar persists on the Dashboard page
-    await expect(page.locator('.imp-sidebar-shell')).toBeVisible();
+    await expect(page.locator('.fl-sidebar-shell')).toBeVisible();
   });
 
   // ─── Test 2 — Medium ───────────────────────────────────────────────────────
@@ -225,10 +225,10 @@ test.describe('Navigation & App Shell', () => {
 
     // 3. Assert nav labels are now visible (expanded state)
     await expect(
-      page.locator('.imp-sidebar-shell nav span').filter({ hasText: 'Flow Runs' }),
+      page.locator('.fl-sidebar-shell nav span').filter({ hasText: 'Flow Runs' }),
     ).toBeVisible({ timeout: 3_000 });
     await expect(
-      page.locator('.imp-sidebar-shell nav span').filter({ hasText: 'Credentials' }),
+      page.locator('.fl-sidebar-shell nav span').filter({ hasText: 'Credentials' }),
     ).toBeVisible();
 
     // 4. Click the toggle button to collapse the sidebar
@@ -236,10 +236,10 @@ test.describe('Navigation & App Shell', () => {
 
     // 5. Wait for the CSS transition and assert nav labels are NOT in the DOM
     await expect(
-      page.locator('.imp-sidebar-shell nav span').filter({ hasText: 'Flow Runs' }),
+      page.locator('.fl-sidebar-shell nav span').filter({ hasText: 'Flow Runs' }),
     ).not.toBeVisible({ timeout: 3_000 });
     await expect(
-      page.locator('.imp-sidebar-shell nav span').filter({ hasText: 'Credentials' }),
+      page.locator('.fl-sidebar-shell nav span').filter({ hasText: 'Credentials' }),
     ).not.toBeVisible();
 
     // 6. Click the toggle button again to re-expand
@@ -247,10 +247,10 @@ test.describe('Navigation & App Shell', () => {
 
     // 7. Assert nav labels are visible again (restored expanded state)
     await expect(
-      page.locator('.imp-sidebar-shell nav span').filter({ hasText: 'Flow Runs' }),
+      page.locator('.fl-sidebar-shell nav span').filter({ hasText: 'Flow Runs' }),
     ).toBeVisible({ timeout: 3_000 });
     await expect(
-      page.locator('.imp-sidebar-shell nav span').filter({ hasText: 'Credentials' }),
+      page.locator('.fl-sidebar-shell nav span').filter({ hasText: 'Credentials' }),
     ).toBeVisible();
   });
 
@@ -275,7 +275,7 @@ test.describe('Navigation & App Shell', () => {
     //    theme=dark   → button reads "Light Mode"
     const expectedLabel = initialIsDark ? 'Light Mode' : 'Dark Mode';
     const themeToggleBtn = page
-      .locator('.imp-sidebar-shell button')
+      .locator('.fl-sidebar-shell button')
       .filter({ hasText: expectedLabel });
     await expect(themeToggleBtn).toBeVisible({ timeout: 5_000 });
 
@@ -290,7 +290,7 @@ test.describe('Navigation & App Shell', () => {
     }
 
     // 7. Navigate to /flowlib/flow-runs via the sidebar link
-    await page.locator('.imp-sidebar-shell').getByRole('link', { name: 'Flow Runs' }).click();
+    await page.locator('.fl-sidebar-shell').getByRole('link', { name: 'Flow Runs' }).click();
     await expect(page.getByRole('heading', { level: 1, name: 'Flow Runs' })).toBeVisible({
       timeout: 15_000,
     });
@@ -307,7 +307,7 @@ test.describe('Navigation & App Shell', () => {
 
     // 10. Click the theme toggle again to restore the original theme
     const restoreLabel = initialIsDark ? 'Dark Mode' : 'Light Mode';
-    const restoreBtn = page.locator('.imp-sidebar-shell button').filter({ hasText: restoreLabel });
+    const restoreBtn = page.locator('.fl-sidebar-shell button').filter({ hasText: restoreLabel });
     await expect(restoreBtn).toBeVisible({ timeout: 5_000 });
     await restoreBtn.click();
 
@@ -362,7 +362,7 @@ test.describe('Navigation & App Shell', () => {
     });
 
     // 3. Assert the sidebar shell rendered correctly
-    await expect(page.locator('.imp-sidebar-shell')).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator('.fl-sidebar-shell')).toBeVisible({ timeout: 10_000 });
     // Nav links carry aria-labels and are present in the DOM even when collapsed
     await expect(page.getByRole('link', { name: 'Flow Runs' })).toBeVisible({ timeout: 5_000 });
 

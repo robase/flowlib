@@ -13,7 +13,7 @@ test('seed', async ({ page }) => {
   await page.goto('/flowlib');
 
   // 2. The app shell should render
-  await expect(page.locator('.imp-sidebar-shell')).toBeVisible();
+  await expect(page.locator('.fl-sidebar-shell')).toBeVisible();
 
   // 3. The dashboard should load (proves the Flowlib component route matched)
   await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible({

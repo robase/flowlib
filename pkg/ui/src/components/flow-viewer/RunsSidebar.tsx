@@ -65,7 +65,7 @@ function StatusIcon({ status }: { status: string }) {
 
 export const RunsSidebar: React.FC<RunsSidebarProps> = ({ runs, selectedRunId, onSelectRun }) => {
   return (
-    <div className="flex flex-col w-64 border-r shrink-0 border-border bg-imp-background text-card-foreground">
+    <div className="flex flex-col w-64 border-r shrink-0 border-border bg-fl-background text-card-foreground">
       <div className="px-4 py-3 border-b border-border">
         <h2 className="text-sm font-semibold text-card-foreground">Execution History</h2>
         <p className="mt-1 text-xs text-muted-foreground">{runs.length} total runs</p>

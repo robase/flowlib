@@ -20,16 +20,21 @@ export {
   useListAccounts,
   // Auth flow mutations
   useSignInEmail,
+  useSignInSocial,
   useSignUpEmail,
+  useSendMagicLink,
   useSignOut,
   useRequestPasswordReset,
   useResetPassword,
   // Profile mutations
   useUpdateUser,
   useChangePassword,
+  useSetPassword,
   useChangeEmail,
   useRevokeSession,
   useDeleteUser,
+  // Public config
+  useAuthPublicConfig,
   // 2FA mutations
   useVerifyTwoFactorTotp,
   useVerifyTwoFactorBackupCode,
@@ -43,12 +48,27 @@ export {
 export { SignInForm } from './components/SignInForm';
 export type { SignInFormProps } from './components/SignInForm';
 export { SignUpForm } from './components/SignUpForm';
-export type { SignUpFormProps } from './components/SignUpForm';
+export type { SignUpFormProps, SignUpMode } from './components/SignUpForm';
 export { ForgotPasswordForm } from './components/ForgotPasswordForm';
 export { ResetPasswordForm } from './components/ResetPasswordForm';
 export { TwoFactorVerifyForm } from './components/TwoFactorVerifyForm';
 export type { TwoFactorVerifyFormProps } from './components/TwoFactorVerifyForm';
 export { TwoFactorSetup } from './components/TwoFactorSetup';
+export { EmailSentNotice } from './components/EmailSentNotice';
+export type { EmailSentNoticeProps } from './components/EmailSentNotice';
+export { PasswordSetupForm } from './components/PasswordSetupForm';
+export type { PasswordSetupFormProps } from './components/PasswordSetupForm';
+export { PasswordSetupPage } from './components/PasswordSetupPage';
+export type { PasswordSetupPageProps } from './components/PasswordSetupPage';
+export { SocialAuthButtons } from './components/ui/SocialAuthButtons';
+export type {
+  SocialAuthButtonsProps,
+  SocialProviderConfig,
+  SocialProviderObject,
+  SocialProviderId,
+  BuiltInSocialProviderId,
+  SocialDisclosure,
+} from './components/ui/SocialAuthButtons';
 
 // ── Full-page components ─────────────────────────────────────────
 export { SignInPage } from './components/SignInPage';

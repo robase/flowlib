@@ -298,7 +298,7 @@ const OverviewSection: FC<{
         <button
           onClick={onDelete}
           disabled={isDeleting}
-          className="inline-flex items-center h-8 gap-2 px-3 text-sm font-medium text-imp-destructive transition-colors border border-imp-destructive/30 rounded-md hover:bg-imp-destructive/10"
+          className="inline-flex items-center h-8 gap-2 px-3 text-sm font-medium text-fl-destructive transition-colors border border-fl-destructive/30 rounded-md hover:bg-fl-destructive/10"
         >
           {isDeleting ? (
             <Loader2 className="w-3.5 h-3.5 animate-spin" />

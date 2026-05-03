@@ -110,19 +110,19 @@ function FlowTreeRow({
       onClick={() => onSelect(flow)}
       className={clsx(
         'group flex cursor-pointer items-center gap-2 rounded-md px-4 py-1.5 transition-colors',
-        'hover:bg-imp-muted/50',
+        'hover:bg-fl-muted/50',
         isDragging && 'opacity-40',
-        isSelected && 'bg-imp-primary/10 text-imp-primary ring-1 ring-imp-primary/30',
+        isSelected && 'bg-fl-primary/10 text-fl-primary ring-1 ring-fl-primary/30',
       )}
     >
       <Workflow
         className={clsx(
           'h-4 w-4 shrink-0',
-          isSelected ? 'text-imp-primary' : 'text-imp-muted-foreground',
+          isSelected ? 'text-fl-primary' : 'text-fl-muted-foreground',
         )}
       />
       <span className="flex-1 min-w-0 text-sm font-medium truncate">{flow.name}</span>
-      <GripVertical className="h-3.5 w-3.5 shrink-0 text-imp-muted-foreground/60 opacity-0 transition-opacity group-hover:opacity-100" />
+      <GripVertical className="h-3.5 w-3.5 shrink-0 text-fl-muted-foreground/60 opacity-0 transition-opacity group-hover:opacity-100" />
     </div>
   );
 }
@@ -212,8 +212,8 @@ function ScopeTreeRow({
         className={clsx(
           'group flex cursor-pointer items-center gap-2 rounded-xl px-3 py-2 transition-colors',
           isDragging && 'opacity-40',
-          isDropTarget && 'ring-2 ring-imp-primary/40 bg-imp-primary/5',
-          isSelected ? 'text-imp-primary ring-1 ring-imp-primary/30' : 'hover:bg-accent',
+          isDropTarget && 'ring-2 ring-fl-primary/40 bg-fl-primary/5',
+          isSelected ? 'text-fl-primary ring-1 ring-fl-primary/30' : 'hover:bg-accent',
         )}
       >
         {hasChildren ? (
@@ -223,7 +223,7 @@ function ScopeTreeRow({
               event.stopPropagation();
               toggleNode(scope.id);
             }}
-            className="rounded p-0.5 text-imp-muted-foreground hover:bg-imp-muted"
+            className="rounded p-0.5 text-fl-muted-foreground hover:bg-fl-muted"
           >
             {isExpanded ? (
               <ChevronDown className="w-4 h-4" />
@@ -237,7 +237,7 @@ function ScopeTreeRow({
         <Users
           className={clsx(
             'h-4 w-4 shrink-0',
-            isSelected ? 'text-imp-primary' : 'text-imp-muted-foreground',
+            isSelected ? 'text-fl-primary' : 'text-fl-muted-foreground',
           )}
         />
         <span className="flex-1 min-w-0 text-sm font-medium truncate">{scope.name}</span>
@@ -251,11 +251,11 @@ function ScopeTreeRow({
             {formatPermissionLabel(scope.teamPermission)}
           </span>
         ) : null}
-        <GripVertical className="h-3.5 w-3.5 shrink-0 text-imp-muted-foreground/60 opacity-0 transition-opacity group-hover:opacity-100" />
+        <GripVertical className="h-3.5 w-3.5 shrink-0 text-fl-muted-foreground/60 opacity-0 transition-opacity group-hover:opacity-100" />
       </div>
 
       {isExpanded ? (
-        <div className="space-y-1 border-l border-imp-border" style={{ marginLeft: '22px' }}>
+        <div className="space-y-1 border-l border-fl-border" style={{ marginLeft: '22px' }}>
           {scope.flows.map((flow) => (
             <FlowTreeRow
               key={flow.id}
@@ -395,7 +395,7 @@ export function AccessControlPage() {
         subtitle="Manage team hierarchy and flow-level access grants."
         icon={Shield}
       >
-        <p className="text-sm text-imp-muted-foreground">Please sign in to access this page.</p>
+        <p className="text-sm text-fl-muted-foreground">Please sign in to access this page.</p>
       </PageLayout>
     );
   }
@@ -411,12 +411,12 @@ export function AccessControlPage() {
       {/* Search + New Team */}
       <div className="flex items-center gap-2">
         <div className="relative flex-1 max-w-sm">
-          <Search className="absolute w-3.5 h-3.5 pointer-events-none left-3 top-1/2 -translate-y-1/2 text-imp-muted-foreground" />
+          <Search className="absolute w-3.5 h-3.5 pointer-events-none left-3 top-1/2 -translate-y-1/2 text-fl-muted-foreground" />
           <input
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             placeholder="Search teams and flows…"
-            className="w-full py-2 pr-3 text-sm border rounded-lg outline-none pl-9 border-imp-border bg-imp-background placeholder:text-imp-muted-foreground focus:border-imp-primary/50"
+            className="w-full py-2 pr-3 text-sm border rounded-lg outline-none pl-9 border-fl-border bg-fl-background placeholder:text-fl-muted-foreground focus:border-fl-primary/50"
           />
         </div>
         {isAdmin ? (
@@ -426,7 +426,7 @@ export function AccessControlPage() {
                 value={newTeamName}
                 onChange={(event) => setNewTeamName(event.target.value)}
                 placeholder="Team name"
-                className="px-2.5 py-2 text-sm border rounded-lg border-imp-border bg-imp-background"
+                className="px-2.5 py-2 text-sm border rounded-lg border-fl-border bg-fl-background"
                 autoFocus
                 onKeyDown={(event) => {
                   if (event.key === 'Enter' && newTeamName.trim()) {
@@ -484,7 +484,7 @@ export function AccessControlPage() {
         style={{ gridTemplateColumns: '320px 1fr' }}
       >
         {/* Left: hierarchy tree */}
-        <div className="flex flex-col overflow-hidden bg-imp-muted/20">
+        <div className="flex flex-col overflow-hidden bg-fl-muted/20">
           <div
             className="flex-1 px-1 py-2 overflow-y-auto"
             onDragOver={(event) => {
@@ -518,21 +518,21 @@ export function AccessControlPage() {
               className={clsx(
                 'min-h-full rounded-lg py-1 transition-colors',
                 dropTarget === 'root'
-                  ? 'bg-imp-primary/5 ring-1 ring-imp-primary/20 ring-inset'
+                  ? 'bg-fl-primary/5 ring-1 ring-fl-primary/20 ring-inset'
                   : '',
               )}
             >
               {isLoading ? (
-                <div className="flex items-center justify-center px-4 py-12 text-sm text-center text-imp-muted-foreground">
+                <div className="flex items-center justify-center px-4 py-12 text-sm text-center text-fl-muted-foreground">
                   Loading hierarchy…
                 </div>
               ) : !hasTreeItems ? (
                 <div className="flex flex-col items-center justify-center px-6 py-16 text-center">
-                  <FolderInput className="w-10 h-10 mb-3 opacity-30 text-imp-muted-foreground" />
-                  <h3 className="text-base font-medium text-imp-foreground">
+                  <FolderInput className="w-10 h-10 mb-3 opacity-30 text-fl-muted-foreground" />
+                  <h3 className="text-base font-medium text-fl-foreground">
                     {normalizedSearch ? 'No matching teams or flows' : 'No teams or flows yet'}
                   </h3>
-                  <p className="max-w-sm mt-2 text-sm text-imp-muted-foreground">
+                  <p className="max-w-sm mt-2 text-sm text-fl-muted-foreground">
                     {normalizedSearch
                       ? 'Adjust the search to find a team or flow in the hierarchy.'
                       : 'Create a team to start organizing flows and access scopes.'}
@@ -573,15 +573,15 @@ export function AccessControlPage() {
         </div>
 
         {/* Right: detail panel */}
-        <aside className="flex flex-col overflow-hidden border-l border-imp-border bg-imp-muted/30">
+        <aside className="flex flex-col overflow-hidden border-l border-fl-border bg-fl-muted/30">
           {!selected ? (
-            <div className="flex flex-col items-center justify-center h-full gap-4 px-8 text-center text-imp-muted-foreground">
-              <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-imp-primary/5">
-                <Shield className="w-6 h-6 text-imp-primary/40" />
+            <div className="flex flex-col items-center justify-center h-full gap-4 px-8 text-center text-fl-muted-foreground">
+              <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-fl-primary/5">
+                <Shield className="w-6 h-6 text-fl-primary/40" />
               </div>
               <div>
-                <p className="text-sm font-medium text-imp-foreground">Select a team or flow</p>
-                <p className="mt-1.5 text-xs text-imp-muted-foreground max-w-[280px]">
+                <p className="text-sm font-medium text-fl-foreground">Select a team or flow</p>
+                <p className="mt-1.5 text-xs text-fl-muted-foreground max-w-[280px]">
                   Choose an item from the tree to manage its members and permissions.
                 </p>
               </div>
@@ -589,7 +589,7 @@ export function AccessControlPage() {
                 <button
                   type="button"
                   onClick={() => setShowNewTeam(true)}
-                  className="flex items-center gap-1.5 rounded-lg border border-imp-border px-3 py-1.5 text-xs font-medium text-imp-foreground transition-colors hover:border-imp-primary/50 hover:bg-imp-muted/50"
+                  className="flex items-center gap-1.5 rounded-lg border border-fl-border px-3 py-1.5 text-xs font-medium text-fl-foreground transition-colors hover:border-fl-primary/50 hover:bg-fl-muted/50"
                 >
                   <Plus className="h-3.5 w-3.5" /> Create your first team
                 </button>

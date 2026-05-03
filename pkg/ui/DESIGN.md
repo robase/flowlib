@@ -9,7 +9,7 @@ description: Linear-inspired theme system for Flowlib UI components.
 
 A dark-mode-first design language where content emerges from darkness with surgical precision. The overall impression is one of extreme precision engineering: every element exists in a carefully calibrated hierarchy of luminance, managed through subtle gradations of opacity rather than color variation.
 
-This document maps that vision onto Flowlib's `imp-*` token system, `.flowlib` CSS scope, Tailwind utility classes, and component architecture (CVA variants, Radix primitives, shadcn/ui foundation).
+This document maps that vision onto Flowlib's `fl-*` token system, `.flowlib` CSS scope, Tailwind utility classes, and component architecture (CVA variants, Radix primitives, shadcn/ui foundation).
 
 ### Core Design Principles
 
@@ -21,9 +21,9 @@ This document maps that vision onto Flowlib's `imp-*` token system, `.flowlib` C
 
 ---
 
-## 2. Color Palette — `imp-*` Token Mapping
+## 2. Color Palette — `fl-*` Token Mapping
 
-All values are set via `--imp-*` CSS custom properties in [pkg/ui/src/app.css](../../pkg/ui/src/app.css). The `.flowlib` scope activates them; `.flowlib.dark` applies the dark overrides.
+All values are set via `--fl-*` CSS custom properties in [pkg/ui/src/app.css](../../pkg/ui/src/app.css). The `.flowlib` scope activates them; `.flowlib.dark` applies the dark overrides.
 
 ### Dark Mode (Primary Experience)
 
@@ -31,53 +31,53 @@ All values are set via `--imp-*` CSS custom properties in [pkg/ui/src/app.css](.
 
 | Role                | Token                     | New Value | Tailwind Class  | Notes                                                  |
 | ------------------- | ------------------------- | --------- | --------------- | ------------------------------------------------------ |
-| Page background     | `--imp-background`        | `#0a0a0c` | `bg-background` | Near-black with cool undertone. The canvas.            |
-| Canvas (React Flow) | `--imp-canvas-background` | `#0f0f12` | —               | Flow editor surface, one step up.                      |
-| Card / Panel        | `--imp-card`              | `#141418` | `bg-card`       | Elevated surface. Translucent feel via subtle borders. |
-| Popover / Dropdown  | `--imp-popover`           | `#191a1f` | `bg-popover`    | Floating surfaces, slightly brighter than cards.       |
-| Secondary surface   | `--imp-secondary`         | `#1a1a22` | `bg-secondary`  | Hover states, slightly elevated components.            |
-| Muted / Disabled    | `--imp-muted`             | `#1a1a22` | `bg-muted`      | De-emphasized areas, disabled control backgrounds.     |
-| Accent highlight    | `--imp-accent`            | `#1e1e2a` | `bg-accent`     | Selected/active item backgrounds.                      |
-| Sidebar             | `--imp-sidebar`           | `#0a0a0c` | `bg-sidebar`    | Matches page background for seamless integration.      |
+| Page background     | `--fl-background`        | `#0a0a0c` | `bg-background` | Near-black with cool undertone. The canvas.            |
+| Canvas (React Flow) | `--fl-canvas-background` | `#0f0f12` | —               | Flow editor surface, one step up.                      |
+| Card / Panel        | `--fl-card`              | `#141418` | `bg-card`       | Elevated surface. Translucent feel via subtle borders. |
+| Popover / Dropdown  | `--fl-popover`           | `#191a1f` | `bg-popover`    | Floating surfaces, slightly brighter than cards.       |
+| Secondary surface   | `--fl-secondary`         | `#1a1a22` | `bg-secondary`  | Hover states, slightly elevated components.            |
+| Muted / Disabled    | `--fl-muted`             | `#1a1a22` | `bg-muted`      | De-emphasized areas, disabled control backgrounds.     |
+| Accent highlight    | `--fl-accent`            | `#1e1e2a` | `bg-accent`     | Selected/active item backgrounds.                      |
+| Sidebar             | `--fl-sidebar`           | `#0a0a0c` | `bg-sidebar`    | Matches page background for seamless integration.      |
 
 #### Text & Content
 
 | Role           | Token                      | New Value | Tailwind Class            | Notes                                              |
 | -------------- | -------------------------- | --------- | ------------------------- | -------------------------------------------------- |
-| Primary text   | `--imp-foreground`         | `#f0f1f3` | `text-foreground`         | Near-white, not pure `#fff` — prevents eye strain. |
-| Card text      | `--imp-card-foreground`    | `#f0f1f3` | `text-card-foreground`    | Matches primary.                                   |
-| Secondary text | `--imp-muted-foreground`   | `#8a8f98` | `text-muted-foreground`   | Muted gray for descriptions, metadata.             |
-| Sidebar text   | `--imp-sidebar-foreground` | `#f0f1f3` | `text-sidebar-foreground` | —                                                  |
+| Primary text   | `--fl-foreground`         | `#f0f1f3` | `text-foreground`         | Near-white, not pure `#fff` — prevents eye strain. |
+| Card text      | `--fl-card-foreground`    | `#f0f1f3` | `text-card-foreground`    | Matches primary.                                   |
+| Secondary text | `--fl-muted-foreground`   | `#8a8f98` | `text-muted-foreground`   | Muted gray for descriptions, metadata.             |
+| Sidebar text   | `--fl-sidebar-foreground` | `#f0f1f3` | `text-sidebar-foreground` | —                                                  |
 
 #### Brand & Accent
 
 | Role                | Token                             | New Value | Tailwind Class                   | Notes                                      |
 | ------------------- | --------------------------------- | --------- | -------------------------------- | ------------------------------------------ |
-| Primary accent      | `--imp-primary`                   | `#7170ff` | `bg-primary`, `text-primary`     | Indigo-violet. Interactive elements, CTAs. |
-| Primary on-color    | `--imp-primary-foreground`        | `#ffffff` | `text-primary-foreground`        | White text on primary backgrounds.         |
-| Ring / Focus        | `--imp-ring`                      | `#7170ff` | `ring-ring`                      | Focus indicators match primary.            |
-| Sidebar accent bg   | `--imp-sidebar-accent`            | `#1e1e2a` | `bg-sidebar-accent`              | Active sidebar item highlight.             |
-| Sidebar accent text | `--imp-sidebar-accent-foreground` | `#7170ff` | `text-sidebar-accent-foreground` | Accent-colored active sidebar text.        |
+| Primary accent      | `--fl-primary`                   | `#7170ff` | `bg-primary`, `text-primary`     | Indigo-violet. Interactive elements, CTAs. |
+| Primary on-color    | `--fl-primary-foreground`        | `#ffffff` | `text-primary-foreground`        | White text on primary backgrounds.         |
+| Ring / Focus        | `--fl-ring`                      | `#7170ff` | `ring-ring`                      | Focus indicators match primary.            |
+| Sidebar accent bg   | `--fl-sidebar-accent`            | `#1e1e2a` | `bg-sidebar-accent`              | Active sidebar item highlight.             |
+| Sidebar accent text | `--fl-sidebar-accent-foreground` | `#7170ff` | `text-sidebar-accent-foreground` | Accent-colored active sidebar text.        |
 
 #### Border & Divider
 
 | Role           | Token                  | New Value                | Tailwind Class          | Notes                                                    |
 | -------------- | ---------------------- | ------------------------ | ----------------------- | -------------------------------------------------------- |
-| Default border | `--imp-border`         | `rgba(255,255,255,0.08)` | `border-border`         | Semi-transparent white. The default for cards, sections. |
-| Input border   | `--imp-input`          | `rgba(255,255,255,0.10)` | `border-input`          | Slightly more visible for form controls.                 |
-| Sidebar border | `--imp-sidebar-border` | `rgba(255,255,255,0.06)` | `border-sidebar-border` | Subtler for nav chrome.                                  |
+| Default border | `--fl-border`         | `rgba(255,255,255,0.08)` | `border-border`         | Semi-transparent white. The default for cards, sections. |
+| Input border   | `--fl-input`          | `rgba(255,255,255,0.10)` | `border-input`          | Slightly more visible for form controls.                 |
+| Sidebar border | `--fl-sidebar-border` | `rgba(255,255,255,0.06)` | `border-sidebar-border` | Subtler for nav chrome.                                  |
 
 #### Semantic / Status Colors
 
 | Role          | Token                 | Value     | Tailwind                     |
 | ------------- | --------------------- | --------- | ---------------------------- |
-| Success       | `--imp-success`       | `#3dd68c` | `bg-success`, `text-success` |
-| Success muted | `--imp-success-muted` | `#1a3a2a` | `bg-success-muted`           |
-| Warning       | `--imp-warning`       | `#f5c518` | `bg-warning`, `text-warning` |
-| Warning muted | `--imp-warning-muted` | `#3a3000` | `bg-warning-muted`           |
-| Info          | `--imp-info`          | `#60a5fa` | `bg-info`, `text-info`       |
-| Info muted    | `--imp-info-muted`    | `#1e3a5f` | `bg-info-muted`              |
-| Destructive   | `--imp-destructive`   | `#e5484d` | `bg-destructive`             |
+| Success       | `--fl-success`       | `#3dd68c` | `bg-success`, `text-success` |
+| Success muted | `--fl-success-muted` | `#1a3a2a` | `bg-success-muted`           |
+| Warning       | `--fl-warning`       | `#f5c518` | `bg-warning`, `text-warning` |
+| Warning muted | `--fl-warning-muted` | `#3a3000` | `bg-warning-muted`           |
+| Info          | `--fl-info`          | `#60a5fa` | `bg-info`, `text-info`       |
+| Info muted    | `--fl-info-muted`    | `#1e3a5f` | `bg-info-muted`              |
+| Destructive   | `--fl-destructive`   | `#e5484d` | `bg-destructive`             |
 
 #### Shadows
 
@@ -85,10 +85,10 @@ On dark surfaces, traditional shadows (dark-on-dark) are nearly invisible. Eleva
 
 | Token                     | Value                                                                 |
 | ------------------------- | --------------------------------------------------------------------- |
-| `--imp-shadow-card`       | `0 1px 3px rgba(0,0,0,0.3), 0 1px 2px rgba(0,0,0,0.2)`                |
-| `--imp-shadow-card-hover` | `0 4px 12px rgba(0,0,0,0.4), 0 2px 4px rgba(0,0,0,0.2)`               |
-| `--imp-shadow-floating`   | `0 16px 48px -12px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.05)` |
-| `--imp-shadow-sidebar`    | `1px 0 3px rgba(0,0,0,0.3)`                                           |
+| `--fl-shadow-card`       | `0 1px 3px rgba(0,0,0,0.3), 0 1px 2px rgba(0,0,0,0.2)`                |
+| `--fl-shadow-card-hover` | `0 4px 12px rgba(0,0,0,0.4), 0 2px 4px rgba(0,0,0,0.2)`               |
+| `--fl-shadow-floating`   | `0 16px 48px -12px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.05)` |
+| `--fl-shadow-sidebar`    | `1px 0 3px rgba(0,0,0,0.3)`                                           |
 | `--shadow-opacity`        | `0.25`                                                                |
 | `--shadow-color`          | `#000000`                                                             |
 
@@ -118,15 +118,15 @@ Light mode inverts the luminance hierarchy while preserving the same accent and 
 
 | Token                     | Light Value | Notes                                         |
 | ------------------------- | ----------- | --------------------------------------------- |
-| `--imp-background`        | `#fafafa`   |                                               |
-| `--imp-canvas-background` | `#f8f9fb`   |                                               |
-| `--imp-foreground`        | `#1a1a2e`   |                                               |
-| `--imp-card`              | `#ffffff`   |                                               |
-| `--imp-primary`           | `#5b5bd6`   | Slightly desaturated for legibility on white. |
-| `--imp-muted-foreground`  | `#6e6e80`   |                                               |
-| `--imp-border`            | `#e0e0ec`   | Solid light gray-blue.                        |
-| `--imp-input`             | `#dcdce4`   |                                               |
-| `--imp-ring`              | `#5b5bd6`   |                                               |
+| `--fl-background`        | `#fafafa`   |                                               |
+| `--fl-canvas-background` | `#f8f9fb`   |                                               |
+| `--fl-foreground`        | `#1a1a2e`   |                                               |
+| `--fl-card`              | `#ffffff`   |                                               |
+| `--fl-primary`           | `#5b5bd6`   | Slightly desaturated for legibility on white. |
+| `--fl-muted-foreground`  | `#6e6e80`   |                                               |
+| `--fl-border`            | `#e0e0ec`   | Solid light gray-blue.                        |
+| `--fl-input`             | `#dcdce4`   |                                               |
+| `--fl-ring`              | `#5b5bd6`   |                                               |
 
 Full light-mode token list remains in [app.css](../../pkg/ui/src/app.css) — the `.flowlib` base scope (before `.dark`).
 
@@ -174,7 +174,7 @@ Flowlib uses Tailwind's default type scale. In this Linear-inspired direction, t
 
 ## 4. Component Styling Patterns
 
-All Flowlib components use [class-variance-authority (CVA)](https://cva.style/docs) for variant management and are built on shadcn/ui + Radix primitives. Styles use Tailwind classes referencing `imp-*` tokens.
+All Flowlib components use [class-variance-authority (CVA)](https://cva.style/docs) for variant management and are built on shadcn/ui + Radix primitives. Styles use Tailwind classes referencing `fl-*` tokens.
 
 ### Buttons
 
@@ -196,7 +196,7 @@ Defined in `pkg/ui/src/components/ui/button.tsx` via `buttonVariants`. For the L
 ### Cards & Containers
 
 ```tsx
-<Card className="bg-card border border-border rounded-xl shadow-[var(--imp-shadow-card)]">
+<Card className="bg-card border border-border rounded-xl shadow-[var(--fl-shadow-card)]">
   <CardHeader>
     <CardTitle className="text-foreground font-semibold">Title</CardTitle>
     <CardDescription className="text-muted-foreground">Description</CardDescription>
@@ -210,7 +210,7 @@ Key properties:
 - Background: `bg-card` (token resolves to translucent-feeling dark surface)
 - Border: `border border-border` (semi-transparent white in dark mode)
 - Radius: `rounded-xl` (12px) for cards, `rounded-lg` (8px) for smaller containers
-- Shadow: `--imp-shadow-card` for resting, `--imp-shadow-card-hover` on hover
+- Shadow: `--fl-shadow-card` for resting, `--fl-shadow-card-hover` on hover
 - Hover: subtle background opacity increase via `hover:bg-accent`
 
 ### Inputs & Forms
@@ -245,7 +245,7 @@ Key properties:
 
 - Background: `bg-sidebar` (matches page background for seamless look)
 - Border right: `border-sidebar-border` (barely-visible divider)
-- Shadow: `--imp-shadow-sidebar` (subtle vertical light)
+- Shadow: `--fl-shadow-sidebar` (subtle vertical light)
 - Links: `text-sm font-medium text-sidebar-foreground`
 - Active item: `bg-sidebar-accent text-sidebar-accent-foreground`
 - Hover: `hover:bg-sidebar-accent/50`
@@ -283,7 +283,7 @@ Defined as CSS custom properties in the `@theme inline` block:
 
 - **Page structure**: Sidebar (`bg-sidebar`) + main content area (`bg-background`)
 - **Flow editor**: Full canvas (`bg-canvas-background`) with floating panels
-- **Config panels**: Slide-over or dialog with `bg-card` background and `--imp-shadow-floating`
+- **Config panels**: Slide-over or dialog with `bg-card` background and `--fl-shadow-floating`
 - **Section separation**: Generous vertical padding (`py-8` to `py-16`), no visible dividers — the dark background provides natural separation
 
 ---
@@ -301,7 +301,7 @@ On dark surfaces, elevation is communicated primarily through **background lumin
 | 4 — Selected | Interactive   | `bg-accent` (`#1e1e2a`)                      | Hover states, active items             |
 | Focus        | Ring          | `ring-ring/50 ring-[3px]`                    | Keyboard focus on interactive elements |
 
-**Shadow philosophy**: Shadows exist mainly at the floating layer (level 3+). At lower levels, the background luminance difference and semi-transparent borders provide sufficient depth cues. The `--imp-shadow-floating` token uses a `0 0 0 1px rgba(255,255,255,0.05)` ring to reinforce the boundary between floating elements and the canvas.
+**Shadow philosophy**: Shadows exist mainly at the floating layer (level 3+). At lower levels, the background luminance difference and semi-transparent borders provide sufficient depth cues. The `--fl-shadow-floating` token uses a `0 0 0 1px rgba(255,255,255,0.05)` ring to reinforce the boundary between floating elements and the canvas.
 
 ---
 
@@ -309,7 +309,7 @@ On dark surfaces, elevation is communicated primarily through **background lumin
 
 ### Do
 
-- Use `imp-*` theme tokens exclusively — `bg-background`, `text-foreground`, `border-border`, etc.
+- Use `fl-*` theme tokens exclusively — `bg-background`, `text-foreground`, `border-border`, etc.
 - Default to dark mode as the primary design surface
 - Use semi-transparent borders (`rgba(255,255,255,0.05–0.08)`) in dark mode, not solid dark colors
 - Keep button backgrounds near-transparent: `bg-secondary`, `hover:bg-accent` — never opaque
@@ -345,12 +345,12 @@ All token definitions live in [pkg/ui/src/app.css](../../pkg/ui/src/app.css), in
 @layer utilities {
   .flowlib {
     /* Light mode tokens (base) */
-    --imp-background: #fafafa;
+    --fl-background: #fafafa;
     ...
 
     &.dark {
       /* Dark mode tokens (overrides) */
-      --imp-background: #0a0a0c;
+      --fl-background: #0a0a0c;
       ...
     }
   }
@@ -361,26 +361,26 @@ All token definitions live in [pkg/ui/src/app.css](../../pkg/ui/src/app.css), in
 
 The system uses a two-layer variable chain:
 
-1. **`--imp-*` variables**: The source of truth. Set per theme mode.
-2. **`--*` variables** (unprefixed): Aliases that point to `--imp-*`. Used by Tailwind's `@theme inline` block.
+1. **`--fl-*` variables**: The source of truth. Set per theme mode.
+2. **`--*` variables** (unprefixed): Aliases that point to `--fl-*`. Used by Tailwind's `@theme inline` block.
 3. **Tailwind `--color-*` mappings**: Auto-generated from the `@theme inline` declaration.
 
 ```
---imp-primary: #7170ff
+--fl-primary: #7170ff
     ↓
---primary: var(--imp-primary)
+--primary: var(--fl-primary)
     ↓
 --color-primary: var(--primary)     ← Tailwind reads this
     ↓
 bg-primary, text-primary, etc.     ← Component classes
 ```
 
-To change a token value, edit the `--imp-*` variable. Everything downstream updates automatically.
+To change a token value, edit the `--fl-*` variable. Everything downstream updates automatically.
 
 ### Adding New Tokens
 
-1. Add `--imp-<name>` in the `.flowlib` scope (light value) and `.flowlib.dark` scope (dark value)
-2. Add `--<name>: var(--imp-<name>)` alias
+1. Add `--fl-<name>` in the `.flowlib` scope (light value) and `.flowlib.dark` scope (dark value)
+2. Add `--<name>: var(--fl-<name>)` alias
 3. Add `--color-<name>: var(--<name>)` in the `@theme inline` block
 4. Use via Tailwind: `bg-<name>`, `text-<name>`, etc.
 
@@ -421,7 +421,7 @@ Destructive:       bg-destructive        (#e5484d)
 {
   /* Card on dark background */
 }
-<div className="bg-card border border-border rounded-xl p-6 shadow-[var(--imp-shadow-card)]">
+<div className="bg-card border border-border rounded-xl p-6 shadow-[var(--fl-shadow-card)]">
   <h3 className="text-xl font-semibold text-foreground tracking-tight">Feature Title</h3>
   <p className="mt-2 text-sm text-muted-foreground">Description text in muted gray.</p>
   <div className="mt-4 flex gap-3">
@@ -461,7 +461,7 @@ Destructive:       bg-destructive        (#e5484d)
 {
   /* Command palette / popover */
 }
-<div className="bg-popover border border-border rounded-xl shadow-[var(--imp-shadow-floating)] p-2">
+<div className="bg-popover border border-border rounded-xl shadow-[var(--fl-shadow-floating)] p-2">
   <input
     className="w-full bg-transparent text-foreground placeholder:text-muted-foreground text-sm px-3 py-2 border-b border-border outline-none"
     placeholder="Search..."

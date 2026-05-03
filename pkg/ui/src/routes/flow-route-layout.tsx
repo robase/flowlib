@@ -109,7 +109,7 @@ export function FlowRouteLayout({ basePath = '' }: FlowRouteLayoutProps) {
   return (
     <ReactFlowProvider>
       <FlowActionsContext.Provider value={flowActionsValue}>
-        <div className="imp-page flex flex-col flex-1 min-h-0 bg-imp-background">
+        <div className="fl-page flex flex-col flex-1 min-h-0 bg-fl-background">
           <FlowHeader
             flowName={flowName}
             onFlowNameChange={handleFlowNameChange}
@@ -118,7 +118,7 @@ export function FlowRouteLayout({ basePath = '' }: FlowRouteLayoutProps) {
             isSaving={flowActionsValue?.isSaving}
             basePath={basePath}
           />
-          <div className="imp-page flex-1 min-h-0 bg-imp-background">
+          <div className="fl-page flex-1 min-h-0 bg-fl-background">
             <Outlet />
           </div>
         </div>
