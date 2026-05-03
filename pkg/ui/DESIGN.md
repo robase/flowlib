@@ -29,8 +29,8 @@ All values are set via `--fl-*` CSS custom properties in [pkg/ui/src/app.css](..
 
 #### Background Surfaces
 
-| Role                | Token                     | New Value | Tailwind Class  | Notes                                                  |
-| ------------------- | ------------------------- | --------- | --------------- | ------------------------------------------------------ |
+| Role                | Token                    | New Value | Tailwind Class  | Notes                                                  |
+| ------------------- | ------------------------ | --------- | --------------- | ------------------------------------------------------ |
 | Page background     | `--fl-background`        | `#0a0a0c` | `bg-background` | Near-black with cool undertone. The canvas.            |
 | Canvas (React Flow) | `--fl-canvas-background` | `#0f0f12` | —               | Flow editor surface, one step up.                      |
 | Card / Panel        | `--fl-card`              | `#141418` | `bg-card`       | Elevated surface. Translucent feel via subtle borders. |
@@ -42,8 +42,8 @@ All values are set via `--fl-*` CSS custom properties in [pkg/ui/src/app.css](..
 
 #### Text & Content
 
-| Role           | Token                      | New Value | Tailwind Class            | Notes                                              |
-| -------------- | -------------------------- | --------- | ------------------------- | -------------------------------------------------- |
+| Role           | Token                     | New Value | Tailwind Class            | Notes                                              |
+| -------------- | ------------------------- | --------- | ------------------------- | -------------------------------------------------- |
 | Primary text   | `--fl-foreground`         | `#f0f1f3` | `text-foreground`         | Near-white, not pure `#fff` — prevents eye strain. |
 | Card text      | `--fl-card-foreground`    | `#f0f1f3` | `text-card-foreground`    | Matches primary.                                   |
 | Secondary text | `--fl-muted-foreground`   | `#8a8f98` | `text-muted-foreground`   | Muted gray for descriptions, metadata.             |
@@ -51,8 +51,8 @@ All values are set via `--fl-*` CSS custom properties in [pkg/ui/src/app.css](..
 
 #### Brand & Accent
 
-| Role                | Token                             | New Value | Tailwind Class                   | Notes                                      |
-| ------------------- | --------------------------------- | --------- | -------------------------------- | ------------------------------------------ |
+| Role                | Token                            | New Value | Tailwind Class                   | Notes                                      |
+| ------------------- | -------------------------------- | --------- | -------------------------------- | ------------------------------------------ |
 | Primary accent      | `--fl-primary`                   | `#7170ff` | `bg-primary`, `text-primary`     | Indigo-violet. Interactive elements, CTAs. |
 | Primary on-color    | `--fl-primary-foreground`        | `#ffffff` | `text-primary-foreground`        | White text on primary backgrounds.         |
 | Ring / Focus        | `--fl-ring`                      | `#7170ff` | `ring-ring`                      | Focus indicators match primary.            |
@@ -61,16 +61,16 @@ All values are set via `--fl-*` CSS custom properties in [pkg/ui/src/app.css](..
 
 #### Border & Divider
 
-| Role           | Token                  | New Value                | Tailwind Class          | Notes                                                    |
-| -------------- | ---------------------- | ------------------------ | ----------------------- | -------------------------------------------------------- |
+| Role           | Token                 | New Value                | Tailwind Class          | Notes                                                    |
+| -------------- | --------------------- | ------------------------ | ----------------------- | -------------------------------------------------------- |
 | Default border | `--fl-border`         | `rgba(255,255,255,0.08)` | `border-border`         | Semi-transparent white. The default for cards, sections. |
 | Input border   | `--fl-input`          | `rgba(255,255,255,0.10)` | `border-input`          | Slightly more visible for form controls.                 |
 | Sidebar border | `--fl-sidebar-border` | `rgba(255,255,255,0.06)` | `border-sidebar-border` | Subtler for nav chrome.                                  |
 
 #### Semantic / Status Colors
 
-| Role          | Token                 | Value     | Tailwind                     |
-| ------------- | --------------------- | --------- | ---------------------------- |
+| Role          | Token                | Value     | Tailwind                     |
+| ------------- | -------------------- | --------- | ---------------------------- |
 | Success       | `--fl-success`       | `#3dd68c` | `bg-success`, `text-success` |
 | Success muted | `--fl-success-muted` | `#1a3a2a` | `bg-success-muted`           |
 | Warning       | `--fl-warning`       | `#f5c518` | `bg-warning`, `text-warning` |
@@ -83,14 +83,14 @@ All values are set via `--fl-*` CSS custom properties in [pkg/ui/src/app.css](..
 
 On dark surfaces, traditional shadows (dark-on-dark) are nearly invisible. Elevation is communicated primarily through background luminance stepping. Shadows reinforce depth at floating layers only.
 
-| Token                     | Value                                                                 |
-| ------------------------- | --------------------------------------------------------------------- |
+| Token                    | Value                                                                 |
+| ------------------------ | --------------------------------------------------------------------- |
 | `--fl-shadow-card`       | `0 1px 3px rgba(0,0,0,0.3), 0 1px 2px rgba(0,0,0,0.2)`                |
 | `--fl-shadow-card-hover` | `0 4px 12px rgba(0,0,0,0.4), 0 2px 4px rgba(0,0,0,0.2)`               |
 | `--fl-shadow-floating`   | `0 16px 48px -12px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.05)` |
 | `--fl-shadow-sidebar`    | `1px 0 3px rgba(0,0,0,0.3)`                                           |
-| `--shadow-opacity`        | `0.25`                                                                |
-| `--shadow-color`          | `#000000`                                                             |
+| `--shadow-opacity`       | `0.25`                                                                |
+| `--shadow-color`         | `#000000`                                                             |
 
 #### Flow Editor
 
@@ -116,8 +116,8 @@ On dark surfaces, traditional shadows (dark-on-dark) are nearly invisible. Eleva
 
 Light mode inverts the luminance hierarchy while preserving the same accent and semantic colors.
 
-| Token                     | Light Value | Notes                                         |
-| ------------------------- | ----------- | --------------------------------------------- |
+| Token                    | Light Value | Notes                                         |
+| ------------------------ | ----------- | --------------------------------------------- |
 | `--fl-background`        | `#fafafa`   |                                               |
 | `--fl-canvas-background` | `#f8f9fb`   |                                               |
 | `--fl-foreground`        | `#1a1a2e`   |                                               |

@@ -235,9 +235,7 @@ export function AccessTable({
                           )}
                         </div>
                         {row.source && row.source !== 'Direct grant' && row.source !== 'Member' && (
-                          <span className="text-[11px] text-fl-muted-foreground">
-                            {row.source}
-                          </span>
+                          <span className="text-[11px] text-fl-muted-foreground">{row.source}</span>
                         )}
                       </div>
                     </div>

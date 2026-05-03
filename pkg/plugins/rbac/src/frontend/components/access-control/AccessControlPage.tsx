@@ -517,9 +517,7 @@ export function AccessControlPage() {
             <div
               className={clsx(
                 'min-h-full rounded-lg py-1 transition-colors',
-                dropTarget === 'root'
-                  ? 'bg-fl-primary/5 ring-1 ring-fl-primary/20 ring-inset'
-                  : '',
+                dropTarget === 'root' ? 'bg-fl-primary/5 ring-1 ring-fl-primary/20 ring-inset' : '',
               )}
             >
               {isLoading ? (
