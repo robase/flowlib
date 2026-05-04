@@ -1238,6 +1238,9 @@ importers:
       clsx:
         specifier: '>=2.0.0'
         version: 2.1.1
+      kysely:
+        specifier: '>=0.28.16'
+        version: 0.28.16
       tailwind-merge:
         specifier: '>=2.0.0'
         version: 3.5.0
@@ -18286,7 +18289,7 @@ snapshots:
       obug: 2.1.1
       std-env: 4.0.0
       tinyrainbow: 3.1.0
-      vitest: 4.1.4(@opentelemetry/api@1.9.1)(@types/node@24.12.0)(@vitest/coverage-v8@4.1.4)(@vitest/ui@4.1.4)(msw@2.12.10(@types/node@24.12.0)(typescript@5.9.3))(vite@8.0.8(@types/node@24.12.0)(esbuild@0.27.3)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.3))
+      vitest: 4.1.4(@opentelemetry/api@1.9.1)(@types/node@20.19.37)(@vitest/coverage-v8@4.1.4)(@vitest/ui@4.1.4)(msw@2.12.10(@types/node@20.19.37)(typescript@5.9.3))(vite@8.0.8(@types/node@20.19.37)(esbuild@0.27.3)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.3))
 
   '@vitest/expect@4.1.4':
     dependencies:
@@ -18351,7 +18354,7 @@ snapshots:
       sirv: 3.0.2
       tinyglobby: 0.2.15
       tinyrainbow: 3.1.0
-      vitest: 4.1.4(@opentelemetry/api@1.9.1)(@types/node@24.12.0)(@vitest/coverage-v8@4.1.4)(@vitest/ui@4.1.4)(msw@2.12.10(@types/node@24.12.0)(typescript@5.9.3))(vite@8.0.8(@types/node@24.12.0)(esbuild@0.27.3)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.3))
+      vitest: 4.1.4(@opentelemetry/api@1.9.1)(@types/node@20.19.37)(@vitest/coverage-v8@4.1.4)(@vitest/ui@4.1.4)(msw@2.12.10(@types/node@20.19.37)(typescript@5.9.3))(vite@8.0.8(@types/node@20.19.37)(esbuild@0.27.3)(jiti@2.6.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.3))
 
   '@vitest/utils@4.1.4':
     dependencies:
