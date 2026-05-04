@@ -69,9 +69,13 @@ test.describe('Node Config Panel — Test Mode & Template Expressions', () => {
     await page.evaluate(
       ([selector, value]) => {
         const dialogEl = document.querySelector('[role="dialog"]');
-        if (!dialogEl) {throw new Error('dialog not found');}
+        if (!dialogEl) {
+          throw new Error('dialog not found');
+        }
         const target = dialogEl.querySelector(selector as string) as HTMLElement | null;
-        if (!target) {throw new Error(`${selector} not found`);}
+        if (!target) {
+          throw new Error(`${selector} not found`);
+        }
         target.focus();
         // Select all so the paste replaces the existing content.
         document.getSelection()?.selectAllChildren(target);

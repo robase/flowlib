@@ -178,15 +178,23 @@ const TWO_NODE_FLOW = {
   edges: [{ id: 'cp-edge-1', source: 'cp-input', target: 'cp-jq' }],
 };
 
-/** 4-node chain flow: Input → JavaScript → Template → Output */
+/**
+ * 4-node chain flow: Source → Process → Format → Output.
+ *
+ * The first node is `core.javascript` rather than `trigger.manual` because
+ * `trigger.manual` has `maxInstances: 1` — pasting a copy of a flow whose
+ * first node is `trigger.manual` would silently drop the pasted trigger,
+ * leaving 7 nodes after paste instead of the expected 8 and breaking the
+ * "copy-paste preserves internal edges" assertion.
+ */
 const CHAIN_FLOW = {
   nodes: [
     {
       id: 'chain-input',
-      type: 'trigger.manual',
+      type: 'core.javascript',
       label: 'Source',
       referenceId: 'source',
-      params: { variableName: 'source', defaultValue: '{"value": 42}' },
+      params: { code: '({ value: 42 })' },
       position: { x: 100, y: 200 },
     },
     {
