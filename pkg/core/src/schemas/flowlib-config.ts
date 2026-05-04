@@ -372,6 +372,19 @@ export const FlowlibConfigSchema = z.object({
    * };
    * ```
    */
+  /**
+   * Authorization configuration for Flowlib's RBAC layer.
+   *
+   * Wired into `createAuthorizationService()`. Plugin `onAuthorize` hooks and
+   * the per-route enforcement helpers in `@flowlib/http` consult this config
+   * when evaluating identity-vs-permission checks.
+   *
+   * Accepted as `z.any()` at the schema layer because `customAuthorize` is a
+   * function callback that Zod can't validate. The TS overlay type below
+   * narrows it to `FlowlibAuthConfig` for IntelliSense.
+   */
+  auth: z.any().optional(),
+
   defaultCredentials: z
     .array(
       z.discriminatedUnion('type', [
@@ -419,18 +432,21 @@ export type ExecutionConfig = z.input<typeof ExecutionConfigSchema>;
 export type LoggingConfig = z.infer<typeof LoggingConfigSchema>;
 
 import type { FlowlibServiceOverrides } from '../types/services';
+import type { FlowlibAuthConfig } from '../types/auth.types';
 
 /**
  * Inferred Flowlib configuration type.
  *
  * The `services` field is overridden from `unknown` (Zod) to the typed
  * `FlowlibServiceOverrides` shape so authors get proper IntelliSense for
- * `config.services.encryption`, etc. The runtime schema accepts any
- * object — the overrides are just adapter instances and not
- * Zod-validatable.
+ * `config.services.encryption`, etc. Same pattern for `auth` — Zod can't
+ * validate the `customAuthorize` callback, so the schema accepts `any` and
+ * the TS overlay narrows it. The runtime schema accepts any object — the
+ * overrides are just adapter instances and not Zod-validatable.
  */
-export type FlowlibConfig = Omit<z.input<typeof FlowlibConfigSchema>, 'services'> & {
+export type FlowlibConfig = Omit<z.input<typeof FlowlibConfigSchema>, 'services' | 'auth'> & {
   services?: FlowlibServiceOverrides;
+  auth?: FlowlibAuthConfig;
 };
 
 /**

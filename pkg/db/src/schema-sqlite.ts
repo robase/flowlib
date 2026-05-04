@@ -9,7 +9,9 @@ import {
 } from '@flowlib/action-kit';
 import type { FlowlibDefinitionRuntime, NodeErrorDetails } from '@flowlib/action-kit';
 import { randomUUID } from 'crypto';
+import type { CredentialAuthType, CredentialConfig, CredentialType } from './credential-types';
 import type { JSONValue } from './index';
+export type { CredentialAuthType, CredentialConfig, CredentialType } from './credential-types';
 
 // =============================================================================
 // Tables
@@ -147,76 +149,6 @@ export const batchJobs = sqliteTable('flowlib_batch_jobs', {
     .notNull()
     .default(sql`CURRENT_TIMESTAMP`),
 });
-
-// =============================================================================
-// Credentials - For storing API authentication credentials
-// =============================================================================
-
-export type CredentialType =
-  | 'http-api' // HTTP/REST APIs, GraphQL, webhooks
-  | 'database' // SQL and NoSQL databases
-  | 'llm'; // LLM providers (OpenAI, Anthropic, OpenRouter, etc.)
-
-export type CredentialAuthType =
-  | 'apiKey' // API Key in header or query
-  | 'bearer' // Bearer token
-  | 'basic' // Basic auth (username/password)
-  | 'oauth2' // OAuth2 tokens
-  | 'custom' // Custom headers
-  | 'awsSigV4' // AWS Signature V4
-  | 'jwt' // JWT token
-  | 'connectionString'; // Database connection string
-
-export interface CredentialConfig {
-  // For apiKey
-  apiKey?: string;
-  location?: 'header' | 'query';
-  paramName?: string;
-
-  // For bearer
-  token?: string;
-
-  // For basic
-  username?: string;
-  password?: string;
-
-  // For oauth2
-  accessToken?: string;
-  refreshToken?: string;
-  tokenType?: string;
-  scope?: string;
-  clientId?: string;
-  clientSecret?: string;
-  /** OAuth2 provider ID (e.g., "google_docs", "github") */
-  oauth2Provider?: string;
-  /** Authorization URL (for custom OAuth2 providers) */
-  authorizationUrl?: string;
-  /** Token URL (for custom OAuth2 providers) */
-  tokenUrl?: string;
-
-  // For custom
-  headers?: Record<string, string>;
-
-  // For awsSigV4
-  accessKeyId?: string;
-  secretAccessKey?: string;
-  region?: string;
-  service?: string;
-
-  // For jwt
-  algorithm?: string;
-  secret?: string;
-
-  // For database connection string
-  connectionString?: string;
-
-  // Common
-  expiresAt?: string;
-  apiUrl?: string;
-  baseUrl?: string;
-  endpoint?: string;
-  [key: string]: unknown;
-}
 
 // Credentials table for storing API authentication credentials
 export const credentials = sqliteTable('flowlib_credentials', {

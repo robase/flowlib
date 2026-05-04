@@ -13,6 +13,7 @@ export default defineConfig({
   deps: {
     neverBundle: [
       '@flowlib/core',
+      '@flowlib/http',
       '@nestjs/common',
       '@nestjs/core',
       '@nestjs/schedule',

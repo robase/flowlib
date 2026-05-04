@@ -13,7 +13,7 @@ export default defineConfig({
   report: false,
   unbundle: true,
   deps: {
-    neverBundle: ['@flowlib/core', 'express', 'cors', 'zod'],
+    neverBundle: ['@flowlib/core', '@flowlib/http', 'express', 'cors', 'zod'],
   },
   outExtensions({ format }) {
     return {

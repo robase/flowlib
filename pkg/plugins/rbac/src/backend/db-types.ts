@@ -14,14 +14,11 @@
  * (date columns, booleans, JSON encoding) that apply here too.
  */
 
-import type { ColumnType } from 'kysely';
-import type { CoreDB, CoreFlowsTable } from '@flowlib/db/kysely';
+import type { CoreDB, CoreFlowsTable, TimestampColumn } from '@flowlib/db/kysely';
 import type { AuthDB } from '@flowlib/user-auth/kysely';
 import type { FlowAccessPermission } from '../shared/types';
 
-// See `@flowlib/user-auth/kysely` for `Timestamp` rationale: ISO string on
-// select, both `string`/`Date` accepted on write.
-type Timestamp = ColumnType<string, string | Date | undefined, string | Date>;
+// See `@flowlib/user-auth/kysely` for timestamp rationale.
 
 export interface RbacTeamsTable {
   id: string;
@@ -29,15 +26,15 @@ export interface RbacTeamsTable {
   description: string | null;
   parent_id: string | null;
   created_by: string | null;
-  created_at: Timestamp;
-  updated_at: Timestamp | null;
+  created_at: TimestampColumn;
+  updated_at: TimestampColumn | null;
 }
 
 export interface RbacTeamMembersTable {
   id: string;
   team_id: string;
   user_id: string;
-  created_at: Timestamp;
+  created_at: TimestampColumn;
 }
 
 export interface RbacScopeAccessTable {
@@ -47,7 +44,7 @@ export interface RbacScopeAccessTable {
   team_id: string | null;
   permission: FlowAccessPermission;
   granted_by: string | null;
-  granted_at: Timestamp;
+  granted_at: TimestampColumn;
 }
 
 /**

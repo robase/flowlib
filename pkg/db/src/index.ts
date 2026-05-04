@@ -20,6 +20,10 @@ export type {
   PluginSchemaSource,
 } from './plugin-schema';
 
+// Canonical credential contract shared by all dialect schema modules.
+export { CREDENTIAL_AUTH_TYPES, CREDENTIAL_TYPES } from './credential-types';
+export type { CredentialAuthType, CredentialConfig, CredentialType } from './credential-types';
+
 // Core abstract schema (used by the schema generator and merger).
 export { CORE_SCHEMA, CORE_TABLE_NAMES, CORE_ENUMS } from './core-schema';
 

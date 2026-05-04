@@ -20,7 +20,7 @@ import type { FlowlibPlugin, FlowlibPluginDefinition } from '../types/plugin.typ
 import { AuthorizationService, createAuthorizationService } from '../services/auth';
 import { ActionRegistry, initializeGlobalActionRegistry } from '@flowlib/actions/registry';
 import { allProviderActions } from '@flowlib/actions';
-import type { CredentialAuthType } from '@flowlib/db/sqlite';
+import type { CredentialAuthType } from '@flowlib/db';
 
 import type { FlowlibInstance, FlowlibMaintenanceOptions, FlowlibMaintenanceResult } from './types';
 import { createFlowsAPI } from './flows';
@@ -168,8 +168,15 @@ export async function createFlowlib(config: FlowlibConfig): Promise<FlowlibInsta
   });
 
   try {
-    // Initialize authorization service
-    const authService: AuthorizationService = createAuthorizationService({ logger });
+    // Initialize authorization service. Pass `parsedConfig.auth` through so
+    // RBAC settings (`enabled`, `roleMapper`, `customRoles`, `customAuthorize`,
+    // `publicRoutes`, `defaultRole`) declared in `FlowlibConfig.auth` actually
+    // reach the service. Previously this was instantiated with `{ logger }`
+    // only — the `auth` field on `FlowlibConfig` had no effect.
+    const authService: AuthorizationService = createAuthorizationService({
+      config: (parsedConfig as { auth?: import('../types/auth.types').FlowlibAuthConfig }).auth,
+      logger,
+    });
 
     // Initialize plugin manager — extract backend plugins from unified definitions
     const rawPlugins = (parsedConfig.plugins as FlowlibPluginDefinition[] | undefined) ?? [];

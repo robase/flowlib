@@ -1,4 +1,5 @@
 import type { PluginDatabaseApi } from '@flowlib/core';
+import type { DialectBoolean } from '@flowlib/db/kysely';
 import { sql } from 'kysely';
 import type { WebhooksDB } from './db-types';
 import type {
@@ -23,9 +24,9 @@ interface WebhookTriggerRow {
   description: string | null;
   webhook_path: string;
   provider: string;
-  is_enabled: boolean | 0 | 1;
+  is_enabled: DialectBoolean;
   allowed_methods: string;
-  hmac_enabled: boolean | 0 | 1;
+  hmac_enabled: DialectBoolean;
   hmac_header_name: string | null;
   hmac_secret: string | null;
   allowed_ips: string | null;
@@ -58,7 +59,7 @@ function toIsoOrUndefined(value: string | Date | null): string | undefined {
  * SQLite stores 0/1 in INTEGER columns; Postgres returns native bool;
  * MySQL returns 0/1 from `tinyint(1)`. Coerce uniformly.
  */
-function toBool(value: boolean | 0 | 1): boolean {
+function toBool(value: DialectBoolean): boolean {
   return value === true || value === 1;
 }
 
@@ -260,7 +261,7 @@ export class WebhookTriggersRepository {
 
   /** Dialect-appropriate boolean. SQLite stores 0/1 in INTEGER; Postgres
    *  has native bool; MySQL accepts both. */
-  private boolValue(value: boolean): boolean | 0 | 1 {
+  private boolValue(value: boolean): DialectBoolean {
     return this.database.type === 'sqlite' ? (value ? 1 : 0) : value;
   }
 }

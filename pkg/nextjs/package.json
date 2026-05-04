@@ -48,6 +48,7 @@
   },
   "dependencies": {
     "@flowlib/core": "workspace:*",
+    "@flowlib/http": "workspace:*",
     "zod": "^3.22.0"
   },
   "devDependencies": {

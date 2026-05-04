@@ -9,7 +9,7 @@
 import { CredentialsModel } from './credentials.model';
 import type { EncryptionAdapter, EncryptionContext } from '../../types/services';
 import type { FlowlibAdapter } from '../../database/adapter';
-import type { CredentialConfig, CredentialAuthType, CredentialType } from '@flowlib/db/sqlite';
+import type { CredentialConfig, CredentialAuthType, CredentialType } from '@flowlib/db';
 import type { Logger } from 'src/schemas';
 
 import type { Credential as ModelCredential } from './credentials.model';

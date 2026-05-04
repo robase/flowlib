@@ -159,7 +159,7 @@ export { FLOW_VALIDATION_ERROR_TYPES } from './types/validation';
 // structural type.
 export type { FlowlibDefinitionRuntime } from '@flowlib/action-kit';
 export type { JSONValue } from '@flowlib/db';
-export type { CredentialType, CredentialAuthType, CredentialConfig } from '@flowlib/db/sqlite';
+export type { CredentialType, CredentialAuthType, CredentialConfig } from '@flowlib/db';
 
 // Dashboard stats type (pure interface — safe for frontend)
 export type { DashboardStats } from './flowlib-core';

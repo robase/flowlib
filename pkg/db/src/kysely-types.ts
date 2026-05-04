@@ -47,6 +47,7 @@
  * core schema.
  */
 
+import type { ColumnType } from 'kysely';
 import type {
   BatchProvider,
   BatchStatus,
@@ -55,23 +56,11 @@ import type {
   FlowlibDefinitionRuntime,
   NodeErrorDetails,
 } from '@flowlib/action-kit';
+import type { CredentialAuthType, CredentialConfig, CredentialType } from './credential-types';
 import type { JSONValue } from './index';
-// `CredentialType` / `CredentialAuthType` / `CredentialConfig` are declared
-// per-dialect in the Drizzle schemas (they pre-date the `index.ts` re-export
-// surface). Mirror them here as Kysely-side types — the credentials table is
-// rarely accessed by plugins, so duplication cost is low.
-type CredentialType = 'http-api' | 'database' | 'llm';
-type CredentialAuthType =
-  | 'apiKey'
-  | 'bearer'
-  | 'basic'
-  | 'oauth2'
-  | 'custom'
-  | 'awsSigV4'
-  | 'jwt'
-  | 'connectionString';
-// Kept loose intentionally — encrypted blob with provider-specific keys.
-type CredentialConfig = Record<string, unknown>;
+
+export type TimestampColumn = ColumnType<string, string | Date | undefined, string | Date>;
+export type DialectBoolean = boolean | 0 | 1;
 
 export interface CoreFlowsTable {
   id: string;
@@ -79,7 +68,7 @@ export interface CoreFlowsTable {
   description: string | null;
   /** JSON-encoded `string[]` on the wire — parse on read if going through Kysely. */
   tags: string | string[] | null;
-  is_active: boolean | 0 | 1;
+  is_active: DialectBoolean;
   live_version_number: number | null;
   created_at: string;
   updated_at: string;
@@ -164,7 +153,7 @@ export interface CoreFlowTriggersTable {
   node_id: string;
   type: 'manual' | 'webhook' | 'cron';
   config: string | JSONValue;
-  is_enabled: boolean | 0 | 1;
+  is_enabled: DialectBoolean;
   created_at: string;
   updated_at: string;
 }

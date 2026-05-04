@@ -14,7 +14,15 @@ import {
 import { relations } from 'drizzle-orm';
 import { randomUUID } from 'crypto';
 import type { FlowlibDefinitionRuntime, NodeErrorDetails } from '@flowlib/action-kit';
+import {
+  CREDENTIAL_AUTH_TYPES,
+  CREDENTIAL_TYPES,
+  type CredentialAuthType,
+  type CredentialConfig,
+  type CredentialType,
+} from './credential-types';
 import type { JSONValue } from './index';
+export type { CredentialAuthType, CredentialConfig, CredentialType } from './credential-types';
 
 // =============================================================================
 // Enums for PostgreSQL
@@ -166,60 +174,17 @@ export const batchJobs = pgTable('flowlib_batch_jobs', {
 });
 
 // Credentials table for storing API authentication credentials
-export const credentialTypeEnum = pgEnum('credential_type', ['http-api', 'database', 'llm']);
+export const credentialTypeEnum = pgEnum('credential_type', CREDENTIAL_TYPES);
 
-export const credentialAuthTypeEnum = pgEnum('credential_auth_type', [
-  'apiKey',
-  'bearer',
-  'basic',
-  'oauth2',
-  'custom',
-  'awsSigV4',
-  'jwt',
-  'connectionString',
-]);
-
-export interface CredentialConfig {
-  apiKey?: string;
-  location?: 'header' | 'query';
-  paramName?: string;
-  token?: string;
-  username?: string;
-  password?: string;
-  accessToken?: string;
-  refreshToken?: string;
-  tokenType?: string;
-  scope?: string;
-  clientId?: string;
-  clientSecret?: string;
-  /** OAuth2 provider ID (e.g., "google_docs", "github") */
-  oauth2Provider?: string;
-  /** Authorization URL (for custom OAuth2 providers) */
-  authorizationUrl?: string;
-  /** Token URL (for custom OAuth2 providers) */
-  tokenUrl?: string;
-  headers?: Record<string, string>;
-  accessKeyId?: string;
-  secretAccessKey?: string;
-  region?: string;
-  service?: string;
-  algorithm?: string;
-  secret?: string;
-  connectionString?: string;
-  expiresAt?: string;
-  apiUrl?: string;
-  baseUrl?: string;
-  endpoint?: string;
-  [key: string]: unknown;
-}
+export const credentialAuthTypeEnum = pgEnum('credential_auth_type', CREDENTIAL_AUTH_TYPES);
 
 export const credentials = pgTable('flowlib_credentials', {
   id: uuid('id')
     .primaryKey()
     .$default(() => randomUUID()),
   name: text('name').notNull(),
-  type: credentialTypeEnum('type').notNull(),
-  authType: credentialAuthTypeEnum('auth_type').notNull(),
+  type: credentialTypeEnum('type').$type<CredentialType>().notNull(),
+  authType: credentialAuthTypeEnum('auth_type').$type<CredentialAuthType>().notNull(),
   config: json('config').$type<CredentialConfig>().notNull(),
   description: text('description'),
   isActive: boolean('is_active').notNull().default(true),

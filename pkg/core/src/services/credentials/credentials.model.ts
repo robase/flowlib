@@ -3,7 +3,7 @@ import { randomUUID } from 'crypto';
 import type { FlowlibAdapter, WhereClause } from '../../database/adapter';
 import { DatabaseError } from 'src/types/common/errors.types';
 import { Logger, PaginatedResponse, PaginationQuery, QueryOptions } from 'src/schemas';
-import type { CredentialAuthType, CredentialConfig, CredentialType } from '@flowlib/db/sqlite';
+import type { CredentialAuthType, CredentialConfig, CredentialType } from '@flowlib/db';
 
 /**
  * Credential entity
