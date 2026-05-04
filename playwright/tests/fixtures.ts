@@ -85,19 +85,18 @@ const TEST_FLOW_DEFINITIONS: Record<string, TestFlowDefinition> = {
         label: 'User List',
         referenceId: 'data',
         params: {
-          variableName: 'data',
-          defaultValue: JSON.stringify(
+          inputs: [
             {
-              users: [
+              name: 'users',
+              type: 'json',
+              defaultValue: [
                 { id: 1, name: 'Alice', role: 'admin' },
                 { id: 2, name: 'Bob', role: 'user' },
                 { id: 3, name: 'Charlie', role: 'admin' },
               ],
-              metadata: { total: 3, page: 1 },
             },
-            null,
-            2,
-          ),
+            { name: 'metadata', type: 'json', defaultValue: { total: 3, page: 1 } },
+          ],
         },
         position: { x: 100, y: 200 },
       },
@@ -107,7 +106,10 @@ const TEST_FLOW_DEFINITIONS: Record<string, TestFlowDefinition> = {
         label: 'Filter Admins',
         referenceId: 'admins',
         params: {
-          code: '({ admins: data.users.filter((user) => user.role === "admin").map((user) => user.name), count: data.users.filter((user) => user.role === "admin").length })',
+          // Upstream `trigger.manual` spreads its declared inputs (`users`,
+          // `metadata`) directly into incoming data — referenced as bare
+          // identifiers, not wrapped under the upstream's referenceId.
+          code: '({ admins: users.filter((u) => u.role === "admin").map((u) => u.name), count: users.filter((u) => u.role === "admin").length })',
         },
         position: { x: 400, y: 200 },
       },
@@ -135,8 +137,7 @@ const TEST_FLOW_DEFINITIONS: Record<string, TestFlowDefinition> = {
         label: 'Topic Input',
         referenceId: 'topic',
         params: {
-          variableName: 'topic',
-          defaultValue: 'artificial intelligence',
+          inputs: [{ name: 'topic', type: 'string', defaultValue: 'artificial intelligence' }],
         },
         position: { x: 100, y: 200 },
       },
@@ -146,6 +147,9 @@ const TEST_FLOW_DEFINITIONS: Record<string, TestFlowDefinition> = {
         label: 'Build Prompt',
         referenceId: 'prompt',
         params: {
+          // `trigger.manual` spreads its declared `topic` input into
+          // incoming data, so the bare `{{ topic }}` reference resolves
+          // directly to the topic string.
           template: 'Write a brief 2-sentence explanation about: {{ topic }}',
         },
         position: { x: 400, y: 200 },
@@ -161,16 +165,11 @@ const TEST_FLOW_DEFINITIONS: Record<string, TestFlowDefinition> = {
         label: 'User Data',
         referenceId: 'user_data',
         params: {
-          variableName: 'user_data',
-          defaultValue: JSON.stringify(
-            {
-              name: 'Alice',
-              age: 25,
-              email: 'alice@example.com',
-            },
-            null,
-            2,
-          ),
+          inputs: [
+            { name: 'name', type: 'string', defaultValue: 'Alice' },
+            { name: 'age', type: 'number', defaultValue: 25 },
+            { name: 'email', type: 'string', defaultValue: 'alice@example.com' },
+          ],
         },
         position: { x: 100, y: 200 },
       },
@@ -180,7 +179,9 @@ const TEST_FLOW_DEFINITIONS: Record<string, TestFlowDefinition> = {
         label: 'Extract User Info',
         referenceId: 'user_info',
         params: {
-          code: '({ name: user_data.name, age: user_data.age, isAdult: user_data.age >= 18 })',
+          // `trigger.manual` spreads its declared inputs directly into incoming
+          // data — name, age, email are all top-level identifiers here.
+          code: '({ name, age, isAdult: age >= 18 })',
         },
         position: { x: 350, y: 200 },
       },
@@ -241,27 +242,30 @@ const TEST_FLOW_DEFINITIONS: Record<string, TestFlowDefinition> = {
         label: 'Order Data',
         referenceId: 'order',
         params: {
-          variableName: 'order',
-          defaultValue: JSON.stringify(
+          inputs: [
+            { name: 'orderId', type: 'string', defaultValue: 'ORD-2024-001' },
             {
-              orderId: 'ORD-2024-001',
-              items: [
+              name: 'items',
+              type: 'json',
+              defaultValue: [
                 { sku: 'LAPTOP-PRO', name: 'Laptop Pro 15', price: 1299.99, quantity: 1 },
                 { sku: 'MOUSE-WL', name: 'Wireless Mouse', price: 49.99, quantity: 2 },
                 { sku: 'KB-MECH', name: 'Mechanical Keyboard', price: 159.99, quantity: 1 },
               ],
-              shippingAddress: {
+            },
+            {
+              name: 'shippingAddress',
+              type: 'json',
+              defaultValue: {
                 street: '123 Tech Street',
                 city: 'San Francisco',
                 state: 'CA',
                 zip: '94102',
               },
-              paymentMethod: 'credit_card',
-              createdAt: '2024-12-14T10:30:00Z',
             },
-            null,
-            2,
-          ),
+            { name: 'paymentMethod', type: 'string', defaultValue: 'credit_card' },
+            { name: 'createdAt', type: 'string', defaultValue: '2024-12-14T10:30:00Z' },
+          ],
         },
         position: { x: 50, y: 100 },
       },
@@ -271,24 +275,19 @@ const TEST_FLOW_DEFINITIONS: Record<string, TestFlowDefinition> = {
         label: 'Customer Data',
         referenceId: 'customer',
         params: {
-          variableName: 'customer',
-          defaultValue: JSON.stringify(
+          inputs: [
+            { name: 'customerId', type: 'string', defaultValue: 'CUST-001' },
+            { name: 'name', type: 'string', defaultValue: 'Alice Johnson' },
+            { name: 'email', type: 'string', defaultValue: 'alice@example.com' },
+            { name: 'tier', type: 'string', defaultValue: 'VIP' },
+            { name: 'totalOrders', type: 'number', defaultValue: 47 },
+            { name: 'memberSince', type: 'string', defaultValue: '2020-03-15' },
             {
-              customerId: 'CUST-001',
-              name: 'Alice Johnson',
-              email: 'alice@example.com',
-              tier: 'VIP',
-              totalOrders: 47,
-              memberSince: '2020-03-15',
-              preferences: {
-                newsletter: true,
-                promotions: true,
-                language: 'en',
-              },
+              name: 'preferences',
+              type: 'json',
+              defaultValue: { newsletter: true, promotions: true, language: 'en' },
             },
-            null,
-            2,
-          ),
+          ],
         },
         position: { x: 50, y: 300 },
       },
@@ -298,18 +297,23 @@ const TEST_FLOW_DEFINITIONS: Record<string, TestFlowDefinition> = {
         label: 'Merge Data',
         referenceId: 'merged',
         params: {
+          // Upstream `trigger.manual` nodes spread their declared `inputs[]`
+          // keys directly into this node's incoming data (see
+          // `buildIncomingDataObject` in node-execution-coordinator.ts), so
+          // we reference them as bare identifiers rather than wrapped under
+          // the upstream's referenceId.
           code: `({
-  orderId: order.orderId,
+  orderId,
   customer: {
-    id: customer.customerId,
-    name: customer.name,
-    email: customer.email,
-    tier: customer.tier,
-    totalOrders: customer.totalOrders,
+    id: customerId,
+    name,
+    email,
+    tier,
+    totalOrders,
   },
-  items: order.items,
-  shipping: order.shippingAddress,
-  paymentMethod: order.paymentMethod,
+  items,
+  shipping: shippingAddress,
+  paymentMethod,
 })`,
         },
         position: { x: 300, y: 200 },
@@ -373,20 +377,23 @@ const TEST_FLOW_DEFINITIONS: Record<string, TestFlowDefinition> = {
         label: 'Incident Payload',
         referenceId: 'incident',
         params: {
-          variableName: 'incident',
-          defaultValue: JSON.stringify(
+          inputs: [
+            { name: 'incidentId', type: 'string', defaultValue: 'INC-2048' },
+            { name: 'service', type: 'string', defaultValue: 'billing-api' },
+            { name: 'priority', type: 'string', defaultValue: 'P1' },
+            { name: 'status', type: 'string', defaultValue: 'investigating' },
+            { name: 'impactedCustomers', type: 'number', defaultValue: 124 },
             {
-              incidentId: 'INC-2048',
-              service: 'billing-api',
-              priority: 'P1',
-              status: 'investigating',
-              impactedCustomers: 124,
-              suspectedRootCause: 'regional database failover lag',
-              regions: ['us-east-1', 'eu-west-1'],
+              name: 'suspectedRootCause',
+              type: 'string',
+              defaultValue: 'regional database failover lag',
             },
-            null,
-            2,
-          ),
+            {
+              name: 'regions',
+              type: 'json',
+              defaultValue: ['us-east-1', 'eu-west-1'],
+            },
+          ],
         },
         position: { x: 40, y: 120 },
       },
@@ -396,18 +403,13 @@ const TEST_FLOW_DEFINITIONS: Record<string, TestFlowDefinition> = {
         label: 'Account Context',
         referenceId: 'account',
         params: {
-          variableName: 'account',
-          defaultValue: JSON.stringify(
-            {
-              accountName: 'Northstar Health',
-              tier: 'enterprise',
-              arr: 420000,
-              csm: 'Jamie Rivera',
-              slackChannel: '#ops-northstar-health',
-            },
-            null,
-            2,
-          ),
+          inputs: [
+            { name: 'accountName', type: 'string', defaultValue: 'Northstar Health' },
+            { name: 'tier', type: 'string', defaultValue: 'enterprise' },
+            { name: 'arr', type: 'number', defaultValue: 420000 },
+            { name: 'csm', type: 'string', defaultValue: 'Jamie Rivera' },
+            { name: 'slackChannel', type: 'string', defaultValue: '#ops-northstar-health' },
+          ],
         },
         position: { x: 40, y: 320 },
       },
@@ -417,20 +419,24 @@ const TEST_FLOW_DEFINITIONS: Record<string, TestFlowDefinition> = {
         label: 'Normalize Context',
         referenceId: 'incident_context',
         params: {
+          // Upstream trigger.manual nodes spread their inputs directly. The
+          // two upstream nodes (Incident Payload, Account Context) have
+          // non-overlapping input names except `tier` (account-only) so all
+          // identifiers below are unambiguous.
           code: `({
-  incidentId: incident.incidentId,
-  service: incident.service,
-  priority: incident.priority,
-  status: incident.status,
-  impactedCustomers: incident.impactedCustomers,
-  accountName: account.accountName,
-  tier: account.tier,
-  arr: account.arr,
-  csm: account.csm,
-  slackChannel: account.slackChannel,
-  severityScore: (incident.priority === "P1" ? 70 : 30) + incident.impactedCustomers / 2,
-  needsExecutiveUpdate: account.tier === "enterprise" && incident.priority === "P1",
-  requiresHotfix: incident.priority === "P1" || incident.impactedCustomers > 100,
+  incidentId,
+  service,
+  priority,
+  status,
+  impactedCustomers,
+  accountName,
+  tier,
+  arr,
+  csm,
+  slackChannel,
+  severityScore: (priority === "P1" ? 70 : 30) + impactedCustomers / 2,
+  needsExecutiveUpdate: tier === "enterprise" && priority === "P1",
+  requiresHotfix: priority === "P1" || impactedCustomers > 100,
 })`,
         },
         position: { x: 320, y: 220 },

@@ -175,8 +175,10 @@ function buildJqTransformFlow(): FlowlibDefinition {
         label: 'User List',
         referenceId: 'data',
         params: {
-          variableName: 'users_json',
-          defaultValue: JSON.stringify(sampleData),
+          inputs: [
+            { name: 'users', type: 'json', defaultValue: sampleData.users },
+            { name: 'metadata', type: 'json', defaultValue: sampleData.metadata },
+          ],
         },
         position: { x: 100, y: 200 },
       },

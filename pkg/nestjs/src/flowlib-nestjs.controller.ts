@@ -36,9 +36,18 @@ export class FlowlibController {
    * `onRequest` hook chain, plugin-supplied database adapter), so they go
    * through `dispatchPluginEndpoint`, not the first-party registry.
    */
-  @All('plugins/*')
+  @All('plugins/*pluginPath')
   async handlePluginEndpoint(@Req() req: Request, @Res() res: Response): Promise<void> {
-    const pluginPath = (req.path as string).replace(/^.*\/plugins/, '') || '/';
+    // Same wildcard-capture trick as `dispatchAny` below — Nest's
+    // `setGlobalPrefix` leaves `req.path` prefixed, but `req.params.pluginPath`
+    // (array) holds the segments after `plugins/` regardless of any global
+    // prefix the host added.
+    const captured = (req.params as Record<string, unknown>).pluginPath;
+    const pluginPath = Array.isArray(captured)
+      ? '/' + (captured as string[]).join('/')
+      : typeof captured === 'string'
+        ? '/' + captured
+        : (req.path as string).replace(/^.*\/plugins/, '') || '/';
     const method = normaliseHttpMethod(req.method);
 
     const webRequest = toWebRequestFromExpress({
@@ -92,10 +101,22 @@ export class FlowlibController {
    * would have already broken under the registry contract since `runEndpoint`
    * decides everything before the handler runs.
    */
-  @All('*')
+  @All('*path')
   async dispatchAny(@Req() req: Request, @Res() res: Response): Promise<void> {
     const method = normaliseHttpMethod(req.method);
-    const path = req.path;
+    // Nest's `setGlobalPrefix(...)` doesn't populate Express's `req.baseUrl`,
+    // so `req.path` includes the prefix (e.g. `/flowlib/flows/list`). The
+    // wildcard match in `@All('*path')` captures the unprefixed segments
+    // into `req.params.path` (array form under path-to-regexp v6+, single
+    // string under older versions). Reconstruct the registry-shape path
+    // from those segments — that's what's mount-relative regardless of
+    // whatever global prefix the host configured.
+    const wildcardParam = (req.params as Record<string, unknown>).path;
+    const path = Array.isArray(wildcardParam)
+      ? '/' + (wildcardParam as string[]).join('/')
+      : typeof wildcardParam === 'string'
+        ? '/' + wildcardParam
+        : req.path;
 
     const matched = matchHttpEndpoint(allFirstPartyEndpoints, method, path);
 

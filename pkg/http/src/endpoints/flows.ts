@@ -1,8 +1,9 @@
 /**
  * Flows endpoint slice.
  *
- *   GET    /flows/list
- *   POST   /flows/list
+ *   GET    /flows                     — query-string filter
+ *   GET    /flows/list                — no filter
+ *   POST   /flows/list                — body filter
  *   POST   /flows
  *   GET    /flows/:id
  *   PUT    /flows/:id
@@ -24,6 +25,31 @@ import type {
 import { defineEndpoint, type FlowlibHttpEndpoint } from './types';
 
 const flowResource = (id: string) => ({ type: 'flow' as const, id });
+
+/**
+ * `GET /flows` — query-string filtered list. Was previously a NestJS-only
+ * convenience; registering it here gives all three adapters the same
+ * surface (the Express + Next.js adapters never had this route before, so
+ * this is a *new* endpoint on those adapters — no existing behaviour
+ * breaks).
+ */
+const listFlowsGetWithQuery = defineEndpoint({
+  id: 'flows.listGetWithQuery',
+  method: 'GET',
+  path: '/flows',
+  auth: { kind: 'protected', permission: 'flow:read' },
+  async handle({ flowlib, request }) {
+    const query: Record<string, unknown> = {};
+    request.searchParams.forEach((v, k) => {
+      query[k] = v;
+    });
+    return {
+      kind: 'json',
+      status: 200,
+      body: await flowlib.flows.list(query as QueryOptions<Flow>),
+    };
+  },
+});
 
 const listFlowsGet = defineEndpoint({
   id: 'flows.listGet',
@@ -226,8 +252,9 @@ const getVersion = defineEndpoint({
 });
 
 export const flowsEndpoints: readonly FlowlibHttpEndpoint<unknown>[] = [
-  // List GET must come before /flows/:id GET (Express + matcher walk in order)
+  // List GETs must come before /flows/:id GET (Express + matcher walk in order)
   listFlowsGet,
+  listFlowsGetWithQuery,
   listFlowsPost,
   createFlow,
   // Versions paths first so they match before generic /flows/:id
