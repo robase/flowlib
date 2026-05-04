@@ -45,7 +45,6 @@ jobs:
 
       - name: '@flowlib/db bundle-size guard'
         # Catches regressions where a heavy import sneaks into the dialect
-        # schemas — see plans/db-package-split-plan.md (Path A).
         run: node scripts/check-db-bundle-sizes.mjs
 
       - name: Format check
