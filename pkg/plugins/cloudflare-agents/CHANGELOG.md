@@ -1,5 +1,13 @@
 # @flowlib/cloudflare-agents
 
+## 0.0.5
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @flowlib/core@0.0.5
+  - @flowlib/primitives@0.0.5
+
 ## 0.0.4
 
 ### Patch Changes
