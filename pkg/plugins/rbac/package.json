@@ -1,6 +1,6 @@
 {
   "name": "@flowlib/rbac",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "RBAC plugin for Flowlib — adds role-based access control UI, flow sharing, and permission management. Requires @flowlib/user-auth.",
   "homepage": "https://flowlib.dev",
   "bugs": {

@@ -1,6 +1,6 @@
 {
   "name": "@flowlib/ui",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "description": "Complete React components and routes for Flowlib workflow management",
   "keywords": [
     "components",
