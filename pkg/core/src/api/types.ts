@@ -6,7 +6,7 @@
  */
 
 import type { Flow, CreateFlowInput, UpdateFlowInput } from '../services/flows/flows.model';
-import type { FlowVersion } from '../database';
+import type { FlowVersion } from '@flowlib/db';
 import type { FlowRun } from '../services/flow-runs/flow-runs.model';
 import type {
   NodeExecution,

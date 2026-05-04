@@ -289,6 +289,29 @@ export class PluginManager implements PluginHookRunner {
     return { output: currentOutput };
   }
 
+  async runAfterAgentExecute(context: {
+    flowRunId: string;
+    flowId: string;
+    nodeId: string;
+    model?: string;
+    tokensIn: number;
+    tokensOut: number;
+    toolCallCount: number;
+    durationMs: number;
+  }): Promise<void> {
+    for (const plugin of this.plugins) {
+      const hook = plugin.hooks?.afterAgentExecute;
+      if (!hook) {
+        continue;
+      }
+      try {
+        await hook(context);
+      } catch {
+        // Don't let plugin errors crash agent execution
+      }
+    }
+  }
+
   async runOnRequest(
     request: Request,
     context: { path: string; method: string; identity: FlowlibIdentity | null },

@@ -17,11 +17,11 @@ import type {
   FlowlibPluginDefinition,
   FlowlibPluginContext,
   FlowlibPermission,
-  FlowlibPluginSchema,
   FlowlibIdentity,
   PluginDatabaseApi,
   PluginEndpointContext,
 } from '@flowlib/core';
+import type { FlowlibPluginSchema } from '@flowlib/db';
 import type {
   EffectiveAccessRecord,
   FlowAccessPermission,

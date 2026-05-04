@@ -6,7 +6,7 @@ import { CreateFlowInput, Flow, UpdateFlowInput } from './flows.model';
 import { FlowRun } from '../flow-runs/flow-runs.model';
 import { Logger, QueryOptions, PaginatedResponse } from 'src/schemas';
 import { ValidationError, FlowNotFoundError, DatabaseError } from 'src/types/common/errors.types';
-import { FlowVersion } from 'src/database';
+import type { FlowVersion } from '@flowlib/db';
 
 /**
  * Flow Service implementation that delegates to DatabaseService

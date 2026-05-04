@@ -1,93 +1,107 @@
-// MySQL schema for Flowlib core
+// PostgreSQL schema for Flowlib core
 import {
-  mysqlTable,
-  varchar,
+  pgTable,
   text,
-  int,
+  integer,
   boolean,
   timestamp,
   json,
-  mysqlEnum,
+  jsonb,
+  pgEnum,
+  uuid,
   primaryKey,
-} from 'drizzle-orm/mysql-core';
-import { relations, sql } from 'drizzle-orm';
-import { JSONValue } from '.';
-import { FlowlibDefinitionRuntime } from 'src/services/flow-versions/schemas-fresh';
+} from 'drizzle-orm/pg-core';
+import { relations } from 'drizzle-orm';
 import { randomUUID } from 'crypto';
-import type { NodeErrorDetails } from '@flowlib/action-kit';
+import type { FlowlibDefinitionRuntime, NodeErrorDetails } from '@flowlib/action-kit';
+import type { JSONValue } from './index';
+
+// =============================================================================
+// Enums for PostgreSQL
+// =============================================================================
+
+export const flowRunStatusEnum = pgEnum('execution_status', [
+  'PENDING',
+  'RUNNING',
+  'SUCCESS',
+  'FAILED',
+  'CANCELLED',
+  'PAUSED',
+  'PAUSED_FOR_BATCH',
+]);
+
+export const nodeExecutionStatusEnum = pgEnum('node_execution_status', [
+  'PENDING',
+  'RUNNING',
+  'SUCCESS',
+  'FAILED',
+  'SKIPPED',
+  'BATCH_SUBMITTED',
+  'BATCH_PROCESSING',
+]);
+
+export const batchStatusEnum = pgEnum('batch_status', [
+  'SUBMITTED',
+  'PROCESSING',
+  'COMPLETED',
+  'FAILED',
+  'CANCELLED',
+]);
+
+export const batchProviderEnum = pgEnum('batch_provider', ['OPENAI', 'ANTHROPIC', 'OPENROUTER']);
 
 // =============================================================================
 // Tables
 // =============================================================================
 
 // Flow definition table
-export const flows = mysqlTable('flowlib_flows', {
-  id: varchar('id', { length: 36 }).primaryKey(), // Will be generated using IdGenerator.generateFlowId()
-  name: varchar('name', { length: 255 }).notNull(),
+export const flows = pgTable('flowlib_flows', {
+  id: text('id').primaryKey(), // Will be generated using IdGenerator.generateFlowId()
+  name: text('name').notNull(),
   description: text('description'),
   tags: json('tags').$type<string[]>(),
   isActive: boolean('is_active').notNull().default(true),
-  liveVersionNumber: int('live_version_number'),
-  createdAt: timestamp('created_at')
-    .notNull()
-    .default(sql`CURRENT_TIMESTAMP`),
-  updatedAt: timestamp('updated_at')
-    .notNull()
-    .default(sql`CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP`),
+  liveVersionNumber: integer('live_version_number'),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
 });
 
 // Flow version table to support version history
-export const flowVersions = mysqlTable(
+export const flowVersions = pgTable(
   'flowlib_flow_versions',
   {
-    flowId: varchar('flow_id', { length: 36 })
+    flowId: text('flow_id')
       .notNull()
       .references(() => flows.id, { onDelete: 'cascade' }),
-    version: int('version').notNull().unique(),
+    version: integer('version').notNull().unique().default(0),
     flowlibDefinition: json('flowlib_definition').$type<FlowlibDefinitionRuntime>().notNull(),
-    createdAt: timestamp('created_at')
-      .notNull()
-      .default(sql`CURRENT_TIMESTAMP`),
-    createdBy: varchar('created_by', { length: 255 }),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    createdBy: text('created_by'),
   },
   (table) => [primaryKey({ columns: [table.version, table.flowId] })],
 );
 
 // Flow execution table to track execution instances
-export const flowRuns = mysqlTable('flowlib_flow_executions', {
-  id: varchar('id', { length: 36 })
+export const flowRuns = pgTable('flowlib_flow_executions', {
+  id: uuid('id')
     .primaryKey()
-    .$defaultFn(() => randomUUID()),
-  flowId: varchar('flow_id', { length: 36 })
+    .$default(() => randomUUID()),
+  flowId: text('flow_id')
     .notNull()
     .references(() => flows.id, { onDelete: 'cascade' }),
-  flowVersion: int('flow_version')
-    .notNull()
-    .references(() => flowVersions.version, { onDelete: 'cascade' }),
-  status: mysqlEnum('status', [
-    'PENDING',
-    'RUNNING',
-    'SUCCESS',
-    'FAILED',
-    'CANCELLED',
-    'PAUSED',
-    'PAUSED_FOR_BATCH',
-  ])
-    .notNull()
-    .default('PENDING'),
+  flowVersion: integer('flow_version').notNull(),
+  status: flowRunStatusEnum('status').notNull().default('PENDING'),
   inputs: json('inputs').$type<JSONValue>().notNull(),
   outputs: json('outputs').$type<JSONValue>(),
   error: text('error'),
-  startedAt: timestamp('started_at')
-    .notNull()
-    .default(sql`CURRENT_TIMESTAMP`),
+  startedAt: timestamp('started_at').notNull().defaultNow(),
   completedAt: timestamp('completed_at'),
-  duration: int('duration'), // in milliseconds
-  createdBy: varchar('created_by', { length: 255 }),
+  duration: integer('duration'), // in milliseconds
+  createdBy: text('created_by'),
   // Trigger provenance
-  triggerType: varchar('trigger_type', { length: 50 }), // 'manual' | 'webhook' | 'cron' | 'api' | null
-  triggerId: varchar('trigger_id', { length: 36 }), // References flow_triggers.id
-  triggerNodeId: varchar('trigger_node_id', { length: 255 }), // The trigger node that initiated this run
+  triggerType: text('trigger_type'), // 'manual' | 'webhook' | 'cron' | 'api' | null
+  triggerId: text('trigger_id'), // References flow_triggers.id
+  triggerNodeId: text('trigger_node_id'), // The trigger node that initiated this run
   triggerData: json('trigger_data').$type<JSONValue>(), // Webhook payload / cron metadata
   lastHeartbeatAt: timestamp('last_heartbeat_at'), // Updated periodically during execution for stale run detection
   // Buffered node executions for execution.persistence: 'per-run' mode.
@@ -96,82 +110,75 @@ export const flowRuns = mysqlTable('flowlib_flow_executions', {
 });
 
 // Action traces table — unified node executions + agent tool executions
-import type { AnyMySqlColumn } from 'drizzle-orm/mysql-core';
+import type { AnyPgColumn } from 'drizzle-orm/pg-core';
 
-export const actionTraces = mysqlTable('flowlib_action_traces', {
-  id: varchar('id', { length: 36 })
+export const actionTraces = pgTable('flowlib_action_traces', {
+  id: uuid('id')
     .primaryKey()
-    .$defaultFn(() => randomUUID()),
-  flowRunId: varchar('flow_run_id', { length: 36 })
+    .$default(() => randomUUID()),
+  flowRunId: uuid('flow_run_id')
     .notNull()
     .references(() => flowRuns.id, { onDelete: 'cascade' }),
   // Self-referential FK: NULL for node traces, set for tool traces
-  parentNodeExecutionId: varchar('parent_node_execution_id', { length: 36 }).references(
-    (): AnyMySqlColumn => actionTraces.id,
+  parentNodeExecutionId: uuid('parent_node_execution_id').references(
+    (): AnyPgColumn => actionTraces.id,
     { onDelete: 'cascade' },
   ),
   // Node execution fields (null for tool traces)
-  nodeId: varchar('node_id', { length: 255 }),
-  nodeType: varchar('node_type', { length: 100 }),
+  nodeId: text('node_id'),
+  nodeType: text('node_type'),
   // Tool execution fields (null for node traces)
-  toolId: varchar('tool_id', { length: 255 }),
-  toolName: varchar('tool_name', { length: 255 }),
-  iteration: int('iteration'),
+  toolId: text('tool_id'),
+  toolName: text('tool_name'),
+  iteration: integer('iteration'),
   // Shared fields
-  status: mysqlEnum('status', [
-    'PENDING',
-    'RUNNING',
-    'SUCCESS',
-    'FAILED',
-    'SKIPPED',
-    'BATCH_SUBMITTED',
-    'BATCH_PROCESSING',
-  ])
-    .notNull()
-    .default('PENDING'),
+  status: nodeExecutionStatusEnum('status').notNull().default('PENDING'),
   inputs: json('inputs').$type<JSONValue>().notNull(),
   outputs: json('outputs').$type<JSONValue>(),
   // Structured failure (NodeErrorDetails) — classifier code + message +
-  // fieldErrors / providerRequestId / attempts.
-  error: json('error').$type<NodeErrorDetails>(),
-  startedAt: timestamp('started_at')
-    .notNull()
-    .default(sql`CURRENT_TIMESTAMP`),
+  // fieldErrors / providerRequestId / attempts. jsonb for query-ability.
+  error: jsonb('error').$type<NodeErrorDetails>(),
+  startedAt: timestamp('started_at').notNull().defaultNow(),
   completedAt: timestamp('completed_at'),
-  duration: int('duration'), // in milliseconds
-  retryCount: int('retry_count').notNull().default(0),
+  duration: integer('duration'), // in milliseconds
+  retryCount: integer('retry_count').notNull().default(0),
 });
 
 // Batch job table to track batch processing jobs
-export const batchJobs = mysqlTable('flowlib_batch_jobs', {
-  id: varchar('id', { length: 36 })
+export const batchJobs = pgTable('flowlib_batch_jobs', {
+  id: uuid('id')
     .primaryKey()
-    .$defaultFn(() => randomUUID()),
-  flowRunId: varchar('flow_run_id', { length: 36 })
+    .$default(() => randomUUID()),
+  flowRunId: uuid('flow_run_id')
     .notNull()
     .references(() => flowRuns.id, { onDelete: 'cascade' }),
-  nodeId: varchar('node_id', { length: 255 }).notNull(),
-  provider: mysqlEnum('provider', ['OPENAI', 'ANTHROPIC', 'OPENROUTER']).notNull(),
-  batchId: varchar('batch_id', { length: 255 }),
-  status: mysqlEnum('status', ['SUBMITTED', 'PROCESSING', 'COMPLETED', 'FAILED', 'CANCELLED'])
-    .notNull()
-    .default('SUBMITTED'),
+  nodeId: text('node_id').notNull(),
+  provider: batchProviderEnum('provider').notNull(),
+  batchId: text('batch_id'),
+  status: batchStatusEnum('status').notNull().default('SUBMITTED'),
   requestData: json('request_data').notNull(),
   responseData: json('response_data'),
   error: text('error'),
-  submittedAt: timestamp('submitted_at')
-    .notNull()
-    .default(sql`CURRENT_TIMESTAMP`),
+  submittedAt: timestamp('submitted_at').notNull().defaultNow(),
   completedAt: timestamp('completed_at'),
-  createdAt: timestamp('created_at')
-    .notNull()
-    .default(sql`CURRENT_TIMESTAMP`),
-  updatedAt: timestamp('updated_at')
-    .notNull()
-    .default(sql`CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP`),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
 });
 
 // Credentials table for storing API authentication credentials
+export const credentialTypeEnum = pgEnum('credential_type', ['http-api', 'database', 'llm']);
+
+export const credentialAuthTypeEnum = pgEnum('credential_auth_type', [
+  'apiKey',
+  'bearer',
+  'basic',
+  'oauth2',
+  'custom',
+  'awsSigV4',
+  'jwt',
+  'connectionString',
+]);
+
 export interface CredentialConfig {
   apiKey?: string;
   location?: 'header' | 'query';
@@ -206,36 +213,23 @@ export interface CredentialConfig {
   [key: string]: unknown;
 }
 
-export const credentials = mysqlTable('flowlib_credentials', {
-  id: varchar('id', { length: 36 })
+export const credentials = pgTable('flowlib_credentials', {
+  id: uuid('id')
     .primaryKey()
-    .$defaultFn(() => randomUUID()),
-  name: varchar('name', { length: 255 }).notNull(),
-  type: mysqlEnum('type', ['http-api', 'database', 'llm']).notNull(),
-  authType: mysqlEnum('auth_type', [
-    'apiKey',
-    'bearer',
-    'basic',
-    'oauth2',
-    'custom',
-    'awsSigV4',
-    'jwt',
-    'connectionString',
-  ]).notNull(),
+    .$default(() => randomUUID()),
+  name: text('name').notNull(),
+  type: credentialTypeEnum('type').notNull(),
+  authType: credentialAuthTypeEnum('auth_type').notNull(),
   config: json('config').$type<CredentialConfig>().notNull(),
   description: text('description'),
   isActive: boolean('is_active').notNull().default(true),
-  workspaceId: varchar('workspace_id', { length: 255 }),
+  workspaceId: text('workspace_id'),
   isShared: boolean('is_shared').notNull().default(false),
   metadata: json('metadata').$type<Record<string, unknown>>(),
   lastUsedAt: timestamp('last_used_at'),
   expiresAt: timestamp('expires_at'),
-  createdAt: timestamp('created_at')
-    .notNull()
-    .default(sql`CURRENT_TIMESTAMP`),
-  updatedAt: timestamp('updated_at')
-    .notNull()
-    .default(sql`CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP`),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
 });
 
 // =============================================================================
@@ -245,52 +239,46 @@ export const credentials = mysqlTable('flowlib_credentials', {
 /** Trigger type discriminant */
 export type TriggerType = 'manual' | 'webhook' | 'cron';
 
-export const flowTriggers = mysqlTable('flowlib_flow_triggers', {
-  id: varchar('id', { length: 36 })
+export const flowTriggers = pgTable('flowlib_flow_triggers', {
+  id: uuid('id')
     .primaryKey()
-    .$defaultFn(() => randomUUID()),
-  flowId: varchar('flow_id', { length: 36 })
+    .$default(() => randomUUID()),
+  flowId: text('flow_id')
     .notNull()
     .references(() => flows.id, { onDelete: 'cascade' }),
   /** The trigger node's ID in the flow graph */
-  nodeId: varchar('node_id', { length: 255 }).notNull(),
-  type: varchar('type', { length: 50 }).$type<TriggerType>().notNull(),
+  nodeId: text('node_id').notNull(),
+  type: text('type').$type<TriggerType>().notNull(),
   isEnabled: boolean('is_enabled').notNull().default(true),
 
   // Webhook-only: top-level for unique index + O(1) lookup
-  webhookPath: varchar('webhook_path', { length: 255 }).unique(),
-  webhookSecret: varchar('webhook_secret', { length: 255 }),
+  webhookPath: text('webhook_path').unique(),
+  webhookSecret: text('webhook_secret'),
 
   // Cron-only: denormalized from node params so scheduler doesn't need to load flow
-  cronExpression: varchar('cron_expression', { length: 255 }),
-  cronTimezone: varchar('cron_timezone', { length: 100 }),
+  cronExpression: text('cron_expression'),
+  cronTimezone: text('cron_timezone'),
 
   lastTriggeredAt: timestamp('last_triggered_at'),
-  createdAt: timestamp('created_at')
-    .notNull()
-    .default(sql`CURRENT_TIMESTAMP`),
-  updatedAt: timestamp('updated_at')
-    .notNull()
-    .default(sql`CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP`),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
 });
 
 // =============================================================================
 // Chat Messages — persisted chat history scoped to flows
 // =============================================================================
 
-export const chatMessages = mysqlTable('flowlib_chat_messages', {
-  id: varchar('id', { length: 36 })
+export const chatMessages = pgTable('flowlib_chat_messages', {
+  id: uuid('id')
     .primaryKey()
-    .$defaultFn(() => randomUUID()),
-  flowId: varchar('flow_id', { length: 36 })
+    .$default(() => randomUUID()),
+  flowId: text('flow_id')
     .notNull()
     .references(() => flows.id, { onDelete: 'cascade' }),
-  role: varchar('role', { length: 20 }).$type<'user' | 'assistant' | 'system' | 'tool'>().notNull(),
-  content: text('content').notNull(),
+  role: text('role').$type<'user' | 'assistant' | 'system' | 'tool'>().notNull(),
+  content: text('content').notNull().default(''),
   toolMeta: json('tool_meta').$type<Record<string, unknown>>(),
-  createdAt: timestamp('created_at')
-    .notNull()
-    .default(sql`CURRENT_TIMESTAMP`),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
 });
 
 // =============================================================================

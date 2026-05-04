@@ -9,7 +9,7 @@ import { ProviderIcon } from '../shared/ProviderIcon';
 import { useFlowEditorStore } from './flow-editor.store';
 import { useUIStore } from '../../stores/uiStore';
 import { ActionsSidebar } from './ActionsSidebar';
-import { Search, Plus, X, ChevronRight, PanelLeftClose, ArrowLeft } from 'lucide-react';
+import { Search, Plus, X, ChevronRight, ArrowLeft } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { Skeleton } from '../ui/skeleton';
 
@@ -76,11 +76,6 @@ function NodesSidebar({
     toggleNodeSidebarGroup(providerId);
   };
 
-  const totalVisible = useMemo(
-    () => nodeDefinitions.filter((n) => !n.hidden).length,
-    [nodeDefinitions],
-  );
-
   const getNodeSortRank = (providerId: string, node: NodeDefinition) => {
     if (providerId === 'core') {
       if (node.type === 'core.agent') {
@@ -95,7 +90,7 @@ function NodesSidebar({
   };
 
   // Filter nodes by search, then group by provider
-  const { providerGroups, totalFiltered } = useMemo(() => {
+  const { providerGroups } = useMemo(() => {
     const lowerSearch = search.toLowerCase();
 
     const filtered = nodeDefinitions.filter((n) => {
@@ -141,7 +136,7 @@ function NodesSidebar({
       });
     }
 
-    return { providerGroups: byProvider, totalFiltered: filtered.length };
+    return { providerGroups: byProvider };
   }, [nodeDefinitions, search]);
 
   // Sort providers: triggers first, then core, then rest alphabetical

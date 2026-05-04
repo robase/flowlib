@@ -39,21 +39,6 @@
       "import": "./dist/types.frontend.js",
       "require": "./dist/types.frontend.cjs"
     },
-    "./drizzle/sqlite": {
-      "types": "./dist/database/schema-sqlite.d.ts",
-      "import": "./dist/database/schema-sqlite.js",
-      "require": "./dist/database/schema-sqlite.cjs"
-    },
-    "./drizzle/postgres": {
-      "types": "./dist/database/schema-postgres.d.ts",
-      "import": "./dist/database/schema-postgres.js",
-      "require": "./dist/database/schema-postgres.cjs"
-    },
-    "./drizzle/mysql": {
-      "types": "./dist/database/schema-mysql.d.ts",
-      "import": "./dist/database/schema-mysql.js",
-      "require": "./dist/database/schema-mysql.cjs"
-    },
     "./config": {
       "types": "./dist/config.d.ts",
       "import": "./dist/config.js",
@@ -83,6 +68,7 @@
     "@anthropic-ai/sdk": "^0.57.0",
     "@flowlib/action-kit": "workspace:*",
     "@flowlib/actions": "workspace:*",
+    "@flowlib/db": "workspace:*",
     "@flowlib/layouts": "workspace:*",
     "@flowlib/sdk": "workspace:*",
     "@secure-exec/core": "^0.1.0",

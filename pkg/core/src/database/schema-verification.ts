@@ -21,7 +21,7 @@
 
 import type { DatabaseConnection } from './connection';
 import type { Logger } from 'src/schemas';
-import { mergeSchemas } from './schema-merger';
+import { mergeSchemas } from '@flowlib/db';
 import type { FlowlibPlugin } from 'src/types/plugin.types';
 
 // =============================================================================

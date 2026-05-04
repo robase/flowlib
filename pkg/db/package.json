@@ -1,0 +1,71 @@
+{
+  "name": "@flowlib/db",
+  "version": "0.0.4",
+  "description": "Drizzle schemas + schema-merger + schema-generator for Flowlib core. Lightweight package consumable from any JS runtime (Node, Workers, edge) without pulling in the @flowlib/core executor.",
+  "keywords": [
+    "drizzle",
+    "flowlib",
+    "schema"
+  ],
+  "homepage": "https://flowlib.dev",
+  "bugs": {
+    "url": "https://github.com/robase/flowlib/issues"
+  },
+  "license": "MIT",
+  "author": "robase <team@flowlib.dev>",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/robase/flowlib.git",
+    "directory": "pkg/db"
+  },
+  "files": [
+    "dist",
+    "!dist/**/*.map"
+  ],
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.mts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.mts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs"
+    },
+    "./sqlite": {
+      "types": "./dist/schema-sqlite.d.mts",
+      "import": "./dist/schema-sqlite.mjs",
+      "require": "./dist/schema-sqlite.cjs"
+    },
+    "./postgres": {
+      "types": "./dist/schema-postgres.d.mts",
+      "import": "./dist/schema-postgres.mjs",
+      "require": "./dist/schema-postgres.cjs"
+    },
+    "./mysql": {
+      "types": "./dist/schema-mysql.d.mts",
+      "import": "./dist/schema-mysql.mjs",
+      "require": "./dist/schema-mysql.cjs"
+    },
+    "./package.json": "./package.json"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "tsdown",
+    "build:watch": "tsdown --watch",
+    "dev": "tsdown --watch",
+    "clean": "rm -rf dist",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@flowlib/action-kit": "workspace:*",
+    "drizzle-orm": "^0.45.2"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "tsdown": "^0.21.10",
+    "typescript": "^5.8.3"
+  }
+}

@@ -763,8 +763,8 @@ async function printSummary(
   if (pluginsWithSchema.length > 0) {
     let coreSchema: Record<string, unknown>;
     try {
-      const core = await import('@flowlib/core');
-      coreSchema = core.CORE_SCHEMA;
+      const db = await import('@flowlib/db');
+      coreSchema = db.CORE_SCHEMA;
     } catch {
       coreSchema = {};
     }

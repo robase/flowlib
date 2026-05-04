@@ -248,9 +248,42 @@ export class AnthropicAdapter extends BaseProviderAdapter {
     let fullContent = '';
     let reasoningContent = '';
     let currentToolUse: { id: string; name: string; input: string } | null = null;
+    let inputTokens: number | undefined;
+    let outputTokens: number | undefined;
     const toolCalls: AgentToolCall[] = [];
 
     for await (const chunk of stream) {
+      // Usage capture. Anthropic emits `message_start` with `message.usage.input_tokens`
+      // (final input total) and `output_tokens` set to a small initial value, then
+      // `message_delta` events whose `usage.output_tokens` is the running cumulative
+      // total. Last-write-wins on output, first-non-zero wins on input.
+      const evt = chunk as
+        | {
+            type: 'message_start';
+            message: { usage?: { input_tokens?: number; output_tokens?: number } };
+          }
+        | { type: 'message_delta'; usage?: { input_tokens?: number; output_tokens?: number } }
+        | typeof chunk;
+      if (evt.type === 'message_start') {
+        const u = (
+          evt as { message: { usage?: { input_tokens?: number; output_tokens?: number } } }
+        ).message.usage;
+        if (u) {
+          inputTokens = u.input_tokens ?? inputTokens;
+          outputTokens = u.output_tokens ?? outputTokens;
+        }
+      } else if (evt.type === 'message_delta') {
+        const u = (evt as { usage?: { input_tokens?: number; output_tokens?: number } }).usage;
+        if (u) {
+          if (u.input_tokens !== undefined) {
+            inputTokens = u.input_tokens;
+          }
+          if (u.output_tokens !== undefined) {
+            outputTokens = u.output_tokens;
+          }
+        }
+      }
+
       if (chunk.type === 'content_block_start') {
         if (chunk.content_block.type === 'tool_use') {
           currentToolUse = {
@@ -301,11 +334,15 @@ export class AnthropicAdapter extends BaseProviderAdapter {
     }
 
     const reasoning = reasoningContent ? reasoningContent : undefined;
+    const usage =
+      inputTokens !== undefined || outputTokens !== undefined
+        ? { inputTokens: inputTokens ?? 0, outputTokens: outputTokens ?? 0 }
+        : undefined;
 
     if (toolCalls.length > 0) {
-      return { ...this.createToolUseResponse(fullContent, toolCalls), reasoning };
+      return { ...this.createToolUseResponse(fullContent, toolCalls), reasoning, usage };
     }
-    return { ...this.createTextResponse(fullContent), reasoning };
+    return { ...this.createTextResponse(fullContent), reasoning, usage };
   }
 
   /**
@@ -499,13 +536,29 @@ export class AnthropicAdapter extends BaseProviderAdapter {
 
         let result: BatchResult;
         switch (batchResult.result.type) {
-          case 'succeeded':
+          case 'succeeded': {
+            // Capture provider-reported token usage. Anthropic's batch
+            // success result mirrors a normal Message response, so
+            // `message.usage.{input,output}_tokens` is present.
+            const rawUsage = (
+              batchResult.result.message as {
+                usage?: { input_tokens?: number; output_tokens?: number };
+              }
+            ).usage;
+            const usage = rawUsage
+              ? {
+                  inputTokens: rawUsage.input_tokens ?? 0,
+                  outputTokens: rawUsage.output_tokens ?? 0,
+                }
+              : undefined;
             result = {
               batchId: resultBatchId,
               status: BatchStatus.COMPLETED,
               content: this.handleMessageResponse(batchResult.result.message),
+              ...(usage ? { usage } : {}),
             };
             break;
+          }
           case 'errored':
             result = {
               batchId: resultBatchId,

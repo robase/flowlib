@@ -53,7 +53,8 @@
     "lint": "oxlint --fix"
   },
   "dependencies": {
-    "@flowlib/core": "workspace:*"
+    "@flowlib/core": "workspace:*",
+    "@flowlib/db": "workspace:*"
   },
   "devDependencies": {
     "@flowlib/ui": "workspace:*",

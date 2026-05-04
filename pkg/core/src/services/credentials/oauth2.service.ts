@@ -9,7 +9,7 @@
 
 import { randomBytes, createHash } from 'crypto';
 import type { Logger } from 'src/schemas';
-import type { CredentialConfig } from 'src/database/schema-sqlite';
+import type { CredentialConfig } from '@flowlib/db/sqlite';
 import {
   getOAuth2Provider,
   getAllOAuth2Providers,

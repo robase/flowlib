@@ -73,7 +73,12 @@ export {
 } from './agent-tool';
 
 // Flow graph (structural)
-export type { FlowEdge, FlowNodeDefinitions } from './flow';
+export type {
+  FlowEdge,
+  FlowNodeDefinitions,
+  FlowlibDefinition,
+  FlowlibDefinitionRuntime,
+} from './flow';
 
 // Node execution (runtime result shapes + structural executor context)
 export { NodeExecutionStatus, FlowRunStatus } from './node-execution';

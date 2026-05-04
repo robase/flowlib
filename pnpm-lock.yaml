@@ -199,6 +199,9 @@ importers:
 
   examples/express-drizzle:
     dependencies:
+      '@flowlib/action-kit':
+        specifier: workspace:*
+        version: link:../../pkg/action-kit
       '@flowlib/core':
         specifier: workspace:*
         version: link:../../pkg/core
@@ -409,6 +412,9 @@ importers:
 
   examples/nextjs-app-router:
     dependencies:
+      '@flowlib/action-kit':
+        specifier: workspace:*
+        version: link:../../pkg/action-kit
       '@flowlib/core':
         specifier: workspace:*
         version: link:../../pkg/core
@@ -675,6 +681,9 @@ importers:
       '@flowlib/core':
         specifier: workspace:*
         version: link:../core
+      '@flowlib/db':
+        specifier: workspace:*
+        version: link:../db
       '@mrleebo/prisma-ast':
         specifier: ^0.14.0
         version: 0.14.0
@@ -725,6 +734,9 @@ importers:
       '@flowlib/actions':
         specifier: workspace:*
         version: link:../actions
+      '@flowlib/db':
+        specifier: workspace:*
+        version: link:../db
       '@flowlib/layouts':
         specifier: workspace:*
         version: link:../layouts
@@ -805,6 +817,25 @@ importers:
       postgres:
         specifier: ^3.4.7
         version: 3.4.8
+
+  pkg/db:
+    dependencies:
+      '@flowlib/action-kit':
+        specifier: workspace:*
+        version: link:../action-kit
+      drizzle-orm:
+        specifier: ^0.45.2
+        version: 0.45.2(@cloudflare/workers-types@4.20260426.1)(@libsql/client@0.17.2(encoding@0.1.13))(@neondatabase/serverless@1.0.2)(@opentelemetry/api@1.9.1)(@prisma/client@6.19.2(prisma@6.19.2(magicast@0.3.5)(typescript@5.9.3))(typescript@5.9.3))(@types/better-sqlite3@7.6.13)(@types/pg@8.18.0)(better-sqlite3@12.8.0)(kysely@0.28.16)(mysql2@3.19.1(@types/node@22.19.15))(pg@8.20.0)(postgres@3.4.8)(prisma@6.19.2(magicast@0.3.5)(typescript@5.9.3))(sqlite3@5.1.7)
+    devDependencies:
+      '@types/node':
+        specifier: ^22.10.2
+        version: 22.19.15
+      tsdown:
+        specifier: ^0.21.10
+        version: 0.21.10(oxc-resolver@11.19.1)(synckit@0.11.12)(typescript@5.9.3)
+      typescript:
+        specifier: ^5.8.3
+        version: 5.9.3
 
   pkg/docs:
     dependencies:
@@ -973,9 +1004,15 @@ importers:
 
   pkg/nestjs:
     dependencies:
+      '@flowlib/action-kit':
+        specifier: workspace:*
+        version: link:../action-kit
       '@flowlib/core':
         specifier: workspace:*
         version: link:../core
+      '@flowlib/db':
+        specifier: workspace:*
+        version: link:../db
       '@nestjs/common':
         specifier: ^11.1.18
         version: 11.1.19(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)
@@ -1056,6 +1093,9 @@ importers:
       '@flowlib/core':
         specifier: workspace:*
         version: link:../../core
+      '@flowlib/db':
+        specifier: workspace:*
+        version: link:../../db
       better-auth:
         specifier: ^1.6.0
         version: 1.6.3(@cloudflare/workers-types@4.20260426.1)(@opentelemetry/api@1.9.1)(@prisma/client@6.19.2(prisma@6.19.2(magicast@0.3.5)(typescript@5.9.3))(typescript@5.9.3))(better-sqlite3@12.8.0)(drizzle-kit@0.31.9)(drizzle-orm@0.45.2(@cloudflare/workers-types@4.20260426.1)(@libsql/client@0.17.2(encoding@0.1.13))(@neondatabase/serverless@1.0.2)(@opentelemetry/api@1.9.1)(@prisma/client@6.19.2(prisma@6.19.2(magicast@0.3.5)(typescript@5.9.3))(typescript@5.9.3))(@types/better-sqlite3@7.6.13)(@types/pg@8.18.0)(better-sqlite3@12.8.0)(kysely@0.28.16)(mysql2@3.19.1(@types/node@20.19.37))(pg@8.20.0)(postgres@3.4.8)(prisma@6.19.2(magicast@0.3.5)(typescript@5.9.3))(sqlite3@5.1.7))(mongodb@7.1.0(socks@2.8.7))(mysql2@3.19.1(@types/node@20.19.37))(next@16.2.3(@opentelemetry/api@1.9.1)(@playwright/test@1.58.2)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(pg@8.20.0)(prisma@6.19.2(magicast@0.3.5)(typescript@5.9.3))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(vitest@4.1.4)
@@ -1161,6 +1201,9 @@ importers:
       '@flowlib/core':
         specifier: workspace:*
         version: link:../../core
+      '@flowlib/db':
+        specifier: workspace:*
+        version: link:../../db
       clsx:
         specifier: '>=2.0.0'
         version: 2.1.1
@@ -1256,6 +1299,9 @@ importers:
       '@flowlib/core':
         specifier: workspace:*
         version: link:../../core
+      '@flowlib/db':
+        specifier: workspace:*
+        version: link:../../db
       '@flowlib/sdk':
         specifier: workspace:*
         version: link:../../sdk
@@ -1299,6 +1345,9 @@ importers:
       '@flowlib/core':
         specifier: workspace:*
         version: link:../../core
+      '@flowlib/db':
+        specifier: workspace:*
+        version: link:../../db
       react:
         specifier: '>=18.0.0'
         version: 18.3.1
@@ -1579,6 +1628,9 @@ importers:
       '@flowlib/core':
         specifier: workspace:*
         version: link:../core
+      '@flowlib/db':
+        specifier: workspace:*
+        version: link:../db
       '@flowlib/express':
         specifier: workspace:*
         version: link:../express

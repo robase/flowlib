@@ -26,7 +26,7 @@
  * | string[]    | enum              | String (fallback)|
  */
 
-import type { PluginFieldAttribute, PluginFieldType } from 'src/types/plugin.types';
+import type { PluginFieldAttribute, PluginFieldType } from './plugin-schema';
 import type { MergedSchema, MergedTable } from './schema-merger';
 
 export type PrismaProvider = 'postgresql' | 'mysql' | 'sqlite';

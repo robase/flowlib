@@ -7,7 +7,7 @@ import {
 } from 'drizzle-orm/sqlite-core';
 import { relations, sql } from 'drizzle-orm';
 import { randomUUID } from 'crypto';
-import { BatchStatus, FlowRunStatus, NodeExecutionStatus } from '@flowlib/core';
+import { BatchStatus, FlowRunStatus, NodeExecutionStatus } from '@flowlib/action-kit';
 import type {
   BatchProvider,
   CredentialAuthType,

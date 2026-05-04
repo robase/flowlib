@@ -15,7 +15,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { verifySchema } from '../../../src/database/schema-verification';
 import type { DatabaseConnection } from '../../../src/database/connection';
-import { CORE_SCHEMA } from '../../../src/database/core-schema';
+import { CORE_SCHEMA } from '@flowlib/db';
 import type { FlowlibPlugin } from '../../../src/types/plugin.types';
 
 function asSchemaDefinition(definition: unknown): {

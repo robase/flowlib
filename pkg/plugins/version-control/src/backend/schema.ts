@@ -2,7 +2,7 @@
 // Version Control Plugin — Database Schema (abstract, dialect-agnostic)
 // =============================================================================
 
-import type { FlowlibPluginSchema } from '@flowlib/core';
+import type { FlowlibPluginSchema } from '@flowlib/db';
 
 const SYNC_MODES = ['direct-commit', 'pr-per-save', 'pr-per-publish'] as const;
 const SYNC_DIRECTIONS = ['read', 'write', 'read-write'] as const;

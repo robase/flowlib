@@ -8,7 +8,7 @@
  * (e.g., twoFactor, username, organization) to exercise the generator.
  */
 
-import type { FlowlibPluginSchema } from '@flowlib/core';
+import type { FlowlibPluginSchema } from '@flowlib/db';
 
 // =============================================================================
 // 0. User Auth — auth tables (user, session, account, verification)

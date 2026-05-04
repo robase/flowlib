@@ -9,7 +9,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { CORE_SCHEMA } from '../../../src/database/core-schema';
+import { CORE_SCHEMA } from '@flowlib/db';
 import type { FlowlibPlugin } from '../../../src/types/plugin.types';
 
 // We test the DatabaseService indirectly by importing it and mocking its deps

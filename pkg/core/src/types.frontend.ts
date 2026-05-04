@@ -52,10 +52,10 @@ export type { PaginatedResponse, QueryOptions } from './schemas/pagination-sort-
 
 export type { FlowlibConfig } from './schemas/flowlib-config';
 
-// Plugin system types (safe for frontend — no runtime imports)
+// Plugin system types (safe for frontend — no runtime imports). Schema
+// shape types live in `@flowlib/db` and are not re-exported here.
 export type {
   FlowlibPlugin,
-  FlowlibPluginSchema,
   FlowlibPluginHooks,
   FlowlibPluginEndpoint,
   FlowlibPluginContext,
@@ -63,9 +63,6 @@ export type {
   PluginEndpointContext,
   PluginDatabaseApi,
   PluginEndpointResponse,
-  PluginFieldAttribute,
-  PluginFieldType,
-  PluginTableDefinition,
   PluginHookRunner,
   FlowRunHookContext,
   NodeExecutionHookContext,
@@ -96,7 +93,7 @@ export type {
   ValidationIssue,
 } from './types/validation';
 
-export type { FlowVersion } from './database';
+export type { FlowVersion } from '@flowlib/db';
 
 export type {
   ReactFlowNode,
@@ -156,14 +153,13 @@ export { BatchProvider, BatchStatus } from './services/ai/ai-types';
 
 export { FLOW_VALIDATION_ERROR_TYPES } from './types/validation';
 
-// Database schema types — used by CLI-generated schema files ($type<>() annotations)
-export type { FlowlibDefinitionRuntime } from './services/flow-versions/schemas-fresh';
-export type { JSONValue } from './database';
-export type {
-  CredentialType,
-  CredentialAuthType,
-  CredentialConfig,
-} from './database/schema-sqlite';
+// Database schema types — used by CLI-generated schema files ($type<>() annotations).
+// Sourced from `@flowlib/db` (split out of core); the Zod-backed
+// FlowlibDefinitionRuntime alias lives in `@flowlib/action-kit` as a
+// structural type.
+export type { FlowlibDefinitionRuntime } from '@flowlib/action-kit';
+export type { JSONValue } from '@flowlib/db';
+export type { CredentialType, CredentialAuthType, CredentialConfig } from '@flowlib/db/sqlite';
 
 // Dashboard stats type (pure interface — safe for frontend)
 export type { DashboardStats } from './flowlib-core';

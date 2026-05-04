@@ -15,10 +15,10 @@
  */
 
 import type {
-  FlowlibPlugin,
   PluginFieldAttribute,
+  PluginSchemaSource,
   PluginTableDefinition,
-} from 'src/types/plugin.types';
+} from './plugin-schema';
 import { CORE_SCHEMA, CORE_TABLE_NAMES } from './core-schema';
 
 // =============================================================================
@@ -162,7 +162,7 @@ export interface SchemaMergeError {
  * @throws SchemaConflictError if a transform injects a column that already exists on a target table
  */
 export function mergeSchemas(
-  plugins: FlowlibPlugin[],
+  plugins: PluginSchemaSource[],
   transforms?: SchemaTransform[],
 ): MergedSchema {
   const errors: SchemaMergeError[] = [];

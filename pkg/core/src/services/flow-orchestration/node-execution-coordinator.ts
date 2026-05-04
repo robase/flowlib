@@ -736,6 +736,54 @@ export class NodeExecutionCoordinator {
         }
       }
 
+      // ── Plugin hook: afterAgentExecute ───────────────────────────────────
+      // Fires once per `core.agent` node, carrying the loop-aggregate
+      // token + tool-call totals that `afterNodeExecute` doesn't surface.
+      // Hosts use this for per-org quota / metering on agent activity.
+      if (
+        this.deps.pluginHookRunner &&
+        node.type === 'core.agent' &&
+        executionResult.state === NodeExecutionStatus.SUCCESS
+      ) {
+        try {
+          // The agent action stores loop totals in `result.metadata`, which
+          // action-executor.ts places at `output.data.metadata` (not at
+          // `executionResult.metadata` — that field is reserved for the
+          // executor framework's own bookkeeping).
+          const dataMeta = ((
+            executionResult.output as { data?: { metadata?: unknown } } | undefined
+          )?.data?.metadata ?? {}) as Record<string, unknown>;
+          const tokenUsage = (dataMeta['tokenUsage'] ?? {}) as {
+            inputTokens?: number;
+            outputTokens?: number;
+            promptTokens?: number;
+            completionTokens?: number;
+          };
+          const toolsUsed = Array.isArray(dataMeta['toolsUsed'])
+            ? (dataMeta['toolsUsed'] as unknown[])
+            : [];
+          const tokensIn = Number(tokenUsage.inputTokens ?? tokenUsage.promptTokens ?? 0) || 0;
+          const tokensOut =
+            Number(tokenUsage.outputTokens ?? tokenUsage.completionTokens ?? 0) || 0;
+          await this.deps.pluginHookRunner.runAfterAgentExecute({
+            flowRunId: flowRunId,
+            flowId: executionContext.flowId || '',
+            nodeId: node.id,
+            model:
+              typeof dataMeta['model'] === 'string' ? (dataMeta['model'] as string) : undefined,
+            tokensIn,
+            tokensOut,
+            toolCallCount: toolsUsed.length,
+            durationMs: dispatchDuration,
+          });
+        } catch (hookError) {
+          logger.warn('afterAgentExecute plugin hook error (non-fatal)', {
+            nodeId: node.id,
+            error: hookError instanceof Error ? hookError.message : String(hookError),
+          });
+        }
+      }
+
       if (executionResult.state === NodeExecutionStatus.FAILED) {
         const errorMessage = executionResult.errors.join(', ');
         logger.error('Node execution failed', {

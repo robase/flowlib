@@ -67,6 +67,7 @@
   "dependencies": {
     "@better-auth/api-key": "^1.6.0",
     "@flowlib/core": "workspace:*",
+    "@flowlib/db": "workspace:*",
     "better-auth": "^1.6.0",
     "clsx": "^2.1.1",
     "kysely": "^0.28.14",

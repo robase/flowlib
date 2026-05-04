@@ -2,7 +2,7 @@ import { ValidationError, FlowNotFoundError, DatabaseError } from 'src/types/com
 import { CreateFlowVersionRequest } from './schemas-fresh';
 import { DatabaseService } from '../database/database.service';
 import { Logger, PaginatedResponse, QueryOptions } from 'src/schemas';
-import { FlowVersion } from 'src/database';
+import type { FlowVersion } from '@flowlib/db';
 
 export class FlowVersionsService {
   constructor(

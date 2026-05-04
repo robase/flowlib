@@ -13,7 +13,7 @@
  * When modifying the database schema, edit THIS file, then run `npx flowlib-cli generate`.
  */
 
-import type { FlowlibPluginSchema } from 'src/types/plugin.types';
+import type { FlowlibPluginSchema } from './plugin-schema';
 
 // =============================================================================
 // Enum Definitions

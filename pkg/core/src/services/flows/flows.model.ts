@@ -1,7 +1,7 @@
 // Flows Model for Flowlib core — adapter-based implementation
 import type { FlowlibAdapter, WhereClause } from '../../database/adapter';
 import { IdGenerator } from '../../utils/id-generator';
-import type { FlowVersion } from '../../database';
+import type { FlowVersion } from '@flowlib/db';
 import { Logger, PaginatedResponse, QueryOptions, FilterQuery } from 'src/schemas';
 import { DatabaseError } from 'src/types/common/errors.types';
 

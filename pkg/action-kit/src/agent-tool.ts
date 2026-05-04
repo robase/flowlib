@@ -136,6 +136,15 @@ export interface AgentPromptResult {
   /** Accumulated reasoning / thinking content if the model emitted any. */
   reasoning?: string;
   toolCalls?: AgentToolCall[];
+  /**
+   * Provider-reported token usage for this single call. Optional because
+   * not every provider/transport surfaces usage (e.g. some streaming
+   * variants), and because batch-submitted responses report usage later.
+   */
+  usage?: {
+    inputTokens: number;
+    outputTokens: number;
+  };
 }
 
 export interface AgentPromptRequest {
@@ -158,5 +167,12 @@ export interface AgentExecutionOutput {
   tokenUsage?: {
     conversationTokensEstimate: number;
     truncationOccurred: boolean;
+    /**
+     * Provider-reported input/output tokens summed across all LLM calls
+     * the agent made during this loop. Absent when the provider didn't
+     * surface usage on any iteration (e.g. some streaming transports).
+     */
+    inputTokens?: number;
+    outputTokens?: number;
   };
 }

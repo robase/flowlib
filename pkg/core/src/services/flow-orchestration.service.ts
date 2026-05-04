@@ -14,7 +14,7 @@ import { Flow } from './flows/flows.model';
 import { FlowlibDefinition } from './flow-versions/schemas-fresh';
 import { NodeDataService } from './node-data.service';
 import { GraphService } from './graph.service';
-import { FlowVersion } from 'src/database';
+import type { FlowVersion } from '@flowlib/db';
 import { BaseAIClient, BatchStatus } from './ai/base-client';
 import { NodeExecutionCoordinator } from './flow-orchestration/node-execution-coordinator';
 import { FlowRunCoordinator } from './flow-orchestration/flow-run-coordinator';

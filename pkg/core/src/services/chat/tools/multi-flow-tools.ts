@@ -127,7 +127,7 @@ export const getFlowDefinitionTool: ChatToolDefinition = {
             params: n.params,
             ...(n.mapper ? { mapper: n.mapper } : {}),
           })),
-          edges: definition.edges.map((e: Record<string, unknown>) => ({
+          edges: definition.edges.map((e) => ({
             source: e.source,
             target: e.target,
             sourceHandle: e.sourceHandle,

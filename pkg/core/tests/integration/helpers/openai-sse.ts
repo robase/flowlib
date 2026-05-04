@@ -7,6 +7,10 @@
  * The `core.agent` path always requests streaming; the `core.model` path
  * does not. Handlers should inspect the incoming request body and only
  * wrap with SSE when `stream === true`.
+ *
+ * When the response body has a `usage` field, an extra usage-only chunk
+ * (empty `choices` array) is emitted just before `[DONE]`, mirroring the
+ * format OpenAI uses when callers pass `stream_options.include_usage: true`.
  */
 export function toOpenAiSseStream(body: Record<string, unknown>): string {
   const choices = (body.choices as Array<{ message?: Record<string, unknown> }>) ?? [];
@@ -76,6 +80,22 @@ export function toOpenAiSseStream(body: Record<string, unknown>): string {
       `data: ${JSON.stringify({
         ...baseChunk,
         choices: [{ index: 0, delta: {}, finish_reason: 'stop' }],
+      })}\n\n`,
+    );
+  }
+  // Usage chunk: OpenAI emits this just before [DONE] when callers set
+  // `stream_options.include_usage: true`. The chunk has empty `choices`
+  // and a top-level `usage` field. Mirroring it here lets adapter tests
+  // assert on captured token counts without separate fixtures.
+  const usage = body.usage as
+    | { prompt_tokens?: number; completion_tokens?: number; total_tokens?: number }
+    | undefined;
+  if (usage) {
+    lines.push(
+      `data: ${JSON.stringify({
+        ...baseChunk,
+        choices: [],
+        usage,
       })}\n\n`,
     );
   }

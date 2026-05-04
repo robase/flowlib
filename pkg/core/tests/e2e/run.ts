@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 import Database from 'better-sqlite3';
 import { drizzle } from 'drizzle-orm/better-sqlite3';
 import { sql } from 'drizzle-orm';
-import * as schema from '../../src/database/schema-sqlite';
+import * as schema from '@flowlib/db/sqlite';
 import { createFlowlib } from '../../src/api/create-flowlib';
 import type { FlowExample } from './example-types';
 import { inputTemplateModelExample } from './input-template-model';

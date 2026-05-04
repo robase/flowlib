@@ -1,14 +1,7 @@
 import { defineConfig } from 'tsdown';
 
 export default defineConfig({
-  entry: [
-    'src/index.ts',
-    'src/config.ts',
-    'src/database/schema-sqlite.ts',
-    'src/database/schema-postgres.ts',
-    'src/database/schema-mysql.ts',
-    'src/types.frontend.ts',
-  ],
+  entry: ['src/index.ts', 'src/config.ts', 'src/types.frontend.ts'],
   format: ['cjs', 'esm'],
   // bundle: true, // deprecated
   unbundle: true,
@@ -33,6 +26,7 @@ export default defineConfig({
   // Bundle most dependencies to avoid ESM/CJS issues in Next.js
   deps: {
     neverBundle: [
+      '@flowlib/db',
       'drizzle-orm',
       'drizzle-zod',
       'postgres',

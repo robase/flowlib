@@ -31,7 +31,7 @@ export async function generateRawSql(options: {
     generateSqliteRawSql,
     generatePostgresRawSql,
     generateMysqlRawSql,
-  } = await import('@flowlib/core');
+  } = await import('@flowlib/db');
 
   // oxlint-disable-next-line typescript/no-explicit-any -- plugins/transforms types from dynamic import don't match exactly
   const mergedSchema = mergeSchemas(options.plugins as any, options.transforms as any);

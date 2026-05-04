@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { mergeSchemas, diffSchemas } from '../../../src/database/schema-merger';
+import { mergeSchemas, diffSchemas } from '@flowlib/db';
 import type { FlowlibPlugin } from '../../../src/types/plugin.types';
 
 describe('Schema Merger', () => {

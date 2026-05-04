@@ -1,4 +1,4 @@
-import { FlowVersion } from '../database';
+import type { FlowVersion } from '@flowlib/db';
 import { FlowRun } from './flow-runs/flow-runs.model';
 import { NodeExecution } from './node-executions/node-executions.model';
 import { FlowRunStatus, NodeExecutionStatus } from '../types/base';

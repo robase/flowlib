@@ -7,7 +7,7 @@
  */
 
 import { describe, it, expect } from 'vitest';
-import { mergeSchemas, diffSchemas } from '@flowlib/core';
+import { mergeSchemas, diffSchemas } from '@flowlib/db';
 
 import {
   multiTenantPlugin,

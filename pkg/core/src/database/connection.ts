@@ -17,9 +17,9 @@ import type { drizzle as drizzleSQLiteType } from 'drizzle-orm/better-sqlite3';
 import type { drizzle as drizzleMySQLType } from 'drizzle-orm/mysql2';
 import type Database from 'better-sqlite3';
 
-import type * as sqliteSchemaModule from './schema-sqlite';
-import type * as postgresqlSchemaModule from './schema-postgres';
-import type * as mysqlSchemaModule from './schema-mysql';
+import type * as sqliteSchemaModule from '@flowlib/db/sqlite';
+import type * as postgresqlSchemaModule from '@flowlib/db/postgres';
+import type * as mysqlSchemaModule from '@flowlib/db/mysql';
 import type { DatabaseDriver } from './drivers/types';
 import { createDatabaseDriver, resolveDatabaseDriverType } from './drivers';
 
@@ -115,7 +115,7 @@ export class DatabaseConnectionFactory {
     switch (dbConfig.type) {
       case 'postgresql': {
         const driver = await createDatabaseDriver(dbConfig, logger);
-        const postgresqlSchema = (await import('./schema-postgres')) as PostgresqlSchema;
+        const postgresqlSchema = (await import('@flowlib/db/postgres')) as PostgresqlSchema;
         const pgDb = await this.createPostgreSQLConnection(
           dbConfig,
           driver,
@@ -146,7 +146,7 @@ export class DatabaseConnectionFactory {
       }
       case 'mysql': {
         const driver = await createDatabaseDriver(dbConfig, logger);
-        const mysqlSchema = (await import('./schema-mysql')) as MysqlSchema;
+        const mysqlSchema = (await import('@flowlib/db/mysql')) as MysqlSchema;
         const mysqlDb = await this.createMySQLConnection(dbConfig, driver, logger, mysqlSchema);
         connection = {
           type: 'mysql',
@@ -362,7 +362,7 @@ export class DatabaseConnectionFactory {
     schema: SqliteSchema;
   }> {
     const driverType = resolveDatabaseDriverType(config);
-    const sqliteSchema = (await import('./schema-sqlite')) as SqliteSchema;
+    const sqliteSchema = (await import('@flowlib/db/sqlite')) as SqliteSchema;
 
     // D1: no file path, no connection string — bind directly to env.DB.
     if (driverType === 'd1') {
@@ -618,11 +618,11 @@ export class DatabaseConnectionFactory {
   static async getSchema(type: FlowlibDatabaseConfig['type']) {
     switch (type) {
       case 'postgresql':
-        return (await import('./schema-postgres')) as PostgresqlSchema;
+        return (await import('@flowlib/db/postgres')) as PostgresqlSchema;
       case 'sqlite':
-        return (await import('./schema-sqlite')) as SqliteSchema;
+        return (await import('@flowlib/db/sqlite')) as SqliteSchema;
       case 'mysql':
-        return (await import('./schema-mysql')) as MysqlSchema;
+        return (await import('@flowlib/db/mysql')) as MysqlSchema;
       default:
         throw new Error(`Unsupported database type: ${type}`);
     }

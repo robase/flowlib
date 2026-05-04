@@ -16,7 +16,8 @@ import {
   HttpCode,
   Header,
 } from '@nestjs/common';
-import { BatchProvider, FlowValidationResult, createPluginDatabaseApi } from '@flowlib/core';
+import { FlowValidationResult, createPluginDatabaseApi } from '@flowlib/core';
+import { BatchProvider } from '@flowlib/action-kit';
 import type {
   FlowlibInstance,
   NodeConfigUpdateEvent,
@@ -29,7 +30,6 @@ import type {
   ExecuteFlowOptions,
   SubmitPromptRequest,
   Flow,
-  FlowVersion,
   FlowRun,
   NodeExecution,
   FlowInputs,
@@ -42,6 +42,7 @@ import type {
   FlowlibIdentity,
   ChatMessage,
 } from '@flowlib/core';
+import type { FlowVersion } from '@flowlib/db/sqlite';
 import type { Request, Response } from 'express';
 
 declare global {

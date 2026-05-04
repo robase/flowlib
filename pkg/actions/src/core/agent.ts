@@ -710,6 +710,11 @@ async function runAgentLoop(
   let finishReason: AgentFinishReason = 'max_iterations';
   let finalResponse = '';
   let truncationOccurred = false;
+  // Provider-reported usage summed across iterations. Stays undefined if
+  // no iteration surfaced usage (so callers can distinguish "no data" from
+  // "zero tokens").
+  let inputTokensTotal: number | undefined;
+  let outputTokensTotal: number | undefined;
 
   const submitAgentPrompt = context.functions?.submitAgentPrompt;
   if (!submitAgentPrompt) {
@@ -777,6 +782,14 @@ async function runAgentLoop(
         nodeId: response.nodeId,
         flowRunId: response.flowRunId,
       };
+    }
+
+    // Aggregate provider-reported usage across iterations. Each iteration's
+    // `response.usage` (if present) is for that single call; summing gives
+    // the agent loop's total prompt/completion token cost.
+    if (response.usage) {
+      inputTokensTotal = (inputTokensTotal ?? 0) + response.usage.inputTokens;
+      outputTokensTotal = (outputTokensTotal ?? 0) + response.usage.outputTokens;
     }
 
     const allToolCalls = response.toolCalls ?? [];
@@ -886,6 +899,8 @@ async function runAgentLoop(
     tokenUsage: {
       conversationTokensEstimate: finalTokenEstimate,
       truncationOccurred,
+      ...(inputTokensTotal !== undefined ? { inputTokens: inputTokensTotal } : {}),
+      ...(outputTokensTotal !== undefined ? { outputTokens: outputTokensTotal } : {}),
     },
   };
 }

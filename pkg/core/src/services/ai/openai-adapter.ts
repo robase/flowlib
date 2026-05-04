@@ -272,9 +272,23 @@ export class OpenAIAdapter extends BaseProviderAdapter {
   ): Promise<AgentPromptResult> {
     let content = '';
     let reasoning = '';
+    let usage: { inputTokens: number; outputTokens: number } | undefined;
     const toolCallAcc = new Map<number, { id: string; name: string; arguments: string }>();
 
     for await (const chunk of stream) {
+      // Usage chunks arrive at the end of the stream when `include_usage: true`
+      // is set. They have an empty `choices` array; we capture the totals here
+      // and surface them in the AgentPromptResult so callers can meter cost.
+      const chunkUsage = (
+        chunk as { usage?: { prompt_tokens?: number; completion_tokens?: number } }
+      ).usage;
+      if (chunkUsage) {
+        usage = {
+          inputTokens: chunkUsage.prompt_tokens ?? 0,
+          outputTokens: chunkUsage.completion_tokens ?? 0,
+        };
+      }
+
       const choice = chunk.choices[0];
       if (!choice) {
         continue;
@@ -340,10 +354,14 @@ export class OpenAIAdapter extends BaseProviderAdapter {
           return { id: acc.id, toolId: acc.name, input: parsedInput };
         });
 
-      return { ...this.createToolUseResponse(content, toolCalls), reasoning: finalReasoning };
+      return {
+        ...this.createToolUseResponse(content, toolCalls),
+        reasoning: finalReasoning,
+        usage,
+      };
     }
 
-    return { ...this.createTextResponse(content), reasoning: finalReasoning };
+    return { ...this.createTextResponse(content), reasoning: finalReasoning, usage };
   }
 
   /**
@@ -655,7 +673,25 @@ export class OpenAIAdapter extends BaseProviderAdapter {
           } catch {
             promptResult = { value: content, type: 'string' };
           }
-          batchResults.push({ batchId, status: BatchStatus.COMPLETED, content: promptResult });
+          // Capture provider-reported token usage. OpenAI's batch JSONL
+          // mirrors the chat-completion shape, so `usage.{prompt,completion}_tokens`
+          // are present on success. Host metering reads these via the
+          // resumed node's output metadata.
+          const rawUsage = result.response.body.usage as
+            | { prompt_tokens?: number; completion_tokens?: number }
+            | undefined;
+          const usage = rawUsage
+            ? {
+                inputTokens: rawUsage.prompt_tokens ?? 0,
+                outputTokens: rawUsage.completion_tokens ?? 0,
+              }
+            : undefined;
+          batchResults.push({
+            batchId,
+            status: BatchStatus.COMPLETED,
+            content: promptResult,
+            ...(usage ? { usage } : {}),
+          });
         } else {
           batchResults.push({
             batchId,

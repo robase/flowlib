@@ -645,6 +645,10 @@ export class FlowRunCoordinator {
       flowRunsService,
     } = this.deps;
 
+    // Needed by the plugin-hook payload below — fetched once per resume
+    // rather than per resumed node.
+    const resumingFlowRun = await flowRunsService.getRunById(flowRunId).catch(() => null);
+
     const { nodes, edges } = definition;
     const nodeMap = new Map(nodes.map((node) => [node.id, node]));
     const executionOrder = GraphService.topologicalSort(nodes, edges);
@@ -677,6 +681,23 @@ export class FlowRunCoordinator {
             const batchResult = batchJob.responseData[0];
 
             if (batchResult.status === BatchStatus.COMPLETED) {
+              // Resolve the real node type from the persisted flow definition.
+              // Pre-fix this branch hardcoded `core.model`, which mislabeled
+              // resumed agent batches and prevented hosts from telling them
+              // apart in afterNodeExecute consumers.
+              const nodeDef = nodeMap.get(nodeExecution.nodeId);
+              const resolvedNodeType = nodeDef?.type ?? 'core.model';
+
+              const usage = batchResult.usage;
+              const outputMetadata: Record<string, unknown> = {};
+              if (usage) {
+                outputMetadata['usage'] = usage;
+                outputMetadata['tokenUsage'] = {
+                  inputTokens: usage.inputTokens,
+                  outputTokens: usage.outputTokens,
+                };
+              }
+
               const updatedTrace = await nodeExecutionService.updateNodeExecutionStatus(
                 nodeExecution.id,
                 NodeExecutionStatus.SUCCESS,
@@ -687,14 +708,75 @@ export class FlowRunCoordinator {
                         // batchResult.content is already a PromptResult (discriminated union)
                         output: batchResult.content,
                       },
+                      ...(Object.keys(outputMetadata).length > 0
+                        ? { metadata: outputMetadata }
+                        : {}),
                     },
-                    nodeType: 'core.model',
+                    nodeType: resolvedNodeType,
                   },
                 },
               );
 
               if (updatedTrace.outputs) {
                 nodeOutputs.set(nodeExecution.nodeId, updatedTrace.outputs);
+              }
+
+              // Fire plugin hooks for the resumed node. The original
+              // execution path skipped hooks because the node was PENDING
+              // when control left the coordinator; on resumption the node
+              // genuinely succeeded, so consumers (metering, audit, …)
+              // need notified now.
+              if (this.deps.pluginHookRunner && nodeDef) {
+                const hookContext = {
+                  flowRun: {
+                    flowId: resumingFlowRun?.flowId ?? '',
+                    flowRunId,
+                    flowVersion: resumingFlowRun?.flowVersion ?? 1,
+                    inputs: flowInputs,
+                  },
+                  nodeId: nodeExecution.nodeId,
+                  nodeType: resolvedNodeType,
+                  nodeLabel: nodeDef.label,
+                  // Inputs/params at resume time aren't reconstructed —
+                  // pass empty objects rather than fabricate values.
+                  inputs: {},
+                  params: {},
+                };
+                try {
+                  await this.deps.pluginHookRunner.runAfterNodeExecute({
+                    ...hookContext,
+                    status: 'SUCCESS',
+                    output: batchResult.content,
+                    duration: nodeExecution.duration ?? 0,
+                  });
+                } catch (hookError) {
+                  logger.warn('afterNodeExecute hook error on batch resume (non-fatal)', {
+                    nodeId: nodeExecution.nodeId,
+                    error: hookError instanceof Error ? hookError.message : String(hookError),
+                  });
+                }
+
+                // Agent batches are single-shot (no tool calling — see
+                // agent.ts comment about batch only being used on the
+                // first iteration). toolCallCount is therefore always 0.
+                if (resolvedNodeType === 'core.agent') {
+                  try {
+                    await this.deps.pluginHookRunner.runAfterAgentExecute({
+                      flowRunId,
+                      flowId: resumingFlowRun?.flowId ?? '',
+                      nodeId: nodeExecution.nodeId,
+                      tokensIn: usage?.inputTokens ?? 0,
+                      tokensOut: usage?.outputTokens ?? 0,
+                      toolCallCount: 0,
+                      durationMs: nodeExecution.duration ?? 0,
+                    });
+                  } catch (hookError) {
+                    logger.warn('afterAgentExecute hook error on batch resume (non-fatal)', {
+                      nodeId: nodeExecution.nodeId,
+                      error: hookError instanceof Error ? hookError.message : String(hookError),
+                    });
+                  }
+                }
               }
             } else if (batchResult.status === BatchStatus.FAILED) {
               await nodeExecutionService.updateNodeExecutionStatus(

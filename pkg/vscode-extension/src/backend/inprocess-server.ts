@@ -166,7 +166,7 @@ async function runSchemaBootstrap(
   dbPath: string,
   logger: ReturnType<typeof getExtensionLogger>,
 ): Promise<void> {
-  const { mergeSchemas, generateSqliteRawSql } = await import('@flowlib/core');
+  const { mergeSchemas, generateSqliteRawSql } = await import('@flowlib/db');
   const { createClient } = await import('@libsql/client');
   const { webhooks } = await import('@flowlib/webhooks');
   const { mcp } = await import('@flowlib/mcp');

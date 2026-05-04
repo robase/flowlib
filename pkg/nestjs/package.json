@@ -57,7 +57,9 @@
     "drizzle:studio": "drizzle-kit studio"
   },
   "dependencies": {
+    "@flowlib/action-kit": "workspace:*",
     "@flowlib/core": "workspace:*",
+    "@flowlib/db": "workspace:*",
     "@nestjs/common": "^11.1.18",
     "@nestjs/core": "^11.1.18",
     "reflect-metadata": "^0.2.2",

@@ -210,11 +210,12 @@ export { FlowRunStatus, NodeExecutionStatus } from './types/base';
 export type { FlowlibConfig } from './schemas/flowlib-config';
 export { defineConfig, definePlugin } from './schemas/flowlib-config';
 
-// Plugin system
+// Plugin system. Schema-shape types (FlowlibPluginSchema, PluginFieldType,
+// PluginFieldAttribute, PluginTableDefinition) live in `@flowlib/db` —
+// import them from there directly when authoring a plugin.
 export type {
   FlowlibPlugin,
   FlowlibPluginDefinition,
-  FlowlibPluginSchema,
   FlowlibPluginHooks,
   FlowlibPluginEndpoint,
   FlowlibPluginContext,
@@ -223,40 +224,15 @@ export type {
   PluginDatabaseApi,
   PluginEndpointCoreApi,
   PluginEndpointResponse,
-  PluginFieldAttribute,
-  PluginFieldType,
-  PluginTableDefinition,
   PluginHookRunner,
   FlowRunHookContext,
   NodeExecutionHookContext,
   NodeExecutionHookResult,
 } from './types/plugin.types';
 
-// Schema infrastructure (for CLI and advanced usage)
-export { CORE_SCHEMA, CORE_TABLE_NAMES, CORE_ENUMS } from './database/core-schema';
-export { mergeSchemas, diffSchemas, SchemaConflictError } from './database/schema-merger';
-export type {
-  MergedSchema,
-  MergedTable,
-  SchemaProvenance,
-  SchemaDiff,
-  SchemaTransform,
-  TableIndex,
-} from './database/schema-merger';
-export {
-  generateSqliteSchema,
-  generatePostgresSchema,
-  generateMysqlSchema,
-  generateSqliteSchemaAppend,
-  generatePostgresSchemaAppend,
-  generateMysqlSchemaAppend,
-  generateSqliteRawSql,
-  generatePostgresRawSql,
-  generateMysqlRawSql,
-} from './database/schema-generator';
-export type { AppendSchemaResult } from './database/schema-generator';
-export { generateFullPrismaSchema, generatePrismaModels } from './database/prisma-schema-generator';
-export type { PrismaProvider } from './database/prisma-schema-generator';
+// Schema verification stays in core (depends on the connection layer).
+// All schema authoring + generation lives in `@flowlib/db` — import from
+// there directly: `import { CORE_SCHEMA, mergeSchemas } from '@flowlib/db'`.
 export { verifySchema } from './database/schema-verification';
 export type {
   SchemaVerificationResult,
@@ -375,7 +351,7 @@ export type {
 // Re-export validation constants
 export { FLOW_VALIDATION_ERROR_TYPES } from './types/validation';
 
-export type { FlowVersion } from './database';
+export type { FlowVersion } from '@flowlib/db';
 
 // Node configuration update contracts
 export type {

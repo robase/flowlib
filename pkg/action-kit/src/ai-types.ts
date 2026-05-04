@@ -80,7 +80,19 @@ export interface BatchSubmissionResult {
 }
 
 export type BatchResult =
-  | { batchId: string; status: BatchStatus.COMPLETED; content: PromptResult }
+  | {
+      batchId: string;
+      status: BatchStatus.COMPLETED;
+      content: PromptResult;
+      /**
+       * Provider-reported token usage for the batched request. Optional
+       * because some batch result line items may not carry usage (e.g.
+       * malformed responses, older API surfaces). Hosts use this to meter
+       * llmTokens consumption for batch-resumed nodes — see the resumption
+       * path in flow-orchestration/flow-run-coordinator.ts.
+       */
+      usage?: { inputTokens: number; outputTokens: number };
+    }
   | { batchId: string; status: BatchStatus.FAILED | BatchStatus.CANCELLED; error: string }
   | { batchId: string; status: BatchStatus.SUBMITTED | BatchStatus.PROCESSING };
 

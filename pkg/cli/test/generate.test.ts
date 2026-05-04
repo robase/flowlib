@@ -19,7 +19,7 @@ import {
   generatePostgresSchemaAppend,
   generateMysqlSchemaAppend,
   CORE_TABLE_NAMES,
-} from '@flowlib/core';
+} from '@flowlib/db';
 
 import {
   multiTenantPlugin,
@@ -68,8 +68,11 @@ describe('generate core-only schema (no plugins)', () => {
 
   it('should generate valid SQLite schema', () => {
     expect(sqlite).toContain("from 'drizzle-orm/sqlite-core'");
+    // Path A: emit imports from `@flowlib/action-kit` (types-only, ~50 KB
+    // gzip) instead of `@flowlib/core` (~9 MB) so generated schemas in
+    // consumer repos are Worker-safe by default.
     expect(sqlite).toContain(
-      "import { BatchStatus, FlowRunStatus, NodeExecutionStatus } from '@flowlib/core';",
+      "import { BatchStatus, FlowRunStatus, NodeExecutionStatus } from '@flowlib/action-kit';",
     );
     expect(sqlite).toContain("sqliteTable('flowlib_flows'");
     expect(sqlite).toContain("sqliteTable('flowlib_flow_versions'");

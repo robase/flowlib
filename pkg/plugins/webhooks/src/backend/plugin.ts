@@ -10,10 +10,10 @@
 import type {
   FlowlibPlugin,
   FlowlibPluginDefinition,
-  FlowlibPluginSchema,
   FlowlibPluginEndpoint,
   PluginEndpointContext,
 } from '@flowlib/core';
+import type { FlowlibPluginSchema } from '@flowlib/db';
 import { WebhookSignatureService } from './webhook-signature.service';
 import { WebhookRateLimiter } from './webhook-rate-limiter';
 import { WebhookDedupService } from './webhook-dedup.service';

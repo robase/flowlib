@@ -2,7 +2,7 @@
 
 import { DatabaseConnectionFactory, type DatabaseConnection } from '../../database/connection';
 import { verifySchema, type SchemaVerificationOptions } from '../../database/schema-verification';
-import { CORE_SCHEMA } from '../../database/core-schema';
+import { CORE_SCHEMA } from '@flowlib/db';
 import { DatabaseError } from 'src/types/common/errors.types';
 import { FlowRunsModel } from '../flow-runs/flow-runs.model';
 import { FlowsModel } from '../flows/flows.model';

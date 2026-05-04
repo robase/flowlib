@@ -18,7 +18,7 @@
 import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import { produceSchema } from '@mrleebo/prisma-ast';
-import type { PrismaProvider } from '@flowlib/core';
+import type { PrismaProvider } from '@flowlib/db';
 import type { SchemaGeneratorResult } from './types.js';
 
 function isDebug(): boolean {
@@ -98,8 +98,8 @@ export interface PrismaSchemaGeneratorOptions {
 export async function generatePrismaSchema(
   options: PrismaSchemaGeneratorOptions,
 ): Promise<SchemaGeneratorResult> {
-  // Dynamically import @flowlib/core to avoid bundling it
-  const { mergeSchemas } = await import('@flowlib/core');
+  // Dynamically import @flowlib/db to avoid bundling it
+  const { mergeSchemas } = await import('@flowlib/db');
 
   // Merge core + plugin schemas
   const mergedSchema = mergeSchemas(options.plugins as any);

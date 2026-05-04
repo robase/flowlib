@@ -3,7 +3,7 @@ import type { FlowlibAdapter, WhereClause } from '../../database/adapter';
 import { DatabaseError } from 'src/types/common/errors.types';
 import { Logger, PaginatedResponse, QueryOptions } from 'src/schemas';
 import { CreateFlowVersionRequest, FlowlibDefinitionRuntime } from './schemas-fresh';
-import { FlowVersion } from '../../database';
+import type { FlowVersion } from '@flowlib/db';
 
 /**
  * Input for updating a flow version (limited fields)

@@ -1,10 +1,5 @@
-import type {
-  FlowlibPlugin,
-  FlowlibIdentity,
-  FlowlibRole,
-  FlowlibPermission,
-  FlowlibPluginSchema,
-} from '@flowlib/core';
+import type { FlowlibPlugin, FlowlibIdentity, FlowlibRole, FlowlibPermission } from '@flowlib/core';
+import type { FlowlibPluginSchema } from '@flowlib/db';
 import type {
   AuthenticationPluginOptions,
   BetterAuthContext,

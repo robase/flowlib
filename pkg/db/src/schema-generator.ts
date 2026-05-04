@@ -8,7 +8,7 @@
  * be used by Drizzle Kit for migration generation.
  */
 
-import type { PluginFieldAttribute, PluginFieldType } from 'src/types/plugin.types';
+import type { PluginFieldAttribute, PluginFieldType } from './plugin-schema';
 import type { MergedSchema, MergedTable } from './schema-merger';
 
 // =============================================================================
@@ -37,11 +37,15 @@ function enumVarName(tableName: string, fieldName: string): string {
   return `${tableName}${fieldName.charAt(0).toUpperCase() + fieldName.slice(1)}Enum`;
 }
 
+// Path A (`plans/db-package-split-plan.md`): emit imports from
+// `@flowlib/action-kit` (types-only, < 50 KB gzip) instead of `@flowlib/core`
+// (the executor, ~18 MB raw). Generated `flowlib.schema.ts` files in
+// consumer repos become Worker-safe by default.
 const SQLITE_RUNTIME_DEFAULT_IMPORTS: Record<string, string> = {
-  BatchProvider: '@flowlib/core',
-  BatchStatus: '@flowlib/core',
-  FlowRunStatus: '@flowlib/core',
-  NodeExecutionStatus: '@flowlib/core',
+  BatchProvider: '@flowlib/action-kit',
+  BatchStatus: '@flowlib/action-kit',
+  FlowRunStatus: '@flowlib/action-kit',
+  NodeExecutionStatus: '@flowlib/action-kit',
 };
 
 function collectSqliteRuntimeDefaultImports(schema: MergedSchema): Map<string, Set<string>> {

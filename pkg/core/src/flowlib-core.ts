@@ -7,7 +7,7 @@ import { SubmitAgentPromptRequest, NodeExecutionContext } from './types.internal
 import type { Flow } from './services/flows/flows.model';
 import type { FlowRun } from './services/flow-runs/flow-runs.model';
 import type { NodeExecution } from './services/node-executions/node-executions.model';
-import { FlowVersion } from './database';
+import type { FlowVersion } from '@flowlib/db';
 import type { DatabaseConnection } from './database/connection';
 
 // Service interfaces and types
@@ -23,7 +23,7 @@ import type {
   UpdateCredentialInput,
   CredentialFilters,
 } from './services/credentials';
-import type { CredentialAuthType } from './database/schema-sqlite';
+import type { CredentialAuthType } from '@flowlib/db/sqlite';
 
 import type {
   FlowTriggerRegistration,

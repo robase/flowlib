@@ -33,168 +33,14 @@ import type {
 
 // =============================================================================
 // Plugin Schema Types (Abstract, database-agnostic)
+//
+// Canonical definitions live in `@flowlib/db`. Imported here only so
+// `FlowlibPlugin.schema` can be typed; not re-exported. Plugin authors
+// import them directly:
+//   `import type { FlowlibPluginSchema } from '@flowlib/db'`
 // =============================================================================
 
-/**
- * Abstract field types that map to concrete column types per dialect.
- *
- * | Abstract    | SQLite        | PostgreSQL       | MySQL              |
- * |-------------|---------------|------------------|--------------------|
- * | "string"    | text          | text             | varchar(255)       |
- * | "text"      | text          | text             | text               |
- * | "number"    | integer       | integer          | int                |
- * | "boolean"   | integer(bool) | boolean          | boolean            |
- * | "date"      | text          | timestamp        | timestamp          |
- * | "json"      | text(json)    | json             | json               |
- * | "uuid"      | text          | uuid             | varchar(36)        |
- * | "bigint"    | integer       | bigint           | bigint             |
- * | string[]    | N/A (enum)    | pgEnum values    | mysqlEnum values   |
- */
-export type PluginFieldType =
-  | 'string'
-  | 'text'
-  | 'number'
-  | 'boolean'
-  | 'date'
-  | 'json'
-  | 'uuid'
-  | 'bigint'
-  | string[]; // Enum values — generates pgEnum/mysqlEnum/text
-
-/**
- * Abstract field definition for plugin database schemas.
- *
- * Plugins declare fields using this format. The CLI schema generator
- * converts these to dialect-specific Drizzle column definitions.
- */
-export interface PluginFieldAttribute {
-  /** Abstract column type */
-  type: PluginFieldType;
-
-  /**
-   * Whether the field is required (NOT NULL).
-   * @default true
-   */
-  required?: boolean;
-
-  /** Whether to add a UNIQUE constraint */
-  unique?: boolean;
-
-  /** Whether this field is the primary key (or part of a composite PK) */
-  primaryKey?: boolean;
-
-  /**
-   * Foreign key reference.
-   * `table` is the Drizzle table name (e.g., "flows", "credentials").
-   */
-  references?: {
-    table: string;
-    field: string;
-    onDelete?: 'cascade' | 'set null' | 'restrict' | 'no action';
-  };
-
-  /** Whether to create an index on this column */
-  index?: boolean;
-
-  /**
-   * Default value for the column.
-   * - Primitives are used as literal defaults
-   * - "uuid()" generates a UUID default
-   * - "now()" generates a current timestamp default
-   * - "true" / "false" for booleans
-   */
-  defaultValue?: string | number | boolean | 'uuid()' | 'now()';
-
-  /**
-   * For string fields, the max length (MySQL varchar).
-   * Ignored for SQLite/PostgreSQL text columns.
-   * @default 255
-   */
-  maxLength?: number;
-
-  /**
-   * TypeScript type annotation for the column (Drizzle's $type<>()).
-   * Used for JSON columns or text columns storing typed data.
-   *
-   * @example "Record<string, unknown>"
-   * @example "string[]"
-   */
-  typeAnnotation?: string;
-
-  /**
-   * JSON mode for text/json columns.
-   * When true on SQLite, uses text({ mode: 'json' }).
-   */
-  jsonMode?: boolean;
-}
-
-/**
- * Abstract table definition for plugin schemas.
- */
-export interface PluginTableDefinition {
-  /**
-   * Column definitions keyed by field name.
-   * Field names are camelCase; the generator converts to snake_case for DB columns.
-   */
-  fields: Record<string, PluginFieldAttribute>;
-
-  /**
-   * Composite primary key columns (if not using a single-column PK).
-   * Array of field names that together form the primary key.
-   */
-  compositePrimaryKey?: string[];
-
-  /**
-   * Whether to skip this table in migration generation.
-   * Useful for tables that are conditionally created.
-   * @default false
-   */
-  disableMigration?: boolean;
-
-  /**
-   * Custom DB table name. If not provided, the key in the schema object
-   * is used, converted to snake_case.
-   */
-  tableName?: string;
-
-  /**
-   * Table creation order hint. Lower numbers are created first.
-   * Use this when tables have foreign key dependencies.
-   * @default 100
-   */
-  order?: number;
-}
-
-/**
- * Plugin schema declaration.
- *
- * Keys are logical table names (camelCase). Use an existing core table name
- * (e.g., "flows", "credentials") to add fields to that table (additive only).
- *
- * @example
- * ```typescript
- * const schema: FlowlibPluginSchema = {
- *   // New table
- *   auditLogs: {
- *     fields: {
- *       id: { type: 'uuid', primaryKey: true, defaultValue: 'uuid()' },
- *       action: { type: 'string', required: true },
- *       userId: { type: 'string', references: { table: 'flows', field: 'id' } },
- *       metadata: { type: 'json' },
- *       createdAt: { type: 'date', defaultValue: 'now()' },
- *     },
- *   },
- *   // Extend existing core table
- *   flows: {
- *     fields: {
- *       ownerId: { type: 'string' },
- *       tenantId: { type: 'string', index: true },
- *     },
- *   },
- * };
- * ```
- */
-export type FlowlibPluginSchema = Record<string, PluginTableDefinition>;
+import type { FlowlibPluginSchema } from '@flowlib/db';
 
 // =============================================================================
 // Plugin Endpoint Types
@@ -416,6 +262,31 @@ export interface FlowlibPluginHooks {
       duration?: number;
     },
   ) => Promise<void | NodeExecutionHookResult>;
+
+  /**
+   * Runs after a `core.agent` node completes its prompt-tool-iterate loop.
+   *
+   * Fires once per agent node — NOT per internal tool call. Carries the
+   * aggregate cost (token totals, tool call count) so hosts can meter
+   * agent activity without instrumenting every tool dispatch.
+   *
+   * Distinct from `afterNodeExecute` because the agent records token
+   * usage in `result.metadata.tokenUsage` which is not visible to the
+   * generic node hook signature.
+   */
+  afterAgentExecute?: (context: {
+    flowRunId: string;
+    flowId: string;
+    nodeId: string;
+    /** Resolved model id used for the agent's primary loop. */
+    model?: string;
+    tokensIn: number;
+    tokensOut: number;
+    /** Number of tool invocations the agent made during the loop. */
+    toolCallCount: number;
+    /** Total wall-clock duration of the agent node in ms. */
+    durationMs: number;
+  }) => Promise<void>;
 
   /**
    * Runs before every API request (in framework adapters).
@@ -774,6 +645,18 @@ export interface PluginHookRunner {
       duration?: number;
     },
   ) => Promise<{ output?: unknown }>;
+
+  /** Run all afterAgentExecute hooks in order */
+  runAfterAgentExecute: (context: {
+    flowRunId: string;
+    flowId: string;
+    nodeId: string;
+    model?: string;
+    tokensIn: number;
+    tokensOut: number;
+    toolCallCount: number;
+    durationMs: number;
+  }) => Promise<void>;
 
   /** Run all onRequest hooks in order */
   runOnRequest: (

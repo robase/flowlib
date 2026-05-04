@@ -20,7 +20,7 @@ import type { FlowlibPlugin, FlowlibPluginDefinition } from '../types/plugin.typ
 import { AuthorizationService, createAuthorizationService } from '../services/auth';
 import { ActionRegistry, initializeGlobalActionRegistry } from '@flowlib/actions/registry';
 import { allProviderActions } from '@flowlib/actions';
-import type { CredentialAuthType } from '../database/schema-sqlite';
+import type { CredentialAuthType } from '@flowlib/db/sqlite';
 
 import type { FlowlibInstance, FlowlibMaintenanceOptions, FlowlibMaintenanceResult } from './types';
 import { createFlowsAPI } from './flows';
