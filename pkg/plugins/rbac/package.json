@@ -57,7 +57,8 @@
   },
   "dependencies": {
     "@flowlib/core": "workspace:*",
-    "@flowlib/db": "workspace:*"
+    "@flowlib/db": "workspace:*",
+    "kysely": "^0.28.14"
   },
   "devDependencies": {
     "@flowlib/ui": "workspace:*",
