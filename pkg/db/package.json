@@ -1,6 +1,6 @@
 {
   "name": "@flowlib/db",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "Drizzle schemas + schema-merger + schema-generator for Flowlib core. Lightweight package consumable from any JS runtime (Node, Workers, edge) without pulling in the @flowlib/core executor.",
   "keywords": [
     "drizzle",

@@ -1,5 +1,13 @@
 # @flowlib/sdk
 
+## 0.0.5
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @flowlib/action-kit@0.0.5
+  - @flowlib/actions@0.0.5
+
 ## 0.0.4
 
 ### Patch Changes

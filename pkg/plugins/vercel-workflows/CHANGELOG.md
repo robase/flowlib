@@ -1,5 +1,17 @@
 # @flowlib/vercel-workflows
 
+## 0.0.5
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @flowlib/core@0.0.5
+  - @flowlib/primitives@0.0.5
+  - @flowlib/ui@0.0.5
+  - @flowlib/action-kit@0.0.5
+  - @flowlib/actions@0.0.5
+  - @flowlib/sdk@0.0.5
+
 ## 0.0.4
 
 ### Patch Changes

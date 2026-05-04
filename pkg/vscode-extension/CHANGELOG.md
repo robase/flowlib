@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.0.5
+
+### Patch Changes
+
+- Updated dependencies [[`7d4db0c`](https://github.com/robase/flowlib/commit/7d4db0c537d77410bc76d968a1ecd7da672da5c8)]:
+  - @flowlib/db@0.0.5
+  - @flowlib/core@0.0.5
+  - @flowlib/webhooks@0.0.5
+  - @flowlib/express@0.0.5
+  - @flowlib/mcp@0.0.5
+  - @flowlib/ui@0.0.5
+  - @flowlib/action-kit@0.0.5
+  - @flowlib/sdk@0.0.5
+
 ## 0.0.4
 
 ### Patch Changes
