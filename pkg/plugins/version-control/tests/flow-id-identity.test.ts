@@ -26,6 +26,7 @@ import {
 import type { GitProvider } from '../src/backend/git-provider';
 import type { PluginDatabaseApi } from '@flowlib/core';
 import type { VersionControlPluginOptions } from '../src/backend/types';
+import { patchMockDb } from './test-helpers/mock-db';
 
 // ── Test fixtures ───────────────────────────────────────────────────────
 
@@ -192,11 +193,11 @@ describe('importFlowContent corruption guard', () => {
       metadata: { flowId: 'flow_FROM_FILE', name: 'Mismatch' },
     });
 
-    db = {
+    db = patchMockDb({
       type: 'sqlite',
       query: vi.fn().mockResolvedValue([]),
       execute: vi.fn().mockResolvedValue(undefined),
-    } as unknown as PluginDatabaseApi;
+    }) as unknown as PluginDatabaseApi;
 
     // Use a private-method bypass: call through `pullFlow` indirectly is too
     // heavy for this assertion. Instead, exercise importFlowContent via the
@@ -212,7 +213,7 @@ describe('importFlowContent corruption guard', () => {
     service = new VcSyncService(provider, { ...options, provider }, mockLogger);
 
     (db.query as ReturnType<typeof vi.fn>).mockImplementation(async (sql: string) => {
-      if (sql.includes('FROM flowlib_vc_sync_config')) {
+      if (sql.toLowerCase().replace(/"/g, '').includes('flowlib_vc_sync_config')) {
         return [
           {
             id: 'cfg-1',
@@ -258,10 +259,10 @@ describe('importFlowContent corruption guard', () => {
     service = new VcSyncService(provider, { ...options, provider }, mockLogger);
 
     const executeSpy = vi.fn().mockResolvedValue(undefined);
-    db = {
+    db = patchMockDb({
       type: 'sqlite',
       query: vi.fn().mockImplementation(async (sql: string) => {
-        if (sql.includes('FROM flowlib_vc_sync_config')) {
+        if (sql.toLowerCase().replace(/"/g, '').includes('flowlib_vc_sync_config')) {
           return [
             {
               id: 'cfg-1',
@@ -290,7 +291,7 @@ describe('importFlowContent corruption guard', () => {
         return [];
       }),
       execute: executeSpy,
-    } as unknown as PluginDatabaseApi;
+    }) as unknown as PluginDatabaseApi;
 
     const result = await service.pullFlow(db, 'flow_MATCHED');
     expect(result.success).toBe(true);
@@ -315,10 +316,10 @@ describe('importFlowContent corruption guard', () => {
     });
     service = new VcSyncService(provider, { ...options, provider }, mockLogger);
 
-    db = {
+    db = patchMockDb({
       type: 'sqlite',
       query: vi.fn().mockImplementation(async (sql: string) => {
-        if (sql.includes('FROM flowlib_vc_sync_config')) {
+        if (sql.toLowerCase().replace(/"/g, '').includes('flowlib_vc_sync_config')) {
           return [
             {
               id: 'cfg-1',
@@ -347,7 +348,7 @@ describe('importFlowContent corruption guard', () => {
         return [];
       }),
       execute: vi.fn().mockResolvedValue(undefined),
-    } as unknown as PluginDatabaseApi;
+    }) as unknown as PluginDatabaseApi;
 
     const result = await service.pullFlow(db, 'flow_legacy_target');
     expect(result.success).toBe(true);
@@ -365,7 +366,7 @@ describe('findFlowConfigByEmbeddedId', () => {
   });
 
   it('returns the config row when a flowId matches', async () => {
-    const db = {
+    const db = patchMockDb({
       type: 'sqlite' as const,
       query: vi.fn().mockResolvedValue([
         {
@@ -389,7 +390,7 @@ describe('findFlowConfigByEmbeddedId', () => {
         },
       ]),
       execute: vi.fn(),
-    } as unknown as PluginDatabaseApi;
+    }) as unknown as PluginDatabaseApi;
 
     const config = await service.findFlowConfigByEmbeddedId(db, 'flow_xyz');
     expect(config).not.toBeNull();
@@ -398,11 +399,11 @@ describe('findFlowConfigByEmbeddedId', () => {
   });
 
   it('returns null when no row matches that flowId', async () => {
-    const db = {
+    const db = patchMockDb({
       type: 'sqlite' as const,
       query: vi.fn().mockResolvedValue([]),
       execute: vi.fn(),
-    } as unknown as PluginDatabaseApi;
+    }) as unknown as PluginDatabaseApi;
 
     const config = await service.findFlowConfigByEmbeddedId(db, 'flow_does_not_exist');
     expect(config).toBeNull();

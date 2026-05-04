@@ -147,6 +147,7 @@ export function buildBackendPlugin(options: VercelWorkflowsBackendOptions = {}):
           if (!flowVersion?.flowlibDefinition) {
             return { status: 404, body: { error: `Flow version not found` } };
           }
+          const definition = flowVersion.flowlibDefinition as FlowlibDefinition;
 
           // Derive both identifiers from a single camelCased base. Strip a
           // trailing "Flow" from the flow name (e.g. "Untitled Flow") so the
@@ -158,7 +159,7 @@ export function buildBackendPlugin(options: VercelWorkflowsBackendOptions = {}):
           // A flow may have multiple trigger nodes (e.g. cron + webhook), but
           // a Vercel Workflow has a single entry. Require the caller to name
           // which trigger's subgraph to compile when more than one exists.
-          const triggerNodes = flowVersion.flowlibDefinition.nodes.filter(isTriggerNode);
+          const triggerNodes = definition.nodes.filter(isTriggerNode);
           const requestedTriggerId =
             typeof ctx.query.triggerNodeId === 'string' ? ctx.query.triggerNodeId : undefined;
 
@@ -202,7 +203,7 @@ export function buildBackendPlugin(options: VercelWorkflowsBackendOptions = {}):
           }
 
           const { filtered, outputAssignments } = stripTriggersAndOutputs(
-            flowVersion.flowlibDefinition,
+            definition,
             activeTriggerId,
           );
 

@@ -17,6 +17,7 @@ export default defineConfig({
       '@flowlib/core',
       '@flowlib/user-auth',
       '@flowlib/ui',
+      'kysely',
       'react',
       'react-dom',
       'react/jsx-runtime',

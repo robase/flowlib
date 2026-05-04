@@ -30,6 +30,7 @@
 // =============================================================================
 
 import type { PluginDatabaseApi } from '@flowlib/core';
+import type { VcDB } from './db-types';
 import type { GitProvider } from './git-provider';
 import { extractFlowIdFromContent, parseFlowTsContent } from './sync-service';
 
@@ -116,10 +117,14 @@ export class BootstrapService {
   async detect(db: PluginDatabaseApi): Promise<BootstrapDetection> {
     // 1. If we've already bootstrapped this (repo, branch), say so. The
     //    UI uses this to skip the wizard on subsequent loads.
-    const stateRows = await db.query<{ last_instance_commit_sha: string | null }>(
-      'SELECT last_instance_commit_sha FROM flowlib_vc_instance_state WHERE repo = ? AND branch = ? LIMIT 1',
-      [this.opts.repo, this.opts.branch],
-    );
+    const stateRows = await db
+      .kysely<VcDB>()
+      .selectFrom('flowlib_vc_instance_state')
+      .where('repo', '=', this.opts.repo)
+      .where('branch', '=', this.opts.branch)
+      .select('last_instance_commit_sha')
+      .limit(1)
+      .execute();
     const alreadyBootstrapped =
       stateRows.length > 0 && stateRows[0].last_instance_commit_sha !== null;
 
@@ -135,8 +140,15 @@ export class BootstrapService {
     const flowFiles = tree.filter((e) => e.type === 'blob' && e.path.endsWith('.flow.ts'));
 
     // 4. Local flow count.
-    const localCountRows = await db.query<{ c: number }>('SELECT COUNT(*) as c FROM flowlib_flows');
-    const localFlowCount = Number(localCountRows[0]?.c ?? 0);
+    // Kysely's `fn.countAll<number>` keeps the result type as `number` even
+    // though the underlying driver returns `string` on Postgres for BIGINT
+    // — Kysely casts at the JS boundary.
+    const localCountRow = await db
+      .kysely<VcDB>()
+      .selectFrom('flowlib_flows')
+      .select((eb) => eb.fn.countAll<number>().as('c'))
+      .executeTakeFirst();
+    const localFlowCount = Number(localCountRow?.c ?? 0);
 
     // Empty repo: regardless of local state, no remote flows means push-all
     // (when local has flows) or already-bootstrapped (when both empty).
@@ -187,10 +199,13 @@ export class BootstrapService {
       let localExists = false;
       let localName: string | null = null;
       if (embeddedFlowId) {
-        const localRows = await db.query<{ name: string }>(
-          'SELECT name FROM flowlib_flows WHERE id = ? LIMIT 1',
-          [embeddedFlowId],
-        );
+        const localRows = await db
+          .kysely<VcDB>()
+          .selectFrom('flowlib_flows')
+          .where('id', '=', embeddedFlowId)
+          .select('name')
+          .limit(1)
+          .execute();
         if (localRows.length > 0) {
           localExists = true;
           localName = localRows[0].name;
@@ -320,10 +335,13 @@ export class BootstrapService {
         // Skip files whose flowId already exists locally — the user
         // should resolve those via the merge action, not silently
         // overwrite. Hydrate is "fresh import only".
-        const existing = await db.query<{ id: string }>(
-          'SELECT id FROM flowlib_flows WHERE id = ? LIMIT 1',
-          [embeddedFlowId],
-        );
+        const existing = await db
+          .kysely<VcDB>()
+          .selectFrom('flowlib_flows')
+          .where('id', '=', embeddedFlowId)
+          .select('id')
+          .limit(1)
+          .execute();
         if (existing.length > 0) {
           continue;
         }
@@ -504,10 +522,14 @@ export class BootstrapService {
     branchSha: string,
     now: string,
   ): Promise<void> {
-    const existing = await db.query<{ id: string }>(
-      'SELECT id FROM flowlib_vc_instance_state WHERE repo = ? AND branch = ? LIMIT 1',
-      [this.opts.repo, this.opts.branch],
-    );
+    const existing = await db
+      .kysely<VcDB>()
+      .selectFrom('flowlib_vc_instance_state')
+      .where('repo', '=', this.opts.repo)
+      .where('branch', '=', this.opts.branch)
+      .select('id')
+      .limit(1)
+      .execute();
     if (existing.length > 0) {
       await db.execute(
         `UPDATE flowlib_vc_instance_state

@@ -45,8 +45,13 @@ export function createAdapterFromConnection(connection: DatabaseConnection): Flo
 /**
  * Create a Kysely instance that delegates to the DatabaseDriver from
  * a Drizzle DatabaseConnection. No new connections are created.
+ *
+ * Exported so the plugin database API can hand out a typed Kysely
+ * handle (see `PluginDatabaseApi.kysely<DB>()`). The returned instance
+ * is dialect-aware but type-erased at the table-set level — callers
+ * narrow to their own `DB` interface via the `kysely<DB>()` accessor.
  */
-function createKyselyFromConnection(connection: DatabaseConnection): KyselyDb {
+export function createKyselyFromConnection(connection: DatabaseConnection): KyselyDb {
   switch (connection.type) {
     case 'sqlite': {
       return new Kysely({

@@ -13,6 +13,7 @@ import { VcSyncService } from '../src/backend/sync-service';
 import type { GitProvider, GitTreeEntry } from '../src/backend/git-provider';
 import type { PluginDatabaseApi } from '@flowlib/core';
 import type { VersionControlPluginOptions } from '../src/backend/types';
+import { patchMockDb } from './test-helpers/mock-db';
 
 // ── Test fixtures ────────────────────────────────────────────────────────
 
@@ -112,28 +113,29 @@ function makeStatefulDb(initial?: {
     });
   }
 
-  const db = {
+  const db = patchMockDb({
     type: 'sqlite',
     query: vi.fn(async (sql: string, params: unknown[] = []) => {
-      if (sql.includes('FROM flowlib_vc_instance_state')) {
+      const norm = sql.toLowerCase().replace(/"/g, '');
+      if (norm.includes('flowlib_vc_instance_state')) {
         return state.instanceState ? [state.instanceState] : [];
       }
-      if (sql.includes('FROM flowlib_vc_sync_config WHERE flow_id = ?')) {
+      if (norm.includes('flowlib_vc_sync_config') && norm.includes('flow_id = ?')) {
         const id = params[0] as string;
         const cfg = state.configs.get(id);
         return cfg ? [cfg] : [];
       }
-      if (sql.includes('SELECT MAX(version)')) {
+      if (norm.includes('max(version)')) {
         const id = params[0] as string;
         return [{ version: state.versions.get(id) ?? 0 }];
       }
-      if (sql.includes('FROM flowlib_flows WHERE')) {
+      if (norm.includes('flowlib_flows') && norm.includes('where')) {
         return [];
       }
       return [];
     }),
     execute: vi.fn(async (sql: string, params: unknown[] = []) => {
-      if (sql.includes('INSERT INTO flowlib_vc_instance_state')) {
+      if (sql.toLowerCase().replace(/"/g, '').includes('insert into flowlib_vc_instance_state')) {
         const [id, repo, branch, sha, tickAt, error] = params as [
           string,
           string,
@@ -150,7 +152,9 @@ function makeStatefulDb(initial?: {
           last_reconciler_tick_at: tickAt,
           last_reconciler_error: error,
         };
-      } else if (sql.startsWith('UPDATE flowlib_vc_instance_state')) {
+      } else if (
+        sql.toLowerCase().replace(/"/g, '').startsWith('update flowlib_vc_instance_state')
+      ) {
         if (state.instanceState) {
           const [sha, tickAt, error] = params as [string | null, string, string | null];
           state.instanceState = {
@@ -160,20 +164,24 @@ function makeStatefulDb(initial?: {
             last_reconciler_error: error,
           };
         }
-      } else if (sql.startsWith('UPDATE flowlib_vc_sync_config')) {
+      } else if (sql.toLowerCase().replace(/"/g, '').startsWith('update flowlib_vc_sync_config')) {
         const [filePath, , flowId] = params as [string, string, string];
         const cfg = state.configs.get(flowId);
         if (cfg) {
           state.configs.set(flowId, { ...cfg, file_path: filePath });
         }
-      } else if (sql.includes('INSERT INTO flowlib_flow_versions')) {
+      } else if (
+        sql.toLowerCase().replace(/"/g, '').includes('insert into flowlib_flow_versions')
+      ) {
         const [flowId, version] = params as [string, number];
         state.versions.set(flowId, version);
-      } else if (sql.includes('INSERT INTO flowlib_vc_sync_history')) {
+      } else if (
+        sql.toLowerCase().replace(/"/g, '').includes('insert into flowlib_vc_sync_history')
+      ) {
         state.history.push(params);
       }
     }),
-  } as unknown as PluginDatabaseApi;
+  }) as unknown as PluginDatabaseApi;
 
   return { db, state };
 }

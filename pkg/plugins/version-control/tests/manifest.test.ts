@@ -30,6 +30,7 @@ import { VcSyncService } from '../src/backend/sync-service';
 import type { GitProvider } from '../src/backend/git-provider';
 import type { PluginDatabaseApi } from '@flowlib/core';
 import type { VersionControlPluginOptions } from '../src/backend/types';
+import { patchMockDb } from './test-helpers/mock-db';
 
 // ── 1. extractRequiredEnvs ───────────────────────────────────────────────
 
@@ -202,16 +203,16 @@ describe('buildFlowManifestEntry', () => {
 
 describe('checkManifestAgainstInstance', () => {
   function makeDb(credentialNames: string[]): PluginDatabaseApi {
-    return {
+    return patchMockDb({
       type: 'sqlite' as const,
       query: vi.fn(async (sql: string) => {
-        if (sql.includes('FROM flowlib_credentials')) {
+        if (sql.toLowerCase().replace(/"/g, '').includes('flowlib_credentials')) {
           return credentialNames.map((name) => ({ name }));
         }
         return [];
       }),
       execute: vi.fn(),
-    } as unknown as PluginDatabaseApi;
+    }) as unknown as PluginDatabaseApi;
   }
 
   function manifest(flows: Array<{ flowId: string; creds: string[] }>): AggregateManifest {
@@ -336,23 +337,11 @@ describe('integration: pushFlowsAtomic includes _manifest.json in the commit', (
     });
 
     // Stub DB: one flow, one config, one version with a credential ref.
-    const db = {
+    const db = patchMockDb({
       type: 'sqlite' as const,
       query: vi.fn(async (sql: string, params: unknown[] = []) => {
-        if (sql.includes('FROM flowlib_flows WHERE id =')) {
-          return [
-            {
-              id: 'flow_one',
-              name: 'One',
-              description: null,
-              tags: null,
-            },
-          ];
-        }
-        if (sql.includes('FROM flowlib_flows WHERE id IN')) {
-          return [{ id: 'flow_one', name: 'One' }];
-        }
-        if (sql.includes('FROM flowlib_flow_versions WHERE flow_id') && sql.includes('ORDER BY')) {
+        const norm = sql.toLowerCase().replace(/"/g, '');
+        if (norm.includes('flowlib_flow_versions') && norm.includes('order by')) {
           return [
             {
               flow_id: 'flow_one',
@@ -378,7 +367,7 @@ describe('integration: pushFlowsAtomic includes _manifest.json in the commit', (
             },
           ];
         }
-        if (sql.includes('FROM flowlib_vc_sync_config WHERE flow_id =')) {
+        if (norm.includes('flowlib_vc_sync_config') && norm.includes('flow_id = ?')) {
           return [
             {
               id: 'cfg-1',
@@ -401,10 +390,25 @@ describe('integration: pushFlowsAtomic includes _manifest.json in the commit', (
             },
           ];
         }
+        if (norm.includes('flowlib_flows')) {
+          if (norm.includes('id in')) {
+            return [{ id: 'flow_one', name: 'One' }];
+          }
+          if (norm.includes('id = ?')) {
+            return [
+              {
+                id: 'flow_one',
+                name: 'One',
+                description: null,
+                tags: null,
+              },
+            ];
+          }
+        }
         return [];
       }),
       execute: vi.fn(),
-    } as unknown as PluginDatabaseApi;
+    }) as unknown as PluginDatabaseApi;
 
     const result = await service.pushFlowsAtomic(db, ['flow_one'], {
       commitMessage: 'm',

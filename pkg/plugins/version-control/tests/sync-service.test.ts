@@ -4,6 +4,7 @@ import { configureSyncInputSchema } from '../src/backend/validation';
 import type { GitProvider } from '../src/backend/git-provider';
 import type { PluginDatabaseApi } from '@flowlib/core';
 import type { VersionControlPluginOptions } from '../src/backend/types';
+import { patchMockDb } from './test-helpers/mock-db';
 
 // ── Mock GitProvider ────────────────────────────────────────────────────
 
@@ -32,26 +33,27 @@ function createMockProvider(overrides: Partial<GitProvider> = {}): GitProvider {
 // ── Mock Database ───────────────────────────────────────────────────────
 
 function createMockDb(tables: Record<string, unknown[]> = {}): PluginDatabaseApi {
-  return {
+  const query = vi.fn(async (sql: string) => {
+    if (sql.includes('flowlib_flow_versions')) {
+      return tables.flow_versions ?? [];
+    }
+    if (sql.includes('flowlib_vc_sync_config')) {
+      return tables.vc_sync_config ?? [];
+    }
+    if (sql.includes('flowlib_vc_sync_history')) {
+      return tables.vc_sync_history ?? [];
+    }
+    if (sql.includes('flowlib_flows')) {
+      return tables.flows ?? [];
+    }
+    return [];
+  });
+  return patchMockDb({
     type: 'sqlite',
-    query: vi.fn(async (sql: string) => {
-      // Simple SQL pattern matching for tests
-      if (sql.includes('FROM flowlib_flows WHERE')) {
-        return tables.flows ?? [];
-      }
-      if (sql.includes('FROM flowlib_flow_versions WHERE')) {
-        return tables.flow_versions ?? [];
-      }
-      if (sql.includes('FROM flowlib_vc_sync_config')) {
-        return tables.vc_sync_config ?? [];
-      }
-      if (sql.includes('FROM flowlib_vc_sync_history')) {
-        return tables.vc_sync_history ?? [];
-      }
-      return [];
-    }),
+    query,
     execute: vi.fn().mockResolvedValue(undefined),
-  };
+    drizzle: undefined,
+  }) as unknown as PluginDatabaseApi;
 }
 
 const mockLogger = {
@@ -86,12 +88,14 @@ describe('VcSyncService', () => {
         flows: [{ id: 'flow-1', name: 'Test Flow' }],
       });
 
-      // After insert, the getSyncConfig query should return the new config
+      // After insert, the getSyncConfig query should return the new config.
+      // NOTE: SQL pattern-match is case-insensitive and ignores identifier
+      // quoting because Kysely-emitted SQL uses lower-case keywords + quoted
+      // identifiers (e.g. `from "flowlib_flows" where ...`) where the old
+      // raw SQL was `FROM flowlib_flows WHERE ...`.
       (db.query as ReturnType<typeof vi.fn>).mockImplementation(async (sql: string) => {
-        if (sql.includes('FROM flowlib_flows WHERE')) {
-          return [{ id: 'flow-1', name: 'Test Flow' }];
-        }
-        if (sql.includes('FROM flowlib_vc_sync_config')) {
+        const norm = sql.toLowerCase().replace(/"/g, '');
+        if (norm.includes('flowlib_vc_sync_config')) {
           return [
             {
               id: 'cfg-1',
@@ -113,6 +117,9 @@ describe('VcSyncService', () => {
               updated_at: '2024-01-01T00:00:00Z',
             },
           ];
+        }
+        if (norm.includes('flowlib_flows')) {
+          return [{ id: 'flow-1', name: 'Test Flow' }];
         }
         return [];
       });
@@ -351,9 +358,15 @@ describe('VcSyncService', () => {
         flow_versions: [{ version: 1 }],
       });
 
-      // Override query to respond to both queries within getFlowSyncStatus
+      // Override query to respond to both queries within getFlowSyncStatus.
+      // Case-insensitive + quote-stripped match — Kysely emits lower-case
+      // keywords and quoted identifiers.
       (db.query as ReturnType<typeof vi.fn>).mockImplementation(async (sql: string) => {
-        if (sql.includes('FROM flowlib_vc_sync_config')) {
+        const norm = sql.toLowerCase().replace(/"/g, '');
+        if (norm.includes('flowlib_vc_sync_history')) {
+          return [];
+        }
+        if (norm.includes('flowlib_vc_sync_config')) {
           return [
             {
               id: 'cfg-1',
@@ -376,10 +389,7 @@ describe('VcSyncService', () => {
             },
           ];
         }
-        if (sql.includes('FROM flowlib_vc_sync_history')) {
-          return [];
-        }
-        if (sql.includes('FROM flow_versions')) {
+        if (norm.includes('flow_versions')) {
           return [{ version: 1 }];
         }
         return [];

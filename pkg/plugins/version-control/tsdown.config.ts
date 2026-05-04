@@ -18,6 +18,7 @@ export default defineConfig({
     neverBundle: [
       '@flowlib/core',
       '@flowlib/ui',
+      'kysely',
       '@tanstack/react-query',
       'react',
       'react-dom',

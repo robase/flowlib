@@ -13,6 +13,7 @@ import { versionControl } from '../src/backend/plugin';
 import type { GitProvider } from '../src/backend/git-provider';
 import type { FlowlibPlugin, PluginDatabaseApi, PluginEndpointContext } from '@flowlib/core';
 import type { VersionControlPluginOptions } from '../src/backend/types';
+import { patchMockDb } from './test-helpers/mock-db';
 
 function makeProvider(overrides: Partial<GitProvider> = {}): GitProvider {
   return {
@@ -64,10 +65,10 @@ const definition = {
 };
 
 function makeDb(): PluginDatabaseApi {
-  return {
+  return patchMockDb({
     type: 'sqlite',
     query: vi.fn(async (sql: string) => {
-      if (sql.includes('FROM flowlib_vc_sync_config')) {
+      if (sql.toLowerCase().replace(/"/g, '').includes('flowlib_vc_sync_config')) {
         return [
           {
             id: 'cfg-1',
@@ -90,10 +91,10 @@ function makeDb(): PluginDatabaseApi {
           },
         ];
       }
-      if (sql.includes('FROM flowlib_flows WHERE id = ?')) {
+      if (sql.toLowerCase().replace(/"/g, '').includes('flowlib_flows')) {
         return [{ id: 'flow_diff', name: 'Diff Flow', description: null, tags: null }];
       }
-      if (sql.includes('FROM flowlib_flow_versions WHERE flow_id = ?')) {
+      if (sql.toLowerCase().replace(/"/g, '').includes('flowlib_flow_versions')) {
         return [
           {
             flow_id: 'flow_diff',
@@ -105,7 +106,7 @@ function makeDb(): PluginDatabaseApi {
       return [];
     }),
     execute: vi.fn().mockResolvedValue(undefined),
-  } as unknown as PluginDatabaseApi;
+  }) as unknown as PluginDatabaseApi;
 }
 
 function makeService(provider: GitProvider): VcSyncService {
@@ -186,15 +187,15 @@ describe('VcSyncService.getFlowDiff', () => {
   it('throws a clear error for untracked flows', async () => {
     const provider = makeProvider();
     const service = makeService(provider);
-    const db = {
+    const db = patchMockDb({
       ...makeDb(),
       query: vi.fn(async (sql: string) => {
-        if (sql.includes('FROM flowlib_vc_sync_config')) {
+        if (sql.toLowerCase().replace(/"/g, '').includes('flowlib_vc_sync_config')) {
           return [];
         }
         return [];
       }),
-    } as unknown as PluginDatabaseApi;
+    }) as unknown as PluginDatabaseApi;
 
     await expect(service.getFlowDiff(db, 'flow_missing')).rejects.toThrow(/not connected/);
   });
@@ -274,11 +275,11 @@ describe('GET /vc/flows/:flowId/diff endpoint', () => {
       throw new Error('diff endpoint missing');
     }
 
-    const emptyDb = {
+    const emptyDb = patchMockDb({
       type: 'sqlite',
       query: vi.fn().mockResolvedValue([]),
       execute: vi.fn(),
-    } as unknown as PluginDatabaseApi;
+    }) as unknown as PluginDatabaseApi;
 
     const result = await endpoint.handler({
       database: emptyDb,

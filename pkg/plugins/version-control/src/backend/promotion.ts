@@ -29,6 +29,7 @@
 // =============================================================================
 
 import type { PluginDatabaseApi } from '@flowlib/core';
+import type { VcDB } from './db-types';
 import type { BranchComparison, BranchComparisonFile, GitProvider } from './git-provider';
 import type { AggregateManifest } from './manifest';
 import { manifestFilePath } from './manifest';
@@ -418,11 +419,12 @@ export class PromotionService {
       return;
     }
 
-    const placeholders = paths.map(() => '?').join(', ');
-    const rows = await db.query<{ flow_id: string }>(
-      `SELECT flow_id FROM flowlib_vc_sync_config WHERE file_path IN (${placeholders})`,
-      paths,
-    );
+    const rows = await db
+      .kysely<VcDB>()
+      .selectFrom('flowlib_vc_sync_config')
+      .where('file_path', 'in', paths)
+      .select('flow_id')
+      .execute();
 
     const now = new Date().toISOString();
     for (const row of rows) {

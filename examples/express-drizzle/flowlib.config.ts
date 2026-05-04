@@ -24,7 +24,7 @@ export const flowlibConfig = defineConfig({
   frontendPath: '/flowlib',
   theme: 'dark',
   logging: {
-    level: 'error',
+    level: 'info',
   },
   defaultCredentials: [
     ...(process.env.SEED_ANTHROPIC_API_KEY

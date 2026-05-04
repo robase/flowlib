@@ -4,6 +4,7 @@
 
 import type { FlowlibPlugin, FlowlibPluginDefinition, PluginEndpointContext } from '@flowlib/core';
 import { createPluginDatabaseApi } from '@flowlib/core';
+import type { VcDB } from './db-types';
 
 import type { VersionControlPluginOptions, VcEnvironment } from './types';
 import { VC_SCHEMA } from './schema';
@@ -489,7 +490,11 @@ function _vcBackendPlugin(options: Omit<VersionControlPluginOptions, 'frontend'>
             return { status: 200, body: result };
           }
 
-          const flowRows = await ctx.database.query<{ id: string }>('SELECT id FROM flowlib_flows');
+          const flowRows = await ctx.database
+            .kysely<VcDB>()
+            .selectFrom('flowlib_flows')
+            .select('id')
+            .execute();
           if (flowRows.length === 0) {
             return {
               status: 200,
@@ -672,36 +677,26 @@ function _vcBackendPlugin(options: Omit<VersionControlPluginOptions, 'frontend'>
         path: '/vc/activity',
         handler: async (ctx: PluginEndpointContext) => {
           const limit = historyLimitSchema.parse(ctx.query.limit);
-          const rows = await ctx.database.query<{
-            flow_id: string;
-            flow_name: string | null;
-            file_path: string | null;
-            action: string;
-            commit_sha: string | null;
-            pr_number: number | null;
-            version: number | null;
-            message: string | null;
-            created_at: string;
-            created_by: string | null;
-          }>(
-            `SELECT
-               h.flow_id,
-               f.name AS flow_name,
-               c.file_path,
-               h.action,
-               h.commit_sha,
-               h.pr_number,
-               h.version,
-               h.message,
-               h.created_at,
-               h.created_by
-             FROM flowlib_vc_sync_history h
-             LEFT JOIN flowlib_flows f ON f.id = h.flow_id
-             LEFT JOIN flowlib_vc_sync_config c ON c.flow_id = h.flow_id
-             ORDER BY h.created_at DESC
-             LIMIT ?`,
-            [limit],
-          );
+          const rows = await ctx.database
+            .kysely<VcDB>()
+            .selectFrom('flowlib_vc_sync_history as h')
+            .leftJoin('flowlib_flows as f', 'f.id', 'h.flow_id')
+            .leftJoin('flowlib_vc_sync_config as c', 'c.flow_id', 'h.flow_id')
+            .select([
+              'h.flow_id',
+              'f.name as flow_name',
+              'c.file_path',
+              'h.action',
+              'h.commit_sha',
+              'h.pr_number',
+              'h.version',
+              'h.message',
+              'h.created_at',
+              'h.created_by',
+            ])
+            .orderBy('h.created_at', 'desc')
+            .limit(limit)
+            .execute();
           return {
             status: 200,
             body: {
@@ -1040,14 +1035,12 @@ function _vcBackendPlugin(options: Omit<VersionControlPluginOptions, 'frontend'>
     prNumber: number,
   ): Promise<void> {
     // Find the sync config with this active PR — read draft_branch BEFORE clearing it
-    const rows = await db.query<{
-      flow_id: string;
-      draft_branch: string | null;
-      repo: string;
-    }>(
-      'SELECT flow_id, draft_branch, repo FROM flowlib_vc_sync_config WHERE active_pr_number = ?',
-      [prNumber],
-    );
+    const rows = await db
+      .kysely<VcDB>()
+      .selectFrom('flowlib_vc_sync_config')
+      .where('active_pr_number', '=', prNumber)
+      .select(['flow_id', 'draft_branch', 'repo'])
+      .execute();
 
     for (const row of rows) {
       // Try to clean up the draft branch before clearing the reference

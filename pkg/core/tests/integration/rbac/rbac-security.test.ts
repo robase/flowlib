@@ -342,6 +342,16 @@ describe('RBAC Plugin — Security Red Team', () => {
 
     // 8. Open a raw connection for the test PluginDatabaseApi
     rawDb = new Database(dbPath);
+    const drizzleSqlite = drizzle(rawDb);
+
+    // Real Kysely instance bound to the same `rawDb`. Imported lazily via
+    // require so the test file doesn't pay the import cost when not needed.
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { Kysely, SqliteDialect } = require('kysely') as typeof import('kysely');
+    const kyselyInstance = new Kysely({
+      dialect: new SqliteDialect({ database: rawDb }),
+    });
+
     dbApi = {
       type: 'sqlite',
       async query<T>(sql: string, params: unknown[] = []): Promise<T[]> {
@@ -349,6 +359,18 @@ describe('RBAC Plugin — Security Red Team', () => {
       },
       async execute(sql: string, params: unknown[] = []): Promise<void> {
         rawDb.prepare(sql).run(...params);
+      },
+      async executeRows<T>(query: import('drizzle-orm').SQL): Promise<T[]> {
+        const compiled = (
+          drizzleSqlite as unknown as {
+            dialect: { sqlToQuery(q: typeof query): { sql: string; params: unknown[] } };
+          }
+        ).dialect.sqlToQuery(query);
+        return rawDb.prepare(compiled.sql).all(...compiled.params) as T[];
+      },
+      drizzle: drizzleSqlite,
+      kysely<DB>(): import('kysely').Kysely<DB> {
+        return kyselyInstance as unknown as import('kysely').Kysely<DB>;
       },
     };
 

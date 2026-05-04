@@ -1,4 +1,6 @@
 import type { PluginDatabaseApi } from '@flowlib/core';
+import { sql } from 'kysely';
+import type { WebhooksDB } from './db-types';
 import type {
   WebhookTrigger,
   WebhookProvider,
@@ -6,25 +8,34 @@ import type {
   UpdateWebhookTriggerInput,
 } from '../shared/types';
 
+/**
+ * Webhook triggers persistence — Kysely-typed across SQLite/Postgres/MySQL.
+ *
+ * One typed query expression works on every dialect; column-level type
+ * checking comes from the `WebhooksDB` interface in `db-types.ts`. Migrations
+ * for `flowlib_webhook_triggers` are emitted by `flowlib-cli generate` from
+ * the abstract `WEBHOOK_TRIGGERS_SCHEMA` in `plugin.ts`.
+ */
+
 interface WebhookTriggerRow {
   id: string;
   name: string;
   description: string | null;
   webhook_path: string;
-  provider: WebhookProvider;
-  is_enabled: boolean | number;
+  provider: string;
+  is_enabled: boolean | 0 | 1;
   allowed_methods: string;
-  hmac_enabled: boolean | number;
+  hmac_enabled: boolean | 0 | 1;
   hmac_header_name: string | null;
   hmac_secret: string | null;
   allowed_ips: string | null;
   flow_id: string | null;
   node_id: string | null;
-  last_triggered_at: string | null;
+  last_triggered_at: string | Date | null;
   last_payload: unknown;
-  trigger_count: number | string;
-  created_at: string;
-  updated_at: string;
+  trigger_count: number;
+  created_at: string | Date;
+  updated_at: string | Date;
 }
 
 export interface CreateWebhookTriggerRecord extends CreateWebhookTriggerInput {
@@ -32,33 +43,42 @@ export interface CreateWebhookTriggerRecord extends CreateWebhookTriggerInput {
   webhookPath: string;
 }
 
-function toBoolean(value: boolean | number): boolean {
+function toIso(value: string | Date): string {
+  return value instanceof Date ? value.toISOString() : value;
+}
+
+function toIsoOrUndefined(value: string | Date | null): string | undefined {
+  if (value === null) {
+    return undefined;
+  }
+  return toIso(value);
+}
+
+/**
+ * SQLite stores 0/1 in INTEGER columns; Postgres returns native bool;
+ * MySQL returns 0/1 from `tinyint(1)`. Coerce uniformly.
+ */
+function toBool(value: boolean | 0 | 1): boolean {
   return value === true || value === 1;
 }
 
-function toNumber(value: number | string): number {
-  if (typeof value === 'number') {
-    return value;
-  }
-
-  const parsed = Number(value);
-  return Number.isFinite(parsed) ? parsed : 0;
-}
-
-function parseJson(value: unknown): unknown {
-  if (value === null || value === undefined || value === '') {
+/**
+ * `last_payload` is stored as JSON text on SQLite/MySQL; Postgres jsonb
+ * returns the parsed value. Defensive parse — only attempt when we got a
+ * string back.
+ */
+function parseJsonPayload(value: unknown): unknown {
+  if (value === null || value === undefined) {
     return undefined;
   }
-
-  if (typeof value !== 'string') {
-    return value;
+  if (typeof value === 'string') {
+    try {
+      return JSON.parse(value);
+    } catch {
+      return value;
+    }
   }
-
-  try {
-    return JSON.parse(value);
-  } catch {
-    return value;
-  }
+  return value;
 }
 
 function mapRow(row: WebhookTriggerRow): WebhookTrigger {
@@ -67,20 +87,20 @@ function mapRow(row: WebhookTriggerRow): WebhookTrigger {
     name: row.name,
     description: row.description ?? undefined,
     webhookPath: row.webhook_path,
-    provider: row.provider,
-    isEnabled: toBoolean(row.is_enabled),
+    provider: row.provider as WebhookProvider,
+    isEnabled: toBool(row.is_enabled),
     allowedMethods: row.allowed_methods,
-    hmacEnabled: toBoolean(row.hmac_enabled),
+    hmacEnabled: toBool(row.hmac_enabled),
     hmacHeaderName: row.hmac_header_name ?? undefined,
     hmacSecret: row.hmac_secret ?? undefined,
     allowedIps: row.allowed_ips ?? undefined,
     flowId: row.flow_id ?? undefined,
     nodeId: row.node_id ?? undefined,
-    lastTriggeredAt: row.last_triggered_at ?? undefined,
-    lastPayload: parseJson(row.last_payload),
-    triggerCount: toNumber(row.trigger_count),
-    createdAt: row.created_at,
-    updatedAt: row.updated_at,
+    lastTriggeredAt: toIsoOrUndefined(row.last_triggered_at),
+    lastPayload: parseJsonPayload(row.last_payload),
+    triggerCount: row.trigger_count,
+    createdAt: toIso(row.created_at),
+    updatedAt: toIso(row.updated_at),
   };
 }
 
@@ -88,133 +108,63 @@ export class WebhookTriggersRepository {
   constructor(private readonly database: PluginDatabaseApi) {}
 
   async list(): Promise<WebhookTrigger[]> {
-    const rows = await this.database.query<WebhookTriggerRow>(
-      `SELECT
-         id,
-         name,
-         description,
-         webhook_path,
-         provider,
-         is_enabled,
-         allowed_methods,
-         hmac_enabled,
-         hmac_header_name,
-         hmac_secret,
-         allowed_ips,
-         flow_id,
-         node_id,
-         last_triggered_at,
-         last_payload,
-         trigger_count,
-         created_at,
-         updated_at
-       FROM flowlib_webhook_triggers
-       ORDER BY created_at DESC`,
-    );
-
-    return rows.map(mapRow);
+    const rows = await this.database
+      .kysely<WebhooksDB>()
+      .selectFrom('flowlib_webhook_triggers')
+      .selectAll()
+      .orderBy('created_at', 'desc')
+      .execute();
+    return rows.map((row) => mapRow(row as unknown as WebhookTriggerRow));
   }
 
   async findById(id: string): Promise<WebhookTrigger | null> {
-    const rows = await this.database.query<WebhookTriggerRow>(
-      `SELECT
-         id,
-         name,
-         description,
-         webhook_path,
-         provider,
-         is_enabled,
-         allowed_methods,
-         hmac_enabled,
-         hmac_header_name,
-         hmac_secret,
-         allowed_ips,
-         flow_id,
-         node_id,
-         last_triggered_at,
-         last_payload,
-         trigger_count,
-         created_at,
-         updated_at
-       FROM flowlib_webhook_triggers
-       WHERE id = ?
-       LIMIT 1`,
-      [id],
-    );
-
-    return rows[0] ? mapRow(rows[0]) : null;
+    const row = await this.database
+      .kysely<WebhooksDB>()
+      .selectFrom('flowlib_webhook_triggers')
+      .where('id', '=', id)
+      .selectAll()
+      .limit(1)
+      .executeTakeFirst();
+    return row ? mapRow(row as unknown as WebhookTriggerRow) : null;
   }
 
   async findByWebhookPath(webhookPath: string): Promise<WebhookTrigger | null> {
-    const rows = await this.database.query<WebhookTriggerRow>(
-      `SELECT
-         id,
-         name,
-         description,
-         webhook_path,
-         provider,
-         is_enabled,
-         allowed_methods,
-         hmac_enabled,
-         hmac_header_name,
-         hmac_secret,
-         allowed_ips,
-         flow_id,
-         node_id,
-         last_triggered_at,
-         last_payload,
-         trigger_count,
-         created_at,
-         updated_at
-       FROM flowlib_webhook_triggers
-       WHERE webhook_path = ?
-       LIMIT 1`,
-      [webhookPath],
-    );
-
-    return rows[0] ? mapRow(rows[0]) : null;
+    const row = await this.database
+      .kysely<WebhooksDB>()
+      .selectFrom('flowlib_webhook_triggers')
+      .where('webhook_path', '=', webhookPath)
+      .selectAll()
+      .limit(1)
+      .executeTakeFirst();
+    return row ? mapRow(row as unknown as WebhookTriggerRow) : null;
   }
 
   async create(input: CreateWebhookTriggerRecord): Promise<WebhookTrigger> {
-    const now = new Date().toISOString();
-    await this.database.execute(
-      `INSERT INTO flowlib_webhook_triggers (
-         id,
-         name,
-         description,
-         webhook_path,
-         provider,
-         is_enabled,
-         allowed_methods,
-         hmac_enabled,
-         hmac_header_name,
-         hmac_secret,
-         allowed_ips,
-         flow_id,
-         node_id,
-         trigger_count,
-         created_at,
-         updated_at
-       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [
-        input.id,
-        input.name,
-        input.description ?? null,
-        input.webhookPath,
-        input.provider ?? 'generic',
-        true,
-        input.allowedMethods ?? 'POST',
-        input.hmacEnabled ?? false,
-        input.hmacHeaderName ?? null,
-        input.hmacSecret ?? null,
-        input.allowedIps ?? null,
-        input.flowId ?? null,
-        input.nodeId ?? null,
-        0,
-        now,
-        now,
-      ],
-    );
+    const now = this.nowValue();
+    await this.database
+      .kysely<WebhooksDB>()
+      .insertInto('flowlib_webhook_triggers')
+      .values({
+        id: input.id,
+        name: input.name,
+        description: input.description ?? null,
+        webhook_path: input.webhookPath,
+        provider: input.provider ?? 'generic',
+        is_enabled: this.boolValue(true),
+        allowed_methods: input.allowedMethods ?? 'POST',
+        hmac_enabled: this.boolValue(input.hmacEnabled ?? false),
+        hmac_header_name: input.hmacHeaderName ?? null,
+        hmac_secret: input.hmacSecret ?? null,
+        allowed_ips: input.allowedIps ?? null,
+        flow_id: input.flowId ?? null,
+        node_id: input.nodeId ?? null,
+        last_triggered_at: null,
+        last_payload: null,
+        trigger_count: 0,
+        created_at: now,
+        updated_at: now,
+      })
+      .execute();
 
     const created = await this.findById(input.id);
     if (!created) {
@@ -224,83 +174,93 @@ export class WebhookTriggersRepository {
   }
 
   async update(id: string, input: UpdateWebhookTriggerInput): Promise<WebhookTrigger | null> {
-    const updates: string[] = [];
-    const params: unknown[] = [];
-
+    const set: Record<string, unknown> = {};
     if (input.name !== undefined) {
-      updates.push('name = ?');
-      params.push(input.name);
+      set.name = input.name;
     }
     if (input.description !== undefined) {
-      updates.push('description = ?');
-      params.push(input.description ?? null);
+      set.description = input.description ?? null;
     }
     if (input.provider !== undefined) {
-      updates.push('provider = ?');
-      params.push(input.provider);
+      set.provider = input.provider;
     }
     if (input.isEnabled !== undefined) {
-      updates.push('is_enabled = ?');
-      params.push(input.isEnabled);
+      set.is_enabled = this.boolValue(input.isEnabled);
     }
     if (input.allowedMethods !== undefined) {
-      updates.push('allowed_methods = ?');
-      params.push(input.allowedMethods);
+      set.allowed_methods = input.allowedMethods;
     }
     if (input.hmacEnabled !== undefined) {
-      updates.push('hmac_enabled = ?');
-      params.push(input.hmacEnabled);
+      set.hmac_enabled = this.boolValue(input.hmacEnabled);
     }
     if (input.hmacHeaderName !== undefined) {
-      updates.push('hmac_header_name = ?');
-      params.push(input.hmacHeaderName ?? null);
+      set.hmac_header_name = input.hmacHeaderName ?? null;
     }
     if (input.hmacSecret !== undefined) {
-      updates.push('hmac_secret = ?');
-      params.push(input.hmacSecret ?? null);
+      set.hmac_secret = input.hmacSecret ?? null;
     }
     if (input.allowedIps !== undefined) {
-      updates.push('allowed_ips = ?');
-      params.push(input.allowedIps ?? null);
+      set.allowed_ips = input.allowedIps ?? null;
     }
     if (input.flowId !== undefined) {
-      updates.push('flow_id = ?');
-      params.push(input.flowId ?? null);
+      set.flow_id = input.flowId ?? null;
     }
     if (input.nodeId !== undefined) {
-      updates.push('node_id = ?');
-      params.push(input.nodeId ?? null);
+      set.node_id = input.nodeId ?? null;
     }
 
-    if (updates.length === 0) {
+    if (Object.keys(set).length === 0) {
       return this.findById(id);
     }
 
-    updates.push('updated_at = ?');
-    params.push(new Date().toISOString(), id);
+    set.updated_at = this.nowValue();
 
-    await this.database.execute(
-      `UPDATE flowlib_webhook_triggers SET ${updates.join(', ')} WHERE id = ?`,
-      params,
-    );
+    await this.database
+      .kysely<WebhooksDB>()
+      .updateTable('flowlib_webhook_triggers')
+      .set(set as never)
+      .where('id', '=', id)
+      .execute();
 
     return this.findById(id);
   }
 
   async delete(id: string): Promise<void> {
-    await this.database.execute('DELETE FROM flowlib_webhook_triggers WHERE id = ?', [id]);
+    await this.database
+      .kysely<WebhooksDB>()
+      .deleteFrom('flowlib_webhook_triggers')
+      .where('id', '=', id)
+      .execute();
   }
 
   async recordDelivery(id: string, payload: unknown): Promise<void> {
-    const timestamp = new Date().toISOString();
-    await this.database.execute(
-      `UPDATE flowlib_webhook_triggers
-       SET last_triggered_at = ?,
-           last_payload = ?,
-           trigger_count = trigger_count + 1,
-           updated_at = ?
-       WHERE id = ?`,
-      [timestamp, JSON.stringify(payload ?? null), timestamp, id],
-    );
+    const now = this.nowValue();
+    await this.database
+      .kysely<WebhooksDB>()
+      .updateTable('flowlib_webhook_triggers')
+      .set({
+        last_triggered_at: now,
+        // Always persist as JSON text — works uniformly across SQLite (TEXT),
+        // MySQL (JSON), and Postgres (jsonb accepts JSON-encoded strings).
+        last_payload: payload === null || payload === undefined ? null : JSON.stringify(payload),
+        trigger_count: sql`trigger_count + 1`,
+        updated_at: now,
+      } as never)
+      .where('id', '=', id)
+      .execute();
+  }
+
+  // ─── Internals ─────────────────────────────────────────────────────
+
+  /** Dialect-appropriate "now" value. SQLite stores timestamps as TEXT
+   *  (ISO-8601); Postgres/MySQL accept Date objects through the driver. */
+  private nowValue(): string | Date {
+    return this.database.type === 'sqlite' ? new Date().toISOString() : new Date();
+  }
+
+  /** Dialect-appropriate boolean. SQLite stores 0/1 in INTEGER; Postgres
+   *  has native bool; MySQL accepts both. */
+  private boolValue(value: boolean): boolean | 0 | 1 {
+    return this.database.type === 'sqlite' ? (value ? 1 : 0) : value;
   }
 }

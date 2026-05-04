@@ -7,6 +7,7 @@
  */
 
 import { z } from 'zod/v4';
+import type { FlowlibDefinition } from 'src/services/flow-versions/schemas-fresh';
 import type { ChatToolDefinition, ChatToolContext, ChatToolResult } from '../chat-types';
 
 // =====================================
@@ -111,7 +112,7 @@ export const getFlowDefinitionTool: ChatToolDefinition = {
         };
       }
 
-      const definition = version.flowlibDefinition;
+      const definition = version.flowlibDefinition as FlowlibDefinition;
 
       return {
         success: true,
@@ -119,7 +120,7 @@ export const getFlowDefinitionTool: ChatToolDefinition = {
           id: flow.id,
           name: flow.name,
           description: flow.description,
-          nodes: definition.nodes.map((n: Record<string, unknown>) => ({
+          nodes: definition.nodes.map((n) => ({
             id: n.id,
             type: n.type,
             label: n.label,

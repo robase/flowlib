@@ -15,6 +15,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { EnvironmentResolver, PromotionService } from '../src/backend/promotion';
 import type { GitProvider, BranchComparison } from '../src/backend/git-provider';
 import type { PluginDatabaseApi } from '@flowlib/core';
+import { patchMockDb } from './test-helpers/mock-db';
 
 // ── Helpers ──────────────────────────────────────────────────────────────
 
@@ -53,17 +54,18 @@ const silentLogger = {
  */
 function makeDb(configRows: Array<{ flow_id: string; file_path: string }> = []) {
   const history: Array<{ flow_id: string; action: string; pr_number: number | null }> = [];
-  const db = {
+  const db = patchMockDb({
     type: 'sqlite' as const,
     query: vi.fn(async (sql: string, params: unknown[] = []) => {
-      if (sql.includes('SELECT flow_id FROM flowlib_vc_sync_config WHERE file_path IN')) {
+      const norm = sql.toLowerCase().replace(/"/g, '');
+      if (norm.includes('flowlib_vc_sync_config') && norm.includes('file_path in')) {
         const paths = params as string[];
         return configRows.filter((r) => paths.includes(r.file_path));
       }
       return [];
     }),
     execute: vi.fn(async (sql: string, params: unknown[] = []) => {
-      if (sql.startsWith('INSERT INTO flowlib_vc_sync_history')) {
+      if (sql.toLowerCase().replace(/"/g, '').startsWith('insert into flowlib_vc_sync_history')) {
         const [, flow_id, action, , pr_number] = params as [
           string,
           string,
@@ -74,7 +76,7 @@ function makeDb(configRows: Array<{ flow_id: string; file_path: string }> = []) 
         history.push({ flow_id, action, pr_number });
       }
     }),
-  } as unknown as PluginDatabaseApi;
+  }) as unknown as PluginDatabaseApi;
   return { db, history };
 }
 

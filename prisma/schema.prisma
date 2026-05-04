@@ -1,0 +1,436 @@
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                String              @id
+  name              String
+  email             String
+  emailVerified     Boolean             @default(false) @map("email_verified")
+  image             String?
+  role              String?             @default("default")
+  banned            Boolean?            @default(false)
+  banReason         String?             @map("ban_reason")
+  banExpires        DateTime?           @map("ban_expires") @db.Timestamptz(3)
+  twoFactorEnabled  Boolean?            @default(false) @map("two_factor_enabled")
+  createdAt         DateTime            @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt         DateTime            @updatedAt @map("updated_at") @db.Timestamptz(3)
+  account           Account[]
+  session           Session[]
+  twoFactor         TwoFactor[]
+  rbac_team_members Rbac_team_members[]
+  rbac_teams        Rbac_teams[]
+
+  @@unique([email])
+  @@map("flowlib_user")
+}
+
+model Account {
+  id                    String    @id
+  accountId             String    @map("account_id")
+  providerId            String    @map("provider_id")
+  userId                String    @map("user_id")
+  accessToken           String?   @map("access_token")
+  refreshToken          String?   @map("refresh_token")
+  idToken               String?   @map("id_token")
+  accessTokenExpiresAt  DateTime? @map("access_token_expires_at") @db.Timestamptz(3)
+  refreshTokenExpiresAt DateTime? @map("refresh_token_expires_at") @db.Timestamptz(3)
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt             DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("flowlib_account")
+}
+
+model Session {
+  id             String   @id
+  expiresAt      DateTime @map("expires_at") @db.Timestamptz(3)
+  token          String
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt      DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+  ipAddress      String?  @map("ip_address")
+  userAgent      String?  @map("user_agent")
+  impersonatedBy String?  @map("impersonated_by")
+  userId         String   @map("user_id")
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([token])
+  @@map("flowlib_session")
+}
+
+model Verification {
+  id         String    @id
+  identifier String
+  value      String
+  expiresAt  DateTime  @map("expires_at") @db.Timestamptz(3)
+  createdAt  DateTime? @map("created_at") @db.Timestamptz(3)
+  updatedAt  DateTime? @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@map("flowlib_verification")
+}
+
+model Apikey {
+  id                  String    @id
+  configId            String    @default("default") @map("config_id")
+  name                String?
+  start               String?
+  prefix              String?
+  key                 String
+  referenceId         String    @map("reference_id")
+  refillInterval      Int?      @map("refill_interval")
+  refillAmount        Int?      @map("refill_amount")
+  lastRefillAt        DateTime? @map("last_refill_at") @db.Timestamptz(3)
+  enabled             Boolean?  @default(true)
+  rateLimitEnabled    Boolean?  @map("rate_limit_enabled")
+  rateLimitTimeWindow Int?      @map("rate_limit_time_window")
+  rateLimitMax        Int?      @map("rate_limit_max")
+  requestCount        Int?      @map("request_count")
+  remaining           Int?
+  lastRequest         DateTime? @map("last_request") @db.Timestamptz(3)
+  expiresAt           DateTime? @map("expires_at") @db.Timestamptz(3)
+  createdAt           DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt           DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+  permissions         String?
+  metadata            String?
+
+  @@map("flowlib_apikey")
+}
+
+model FlowAccess {
+  id         String    @id @default(uuid())
+  flowId     String    @map("flow_id")
+  userId     String?   @map("user_id")
+  teamId     String?   @map("team_id")
+  permission String    @default("viewer")
+  grantedBy  String?   @map("granted_by")
+  grantedAt  DateTime  @default(now()) @map("granted_at") @db.Timestamptz(3)
+  expiresAt  DateTime? @map("expires_at") @db.Timestamptz(3)
+  flow       Flows     @relation(fields: [flowId], references: [id], onDelete: Cascade)
+
+  @@map("flowlib_flow_access")
+}
+
+model TwoFactor {
+  id          String   @id
+  userId      String   @map("user_id")
+  secret      String
+  backupCodes String   @map("backup_codes")
+  verified    Boolean? @default(false)
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("flowlib_two_factor")
+}
+
+model Credentials {
+  id          String    @id @default(uuid())
+  name        String
+  type        String
+  authType    String    @map("auth_type")
+  config      Json
+  description String?
+  isActive    Boolean   @default(true) @map("is_active")
+  workspaceId String?   @map("workspace_id")
+  isShared    Boolean   @default(false) @map("is_shared")
+  metadata    Json?
+  lastUsedAt  DateTime? @map("last_used_at") @db.Timestamptz(3)
+  expiresAt   DateTime? @map("expires_at") @db.Timestamptz(3)
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@map("flowlib_credentials")
+}
+
+model Flows {
+  id                String             @id
+  name              String
+  description       String?
+  tags              Json?
+  isActive          Boolean            @default(true) @map("is_active")
+  liveVersionNumber Int?               @map("live_version_number")
+  createdAt         DateTime           @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt         DateTime           @updatedAt @map("updated_at") @db.Timestamptz(3)
+  scope_id          String?
+  scope             Rbac_teams?        @relation(fields: [scope_id], references: [id], onDelete: SetNull)
+  flowAccess        FlowAccess[]
+  vc_sync_config    Vc_sync_config?
+  flowTriggers      FlowTriggers[]
+  flowVersions      FlowVersions[]
+  vc_sync_history   Vc_sync_history[]
+  chatMessages      ChatMessages[]
+  flowRuns          FlowRuns[]
+  vc_pull_commits   Vc_pull_commits[]
+  vc_status_cache   Vc_status_cache[]
+  webhook_triggers  Webhook_triggers[]
+
+  @@index([scope_id])
+  @@map("flowlib_flows")
+}
+
+model Vc_sync_config {
+  id                String    @id
+  flowId            String    @map("flow_id")
+  provider          String
+  repo              String
+  branch            String
+  filePath          String    @map("file_path")
+  mode              String
+  syncDirection     String    @default("write") @map("sync_direction")
+  lastSyncedAt      DateTime? @map("last_synced_at") @db.Timestamptz(3)
+  lastCommitSha     String?   @map("last_commit_sha")
+  lastSyncedVersion Int?      @map("last_synced_version")
+  draftBranch       String?   @map("draft_branch")
+  activePrNumber    Int?      @map("active_pr_number")
+  activePrUrl       String?   @map("active_pr_url")
+  enabled           Boolean   @default(true)
+  createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt         DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+  flow              Flows     @relation(fields: [flowId], references: [id], onDelete: Cascade)
+
+  @@unique([flowId])
+  @@map("flowlib_vc_sync_config")
+}
+
+model FlowTriggers {
+  id              String    @id @default(uuid())
+  flowId          String    @map("flow_id")
+  nodeId          String    @map("node_id")
+  type            String
+  isEnabled       Boolean   @default(true) @map("is_enabled")
+  webhookPath     String?   @map("webhook_path")
+  webhookSecret   String?   @map("webhook_secret")
+  cronExpression  String?   @map("cron_expression")
+  cronTimezone    String?   @map("cron_timezone")
+  lastTriggeredAt DateTime? @map("last_triggered_at") @db.Timestamptz(3)
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt       DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+  flow            Flows     @relation(fields: [flowId], references: [id], onDelete: Cascade)
+
+  @@unique([webhookPath])
+  @@map("flowlib_flow_triggers")
+}
+
+model FlowVersions {
+  flowId            String   @map("flow_id")
+  version           Int
+  flowlibDefinition Json     @map("flowlib_definition")
+  createdAt         DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  createdBy         String?  @map("created_by")
+  flow              Flows    @relation(fields: [flowId], references: [id], onDelete: Cascade)
+
+  @@id([version, flowId])
+  @@map("flowlib_flow_versions")
+}
+
+model Vc_sync_history {
+  id        String   @id @default(uuid())
+  flowId    String   @map("flow_id")
+  action    String
+  commitSha String?  @map("commit_sha")
+  prNumber  Int?     @map("pr_number")
+  version   Int?
+  message   String?
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  createdBy String?  @map("created_by")
+  flow      Flows    @relation(fields: [flowId], references: [id], onDelete: Cascade)
+
+  @@index([flowId])
+  @@map("flowlib_vc_sync_history")
+}
+
+model ChatMessages {
+  id        String   @id @default(uuid())
+  flowId    String   @map("flow_id")
+  role      String
+  content   String   @default("")
+  toolMeta  Json?    @map("tool_meta")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  flow      Flows    @relation(fields: [flowId], references: [id], onDelete: Cascade)
+
+  @@map("flowlib_chat_messages")
+}
+
+model FlowRuns {
+  id              String         @id @default(uuid())
+  flowId          String         @map("flow_id")
+  flowVersion     Int            @map("flow_version")
+  status          String         @default("PENDING")
+  inputs          Json
+  outputs         Json?
+  error           String?
+  startedAt       DateTime       @default(now()) @map("started_at") @db.Timestamptz(3)
+  completedAt     DateTime?      @map("completed_at") @db.Timestamptz(3)
+  duration        Int?
+  createdBy       String?        @map("created_by")
+  triggerType     String?        @map("trigger_type")
+  triggerId       String?        @map("trigger_id")
+  triggerNodeId   String?        @map("trigger_node_id")
+  triggerData     Json?          @map("trigger_data")
+  lastHeartbeatAt DateTime?      @map("last_heartbeat_at") @db.Timestamptz(3)
+  nodeOutputs     Json?          @map("node_outputs")
+  flow            Flows          @relation(fields: [flowId], references: [id], onDelete: Cascade)
+  actionTraces    ActionTraces[]
+  batchJobs       BatchJobs[]
+
+  @@map("flowlib_flow_executions")
+}
+
+model Vc_instance_state {
+  id                    String    @id @default(uuid())
+  repo                  String
+  branch                String
+  lastInstanceCommitSha String?   @map("last_instance_commit_sha")
+  lastReconcilerTickAt  DateTime? @map("last_reconciler_tick_at") @db.Timestamptz(3)
+  lastReconcilerError   String?   @map("last_reconciler_error")
+  breakGlassUntil       DateTime? @map("break_glass_until") @db.Timestamptz(3)
+  breakGlassActor       String?   @map("break_glass_actor")
+  breakGlassReason      String?   @map("break_glass_reason")
+  createdAt             DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt             DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@index([repo])
+  @@map("flowlib_vc_instance_state")
+}
+
+model ActionTraces {
+  id                    String        @id @default(uuid())
+  flowRunId             String        @map("flow_run_id")
+  parentNodeExecutionId String?       @map("parent_node_execution_id")
+  nodeId                String?       @map("node_id")
+  nodeType              String?       @map("node_type")
+  toolId                String?       @map("tool_id")
+  toolName              String?       @map("tool_name")
+  iteration             Int?
+  status                String        @default("PENDING")
+  inputs                Json
+  outputs               Json?
+  error                 Json?
+  startedAt             DateTime      @default(now()) @map("started_at") @db.Timestamptz(3)
+  completedAt           DateTime?     @map("completed_at") @db.Timestamptz(3)
+  duration              Int?
+  retryCount            Int           @default(0) @map("retry_count")
+  flowRun               FlowRuns      @relation(fields: [flowRunId], references: [id], onDelete: Cascade)
+  parentNodeExecution   ActionTraces? @relation(fields: [parentNodeExecutionId], references: [id], onDelete: Cascade)
+
+  @@map("flowlib_action_traces")
+}
+
+model Vc_pull_commits {
+  flowId          String   @map("flow_id")
+  commitSha       String   @map("commit_sha")
+  versionInserted Int?     @map("version_inserted")
+  pulledAt        DateTime @default(now()) @map("pulled_at") @db.Timestamptz(3)
+  flow            Flows    @relation(fields: [flowId], references: [id], onDelete: Cascade)
+
+  @@id([flowId, commitSha])
+  @@map("flowlib_vc_pull_commits")
+}
+
+model BatchJobs {
+  id           String    @id @default(uuid())
+  flowRunId    String    @map("flow_run_id")
+  nodeId       String    @map("node_id")
+  provider     String
+  batchId      String?   @map("batch_id")
+  status       String    @default("SUBMITTED")
+  requestData  Json      @map("request_data")
+  responseData Json?     @map("response_data")
+  error        String?
+  submittedAt  DateTime  @default(now()) @map("submitted_at") @db.Timestamptz(3)
+  completedAt  DateTime? @map("completed_at") @db.Timestamptz(3)
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt    DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+  flowRun      FlowRuns  @relation(fields: [flowRunId], references: [id], onDelete: Cascade)
+
+  @@map("flowlib_batch_jobs")
+}
+
+model Vc_status_cache {
+  flowId      String   @id @map("flow_id")
+  state       String
+  chipLabel   String   @map("chip_label")
+  actionLabel String?  @map("action_label")
+  lastError   String?  @map("last_error")
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+  flow        Flows?   @relation(fields: [flowId], references: [id], onDelete: Cascade)
+
+  @@map("flowlib_vc_status_cache")
+}
+
+model Rbac_scope_access {
+  id         String     @id
+  scope_id   String
+  user_id    String?
+  team_id    String?
+  permission String     @default("viewer")
+  granted_by String?
+  granted_at DateTime   @default(now()) @db.Timestamptz(3)
+  scope      Rbac_teams @relation(fields: [scope_id], references: [id], onDelete: Cascade)
+
+  @@index([scope_id])
+  @@index([user_id])
+  @@index([team_id])
+  @@map("flowlib_rbac_scope_access")
+}
+
+model Rbac_team_members {
+  id         String     @id
+  team_id    String
+  user_id    String
+  created_at DateTime   @default(now()) @db.Timestamptz(3)
+  team       Rbac_teams @relation(fields: [team_id], references: [id], onDelete: Cascade)
+  user       User       @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([team_id])
+  @@index([user_id])
+  @@map("flowlib_rbac_team_members")
+}
+
+model Rbac_teams {
+  id                String              @id
+  name              String
+  description       String?
+  parent_id         String?
+  created_by        String?             @relation(fields: [created_by], references: [id], onDelete: NoAction)
+  created_at        DateTime            @default(now()) @db.Timestamptz(3)
+  updated_at        DateTime?           @db.Timestamptz(3)
+  parent            Rbac_teams?         @relation(fields: [parent_id], references: [id], onDelete: SetNull)
+  flows             Flows[]
+  rbac_scope_access Rbac_scope_access[]
+  rbac_team_members Rbac_team_members[]
+
+  @@index([parent_id])
+  @@map("flowlib_rbac_teams")
+}
+
+model Webhook_triggers {
+  id              String    @id @default(uuid())
+  name            String
+  description     String?
+  webhookPath     String    @map("webhook_path")
+  provider        String    @default("generic")
+  isEnabled       Boolean   @default(true) @map("is_enabled")
+  allowedMethods  String    @default("POST") @map("allowed_methods")
+  hmacEnabled     Boolean   @default(false) @map("hmac_enabled")
+  hmacHeaderName  String?   @map("hmac_header_name")
+  hmacSecret      String?   @map("hmac_secret")
+  allowedIps      String?   @map("allowed_ips")
+  flowId          String?   @map("flow_id")
+  nodeId          String?   @map("node_id")
+  lastTriggeredAt DateTime? @map("last_triggered_at") @db.Timestamptz(3)
+  lastPayload     Json?     @map("last_payload")
+  triggerCount    Int       @default(0) @map("trigger_count")
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt       DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
+  flow            Flows?    @relation(fields: [flowId], references: [id], onDelete: NoAction)
+
+  @@unique([webhookPath])
+  @@map("flowlib_webhook_triggers")
+}

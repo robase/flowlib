@@ -22,6 +22,7 @@ import { execSync } from 'node:child_process';
 import fsSync from 'node:fs';
 import { join } from 'node:path';
 import type { FlowlibInstance } from '../../../src/api/types';
+import type { FlowlibDefinition } from '../../../src/services/flow-versions/schemas-fresh';
 import type { ChatToolContext, ChatToolResult } from '../../../src/services/chat/chat-types';
 import {
   getFlowSourceTool,
@@ -51,7 +52,8 @@ function getAgentTools(flowlib: FlowlibInstance, flowId: string): Promise<ToolIn
     if (!v?.flowlibDefinition) {
       return [];
     }
-    const agent = v.flowlibDefinition.nodes.find((n) => n.type === 'core.agent');
+    const definition = v.flowlibDefinition as FlowlibDefinition;
+    const agent = definition.nodes.find((n) => n.type === 'core.agent');
     return (agent?.params?.addedTools ?? []) as ToolInstance[];
   });
 }

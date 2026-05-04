@@ -1,7 +1,13 @@
 import { defineConfig } from 'tsdown';
 
 export default defineConfig({
-  entry: ['src/index.ts', 'src/schema-sqlite.ts', 'src/schema-postgres.ts', 'src/schema-mysql.ts'],
+  entry: [
+    'src/index.ts',
+    'src/schema-sqlite.ts',
+    'src/schema-postgres.ts',
+    'src/schema-mysql.ts',
+    'src/kysely-types.ts',
+  ],
   format: ['esm', 'cjs'],
   dts: { resolve: false },
   sourcemap: true,

@@ -18,6 +18,8 @@
 // =============================================================================
 
 import type { PluginDatabaseApi } from '@flowlib/core';
+import { sql } from 'kysely';
+import type { VcDB } from './db-types';
 import type {
   VcStatusDisplay,
   VcStatusCacheEntry,
@@ -233,45 +235,40 @@ export class StatusCacheService {
 
   /** Read the cached entry for a single flow. Null when none has been computed yet. */
   async getCached(db: PluginDatabaseApi, flowId: string): Promise<VcStatusCacheEntry | null> {
-    const rows = await db.query<{
-      flow_id: string;
-      state: string;
-      chip_label: string;
-      action_label: string | null;
-      last_error: string | null;
-      updated_at: string;
-    }>('SELECT * FROM flowlib_vc_status_cache WHERE flow_id = ? LIMIT 1', [flowId]);
-    if (rows.length === 0) {
+    const r = await db
+      .kysely<VcDB>()
+      .selectFrom('flowlib_vc_status_cache')
+      .where('flow_id', '=', flowId)
+      .selectAll()
+      .limit(1)
+      .executeTakeFirst();
+    if (!r) {
       return null;
     }
-    const r = rows[0];
     return {
       flowId: r.flow_id,
       state: r.state as VcSyncState,
       chipLabel: r.chip_label,
       actionLabel: r.action_label,
       lastError: r.last_error,
-      updatedAt: r.updated_at,
+      updatedAt: String(r.updated_at),
     };
   }
 
   /** All cached entries — used by the dashboard to render chips. */
   async listCached(db: PluginDatabaseApi): Promise<VcStatusCacheEntry[]> {
-    const rows = await db.query<{
-      flow_id: string;
-      state: string;
-      chip_label: string;
-      action_label: string | null;
-      last_error: string | null;
-      updated_at: string;
-    }>('SELECT * FROM flowlib_vc_status_cache');
+    const rows = await db
+      .kysely<VcDB>()
+      .selectFrom('flowlib_vc_status_cache')
+      .selectAll()
+      .execute();
     return rows.map((r) => ({
       flowId: r.flow_id,
       state: r.state as VcSyncState,
       chipLabel: r.chip_label,
       actionLabel: r.action_label,
       lastError: r.last_error,
-      updatedAt: r.updated_at,
+      updatedAt: String(r.updated_at),
     }));
   }
 
@@ -306,11 +303,12 @@ export class StatusCacheService {
       return out;
     }
     const ids = out.map((f) => f.flowId);
-    const placeholders = ids.map(() => '?').join(', ');
-    const paths = await db.query<{ flow_id: string; file_path: string }>(
-      `SELECT flow_id, file_path FROM flowlib_vc_sync_config WHERE flow_id IN (${placeholders})`,
-      ids,
-    );
+    const paths = await db
+      .kysely<VcDB>()
+      .selectFrom('flowlib_vc_sync_config')
+      .where('flow_id', 'in', ids)
+      .select(['flow_id', 'file_path'])
+      .execute();
     const pathByFlow = new Map(paths.map((p) => [p.flow_id, p.file_path]));
     for (const f of out) {
       f.filePath = pathByFlow.get(f.flowId) ?? '';
@@ -328,21 +326,39 @@ export class StatusCacheService {
    * MySQL — no dialect-specific window functions or LATERAL joins.
    */
   private async loadFacts(db: PluginDatabaseApi): Promise<FactJoinRow[]> {
-    return db.query<FactJoinRow>(`
-      SELECT
-        f.id AS flow_id,
-        f.name AS flow_name,
-        c.enabled AS config_enabled,
-        (SELECT MAX(version) FROM flowlib_flow_versions WHERE flow_id = f.id) AS current_version,
-        c.last_synced_version,
-        c.last_commit_sha,
-        c.active_pr_number,
-        (SELECT action FROM flowlib_vc_sync_history h WHERE h.flow_id = f.id ORDER BY h.created_at DESC LIMIT 1) AS last_sync_action,
-        NULL AS last_sync_error,
-        c.last_synced_at
-      FROM flowlib_flows f
-      LEFT JOIN flowlib_vc_sync_config c ON c.flow_id = f.id
-    `);
+    // The phase-1 conversion left this as a `sql\`\`` template because
+    // Drizzle's builder couldn't express correlated subqueries-as-columns.
+    // Kysely can — the two `eb.selectFrom(...).whereRef(...).as(alias)`
+    // expressions below produce per-row aggregates against `f.id` without
+    // dropping out of the typed builder.
+    const rows = await db
+      .kysely<VcDB>()
+      .selectFrom('flowlib_flows as f')
+      .leftJoin('flowlib_vc_sync_config as c', 'c.flow_id', 'f.id')
+      .select((eb) => [
+        'f.id as flow_id',
+        'f.name as flow_name',
+        'c.enabled as config_enabled',
+        eb
+          .selectFrom('flowlib_flow_versions')
+          .whereRef('flow_id', '=', 'f.id')
+          .select((eb2) => eb2.fn.max<number>('version').as('v'))
+          .as('current_version'),
+        'c.last_synced_version',
+        'c.last_commit_sha',
+        'c.active_pr_number',
+        eb
+          .selectFrom('flowlib_vc_sync_history as h')
+          .whereRef('h.flow_id', '=', 'f.id')
+          .orderBy('h.created_at', 'desc')
+          .limit(1)
+          .select('action')
+          .as('last_sync_action'),
+        sql<null>`NULL`.as('last_sync_error'),
+        'c.last_synced_at',
+      ])
+      .execute();
+    return rows as unknown as FactJoinRow[];
   }
 
   private factToInput(fact: FactJoinRow): FlowStateInput {
@@ -370,10 +386,13 @@ export class StatusCacheService {
     // Upsert via probe-then-write: portable across the three dialects
     // without dialect-specific syntax. flowId is the PK so there's no race
     // beyond the cache itself, which only the reconciler writes to.
-    const existing = await db.query<{ flow_id: string }>(
-      'SELECT flow_id FROM flowlib_vc_status_cache WHERE flow_id = ? LIMIT 1',
-      [input.flowId],
-    );
+    const existing = await db
+      .kysely<VcDB>()
+      .selectFrom('flowlib_vc_status_cache')
+      .where('flow_id', '=', input.flowId)
+      .select('flow_id')
+      .limit(1)
+      .execute();
     if (existing.length > 0) {
       await db.execute(
         `UPDATE flowlib_vc_status_cache
@@ -404,10 +423,13 @@ export class StatusCacheService {
   ): Promise<void> {
     const display = displayFor(state);
     const now = new Date().toISOString();
-    const existing = await db.query<{ flow_id: string }>(
-      'SELECT flow_id FROM flowlib_vc_status_cache WHERE flow_id = ? LIMIT 1',
-      [flowId],
-    );
+    const existing = await db
+      .kysely<VcDB>()
+      .selectFrom('flowlib_vc_status_cache')
+      .where('flow_id', '=', flowId)
+      .select('flow_id')
+      .limit(1)
+      .execute();
     if (existing.length > 0) {
       await db.execute(
         `UPDATE flowlib_vc_status_cache

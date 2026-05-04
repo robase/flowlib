@@ -17,6 +17,8 @@ import { InstanceStateService } from '../src/backend/instance-state';
 import { isFlowMutation, isPluginOwnedPath, readOnlyResponse } from '../src/backend/read-only-gate';
 import type { GitProvider } from '../src/backend/git-provider';
 import type { PluginDatabaseApi, FlowlibPlugin } from '@flowlib/core';
+import { SQLiteSyncDialect } from 'drizzle-orm/sqlite-core';
+import { patchMockDb } from './test-helpers/mock-db';
 
 // ── Shared helpers ───────────────────────────────────────────────────────
 
@@ -59,14 +61,14 @@ function makeStateDb() {
   let row: Record<string, unknown> | null = null;
 
   const handleQuery = async (sql: string): Promise<unknown[]> => {
-    if (sql.includes('FROM flowlib_vc_instance_state')) {
+    if (sql.toLowerCase().replace(/"/g, '').includes('flowlib_vc_instance_state')) {
       return row ? [row] : [];
     }
     return [];
   };
 
   const handleExecute = async (sql: string, params: unknown[] = []) => {
-    if (sql.includes('INSERT INTO flowlib_vc_instance_state')) {
+    if (sql.toLowerCase().replace(/"/g, '').includes('insert into flowlib_vc_instance_state')) {
       const [
         id,
         repo,
@@ -89,7 +91,7 @@ function makeStateDb() {
         break_glass_actor,
         break_glass_reason,
       };
-    } else if (sql.startsWith('UPDATE flowlib_vc_instance_state')) {
+    } else if (sql.toLowerCase().replace(/"/g, '').startsWith('update flowlib_vc_instance_state')) {
       if (sql.includes('SET break_glass_until')) {
         if (row) {
           row.break_glass_until = params[0];
@@ -101,17 +103,21 @@ function makeStateDb() {
   };
 
   // PluginDatabaseApi view — takes (sql, params), returns Promise.
-  const db = {
+  const db = patchMockDb({
     type: 'sqlite' as const,
     query: vi.fn(handleQuery),
     execute: vi.fn(handleExecute),
-  } as unknown as PluginDatabaseApi;
+  }) as unknown as PluginDatabaseApi;
 
   // DatabaseConnection view — what the plugin's createPluginDatabaseApi wraps.
   // Exposes the same handlers under the `driver.queryAll` / `driver.execute`
-  // names that createPluginDatabaseApi calls.
+  // names that createPluginDatabaseApi calls. After the executeRows() addition
+  // the wrapper also reads `connection.db.dialect.sqlToQuery` to compile
+  // Drizzle `sql\`\`` templates — supply the SQLite dialect directly so the
+  // wrapper can compile templates without booting a full Drizzle instance.
   const connection = {
     type: 'sqlite' as const,
+    db: { dialect: new SQLiteSyncDialect() },
     driver: {
       queryAll: vi.fn(async (sql: string, params: unknown[] = []) => handleQuery(sql)),
       execute: vi.fn(async (sql: string, params: unknown[] = []) => handleExecute(sql, params)),

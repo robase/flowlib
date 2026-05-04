@@ -39,10 +39,7 @@ import { flowTriggers } from '@flowlib/db/sqlite';
 export default {
   async scheduled(_, env: { DB: D1Database }) {
     const db = drizzle(env.DB);
-    const due = await db
-      .select()
-      .from(flowTriggers)
-      .where(eq(flowTriggers.isEnabled, true));
+    const due = await db.select().from(flowTriggers).where(eq(flowTriggers.isEnabled, true));
     // …
   },
 };
@@ -96,12 +93,12 @@ const sqliteSource = generateSqliteSchema(merged);
 
 ## Subpath Exports
 
-| Path | Contents | Bundle (gzip) |
-|---|---|---|
-| `@flowlib/db` | Merger + generators + plugin schema types + dialect namespace re-exports | ~11 KB |
-| `@flowlib/db/sqlite` | SQLite Drizzle tables | ~1.9 KB |
-| `@flowlib/db/postgres` | Postgres Drizzle tables | ~2.2 KB |
-| `@flowlib/db/mysql` | MySQL Drizzle tables | ~2.1 KB |
+| Path                   | Contents                                                                 | Bundle (gzip) |
+| ---------------------- | ------------------------------------------------------------------------ | ------------- |
+| `@flowlib/db`          | Merger + generators + plugin schema types + dialect namespace re-exports | ~11 KB        |
+| `@flowlib/db/sqlite`   | SQLite Drizzle tables                                                    | ~1.9 KB       |
+| `@flowlib/db/postgres` | Postgres Drizzle tables                                                  | ~2.2 KB       |
+| `@flowlib/db/mysql`    | MySQL Drizzle tables                                                     | ~2.1 KB       |
 
 The dialect subpaths have **no `@flowlib/core` dependency**, only `drizzle-orm` and `@flowlib/action-kit` (types-only enums).
 

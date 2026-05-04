@@ -18,6 +18,7 @@ import { StaleHeadError } from '../src/backend/git-provider';
 import type { GitProvider } from '../src/backend/git-provider';
 import type { PluginDatabaseApi } from '@flowlib/core';
 import type { VersionControlPluginOptions } from '../src/backend/types';
+import { patchMockDb } from './test-helpers/mock-db';
 
 // ── Test fixtures ────────────────────────────────────────────────────────
 
@@ -119,15 +120,28 @@ function makeFixture(args: {
   const pullCommits = new Map<string, number>(); // (flow_id|commit_sha) -> version
   const versionInserts: Array<{ flow_id: string; version: number }> = [];
 
-  const db = {
+  // SQL pattern-matches normalize case + strip identifier quotes because
+  // Kysely-emitted SQL uses lower-case keywords and `"flowlib_flows"` etc.,
+  // where the original Drizzle/raw paths produced upper-case unquoted SQL.
+  const db = patchMockDb({
     type: 'sqlite',
     query: vi.fn(async (sql: string, params: unknown[] = []) => {
-      if (sql.includes('FROM flowlib_flows WHERE')) {
-        const id = params[0] as string;
-        const f = flows.get(id);
-        return f ? [{ ...f, description: null, tags: null }] : [];
+      const norm = sql.toLowerCase().replace(/"/g, '');
+      if (norm.includes('flowlib_vc_pull_commits')) {
+        const [flowId, sha] = params as [string, string];
+        const v = pullCommits.get(`${flowId}|${sha}`);
+        return v !== undefined ? [{ version_inserted: v }] : [];
       }
-      if (sql.includes('FROM flowlib_flow_versions WHERE flow_id') && sql.includes('ORDER BY')) {
+      if (norm.includes('flowlib_vc_sync_config') && norm.includes('flow_id = ?')) {
+        const id = params[0] as string;
+        const cfg = configs.get(id);
+        return cfg ? [cfg] : [];
+      }
+      if (norm.includes('max(version)')) {
+        const id = params[0] as string;
+        return [{ version: versionsByFlow.get(id) ?? 0 }];
+      }
+      if (norm.includes('flowlib_flow_versions') && norm.includes('order by')) {
         const id = params[0] as string;
         const v = versionsByFlow.get(id);
         if (!v) {
@@ -135,44 +149,33 @@ function makeFixture(args: {
         }
         return [{ flow_id: id, version: v, flowlib_definition: definitionsByFlow.get(id)! }];
       }
-      if (sql.includes('SELECT MAX(version)')) {
+      if (norm.includes('flowlib_flows')) {
         const id = params[0] as string;
-        return [{ version: versionsByFlow.get(id) ?? 0 }];
-      }
-      if (sql.includes('FROM flowlib_vc_sync_config WHERE flow_id = ?')) {
-        const id = params[0] as string;
-        const cfg = configs.get(id);
-        return cfg ? [cfg] : [];
-      }
-      if (sql.includes('FROM flowlib_vc_pull_commits')) {
-        const [flowId, sha] = params as [string, string];
-        const v = pullCommits.get(`${flowId}|${sha}`);
-        return v !== undefined ? [{ version_inserted: v }] : [];
+        const f = flows.get(id);
+        return f ? [{ ...f, description: null, tags: null }] : [];
       }
       return [];
     }),
     execute: vi.fn(async (sql: string, params: unknown[] = []) => {
-      if (sql.includes('INSERT INTO flowlib_flow_versions')) {
+      const norm = sql.toLowerCase().replace(/"/g, '');
+      if (norm.includes('insert into flowlib_flow_versions')) {
         const [flowId, version] = params as [string, number];
         versionsByFlow.set(flowId, version);
         versionInserts.push({ flow_id: flowId, version });
-      } else if (sql.includes('INSERT INTO flowlib_vc_pull_commits')) {
+      } else if (norm.includes('insert into flowlib_vc_pull_commits')) {
         const [flowId, sha, version] = params as [string, string, number];
         pullCommits.set(`${flowId}|${sha}`, version);
-      } else if (sql.includes('UPDATE flowlib_vc_sync_config')) {
-        // Track config updates for lastCommitSha assertions.
-        if (sql.includes('SET last_synced_at = ?, last_commit_sha = ?')) {
+      } else if (norm.includes('update flowlib_vc_sync_config')) {
+        if (norm.includes('set last_synced_at')) {
           const flowId = params[params.length - 1] as string;
           const cfg = configs.get(flowId);
           if (cfg) {
             cfg.last_commit_sha = params[1];
           }
-        } else if (sql.includes('SET file_path = ?')) {
-          // Reconciler rename path — irrelevant here.
         }
       }
     }),
-  } as unknown as PluginDatabaseApi;
+  }) as unknown as PluginDatabaseApi;
 
   const provider = args.provider ?? makeProvider();
   const service = new VcSyncService(provider, { ...baseOptions, provider }, silentLogger);

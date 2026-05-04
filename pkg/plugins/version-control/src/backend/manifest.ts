@@ -227,7 +227,11 @@ export async function checkManifestAgainstInstance(
 
   // Pull every credential name once, build a normalized set, then check
   // each required env. Cheaper than N queries when there are many envs.
-  const rows = await db.query<{ name: string }>('SELECT name FROM flowlib_credentials');
+  const rows = await db
+    .kysely<import('./db-types').VcDB>()
+    .selectFrom('flowlib_credentials')
+    .select('name')
+    .execute();
   const available = new Set(rows.map((r) => normalizeName(r.name)));
 
   const credentials: CredentialCheckResult[] = [];

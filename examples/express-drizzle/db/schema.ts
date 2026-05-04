@@ -202,7 +202,7 @@ export const vc_sync_config = sqliteTable('flowlib_vc_sync_config', {
   branch: text('branch').notNull(),
   filePath: text('file_path').notNull(),
   mode: text('mode').notNull(),
-  syncDirection: text('sync_direction').notNull().default('push'),
+  syncDirection: text('sync_direction').notNull().default('write'),
   lastSyncedAt: text('last_synced_at'),
   lastCommitSha: text('last_commit_sha'),
   lastSyncedVersion: integer('last_synced_version'),
@@ -322,6 +322,27 @@ export const flowRuns = sqliteTable('flowlib_flow_executions', {
   nodeOutputs: text('node_outputs', { mode: 'json' }).$type<JSONValue>(),
 });
 
+export const vc_instance_state = sqliteTable('flowlib_vc_instance_state', {
+  id: text('id')
+    .primaryKey()
+    .notNull()
+    .$defaultFn(() => randomUUID()),
+  repo: text('repo').notNull(),
+  branch: text('branch').notNull(),
+  lastInstanceCommitSha: text('last_instance_commit_sha'),
+  lastReconcilerTickAt: text('last_reconciler_tick_at'),
+  lastReconcilerError: text('last_reconciler_error'),
+  breakGlassUntil: text('break_glass_until'),
+  breakGlassActor: text('break_glass_actor'),
+  breakGlassReason: text('break_glass_reason'),
+  createdAt: text('created_at')
+    .notNull()
+    .default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: text('updated_at')
+    .notNull()
+    .default(sql`CURRENT_TIMESTAMP`),
+});
+
 export const actionTraces = sqliteTable('flowlib_action_traces', {
   id: text('id')
     .primaryKey()
@@ -354,6 +375,21 @@ export const actionTraces = sqliteTable('flowlib_action_traces', {
   retryCount: integer('retry_count').notNull().default(0),
 });
 
+export const vc_pull_commits = sqliteTable(
+  'flowlib_vc_pull_commits',
+  {
+    flowId: text('flow_id')
+      .notNull()
+      .references(() => flows.id, { onDelete: 'cascade' }),
+    commitSha: text('commit_sha').notNull(),
+    versionInserted: integer('version_inserted'),
+    pulledAt: text('pulled_at')
+      .notNull()
+      .default(sql`CURRENT_TIMESTAMP`),
+  },
+  (table) => [primaryKey({ columns: [table.flowId, table.commitSha] })],
+);
+
 export const batchJobs = sqliteTable('flowlib_batch_jobs', {
   id: text('id')
     .primaryKey()
@@ -376,6 +412,20 @@ export const batchJobs = sqliteTable('flowlib_batch_jobs', {
   createdAt: text('created_at')
     .notNull()
     .default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: text('updated_at')
+    .notNull()
+    .default(sql`CURRENT_TIMESTAMP`),
+});
+
+export const vc_status_cache = sqliteTable('flowlib_vc_status_cache', {
+  flowId: text('flow_id')
+    .primaryKey()
+    .notNull()
+    .references(() => flows.id, { onDelete: 'cascade' }),
+  state: text('state').notNull(),
+  chipLabel: text('chip_label').notNull(),
+  actionLabel: text('action_label'),
+  lastError: text('last_error'),
   updatedAt: text('updated_at')
     .notNull()
     .default(sql`CURRENT_TIMESTAMP`),
@@ -483,6 +533,8 @@ export const flowsRelations = relations(flows, ({ one, many }) => ({
   vc_sync_history: many(vc_sync_history),
   chatMessages: many(chatMessages),
   flowRuns: many(flowRuns),
+  vc_pull_commits: many(vc_pull_commits),
+  vc_status_cache: many(vc_status_cache),
   webhook_triggers: many(webhook_triggers),
 }));
 
@@ -521,8 +573,16 @@ export const actionTracesRelations = relations(actionTraces, ({ one, many }) => 
   actionTraces: many(actionTraces),
 }));
 
+export const vc_pull_commitsRelations = relations(vc_pull_commits, ({ one }) => ({
+  flow: one(flows, { fields: [vc_pull_commits.flowId], references: [flows.id] }),
+}));
+
 export const batchJobsRelations = relations(batchJobs, ({ one }) => ({
   flowRun: one(flowRuns, { fields: [batchJobs.flowRunId], references: [flowRuns.id] }),
+}));
+
+export const vc_status_cacheRelations = relations(vc_status_cache, ({ one }) => ({
+  flow: one(flows, { fields: [vc_status_cache.flowId], references: [flows.id] }),
 }));
 
 export const rbac_scope_accessRelations = relations(rbac_scope_access, ({ one }) => ({
@@ -577,10 +637,16 @@ export type ChatMessages = typeof chatMessages.$inferSelect;
 export type NewChatMessages = typeof chatMessages.$inferInsert;
 export type FlowRuns = typeof flowRuns.$inferSelect;
 export type NewFlowRuns = typeof flowRuns.$inferInsert;
+export type Vc_instance_state = typeof vc_instance_state.$inferSelect;
+export type NewVc_instance_state = typeof vc_instance_state.$inferInsert;
 export type ActionTraces = typeof actionTraces.$inferSelect;
 export type NewActionTraces = typeof actionTraces.$inferInsert;
+export type Vc_pull_commits = typeof vc_pull_commits.$inferSelect;
+export type NewVc_pull_commits = typeof vc_pull_commits.$inferInsert;
 export type BatchJobs = typeof batchJobs.$inferSelect;
 export type NewBatchJobs = typeof batchJobs.$inferInsert;
+export type Vc_status_cache = typeof vc_status_cache.$inferSelect;
+export type NewVc_status_cache = typeof vc_status_cache.$inferInsert;
 export type Rbac_scope_access = typeof rbac_scope_access.$inferSelect;
 export type NewRbac_scope_access = typeof rbac_scope_access.$inferInsert;
 export type Rbac_team_members = typeof rbac_team_members.$inferSelect;

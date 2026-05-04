@@ -13,6 +13,7 @@ import { BootstrapService } from '../src/backend/bootstrap';
 import { versionControl } from '../src/backend/plugin';
 import type { GitProvider, GitTreeEntry } from '../src/backend/git-provider';
 import type { PluginDatabaseApi, FlowlibPlugin, PluginEndpointContext } from '@flowlib/core';
+import { patchMockDb } from './test-helpers/mock-db';
 
 function makeProvider(overrides: Partial<GitProvider> = {}): GitProvider {
   return {
@@ -87,33 +88,22 @@ function makeDb(initial: Partial<TestState> = {}): { db: PluginDatabaseApi; stat
     cache: initial.cache ?? new Map(),
   };
 
-  const db = {
+  // Pattern-match normalises case + strips identifier quoting because
+  // Kysely-emitted SQL is `select "id" from "flowlib_flows"...` etc.
+  const db = patchMockDb({
     type: 'sqlite' as const,
     query: vi.fn(async (sql: string, params: unknown[] = []) => {
-      if (sql.includes('FROM flowlib_vc_instance_state')) {
-        return state.instanceState ? [state.instanceState] : [];
-      }
-      if (sql.includes('SELECT COUNT(*) as c FROM flowlib_flows')) {
-        return [{ c: state.flows.size }];
-      }
-      if (sql.includes('SELECT id FROM flowlib_flows WHERE id = ?')) {
-        const id = params[0] as string;
-        return state.flows.has(id) ? [{ id }] : [];
-      }
-      if (sql.includes('SELECT name FROM flowlib_flows WHERE id = ?')) {
-        const row = state.flows.get(params[0] as string);
-        return row ? [{ name: row.name }] : [];
-      }
-      if (sql.trim() === 'SELECT id FROM flowlib_flows') {
-        return Array.from(state.flows.values()).map((row) => ({ id: row.id }));
-      }
-      if (sql.startsWith('SELECT * FROM flowlib_vc_status_cache')) {
-        return Array.from(state.cache.values());
-      }
-      if (
-        sql.includes('FROM flowlib_flows f') &&
-        sql.includes('LEFT JOIN flowlib_vc_sync_config')
-      ) {
+      const norm = sql.toLowerCase().replace(/"/g, '');
+      // Match by *driving* table (the FROM clause). Take the LAST `from`
+      // in the SQL so correlated-subquery FROMs in the SELECT list don't
+      // shadow the outer query's table. Both `from <name>` and
+      // `from <name> as <alias>` are Kysely-emitted patterns.
+      // Last `from <word>` token. Linter's ReDoS detector flags optional
+      // groups with shared character classes, so split into two regexes.
+      const fromMatches = [...norm.matchAll(/from\s+(\w+)/g)];
+      const fromTable = fromMatches.length > 0 ? fromMatches[fromMatches.length - 1][1] : '';
+
+      if (fromTable === 'flowlib_flows' && norm.includes('left join flowlib_vc_sync_config')) {
         return Array.from(state.flows.values()).map((flow) => {
           const cfg = state.configs.get(flow.id);
           return {
@@ -131,15 +121,38 @@ function makeDb(initial: Partial<TestState> = {}): { db: PluginDatabaseApi; stat
           };
         });
       }
-      if (sql.includes('FROM flowlib_vc_sync_history h')) {
+      if (fromTable === 'flowlib_vc_instance_state') {
+        return state.instanceState ? [state.instanceState] : [];
+      }
+      if (fromTable === 'flowlib_vc_status_cache') {
+        if (norm.includes('select flow_id') && !norm.includes('select flow_id,')) {
+          const row = state.cache.get(params[0] as string);
+          return row ? [{ flow_id: row.flow_id }] : [];
+        }
+        return Array.from(state.cache.values());
+      }
+      if (fromTable === 'flowlib_vc_sync_history') {
         return state.history.slice(0, Number(params[0] ?? 20));
       }
-      if (sql.startsWith('SELECT flow_id FROM flowlib_vc_status_cache')) {
-        const row = state.cache.get(params[0] as string);
-        return row ? [{ flow_id: row.flow_id }] : [];
-      }
-      if (sql.includes('SELECT flow_id, file_path FROM flowlib_vc_sync_config')) {
+      if (fromTable === 'flowlib_vc_sync_config') {
         return [];
+      }
+      if (fromTable === 'flowlib_flows') {
+        if (norm.includes('count(*)')) {
+          return [{ c: state.flows.size }];
+        }
+        if (norm.includes('where id = ?')) {
+          const id = params[0] as string;
+          const row = state.flows.get(id);
+          if (!row) {
+            return [];
+          }
+          if (norm.includes('select name')) {
+            return [{ name: row.name }];
+          }
+          return [{ id }];
+        }
+        return Array.from(state.flows.values()).map((row) => ({ id: row.id }));
       }
       return [];
     }),
@@ -217,7 +230,7 @@ function makeDb(initial: Partial<TestState> = {}): { db: PluginDatabaseApi; stat
         };
       }
     }),
-  } as unknown as PluginDatabaseApi;
+  }) as unknown as PluginDatabaseApi;
 
   return { db, state };
 }

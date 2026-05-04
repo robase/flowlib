@@ -8,6 +8,13 @@
       "when": 1776532294283,
       "tag": "0000_overconfident_gladiator",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1777920263258,
+      "tag": "0001_crazy_sunfire",
+      "breakpoints": true
     }
   ]
 }

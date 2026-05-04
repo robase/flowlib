@@ -5,6 +5,7 @@
 import type { GitProvider, TreeCommitFile } from './git-provider';
 import { StaleHeadError } from './git-provider';
 import type { PluginDatabaseApi } from '@flowlib/core';
+import type { VcDB } from './db-types';
 import type { VersionControlPluginOptions } from './types';
 import type {
   VcSyncConfig,
@@ -98,9 +99,12 @@ export class VcSyncService {
     input: ConfigureSyncInput,
   ): Promise<VcSyncConfig> {
     // Check if flow exists
-    const flows = await db.query<FlowRow>('SELECT id, name FROM flowlib_flows WHERE id = ?', [
-      flowId,
-    ]);
+    const flows = await db
+      .kysely<VcDB>()
+      .selectFrom('flowlib_flows')
+      .where('id', '=', flowId)
+      .select(['id', 'name'])
+      .execute();
     if (flows.length === 0) {
       throw new Error(`Flow not found: ${flowId}`);
     }
@@ -128,14 +132,16 @@ export class VcSyncService {
   }
 
   async getSyncConfig(db: PluginDatabaseApi, flowId: string): Promise<VcSyncConfig | null> {
-    const rows = await db.query<VcSyncConfigRow>(
-      'SELECT * FROM flowlib_vc_sync_config WHERE flow_id = ?',
-      [flowId],
-    );
+    const rows = await db
+      .kysely<VcDB>()
+      .selectFrom('flowlib_vc_sync_config')
+      .where('flow_id', '=', flowId)
+      .selectAll()
+      .execute();
     if (rows.length === 0) {
       return null;
     }
-    return mapSyncConfigRow(rows[0]);
+    return mapSyncConfigRow(rows[0] as unknown as VcSyncConfigRow);
   }
 
   async disconnectFlow(db: PluginDatabaseApi, flowId: string): Promise<void> {
@@ -336,11 +342,12 @@ export class VcSyncService {
     // Hydrate names from flow rows so the manifest entry is human-readable.
     const itemFlowIds = items.map((i) => i.flowId);
     if (itemFlowIds.length > 0) {
-      const placeholders = itemFlowIds.map(() => '?').join(', ');
-      const flowMeta = await db.query<{ id: string; name: string }>(
-        `SELECT id, name FROM flowlib_flows WHERE id IN (${placeholders})`,
-        itemFlowIds,
-      );
+      const flowMeta = await db
+        .kysely<VcDB>()
+        .selectFrom('flowlib_flows')
+        .where('id', 'in', itemFlowIds)
+        .select(['id', 'name'])
+        .execute();
       const nameById = new Map(flowMeta.map((r) => [r.id, r.name]));
       for (const e of manifestEntries) {
         e.name = nameById.get(e.flowId) ?? '';
@@ -686,12 +693,17 @@ export class VcSyncService {
       return { status: 'not-connected', config: null, lastSync: null };
     }
 
-    const history = await db.query<VcSyncHistoryRow>(
-      'SELECT * FROM flowlib_vc_sync_history WHERE flow_id = ? ORDER BY created_at DESC LIMIT 1',
-      [flowId],
-    );
+    const history = await db
+      .kysely<VcDB>()
+      .selectFrom('flowlib_vc_sync_history')
+      .where('flow_id', '=', flowId)
+      .orderBy('created_at', 'desc')
+      .limit(1)
+      .selectAll()
+      .execute();
 
-    const lastSync = history.length > 0 ? mapHistoryRow(history[0]) : null;
+    const lastSync =
+      history.length > 0 ? mapHistoryRow(history[0] as unknown as VcSyncHistoryRow) : null;
 
     let status: VcSyncStatus = 'synced';
     if (!config.enabled) {
@@ -701,12 +713,19 @@ export class VcSyncService {
     } else if (!config.lastSyncedAt) {
       status = 'pending';
     } else {
-      // Check if there are newer versions than what was synced
-      const versions = await db.query<{ version: number }>(
-        'SELECT MAX(version) as version FROM flowlib_flow_versions WHERE flow_id = ?',
-        [flowId],
-      );
-      const latestVersion = versions[0]?.version;
+      // Check if there are newer versions than what was synced.
+      // Kysely's `fn.max<number>` types the result as `number` even when
+      // the underlying driver returns string for BIGINT (Postgres).
+      const versionRow = await db
+        .kysely<VcDB>()
+        .selectFrom('flowlib_flow_versions')
+        .where('flow_id', '=', flowId)
+        .select((eb) => eb.fn.max<number>('version').as('version'))
+        .executeTakeFirst();
+      const latestVersion =
+        versionRow?.version !== null && versionRow?.version !== undefined
+          ? Number(versionRow.version)
+          : null;
       if (latestVersion && config.lastSyncedVersion && latestVersion > config.lastSyncedVersion) {
         status = 'pending';
       }
@@ -720,23 +739,32 @@ export class VcSyncService {
     flowId: string,
     limit = 20,
   ): Promise<VcSyncHistoryRecord[]> {
-    const rows = await db.query<VcSyncHistoryRow>(
-      'SELECT * FROM flowlib_vc_sync_history WHERE flow_id = ? ORDER BY created_at DESC LIMIT ?',
-      [flowId, limit],
-    );
-    return rows.map(mapHistoryRow);
+    const rows = await db
+      .kysely<VcDB>()
+      .selectFrom('flowlib_vc_sync_history')
+      .where('flow_id', '=', flowId)
+      .orderBy('created_at', 'desc')
+      .limit(limit)
+      .selectAll()
+      .execute();
+    return rows.map((row) => mapHistoryRow(row as unknown as VcSyncHistoryRow));
   }
 
   async listSyncedFlows(
     db: PluginDatabaseApi,
   ): Promise<Array<VcSyncConfig & { flowName: string }>> {
-    const rows = await db.query<VcSyncConfigRow & { flow_name: string }>(
-      `SELECT flowlib_vc_sync_config.*, flowlib_flows.name as flow_name
-       FROM flowlib_vc_sync_config
-       JOIN flowlib_flows ON flowlib_flows.id = flowlib_vc_sync_config.flow_id
-       ORDER BY flowlib_vc_sync_config.updated_at DESC`,
-    );
-    return rows.map((r) => ({ ...mapSyncConfigRow(r), flowName: r.flow_name }));
+    const rows = await db
+      .kysely<VcDB>()
+      .selectFrom('flowlib_vc_sync_config')
+      .innerJoin('flowlib_flows', 'flowlib_flows.id', 'flowlib_vc_sync_config.flow_id')
+      .selectAll('flowlib_vc_sync_config')
+      .select('flowlib_flows.name as flow_name')
+      .orderBy('flowlib_vc_sync_config.updated_at', 'desc')
+      .execute();
+    return rows.map((r) => ({
+      ...mapSyncConfigRow(r as unknown as VcSyncConfigRow),
+      flowName: (r as unknown as { flow_name: string }).flow_name,
+    }));
   }
 
   /**
@@ -971,23 +999,29 @@ export class VcSyncService {
     db: PluginDatabaseApi,
     flowId: string,
   ): Promise<{ content: string; version: number }> {
-    const flows = await db.query<FlowRow>(
-      'SELECT id, name, description, tags FROM flowlib_flows WHERE id = ?',
-      [flowId],
-    );
+    const flows = await db
+      .kysely<VcDB>()
+      .selectFrom('flowlib_flows')
+      .where('id', '=', flowId)
+      .select(['id', 'name', 'description', 'tags'])
+      .execute();
     if (flows.length === 0) {
       throw new Error(`Flow not found: ${flowId}`);
     }
-    const flow = flows[0];
+    const flow = flows[0] as unknown as FlowRow;
 
-    const versions = await db.query<FlowVersionRow>(
-      'SELECT flow_id, version, flowlib_definition FROM flowlib_flow_versions WHERE flow_id = ? ORDER BY version DESC LIMIT 1',
-      [flowId],
-    );
+    const versions = await db
+      .kysely<VcDB>()
+      .selectFrom('flowlib_flow_versions')
+      .where('flow_id', '=', flowId)
+      .orderBy('version', 'desc')
+      .limit(1)
+      .select(['flow_id', 'version', 'flowlib_definition'])
+      .execute();
     if (versions.length === 0) {
       throw new Error(`No versions found for flow: ${flowId}`);
     }
-    const fv = versions[0];
+    const fv = versions[0] as unknown as FlowVersionRow;
 
     const definition =
       typeof fv.flowlib_definition === 'string'
@@ -1083,10 +1117,13 @@ export class VcSyncService {
     // will conflict and we no-op. We check first so the no-op path is
     // observable in the return value.
     if (commitSha) {
-      const existing = await db.query<{ version_inserted: number | null }>(
-        'SELECT version_inserted FROM flowlib_vc_pull_commits WHERE flow_id = ? AND commit_sha = ?',
-        [flowId, commitSha],
-      );
+      const existing = await db
+        .kysely<VcDB>()
+        .selectFrom('flowlib_vc_pull_commits')
+        .where('flow_id', '=', flowId)
+        .where('commit_sha', '=', commitSha)
+        .select('version_inserted')
+        .execute();
       if (existing.length > 0) {
         const v = existing[0].version_inserted ?? 0;
         this.logger.debug('Pull is idempotent — commit already imported', {
@@ -1098,12 +1135,16 @@ export class VcSyncService {
       }
     }
 
-    // Get current latest version number
-    const versions = await db.query<{ version: number }>(
-      'SELECT MAX(version) as version FROM flowlib_flow_versions WHERE flow_id = ?',
-      [flowId],
-    );
-    const nextVersion = (versions[0]?.version ?? 0) + 1;
+    // Get current latest version number. Kysely's `fn.max<number>` types it
+    // as `number`; coerce to handle Postgres's BIGINT-as-string return.
+    const maxRow = await db
+      .kysely<VcDB>()
+      .selectFrom('flowlib_flow_versions')
+      .where('flow_id', '=', flowId)
+      .select((eb) => eb.fn.max<number>('version').as('version'))
+      .executeTakeFirst();
+    const nextVersion =
+      (maxRow?.version !== null && maxRow?.version !== undefined ? Number(maxRow.version) : 0) + 1;
 
     // Insert new flow version. Persist only the canonical fields; metadata
     // is descriptive and lives on the flows row, not the version blob.
@@ -1154,11 +1195,14 @@ export class VcSyncService {
     db: PluginDatabaseApi,
     embeddedFlowId: string,
   ): Promise<VcSyncConfig | null> {
-    const rows = await db.query<VcSyncConfigRow>(
-      'SELECT * FROM flowlib_vc_sync_config WHERE flow_id = ? LIMIT 1',
-      [embeddedFlowId],
-    );
-    return rows.length > 0 ? mapSyncConfigRow(rows[0]) : null;
+    const rows = await db
+      .kysely<VcDB>()
+      .selectFrom('flowlib_vc_sync_config')
+      .where('flow_id', '=', embeddedFlowId)
+      .selectAll()
+      .limit(1)
+      .execute();
+    return rows.length > 0 ? mapSyncConfigRow(rows[0] as unknown as VcSyncConfigRow) : null;
   }
 
   // =========================================================================

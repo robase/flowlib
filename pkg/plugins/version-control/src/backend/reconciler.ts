@@ -35,6 +35,7 @@
 // =============================================================================
 
 import type { PluginDatabaseApi } from '@flowlib/core';
+import type { VcDB } from './db-types';
 import type { GitProvider } from './git-provider';
 import type { VcSyncService } from './sync-service';
 import { extractFlowIdFromContent } from './sync-service';
@@ -365,11 +366,15 @@ export class ReconcilerService {
   // ---------------------------------------------------------------------------
 
   private async readInstanceState(db: PluginDatabaseApi): Promise<InstanceStateRow | null> {
-    const rows = await db.query<InstanceStateRow>(
-      'SELECT * FROM flowlib_vc_instance_state WHERE repo = ? AND branch = ? LIMIT 1',
-      [this.opts.repo, this.opts.branch],
-    );
-    return rows.length > 0 ? rows[0] : null;
+    const row = await db
+      .kysely<VcDB>()
+      .selectFrom('flowlib_vc_instance_state')
+      .where('repo', '=', this.opts.repo)
+      .where('branch', '=', this.opts.branch)
+      .selectAll()
+      .limit(1)
+      .executeTakeFirst();
+    return (row as InstanceStateRow | undefined) ?? null;
   }
 
   private async writeInstanceState(

@@ -12,6 +12,7 @@
 // =============================================================================
 
 import type { PluginDatabaseApi } from '@flowlib/core';
+import type { VcDB } from './db-types';
 
 export interface InstanceStateRow {
   id: string;
@@ -45,11 +46,15 @@ export class InstanceStateService {
   ) {}
 
   async read(db: PluginDatabaseApi): Promise<InstanceStateRow | null> {
-    const rows = await db.query<InstanceStateRow>(
-      'SELECT * FROM flowlib_vc_instance_state WHERE repo = ? AND branch = ? LIMIT 1',
-      [this.repo, this.branch],
-    );
-    return rows.length > 0 ? rows[0] : null;
+    const row = await db
+      .kysely<VcDB>()
+      .selectFrom('flowlib_vc_instance_state')
+      .where('repo', '=', this.repo)
+      .where('branch', '=', this.branch)
+      .selectAll()
+      .limit(1)
+      .executeTakeFirst();
+    return (row as InstanceStateRow | undefined) ?? null;
   }
 
   /**

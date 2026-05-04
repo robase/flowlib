@@ -26,6 +26,7 @@ import {
   type FlowStateInput,
 } from '../src/backend/status-compute';
 import type { PluginDatabaseApi } from '@flowlib/core';
+import { patchMockDb } from './test-helpers/mock-db';
 
 // ── Fixtures ─────────────────────────────────────────────────────────────
 
@@ -163,14 +164,19 @@ function makeDb(initial: Partial<DbState> = {}): { db: PluginDatabaseApi; state:
     cache: initial.cache ?? new Map(),
   };
 
-  const db = {
+  // SQL pattern-matchers are case-insensitive + quote-stripped because
+  // Kysely emits lower-case keywords and quoted identifiers.
+  const db = patchMockDb({
     type: 'sqlite',
     query: async (sql: string, params: unknown[] = []) => {
+      const norm = sql.toLowerCase().replace(/"/g, '');
+      // Identify the driving table via the LAST `from <name>` so correlated
+      // subqueries in the SELECT list don't shadow the outer query.
+      const fromMatches = [...norm.matchAll(/from\s+(\w+)/g)];
+      const fromTable = fromMatches.length > 0 ? fromMatches[fromMatches.length - 1][1] : '';
+
       // The big fact-loading join.
-      if (
-        sql.includes('FROM flowlib_flows f') &&
-        sql.includes('LEFT JOIN flowlib_vc_sync_config')
-      ) {
+      if (fromTable === 'flowlib_flows' && norm.includes('left join flowlib_vc_sync_config')) {
         return state.flows.map((f) => {
           const cfg = state.configs.get(f.id);
           const lastHistory = [...state.history]
@@ -190,31 +196,34 @@ function makeDb(initial: Partial<DbState> = {}): { db: PluginDatabaseApi; state:
           };
         });
       }
-      // Cache reads
-      if (sql.startsWith('SELECT * FROM flowlib_vc_status_cache')) {
-        if (sql.includes('WHERE flow_id = ?')) {
+      if (fromTable === 'flowlib_vc_status_cache') {
+        // Existence probe via `select flow_id` only.
+        if (norm.includes('select flow_id from')) {
+          const cached = state.cache.get(params[0] as string);
+          return cached ? [{ flow_id: cached.flow_id }] : [];
+        }
+        // Single-row fetch.
+        if (norm.includes('where flow_id = ?')) {
           const cached = state.cache.get(params[0] as string);
           return cached ? [cached] : [];
         }
         return Array.from(state.cache.values());
       }
-      // Cache existence probe
-      if (sql.startsWith('SELECT flow_id FROM flowlib_vc_status_cache')) {
-        const cached = state.cache.get(params[0] as string);
-        return cached ? [{ flow_id: cached.flow_id }] : [];
-      }
-      // Dirty-list path lookup
-      if (sql.includes('SELECT flow_id, file_path FROM flowlib_vc_sync_config WHERE flow_id IN')) {
-        const ids = params as string[];
-        return ids
-          .map((id) => state.configs.get(id))
-          .filter(Boolean)
-          .map((cfg) => ({ flow_id: cfg!.flow_id, file_path: cfg!.file_path }));
+      if (fromTable === 'flowlib_vc_sync_config') {
+        // Dirty-list path lookup: `where flow_id in (?, ?, ...)`
+        if (norm.includes('where flow_id in')) {
+          const ids = params as string[];
+          return ids
+            .map((id) => state.configs.get(id))
+            .filter(Boolean)
+            .map((cfg) => ({ flow_id: cfg!.flow_id, file_path: cfg!.file_path }));
+        }
       }
       return [];
     },
     execute: async (sql: string, params: unknown[] = []) => {
-      if (sql.startsWith('INSERT INTO flowlib_vc_status_cache')) {
+      const norm = sql.toLowerCase().replace(/"/g, '');
+      if (norm.startsWith('insert into flowlib_vc_status_cache')) {
         const [flow_id, st, chip_label, action_label, last_error, updated_at] = params as [
           string,
           string,
@@ -231,7 +240,7 @@ function makeDb(initial: Partial<DbState> = {}): { db: PluginDatabaseApi; state:
           last_error,
           updated_at,
         });
-      } else if (sql.startsWith('UPDATE flowlib_vc_status_cache')) {
+      } else if (norm.startsWith('update flowlib_vc_status_cache')) {
         const [st, chip_label, action_label, last_error, updated_at, flow_id] = params as [
           string,
           string,
@@ -250,7 +259,7 @@ function makeDb(initial: Partial<DbState> = {}): { db: PluginDatabaseApi; state:
         });
       }
     },
-  } as unknown as PluginDatabaseApi;
+  }) as unknown as PluginDatabaseApi;
 
   return { db, state };
 }

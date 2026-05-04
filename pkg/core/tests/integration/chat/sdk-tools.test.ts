@@ -14,6 +14,7 @@ import { execSync } from 'node:child_process';
 import fsSync from 'node:fs';
 import { join } from 'node:path';
 import type { FlowlibInstance } from '../../../src/api/types';
+import type { FlowlibDefinition } from '../../../src/services/flow-versions/schemas-fresh';
 import type { ChatToolContext } from '../../../src/services/chat/chat-types';
 import {
   getFlowSourceTool,
@@ -184,7 +185,8 @@ export default defineFlow({
       expect(result.success).toBe(true);
 
       const version = await flowlib.versions.get(flowId, 'latest');
-      const nodes = version!.flowlibDefinition.nodes;
+      const definition = version!.flowlibDefinition as FlowlibDefinition;
+      const nodes = definition.nodes;
       expect(nodes.find((n) => n.referenceId === 'query')?.id).toBe('node_opaque_abc');
       expect(nodes.find((n) => n.referenceId === 'query')?.position).toEqual({ x: 100, y: 50 });
       expect(nodes.find((n) => n.referenceId === 'out')?.id).toBe('node_opaque_def');
@@ -382,7 +384,8 @@ export default defineFlow({
 
       expect(result.success).toBe(true);
       const latest = await flowlib.versions.get(flowId, 'latest');
-      const outputNode = latest!.flowlibDefinition.nodes.find((n) => n.referenceId === 'result');
+      const definition = latest!.flowlibDefinition as FlowlibDefinition;
+      const outputNode = definition.nodes.find((n) => n.referenceId === 'result');
       // The arrow-to-string transform serialises the edited arrow body back
       // into a QuickJS expression string.
       expect(String(outputNode?.params.outputValue)).toContain('Hello');
@@ -444,7 +447,8 @@ export default defineFlow({
       expect(result.success).toBe(true);
 
       const latest = await flowlib.versions.get(flowId, 'latest');
-      const nodes = latest!.flowlibDefinition.nodes;
+      const definition = latest!.flowlibDefinition as FlowlibDefinition;
+      const nodes = definition.nodes;
       expect(nodes.find((n) => n.referenceId === 'query')?.id).toBe('node_a');
       expect(nodes.find((n) => n.referenceId === 'query')?.position).toEqual({ x: 100, y: 200 });
       expect(nodes.find((n) => n.referenceId === 'result')?.id).toBe('node_b');
@@ -728,7 +732,8 @@ export default defineFlow({
       );
       expect(result.success).toBe(true);
       const latest = await flowlib.versions.get(flowId, 'latest');
-      const sw = latest!.flowlibDefinition.nodes.find((n) => n.referenceId === 'router');
+      const definition = latest!.flowlibDefinition as FlowlibDefinition;
+      const sw = definition.nodes.find((n) => n.referenceId === 'router');
       const cases = sw!.params.cases as Array<{ slug: string; expression: string }>;
       expect(cases.find((c) => c.slug === 'high')?.expression).toBe('x > 999');
       expect(cases.find((c) => c.slug === 'low')?.expression).toBe('x <= 100');
@@ -759,10 +764,11 @@ export default defineFlow({
       expect(result.success).toBe(true);
 
       const latest = await flowlib.versions.get(flowId, 'latest');
-      const sw = latest!.flowlibDefinition.nodes.find((n) => n.referenceId === 'router');
+      const definition = latest!.flowlibDefinition as FlowlibDefinition;
+      const sw = definition.nodes.find((n) => n.referenceId === 'router');
       const cases = sw!.params.cases as Array<{ slug: string }>;
       expect(cases.map((c) => c.slug)).toEqual(['critical', 'low']);
-      const edge = latest!.flowlibDefinition.edges.find((e) => e.id === 'e2');
+      const edge = definition.edges.find((e) => e.id === 'e2');
       expect(edge?.sourceHandle).toBe('critical');
     });
 

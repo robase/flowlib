@@ -47,6 +47,11 @@
       "types": "./dist/shared/types.d.mts",
       "import": "./dist/shared/types.mjs",
       "require": "./dist/shared/types.cjs"
+    },
+    "./kysely": {
+      "types": "./dist/kysely-types.d.mts",
+      "import": "./dist/kysely-types.mjs",
+      "require": "./dist/kysely-types.cjs"
     }
   },
   "publishConfig": {

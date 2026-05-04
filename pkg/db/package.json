@@ -47,6 +47,11 @@
       "import": "./dist/schema-mysql.mjs",
       "require": "./dist/schema-mysql.cjs"
     },
+    "./kysely": {
+      "types": "./dist/kysely-types.d.mts",
+      "import": "./dist/kysely-types.mjs",
+      "require": "./dist/kysely-types.cjs"
+    },
     "./package.json": "./package.json"
   },
   "publishConfig": {

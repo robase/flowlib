@@ -23,6 +23,8 @@
  */
 
 import type { ActionDefinition } from '@flowlib/action-kit';
+import type { SQL } from 'drizzle-orm';
+import type { Kysely } from 'kysely';
 import type { FlowlibInstance } from 'src/api/types';
 import type {
   FlowlibIdentity,
@@ -117,6 +119,68 @@ export interface PluginDatabaseApi {
 
   /** Execute a statement where no result rows are needed */
   execute(sql: string, params?: unknown[]): Promise<void>;
+
+  /**
+   * Execute a Drizzle `sql\`\`` template and return rows.
+   *
+   * Routes through the dialect's `sqlToQuery` compiler, then through the
+   * unified driver layer — so the same `SQL` expression works on SQLite
+   * (`.all()` semantics), Postgres, and MySQL without callers branching
+   * on `db.type`.
+   *
+   * @deprecated Phase-2: prefer `kysely<DB>()` for new plugin code. Kysely's
+   * typed `sql<T>\`\``.execute(db)\` covers the same dialect-portable raw-SQL
+   * cases this method was designed for, with end-to-end type checking on the
+   * result rows. `executeRows` is retained as a legacy escape hatch.
+   */
+  executeRows<T = Record<string, unknown>>(query: SQL): Promise<T[]>;
+
+  /**
+   * Typed Drizzle DB handle for plugins that ship per-dialect Drizzle
+   * tables. Typed loosely as `unknown` because the concrete shape is
+   * dialect-specific (`DrizzleD1Database` / `NodePgDatabase` /
+   * `MySql2Database`); plugins narrow via `db.type` and cast to the
+   * Drizzle base type they need.
+   *
+   * Example:
+   *   if (db.type === 'sqlite') {
+   *     const drizzleDb = db.drizzle as BaseSQLiteDatabase<'async', any>;
+   *     await drizzleDb.select().from(myTable);
+   *   }
+   *
+   * Plugins that don't need Drizzle (or don't ship per-dialect tables)
+   * can keep using `query()` / `execute()` for portable raw SQL.
+   *
+   * @deprecated Phase-2: prefer `kysely<DB>()` for new plugin code. The
+   * Drizzle handle stays for compatibility with existing per-dialect
+   * tables; new plugins should declare a typed `DB` interface and use
+   * Kysely instead.
+   */
+  drizzle: unknown;
+
+  /**
+   * Typed Kysely query-builder handle. Plugin supplies its own `DB`
+   * interface (an intersection of `CoreDB` from `@flowlib/db/kysely`,
+   * any other plugin's published table interfaces it joins against,
+   * and the plugin's own owned-tables interface).
+   *
+   * One typed expression works across SQLite/Postgres/MySQL — no
+   * dialect triplication, full column-level type checking. This is
+   * the recommended path for plugin queries; `executeRows()` and
+   * `drizzle` remain as legacy escape hatches.
+   *
+   * Example:
+   *   import type { CoreDB } from '@flowlib/db/kysely';
+   *   import type { RbacDB } from './db-types';
+   *
+   *   const k = ctx.database.kysely<CoreDB & RbacDB>();
+   *   const rows = await k
+   *     .selectFrom('flowlib_rbac_team_members')
+   *     .where('user_id', '=', userId)
+   *     .select('team_id')
+   *     .execute();
+   */
+  kysely<DB>(): Kysely<DB>;
 }
 
 /**

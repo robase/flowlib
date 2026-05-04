@@ -6,6 +6,7 @@
  */
 
 import { z } from 'zod/v4';
+import type { FlowlibDefinition } from 'src/services/flow-versions/schemas-fresh';
 import type { ChatToolDefinition, ChatToolContext, ChatToolResult } from '../chat-types';
 
 // =====================================
@@ -37,7 +38,7 @@ export const getCurrentFlowContextTool: ChatToolDefinition = {
         return { success: false, error: 'No flow version found' };
       }
 
-      const definition = version.flowlibDefinition;
+      const definition = version.flowlibDefinition as FlowlibDefinition;
 
       if (nodeId) {
         const node =

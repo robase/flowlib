@@ -16,6 +16,7 @@ export default defineConfig({
     neverBundle: [
       '@flowlib/core',
       '@flowlib/ui',
+      'kysely',
       'react',
       'react-dom',
       'react/jsx-runtime',

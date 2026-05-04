@@ -6,6 +6,11 @@ export default defineConfig({
     'browser/index': 'src/browser.ts',
     'frontend/index': 'src/frontend/index.ts',
     'shared/types': 'src/shared/types.ts',
+    // Kysely type contract for `flowlib_flow_access` (auth-owned, RBAC-consumed).
+    // Migration emission for this table flows through the abstract
+    // `AUTH_SCHEMA` declaration in `plugin.ts` + `flowlib-cli generate` —
+    // we don't ship per-dialect Drizzle table objects from auth anymore.
+    'kysely-types': 'src/backend/kysely-types.ts',
   },
   format: ['esm', 'cjs'],
   dts: true,
