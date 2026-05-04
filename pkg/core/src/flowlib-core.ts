@@ -23,7 +23,7 @@ import type {
   UpdateCredentialInput,
   CredentialFilters,
 } from './services/credentials';
-import type { CredentialAuthType } from '@flowlib/db/sqlite';
+import type { CredentialAuthType } from '@flowlib/db';
 
 import type {
   FlowTriggerRegistration,
@@ -159,6 +159,29 @@ const _FLOWLIB_CORE_PROVIDER: NonNullable<NodeDefinition['provider']> = {
  * - AI batch operations
  * - Testing and development utilities
  *
+ * @deprecated Use {@link createFlowlib} instead. The legacy class exposes a
+ * flat method surface (`flowlib.createFlow()`, `flowlib.listFlows()`, etc.)
+ * and a two-phase `new Flowlib(config)` → `await initialize()` lifecycle.
+ * The modern factory returns an `FlowlibInstance` with namespaced sub-APIs
+ * (`flowlib.flows.create()`, `flowlib.flows.list()`, etc.) and a single
+ * awaitable construction step. All framework adapters (`@flowlib/express`,
+ * `@flowlib/nestjs`, `@flowlib/nextjs`) already use `createFlowlib()`.
+ *
+ * Migration:
+ * ```diff
+ * - const flowlib = new Flowlib(config);
+ * - await flowlib.initialize();
+ * - const flow = await flowlib.createFlow({ name: "My Flow" });
+ * - const flows = await flowlib.listFlows();
+ * + const flowlib = await createFlowlib(config);
+ * + const flow = await flowlib.flows.create({ name: "My Flow" });
+ * + const flows = await flowlib.flows.list();
+ * ```
+ *
+ * The class is retained for back-compat with seed scripts and direct-API
+ * consumers; no removal date is set yet, but new code should use
+ * `createFlowlib()`.
+ *
  * @example
  * ```typescript
  * const flowlib = new Flowlib(config);
@@ -204,8 +227,12 @@ export class Flowlib {
     // because console.debug() always outputs regardless of configured level.
     this.config.logger = this.loggerManager.getBasicLogger();
 
-    // Initialize authorization service with defaults (plugins configure via hooks)
+    // Initialize authorization service. Pass `config.auth` through so RBAC
+    // settings declared on the FlowlibConfig actually reach the service.
+    // Plugins still configure via `onAuthorize` hooks; this is the static
+    // baseline (`enabled`, `roleMapper`, `customRoles`, `defaultRole`, etc.).
     this.authService = createAuthorizationService({
+      config: (this.config as { auth?: import('./types/auth.types').FlowlibAuthConfig }).auth,
       logger: this.config.logger,
     });
 

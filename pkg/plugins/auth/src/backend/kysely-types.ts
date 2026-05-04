@@ -18,7 +18,7 @@
  * (date columns, booleans, JSON encoding).
  */
 
-import type { ColumnType } from 'kysely';
+import type { TimestampColumn } from '@flowlib/db/kysely';
 
 // Inline rather than imported from `@flowlib/rbac` to avoid creating a
 // type-level cycle (rbac → auth via peerDep, the reverse would be circular).
@@ -26,14 +26,9 @@ import type { ColumnType } from 'kysely';
 type FlowAccessPermission = 'owner' | 'editor' | 'operator' | 'viewer';
 
 /**
- * ISO-string timestamp. The `Selectable` shape is `string` because every
- * existing plugin treats these values as ISO strings — SQLite stores text
- * directly; PG/MySQL drivers return `Date` objects which the bridge layer
- * is responsible for coercing (or callers do `new Date(v).toISOString()`
- * defensively at comparison points). Insertable/Updateable accept both
- * `string` and `Date` so plugins can pass either format on write.
+ * Reuse the shared Kysely timestamp alias from `@flowlib/db/kysely` so
+ * plugin-owned tables stay aligned with the core DB surface.
  */
-type Timestamp = ColumnType<string, string | Date | undefined, string | Date>;
 
 export interface FlowAccessTable {
   id: string;
@@ -42,8 +37,8 @@ export interface FlowAccessTable {
   team_id: string | null;
   permission: FlowAccessPermission;
   granted_by: string | null;
-  granted_at: Timestamp;
-  expires_at: Timestamp | null;
+  granted_at: TimestampColumn;
+  expires_at: TimestampColumn | null;
 }
 
 export interface AuthDB {

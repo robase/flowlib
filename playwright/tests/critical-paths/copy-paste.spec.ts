@@ -155,15 +155,22 @@ async function selectAllNodes(page: Page) {
 // Test data
 // ---------------------------------------------------------------------------
 
-/** Simple 2-node linear flow: Input → JavaScript */
+/**
+ * Simple 2-node linear flow: Source → Transform.
+ *
+ * Both nodes are `core.javascript` rather than starting with
+ * `trigger.manual` because the duplicate / paste tests below copy these
+ * nodes; `trigger.manual` has `maxInstances: 1` and silently drops the
+ * duplicate, breaking node-count assertions.
+ */
 const TWO_NODE_FLOW = {
   nodes: [
     {
       id: 'cp-input',
-      type: 'trigger.manual',
+      type: 'core.javascript',
       label: 'Data Source',
       referenceId: 'data_source',
-      params: { variableName: 'data', defaultValue: '{"x": 1}' },
+      params: { code: '({ x: 1 })' },
       position: { x: 150, y: 200 },
     },
     {
@@ -171,22 +178,30 @@ const TWO_NODE_FLOW = {
       type: 'core.javascript',
       label: 'Transform',
       referenceId: 'transform',
-      params: { code: '({ ...data })' },
+      params: { code: '({ ...data_source })' },
       position: { x: 450, y: 200 },
     },
   ],
   edges: [{ id: 'cp-edge-1', source: 'cp-input', target: 'cp-jq' }],
 };
 
-/** 4-node chain flow: Input → JavaScript → Template → Output */
+/**
+ * 4-node chain flow: Source → Process → Format → Output.
+ *
+ * The first node is `core.javascript` rather than `trigger.manual` because
+ * `trigger.manual` has `maxInstances: 1` — pasting a copy of a flow whose
+ * first node is `trigger.manual` would silently drop the pasted trigger,
+ * leaving 7 nodes after paste instead of the expected 8 and breaking the
+ * "copy-paste preserves internal edges" assertion.
+ */
 const CHAIN_FLOW = {
   nodes: [
     {
       id: 'chain-input',
-      type: 'trigger.manual',
+      type: 'core.javascript',
       label: 'Source',
       referenceId: 'source',
-      params: { variableName: 'source', defaultValue: '{"value": 42}' },
+      params: { code: '({ value: 42 })' },
       position: { x: 100, y: 200 },
     },
     {
@@ -221,15 +236,21 @@ const CHAIN_FLOW = {
   ],
 };
 
-/** Branching flow: Input → If/Else → two branches */
+/**
+ * Branching flow: Source → If/Else → two branches.
+ *
+ * Source is `core.javascript` (not `trigger.manual`) for the same reason
+ * as `TWO_NODE_FLOW` — the copy/paste tests duplicate selections that
+ * include this node.
+ */
 const BRANCHING_FLOW = {
   nodes: [
     {
       id: 'br-input',
-      type: 'trigger.manual',
+      type: 'core.javascript',
       label: 'User Info',
       referenceId: 'user_info',
-      params: { variableName: 'user_info', defaultValue: JSON.stringify({ age: 25 }) },
+      params: { code: '({ age: 25 })' },
       position: { x: 100, y: 200 },
     },
     {

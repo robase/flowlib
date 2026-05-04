@@ -123,6 +123,17 @@ test.describe('Credential CRUD — Update', () => {
     // Overview shows 'Active' status badge
     await expect(dialog.getByText('Active')).toBeVisible();
 
+    // The Save Changes click only dispatches the click event — the mutation
+    // hook fires the PUT asynchronously, and the dialog switches back to
+    // Overview *before* the response lands. Wait on the PUT response itself
+    // so the subsequent GET observes the persisted state.
+    const waitForCredentialPut = () =>
+      page.waitForResponse(
+        (resp) =>
+          /\/credentials\/[^/]+$/.test(new URL(resp.url()).pathname) &&
+          resp.request().method() === 'PUT',
+      );
+
     // 2. Click 'Edit' tab, uncheck the 'Active' checkbox
     await dialog.getByRole('button', { name: 'Edit', exact: true }).click();
     const activeCheckbox = dialog.getByLabel('Active');
@@ -130,8 +141,10 @@ test.describe('Credential CRUD — Update', () => {
     await activeCheckbox.uncheck();
     await expect(activeCheckbox).not.toBeChecked();
 
-    // 3. Click 'Save Changes'
+    // 3. Click 'Save Changes' and wait for the PUT to complete
+    const disablePut = waitForCredentialPut();
     await dialog.getByRole('button', { name: 'Save Changes' }).click();
+    await disablePut;
 
     // Backend state should now reflect the inactive status.
     const listAfterDisable = await request.get(`${apiBase}/credentials`);
@@ -145,7 +158,9 @@ test.describe('Credential CRUD — Update', () => {
     // 4. Click 'Edit' again, re-check 'Active', save
     await dialog.getByRole('button', { name: 'Edit', exact: true }).click();
     await dialog.getByLabel('Active').check();
+    const enablePut = waitForCredentialPut();
     await dialog.getByRole('button', { name: 'Save Changes' }).click();
+    await enablePut;
 
     const listAfterEnable = await request.get(`${apiBase}/credentials`);
     expect(listAfterEnable.ok()).toBeTruthy();

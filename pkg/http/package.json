@@ -1,0 +1,40 @@
+{
+  "name": "@flowlib/http",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Internal HTTP transport helpers shared across Flowlib's framework adapters (Express/NestJS/Next.js). Not a public surface.",
+  "license": "MIT",
+  "files": [
+    "dist",
+    "!dist/**/*.map"
+  ],
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.mts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.mts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "scripts": {
+    "build": "tsdown",
+    "build:watch": "tsdown --watch",
+    "dev": "tsdown --watch",
+    "clean": "rm -rf dist",
+    "format": "oxfmt",
+    "typecheck": "tsc --noEmit",
+    "lint": "oxlint --fix"
+  },
+  "dependencies": {
+    "@flowlib/core": "workspace:*",
+    "zod": "^3.25.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.20",
+    "tsdown": "^0.21.10",
+    "typescript": "^5.3.3"
+  }
+}
