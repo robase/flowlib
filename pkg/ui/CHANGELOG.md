@@ -1,5 +1,13 @@
 # @flowlib/ui
 
+## 0.0.7
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @flowlib/layouts@0.0.7
+  - @flowlib/sdk@0.0.7
+
 ## 0.0.6
 
 ### Patch Changes

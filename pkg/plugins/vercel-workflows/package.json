@@ -1,6 +1,6 @@
 {
   "name": "@flowlib/vercel-workflows",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "description": "Run Flowlib primitive flows as Vercel Workflows — server plugin and single-step wrapping helpers",
   "license": "MIT",
   "author": "robase <team@flowlib.dev>",
