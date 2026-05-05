@@ -1,6 +1,6 @@
 {
   "name": "@flowlib/http",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "description": "Framework-agnostic HTTP route registry shared by Flowlib's Express, NestJS, and Next.js adapters. Walk `allFirstPartyEndpoints` to build a custom adapter (Hono, Fastify, etc.) without re-implementing route logic.",
   "keywords": [
     "adapter",

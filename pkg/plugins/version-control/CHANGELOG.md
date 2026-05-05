@@ -1,5 +1,15 @@
 # @flowlib/version-control
 
+## 0.0.7
+
+### Patch Changes
+
+- Updated dependencies [[`d5a16b3`](https://github.com/robase/flowlib/commit/d5a16b33924cb7c7d1c5d12190930e312e4a7b35)]:
+  - @flowlib/core@0.0.7
+  - @flowlib/ui@0.0.7
+  - @flowlib/db@0.0.7
+  - @flowlib/sdk@0.0.7
+
 ## 0.0.6
 
 ### Patch Changes
