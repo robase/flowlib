@@ -177,7 +177,7 @@ export interface JobOptions {
  *
  * The default `InProcessJobRunner` runs handlers on a microtask in the
  * same isolate, preserving fire-and-forget behaviour. Edge-runtime
- * adapters typically map `enqueue` onto a hosted queue (Cloudflare
+ * adapters typically map `enqueue` onto a managed queue (Cloudflare
  * Queues, AWS SQS, GCP Pub/Sub) so a separate consumer process picks
  * the job up.
  *

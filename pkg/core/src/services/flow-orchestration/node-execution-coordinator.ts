@@ -603,20 +603,47 @@ export class NodeExecutionCoordinator {
           },
           recordToolExecution: async (input) => {
             const toolService = this.deps.nodeExecutionServiceForTools;
+            let recordId: string | null = null;
             if (!toolService) {
               logger.warn('Node execution service not available for tool recording');
-              return null;
+            } else {
+              try {
+                const record = await toolService.recordToolExecution(input);
+                recordId = record.id;
+              } catch (error) {
+                logger.error('Failed to record tool execution', {
+                  toolId: input.toolId,
+                  error: error instanceof Error ? error.message : String(error),
+                });
+              }
             }
-            try {
-              const record = await toolService.recordToolExecution(input);
-              return { id: record.id };
-            } catch (error) {
-              logger.error('Failed to record tool execution', {
-                toolId: input.toolId,
-                error: error instanceof Error ? error.message : String(error),
-              });
-              return null;
+
+            // ── Plugin hook: afterAgentToolExecute ────────────────────────
+            // Per-tool-call hook; fires once for every tool invocation
+            // inside the agent loop.
+            if (this.deps.pluginHookRunner) {
+              try {
+                await this.deps.pluginHookRunner.runAfterAgentToolExecute({
+                  flowRunId,
+                  flowId: executionContext.flowId || '',
+                  nodeId: node.id,
+                  toolId: input.toolId,
+                  toolName: input.toolName,
+                  iteration: input.iteration,
+                  success: input.success,
+                  error: input.error,
+                  durationMs: input.duration ?? 0,
+                });
+              } catch (hookError) {
+                logger.warn('afterAgentToolExecute plugin hook error (non-fatal)', {
+                  toolId: input.toolId,
+                  nodeId: node.id,
+                  error: hookError instanceof Error ? hookError.message : String(hookError),
+                });
+              }
             }
+
+            return recordId ? { id: recordId } : null;
           },
           incrementRetryCount: async (traceId: string) => {
             try {
@@ -739,7 +766,6 @@ export class NodeExecutionCoordinator {
       // ── Plugin hook: afterAgentExecute ───────────────────────────────────
       // Fires once per `core.agent` node, carrying the loop-aggregate
       // token + tool-call totals that `afterNodeExecute` doesn't surface.
-      // Hosts use this for per-org quota / metering on agent activity.
       if (
         this.deps.pluginHookRunner &&
         node.type === 'core.agent' &&

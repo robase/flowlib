@@ -71,8 +71,8 @@ export class CredentialsService {
      * Only `encrypt`/`decrypt` are called from this service; the convenience
      * `encryptObject` / `decryptObject` helpers on `EncryptionService` are
      * inlined here as `encryptConfig` / `decryptConfig` so any conforming
-     * adapter (e.g. a hosted KMS-backed implementation) works without
-     * needing to expose those helpers.
+     * adapter (e.g. a KMS-backed implementation) works without needing
+     * to expose those helpers.
      */
     private encryption: EncryptionAdapter,
     private logger: Logger,

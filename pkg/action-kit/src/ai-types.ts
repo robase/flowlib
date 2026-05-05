@@ -87,8 +87,8 @@ export type BatchResult =
       /**
        * Provider-reported token usage for the batched request. Optional
        * because some batch result line items may not carry usage (e.g.
-       * malformed responses, older API surfaces). Hosts use this to meter
-       * llmTokens consumption for batch-resumed nodes — see the resumption
+       * malformed responses, older API surfaces). Surfaced to plugin
+       * metering hooks for batch-resumed nodes — see the resumption
        * path in flow-orchestration/flow-run-coordinator.ts.
        */
       usage?: { inputTokens: number; outputTokens: number };

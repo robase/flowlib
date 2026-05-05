@@ -353,6 +353,39 @@ export interface FlowlibPluginHooks {
   }) => Promise<void>;
 
   /**
+   * Runs after every individual tool invocation inside a `core.agent` loop.
+   *
+   * Fires once per tool call (not per agent node) — the per-call
+   * counterpart to `afterAgentExecute`'s loop-aggregate signal. Useful
+   * when the host needs to react to each tool call as it lands rather
+   * than waiting for the whole agent loop to finish: progress
+   * indicators, per-call telemetry, fail-fast policies on repeated
+   * tool errors, etc. Long-running agents with many tool calls
+   * otherwise expose nothing observable until the loop returns.
+   *
+   * Errors thrown by this hook are caught and logged at warn level —
+   * they do not interrupt the agent loop.
+   */
+  afterAgentToolExecute?: (context: {
+    flowRunId: string;
+    flowId: string;
+    /** ID of the parent `core.agent` node. */
+    nodeId: string;
+    /** Stable agent-tool ID (`core.agent_tool` configured-instance id). */
+    toolId: string;
+    /** Display name of the tool (configured `name` or registered `name`). */
+    toolName: string;
+    /** Iteration number within the agent loop (1-indexed). */
+    iteration: number;
+    /** Whether the tool returned a successful result. */
+    success: boolean;
+    /** Error message if the tool failed (timeout, action error, validation). */
+    error?: string;
+    /** Wall-clock duration of the tool call in ms. */
+    durationMs: number;
+  }) => Promise<void>;
+
+  /**
    * Runs before every API request (in framework adapters).
    * Return a Response to short-circuit (like better-auth's onRequest).
    * Return `{ request }` to modify the request.
@@ -719,6 +752,19 @@ export interface PluginHookRunner {
     tokensIn: number;
     tokensOut: number;
     toolCallCount: number;
+    durationMs: number;
+  }) => Promise<void>;
+
+  /** Run all afterAgentToolExecute hooks in order */
+  runAfterAgentToolExecute: (context: {
+    flowRunId: string;
+    flowId: string;
+    nodeId: string;
+    toolId: string;
+    toolName: string;
+    iteration: number;
+    success: boolean;
+    error?: string;
     durationMs: number;
   }) => Promise<void>;
 
