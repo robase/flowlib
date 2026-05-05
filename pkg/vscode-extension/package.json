@@ -1,7 +1,7 @@
 {
   "name": "@flowlib/vscode",
   "displayName": "Flowlib",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "private": true,
   "description": "Edit Flowlib flows visually inside VSCode. .flow.ts files are the source of truth.",
   "categories": [

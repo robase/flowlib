@@ -1,5 +1,12 @@
 # @flowlib/db
 
+## 0.0.6
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @flowlib/action-kit@0.0.6
+
 ## 0.0.5
 
 ### Patch Changes
