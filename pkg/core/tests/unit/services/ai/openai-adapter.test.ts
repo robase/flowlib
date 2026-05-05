@@ -1,6 +1,7 @@
 /**
  * Unit tests for OpenAIAdapter — focused on the streaming agent path
- * because that's what the hosted token-metering pipeline depends on.
+ * because that's what plugin metering hooks (`afterAgentExecute`,
+ * `afterAgentToolExecute`) depend on for token totals.
  *
  * Edge cases covered:
  *   - Captures provider-reported usage from the final usage-only SSE chunk

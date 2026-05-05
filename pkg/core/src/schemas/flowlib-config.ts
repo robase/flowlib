@@ -327,8 +327,8 @@ export const FlowlibConfigSchema = z.object({
    * `services` block) to keep the built-in defaults — self-hosted users
    * never need to touch this surface.
    *
-   * Hosted/edge runtimes (Cloudflare Workers, Vercel Workflows, etc.) use
-   * this to inject runtime-native implementations: DO-backed event buses,
+   * Edge runtimes (Cloudflare Workers, Vercel Workflows, etc.) use this
+   * to inject runtime-native implementations: DO-backed event buses,
    * KV-backed chat sessions, no-op cron schedulers (because Cloudflare
    * Cron Triggers handle scheduling externally), and so on.
    *

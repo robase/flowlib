@@ -2,7 +2,7 @@
  * FlowCanvasProvider — wires up the minimal provider tree required by the
  * flow editor when it runs outside the full `<Flowlib>` app.
  *
- * Unlike the hosted `<Flowlib>`:
+ * Unlike the full `<Flowlib>` app:
  *   - no `BrowserRouter` on the outside — we always use a `MemoryRouter`
  *     with the single synthetic route `/flow-canvas/flow/__canvas__`
  *   - no `ApiProvider` pointing at a real backend — we inject an

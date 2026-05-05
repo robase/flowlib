@@ -2,8 +2,8 @@
  * Integration tests: agent loop token-usage aggregation + afterAgentExecute
  * plugin hook firing.
  *
- * The streaming path is what hosted billing depends on for `llmTokens`
- * metering. These tests cover:
+ * The streaming path is what plugin metering hooks consume for token
+ * totals. These tests cover:
  *   - Per-iteration usage from each LLM round-trip is summed
  *   - Tool-call iterations contribute to the total alongside the final text iter
  *   - `afterAgentExecute` fires once per agent node with correct totals

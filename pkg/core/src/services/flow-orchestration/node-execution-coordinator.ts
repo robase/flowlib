@@ -766,7 +766,6 @@ export class NodeExecutionCoordinator {
       // ── Plugin hook: afterAgentExecute ───────────────────────────────────
       // Fires once per `core.agent` node, carrying the loop-aggregate
       // token + tool-call totals that `afterNodeExecute` doesn't surface.
-      // Hosts use this for per-org quota / metering on agent activity.
       if (
         this.deps.pluginHookRunner &&
         node.type === 'core.agent' &&

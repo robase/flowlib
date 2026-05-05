@@ -1,7 +1,7 @@
 /**
  * Client-side FlowlibDefinition ⇄ ReactFlow converter.
  *
- * The hosted `<Flowlib>` app receives `ReactFlowData` from the backend's
+ * The full `<Flowlib>` app receives `ReactFlowData` from the backend's
  * `ReactFlowRendererService`. The headless `<FlowCanvas>` doesn't talk to a
  * backend, so we replicate the relevant parts of that transform in the
  * browser using the action metadata the caller provides.

@@ -153,11 +153,11 @@ export class ServiceFactory {
       );
 
       // 5b. Create credentials service with encryption.
-      // Honor an injected EncryptionAdapter if the host provided one (PR 2);
+      // Honor an injected EncryptionAdapter if the host provided one;
       // otherwise build the default in-process EncryptionService. The default
       // class is structurally compatible with EncryptionAdapter — the
       // optional `EncryptionContext` parameter is silently ignored by it
-      // (per-tenant DEK lookup is PR 12 territory).
+      // (per-tenant DEK lookup is the host's responsibility).
       const overrides = this.config.services;
       const encryptionAdapter: EncryptionAdapter =
         (overrides?.encryption as EncryptionAdapter | undefined) ??

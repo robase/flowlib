@@ -355,12 +355,13 @@ export interface FlowlibPluginHooks {
   /**
    * Runs after every individual tool invocation inside a `core.agent` loop.
    *
-   * Fires once per tool call (not per agent node). Use this to bill
-   * per-call cost — e.g. counting `agentToolInvocations` against an org
-   * quota the moment each call lands, rather than waiting for the whole
-   * agent loop to finish via `afterAgentExecute`. Long-running agents
-   * with many tool calls would otherwise let cost accrue invisibly until
-   * the loop returns.
+   * Fires once per tool call (not per agent node) — the per-call
+   * counterpart to `afterAgentExecute`'s loop-aggregate signal. Useful
+   * when the host needs to react to each tool call as it lands rather
+   * than waiting for the whole agent loop to finish: progress
+   * indicators, per-call telemetry, fail-fast policies on repeated
+   * tool errors, etc. Long-running agents with many tool calls
+   * otherwise expose nothing observable until the loop returns.
    *
    * Errors thrown by this hook are caught and logged at warn level —
    * they do not interrupt the agent loop.

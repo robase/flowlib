@@ -117,7 +117,7 @@ export function cronSchedulerToAdapter(service: CronSchedulerService): CronSched
  * `BatchPollerAdapter`.
  *
  * Used by `ServiceFactory` to expose the default batch poller through the
- * same adapter contract that hosted runtimes plug a no-op into.
+ * same adapter contract that edge runtimes plug a no-op into.
  */
 export function batchPollerFromAIClient(client: BaseAIClient): BatchPollerAdapter {
   return {

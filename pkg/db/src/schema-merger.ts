@@ -11,7 +11,7 @@
  * - Duplicate field detection (throws error)
  * - Ordering by foreign key dependencies
  * - Optional `SchemaTransform`s that inject columns/indexes across many tables
- *   (e.g., a hosted multi-tenant variant injecting `organization_id` everywhere)
+ *   (e.g., a multi-tenant variant injecting `organization_id` everywhere)
  */
 
 import type {
