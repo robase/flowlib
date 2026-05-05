@@ -173,15 +173,24 @@ export class WebhookSignatureService {
     }
   }
 
+  /**
+   * Resolve a delivery id used for dedup keying. Provider-specific headers
+   * (e.g., `x-github-delivery`) are preferred when present. The standard
+   * `Idempotency-Key` header (RFC draft / Stripe convention) is the
+   * universal fallback so callers using `provider: 'generic'` or
+   * `'none'` — or providers without a delivery-id header in their
+   * registered config — can still opt into dedup by setting a stable
+   * key per logical retry attempt.
+   */
   getDeliveryId(provider: string, headers: Record<string, string>): string | undefined {
-    if (!provider || provider === 'none' || provider === 'generic') {
-      return undefined;
+    if (provider && provider !== 'none' && provider !== 'generic') {
+      const config = WEBHOOK_PROVIDER_SIGNATURES[provider];
+      const providerId = config?.deliveryIdHeader ? headers[config.deliveryIdHeader] : undefined;
+      if (providerId) {
+        return providerId;
+      }
     }
-    const config = WEBHOOK_PROVIDER_SIGNATURES[provider];
-    if (!config?.deliveryIdHeader) {
-      return undefined;
-    }
-    return headers[config.deliveryIdHeader] || undefined;
+    return headers['idempotency-key'] || undefined;
   }
 
   getEventType(provider: string, headers: Record<string, string>): string | undefined {

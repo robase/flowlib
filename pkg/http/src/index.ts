@@ -1,14 +1,12 @@
 /**
- * `@flowlib/http` — internal HTTP transport helpers shared across
- * Flowlib's framework adapters (Express/NestJS/Next.js).
+ * `@flowlib/http` — framework-agnostic HTTP route registry shared by
+ * Flowlib's Express, NestJS, and Next.js adapters.
  *
- * **Internal package.** Not currently published. Marked `private: true` in
- * `package.json`. Plan: [plans/shared-http-adapter-plan.md].
- *
- * Phase 1 surface (this file): transport-level parsing helpers and error
- * classification. Adapter-side route registration, dispatch, and auth are
- * deliberately NOT in here yet — they're the targets of phases 2–7 once
- * helper extraction has settled.
+ * Public surface — third parties can build a custom adapter (Hono,
+ * Fastify, Cloudflare Workers, etc.) by walking `allFirstPartyEndpoints`
+ * and translating `FlowlibHttpResult` to the host framework's response
+ * type. The first-party adapters do exactly this; their wiring is a few
+ * dozen lines on top of this package.
  */
 
 export { parseJsonQueryParam, coerceSingleQueryValue } from './parsing/query';
