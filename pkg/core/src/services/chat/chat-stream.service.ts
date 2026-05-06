@@ -437,7 +437,13 @@ export class ChatStreamService {
         label?: string;
         referenceId?: string;
         params?: Record<string, unknown>;
-        data?: { label?: string; referenceId?: string; params?: Record<string, unknown> };
+        mapper?: Record<string, unknown>;
+        data?: {
+          label?: string;
+          referenceId?: string;
+          params?: Record<string, unknown>;
+          mapper?: Record<string, unknown>;
+        };
       }
       interface FlowEdge {
         source?: string;
@@ -462,10 +468,7 @@ export class ChatStreamService {
             label,
             referenceId,
             params: n.params ?? n.data?.params,
-            mapper: ((n as unknown as Record<string, unknown>).mapper ??
-              (n.data as unknown as Record<string, unknown> | undefined)?.mapper) as
-              | Record<string, unknown>
-              | undefined,
+            mapper: n.mapper ?? n.data?.mapper,
           };
         }
 

@@ -153,8 +153,11 @@ export function useUpdateFlow() {
     mutationFn: ({ id, data }: { id: string; data: Partial<CreateFlowDto> }) =>
       apiClient.updateFlow(id, data),
     onSuccess: (_, { id }) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.flow(id) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.flows });
+      // Pin the parent-key invalidations so they don't cascade into deeper
+      // keys (versions, react-flow). See `useCreateFlowVersion` for the
+      // detailed rationale; same prefix-match cascade applies here.
+      queryClient.invalidateQueries({ queryKey: queryKeys.flow(id), exact: true });
+      queryClient.invalidateQueries({ queryKey: queryKeys.flows, exact: true });
       // React-Flow data carries the flow's name/description/active state,
       // so flow renames also need to bust any rendered editor views.
       queryClient.invalidateQueries({
@@ -200,11 +203,22 @@ export function useCreateFlowVersion() {
     mutationFn: ({ flowId, data }: { flowId: string; data: CreateFlowVersionDto }) =>
       apiClient.createFlowVersion(flowId, data),
     onSuccess: (_, { flowId }) => {
+      // The query keys here share prefixes intentionally:
+      //   queryKeys.flow(id)         = ['flows', id]
+      //   queryKeys.flowVersions(id) = ['flows', id, 'versions']
+      //   queryKeys.flows            = ['flows']
+      //   reactFlow                  = ['flows', id, 'react-flow', ...]
+      //
+      // Default `invalidateQueries` is prefix-match, so without `exact:true`
+      // a single save invalidated the SAME `flowVersions` query under THREE
+      // separate invalidations (direct, via `flow`, via `flows`). Each match
+      // queues a refetch — that's the "6 identical /versions/list POSTs in
+      // one second" we kept seeing. Pin the parent-key invalidations to
+      // exact-match so they don't cascade into deeper keys; keep prefix
+      // semantics on the two whose actual cache keys carry extra segments.
       queryClient.invalidateQueries({ queryKey: queryKeys.flowVersions(flowId) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.flow(flowId) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.flows });
-      // The latest version is what the editor renders by default; bust
-      // every react-flow cache entry for this flow (any version key).
+      queryClient.invalidateQueries({ queryKey: queryKeys.flow(flowId), exact: true });
+      queryClient.invalidateQueries({ queryKey: queryKeys.flows, exact: true });
       queryClient.invalidateQueries({
         queryKey: ['flows', flowId, 'react-flow'],
         exact: false,

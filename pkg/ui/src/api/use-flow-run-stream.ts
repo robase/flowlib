@@ -137,6 +137,19 @@ function applyEvent(
       // terminal flow_run.updated event (RUNNING → FAILED / SUCCESS).
       ensureRunsListFresh(queryClient, flowId);
       invalidateReactFlow(queryClient, flowId);
+      // On terminal status, reconcile the node-executions cache from the DB.
+      // SSE-fed updates are best-effort (events from before the stream
+      // connected can be missed if the per-run DO buffer is recycled, and
+      // first-event publishes can race against DO instance warmup). After the
+      // run finishes, the DB has the canonical list — refetch as a safety
+      // net so the Logs panel never gets stuck showing a node as Pending
+      // because its create/update events were lost in transit.
+      if (isTerminalStatus(event.flowRun.status)) {
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.nodeExecutions(flowRunId),
+          exact: true,
+        });
+      }
       break;
     }
 
@@ -157,10 +170,25 @@ function applyEvent(
 
     case 'node_execution.updated': {
       queryClient.setQueryData<NodeExecution[]>(queryKeys.nodeExecutions(flowRunId), (prev) => {
-        if (!prev) {
+        if (!prev || prev.length === 0) {
           return [event.nodeExecution];
         }
-        return prev.map((ne) => (ne.id === event.nodeExecution.id ? event.nodeExecution : ne));
+        // Upsert: when `node_execution.updated` arrives BEFORE the
+        // corresponding `node_execution.created` (which can happen on
+        // fast-failing nodes — both events fire microseconds apart, then
+        // travel as separate `bus.emit` fetches to the per-run DO with no
+        // ordering guarantee on the publish-side), `.map` would silently
+        // drop the update. Append-if-missing keeps the failure visible in
+        // the Logs panel; if the late-arriving `created` event lands after,
+        // the existing dedup guard in the `created` case turns it into a
+        // no-op so we don't clobber the fresher data.
+        const idx = prev.findIndex((ne) => ne.id === event.nodeExecution.id);
+        if (idx === -1) {
+          return [...prev, event.nodeExecution];
+        }
+        const next = prev.slice();
+        next[idx] = event.nodeExecution;
+        return next;
       });
       invalidateReactFlow(queryClient, flowId);
       break;
@@ -171,6 +199,11 @@ function applyEvent(
       patchRunsList(queryClient, flowId, event.flowRun);
       ensureRunsListFresh(queryClient, flowId);
       invalidateReactFlow(queryClient, flowId);
+      // Same reconcile as terminal `flow_run.updated` — see comment there.
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.nodeExecutions(flowRunId),
+        exact: true,
+      });
       break;
     }
 
@@ -178,6 +211,12 @@ function applyEvent(
     case 'heartbeat':
       break;
   }
+}
+
+const TERMINAL_FLOW_RUN_STATUSES = new Set<string>(['SUCCESS', 'FAILED', 'CANCELLED']);
+
+function isTerminalStatus(status: string): boolean {
+  return TERMINAL_FLOW_RUN_STATUSES.has(status);
 }
 
 /** Update a single run inside the runs-list cache without refetching. */
@@ -201,12 +240,36 @@ function patchRunsList(
   });
 }
 
-/** Invalidate the React Flow graph query so it re-fetches with updated execution status. */
+/**
+ * Coalesce repeated invalidations into a single trailing-edge refetch.
+ *
+ * Each SSE event used to call `invalidateReactFlow` directly, which forced
+ * every active subscriber (typically 3+: editor canvas, run-scoped viewer,
+ * status panel) to re-fetch the full ReactFlow graph. For a 6-node-event
+ * run that meant ~18 redundant GETs of `/react-flow` even though the same
+ * server-rendered graph was returned each time.
+ *
+ * Now we batch within a 75ms window per flowId. Bursts of node_execution
+ * events (which arrive in tight clusters when the orchestrator advances
+ * through a level of the DAG) collapse into one fetch. The trailing-edge
+ * fire ensures the LAST state still wins — terminal events still trigger
+ * the final invalidation as soon as the window elapses.
+ */
+const REACTFLOW_INVALIDATE_WINDOW_MS = 75;
+const pendingReactFlowInvalidations = new Map<string, ReturnType<typeof setTimeout>>();
+
 function invalidateReactFlow(queryClient: ReturnType<typeof useQueryClient>, flowId: string): void {
-  // Invalidate all reactFlow queries for this flow (any version / any flowRunId)
-  queryClient.invalidateQueries({
-    queryKey: ['flows', flowId, 'react-flow'],
-  });
+  const existing = pendingReactFlowInvalidations.get(flowId);
+  if (existing) {
+    clearTimeout(existing);
+  }
+  const handle = setTimeout(() => {
+    pendingReactFlowInvalidations.delete(flowId);
+    queryClient.invalidateQueries({
+      queryKey: ['flows', flowId, 'react-flow'],
+    });
+  }, REACTFLOW_INVALIDATE_WINDOW_MS);
+  pendingReactFlowInvalidations.set(flowId, handle);
 }
 
 /**
@@ -216,9 +279,24 @@ function invalidateReactFlow(queryClient: ReturnType<typeof useQueryClient>, flo
  * arrived before the first list fetch resolved), invalidate triggers the
  * pending fetch to use the fresh server state. Either way the dropdown ends
  * up showing the right status.
+ *
+ * Coalesced for the same reason as `invalidateReactFlow` — every SSE event
+ * (snapshot, flow_run.updated, end) called this; collapsing into one trailing
+ * fetch per burst keeps the dropdown fresh without the per-event refetch storm.
  */
+const RUNSLIST_INVALIDATE_WINDOW_MS = 75;
+const pendingRunsListInvalidations = new Map<string, ReturnType<typeof setTimeout>>();
+
 function ensureRunsListFresh(queryClient: ReturnType<typeof useQueryClient>, flowId: string): void {
-  queryClient.invalidateQueries({
-    queryKey: queryKeys.executions(flowId),
-  });
+  const existing = pendingRunsListInvalidations.get(flowId);
+  if (existing) {
+    clearTimeout(existing);
+  }
+  const handle = setTimeout(() => {
+    pendingRunsListInvalidations.delete(flowId);
+    queryClient.invalidateQueries({
+      queryKey: queryKeys.executions(flowId),
+    });
+  }, RUNSLIST_INVALIDATE_WINDOW_MS);
+  pendingRunsListInvalidations.set(flowId, handle);
 }

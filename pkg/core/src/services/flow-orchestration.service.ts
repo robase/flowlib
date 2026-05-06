@@ -287,6 +287,16 @@ export class FlowOrchestrationService {
       triggerId?: string;
       triggerNodeId?: string;
       triggerData?: Record<string, unknown>;
+      /**
+       * When true, create the PENDING run row but DO NOT enqueue to the
+       * `JobRunnerAdapter`. The caller is responsible for dispatching
+       * execution itself (typically by calling `runs.executePending(id)`
+       * inside a `waitUntil` / setImmediate). Useful for hosts that want
+       * latency-sensitive paths (e.g. UI-initiated manual runs) to skip
+       * the external queue's delivery floor while still using the same
+       * canonical run-creation logic.
+       */
+      skipDispatch?: boolean;
     },
   ): Promise<FlowRunResult> {
     this.logger.info('Starting async flow execution', { flowId, inputs });
@@ -345,7 +355,7 @@ export class FlowOrchestrationService {
       // — `executeFlowAsync` still returns the freshly-created run id
       // synchronously so callers (HTTP handlers, trigger services) can
       // respond immediately.
-      if (this.jobRunner) {
+      if (this.jobRunner && !options?.skipDispatch) {
         const payload: FlowRunJobPayload = {
           flowRunId: execution.id,
           flowId: flow.id,
@@ -355,6 +365,13 @@ export class FlowOrchestrationService {
           // Per-flow-run idempotency: enqueueing the same `flowRunId`
           // twice (e.g. retried request) MUST run the flow once.
           idempotencyKey: execution.id,
+        });
+      } else if (this.jobRunner && options?.skipDispatch) {
+        // Caller is dispatching itself — most commonly via `waitUntil` in
+        // the same isolate. Just create the row; do not enqueue.
+        this.logger.debug('skipDispatch: PENDING run created without enqueue', {
+          flowRunId: execution.id,
+          flowId: flow.id,
         });
       } else {
         this.flowRunCoordinator
@@ -584,6 +601,83 @@ export class FlowOrchestrationService {
         error: error instanceof Error ? error.message : String(error),
       });
       throw new DatabaseError('Failed to execute partial flow', { error });
+    }
+  }
+
+  /**
+   * Execute a flow run that already exists in PENDING state.
+   *
+   * Loads the run by id, re-loads the flow at the run's pinned version,
+   * and runs the orchestration coordinator against it. Used by external
+   * job runner consumers (Cloudflare Queues, SQS) that pick up FLOW_RUN
+   * jobs produced by `executeFlowAsync()`. The in-process job handler
+   * delegates here too so there's a single execution path.
+   *
+   * Failures are caught and persisted as FAILED on the run; this method
+   * does NOT throw to the caller (consumers shouldn't retry on flow-level
+   * errors — only on infrastructure errors).
+   */
+  async executePendingRun(
+    flowRunId: string,
+    options?: { useBatchProcessing?: boolean },
+  ): Promise<void> {
+    let run: FlowRun;
+    try {
+      run = await this.flowRunsService.getRunById(flowRunId);
+    } catch (err) {
+      this.logger.error('executePendingRun: missing flow run', {
+        flowRunId,
+        error: err instanceof Error ? err.message : String(err),
+      });
+      return;
+    }
+    const flow = await this.flowsService.getFlowById(run.flowId, {
+      flowVersion: { version: run.flowVersion },
+    });
+    if (!flow?.flowVersion?.flowlibDefinition) {
+      await this.flowRunsService.updateRunStatus(flowRunId, FlowRunStatus.FAILED, {
+        error: 'Flow definition missing at execution time',
+      });
+      return;
+    }
+    const augmentedInputs: Record<string, unknown> = {
+      ...run.inputs,
+      ...(run.triggerData
+        ? {
+            __triggerData: run.triggerData,
+            __triggerNodeId: run.triggerNodeId,
+          }
+        : {}),
+    };
+
+    // Manual (UI-initiated) runs need per-node persistence so the Logs panel
+    // can read live state via `/flow-runs/:id/node-executions` while the run
+    // is in progress — that endpoint reads from this isolate's in-memory
+    // buffer, which is empty in cross-isolate setups (queue consumer writes
+    // to a different isolate's buffer than the API handler reads from).
+    // Cron / webhook / batch runs aren't watched live, so they keep the
+    // default `'per-run'` mode — one big flush at terminal state, far fewer
+    // DB writes during the run. The decision is per-run, not per-config.
+    if (run.triggerType === 'manual') {
+      this.nodeExecutionService.forceFlowRunPerNode(flowRunId);
+    }
+
+    try {
+      await this.flowRunCoordinator.executeFlowDefinition(
+        run,
+        flow.flowVersion.flowlibDefinition as FlowlibDefinition,
+        augmentedInputs,
+        options?.useBatchProcessing,
+      );
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      this.logger.error('Async flow execution failed (executePendingRun)', {
+        flowRunId,
+        error: errorMessage,
+      });
+      await this.flowRunsService.updateRunStatus(flowRunId, FlowRunStatus.FAILED, {
+        error: errorMessage,
+      });
     }
   }
 
@@ -968,55 +1062,9 @@ export class FlowOrchestrationService {
     }
 
     this.jobRunner.registerHandler<FlowRunJobPayload>(JOB_TYPES.FLOW_RUN, async (payload) => {
-      // Re-load the freshly-created run row so we have its inputs
-      // and any trigger context the producer wrote.
-      let run: FlowRun;
-      try {
-        run = await this.flowRunsService.getRunById(payload.flowRunId);
-      } catch (err) {
-        this.logger.error('FLOW_RUN job referenced missing flow run', {
-          flowRunId: payload.flowRunId,
-          error: err instanceof Error ? err.message : String(err),
-        });
-        return;
-      }
-      // Re-load the flow at the version that was pinned on the run.
-      const flow = await this.flowsService.getFlowById(payload.flowId, {
-        flowVersion: { version: run.flowVersion },
+      await this.executePendingRun(payload.flowRunId, {
+        useBatchProcessing: payload.useBatchProcessing,
       });
-      if (!flow?.flowVersion?.flowlibDefinition) {
-        await this.flowRunsService.updateRunStatus(payload.flowRunId, FlowRunStatus.FAILED, {
-          error: 'Flow definition missing at execution time',
-        });
-        return;
-      }
-      const augmentedInputs: Record<string, unknown> = {
-        ...run.inputs,
-        ...(run.triggerData
-          ? {
-              __triggerData: run.triggerData,
-              __triggerNodeId: run.triggerNodeId,
-            }
-          : {}),
-      };
-
-      try {
-        await this.flowRunCoordinator.executeFlowDefinition(
-          run,
-          flow.flowVersion.flowlibDefinition as FlowlibDefinition,
-          augmentedInputs,
-          payload.useBatchProcessing,
-        );
-      } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : String(error);
-        this.logger.error('Async flow execution failed (job runner path)', {
-          flowRunId: payload.flowRunId,
-          error: errorMessage,
-        });
-        await this.flowRunsService.updateRunStatus(payload.flowRunId, FlowRunStatus.FAILED, {
-          error: errorMessage,
-        });
-      }
     });
 
     this.jobRunner.registerHandler<BatchJobResumeJobPayload>(

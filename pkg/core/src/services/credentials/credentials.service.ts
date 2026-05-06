@@ -7,6 +7,7 @@
  */
 
 import { CredentialsModel } from './credentials.model';
+import { isEncryptedData } from './encryption.service';
 import type { EncryptionAdapter, EncryptionContext } from '../../types/services';
 import type { FlowlibAdapter } from '../../database/adapter';
 import type { CredentialConfig, CredentialAuthType, CredentialType } from '@flowlib/db';
@@ -102,8 +103,24 @@ export class CredentialsService {
     envelopeJson: string,
     context?: EncryptionContext,
   ): Promise<CredentialConfig> {
-    const envelope = JSON.parse(envelopeJson);
+    let envelope: unknown;
+    try {
+      envelope = JSON.parse(envelopeJson);
+    } catch (err) {
+      throw new Error(
+        `decryptConfig: stored envelope is not valid JSON (${err instanceof Error ? err.message : 'parse failure'})`,
+      );
+    }
+    if (!isEncryptedData(envelope)) {
+      throw new Error(
+        'decryptConfig: stored envelope does not match the EncryptedData shape — credential row may be corrupt or encrypted with an incompatible adapter',
+      );
+    }
     const plaintext = await this.encryption.decrypt(envelope, context);
+    // CredentialConfig is a per-credential-type discriminated union; the
+    // caller's authType selects the variant. We can't validate the union here
+    // without a Zod schema for every variant, but the cast is safe for any
+    // plaintext we ourselves wrote via `encryptConfig`.
     return JSON.parse(plaintext) as CredentialConfig;
   }
 

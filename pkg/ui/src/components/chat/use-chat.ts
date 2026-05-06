@@ -481,6 +481,31 @@ export function useChat(options: UseChatOptions = {}) {
 // UI Action Handler
 // =====================================
 
+/**
+ * Trailing-edge debounce for `refresh_flow` invalidations, keyed by flowId.
+ *
+ * AI turns frequently fire multiple `refresh_flow` events in tight succession
+ * — every node/edge/tool change in a multi-step plan emits one. Without
+ * batching, each event invalidates `reactFlow + flowVersions + flow` and each
+ * one fires a fetch per active subscriber.
+ */
+const REFRESH_FLOW_WINDOW_MS = 75;
+const pendingRefreshFlow = new Map<string, ReturnType<typeof setTimeout>>();
+
+function scheduleRefreshFlow(queryClient: ReturnType<typeof useQueryClient>, flowId: string): void {
+  const existing = pendingRefreshFlow.get(flowId);
+  if (existing) {
+    clearTimeout(existing);
+  }
+  const handle = setTimeout(() => {
+    pendingRefreshFlow.delete(flowId);
+    queryClient.invalidateQueries({ queryKey: queryKeys.reactFlow(flowId) });
+    queryClient.invalidateQueries({ queryKey: queryKeys.flowVersions(flowId) });
+    queryClient.invalidateQueries({ queryKey: queryKeys.flow(flowId) });
+  }, REFRESH_FLOW_WINDOW_MS);
+  pendingRefreshFlow.set(flowId, handle);
+}
+
 interface UiActionContext {
   queryClient: ReturnType<typeof useQueryClient>;
   navigate: ReturnType<typeof useNavigate>;
@@ -507,10 +532,11 @@ function handleUiAction(action: string, data: Record<string, unknown>, ctx: UiAc
       // If the user has unsaved local changes, syncFromServer will reject the incoming
       // data (snapshot mismatch). If the user has no local changes, it will apply cleanly.
 
-      // Invalidate React Query caches to trigger refetch
-      queryClient.invalidateQueries({ queryKey: queryKeys.reactFlow(flowId) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.flowVersions(flowId) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.flow(flowId) });
+      // Coalesce trailing-edge: a single AI turn can emit several `refresh_flow`
+      // events (every node/edge/tool tool-call emits one). Without batching,
+      // 5 tool calls × 3 invalidations × ≥1 subscriber each = 15+ refetches in
+      // a tight burst. The trailing-edge fire still picks up the final state.
+      scheduleRefreshFlow(queryClient, flowId);
 
       // Select a specific node if the tool requested it
       const selectNodeId = data.selectNodeId as string | undefined;

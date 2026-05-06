@@ -27,7 +27,32 @@ export const FlowExecutionsFilterSchema = z.object({
  */
 export const GetFlowExecutionsQuerySchema = PaginationQuerySchema.merge(FlowExecutionsFilterSchema);
 
+/**
+ * Flow inputs — arbitrary user-supplied data passed to a flow run. The shape
+ * is intentionally open because flow authors define their own input contract;
+ * Zod just enforces "object whose values are JSON-compatible" at the boundary.
+ */
+export const FlowInputsSchema = z.record(z.string(), z.unknown());
+
+/**
+ * Options for `runs.start` / `runs.startAsync` / `runs.executeToNode`.
+ */
+export const ExecuteFlowOptionsSchema = z.object({
+  version: z.union([z.number().int().positive(), z.literal('latest')]).optional(),
+  initiatedBy: z.string().optional(),
+  useBatchProcessing: z.boolean().optional(),
+});
+
+/**
+ * Body for `POST /flows/:flowId/run` and `POST /flows/:flowId/run-to-node/:nodeId`.
+ */
+export const RunFlowBodySchema = z.object({
+  inputs: FlowInputsSchema.optional(),
+  options: ExecuteFlowOptionsSchema.optional(),
+});
+
 // Type exports
 export type FlowIdParams = z.infer<typeof FlowIdParamsSchema>;
 export type FlowExecutionsFilter = z.infer<typeof FlowExecutionsFilterSchema>;
 export type GetFlowExecutionsQuery = z.infer<typeof GetFlowExecutionsQuerySchema>;
+export type RunFlowBody = z.infer<typeof RunFlowBodySchema>;

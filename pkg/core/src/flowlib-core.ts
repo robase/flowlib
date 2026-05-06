@@ -1494,12 +1494,21 @@ export class Flowlib {
 
       const mockContext: NodeExecutionContext = {
         nodeId: `test-${Date.now()}`,
+        flowId: 'test-flow',
+        flowVersion: 0,
         flowRunId: `test-run-${Date.now()}`,
         logger: this.config.logger,
         globalConfig: {},
         flowInputs: {},
         flowParams: { useBatchProcessing: false },
         incomingData: inputData,
+        edges: [],
+        nodes: [],
+        skippedNodeIds: new Set<string>(),
+        nodeExecutionResults: new Map(),
+        allNodeOutputs: new Map(),
+        allNodeInputs: new Map(),
+        startedAt: new Date(),
         functions: {
           evaluator: this.jsExpressionService ?? undefined,
           markDownstreamNodesAsSkipped: () => {
@@ -1523,8 +1532,7 @@ export class Flowlib {
           getCredential: async (credentialId: string) =>
             this.credentialsService.getDecryptedWithRefresh(credentialId),
         },
-        allNodeOutputs: new Map(),
-      } as unknown as NodeExecutionContext;
+      };
 
       const result = await executeActionAsNode(action, resolvedParams, mockContext);
 

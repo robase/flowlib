@@ -38,22 +38,32 @@ export type NodeExecutionCoordinatorDeps = {
  * Coordinates the execution of individual nodes within a flow run.
  */
 export class NodeExecutionCoordinator {
-  private templateService: TemplateService;
+  /**
+   * `null` when neither a `templateService` nor a `jsExpressionService` was
+   * supplied — typically only happens in tests that never resolve templates.
+   * Calls that need the service go through the `getTemplateService()` accessor
+   * which throws a clear error instead of crashing on `undefined.isTemplate`.
+   */
+  private readonly templateServiceOrNull: TemplateService | null;
 
   constructor(private readonly deps: NodeExecutionCoordinatorDeps) {
     if (deps.templateService) {
-      this.templateService = deps.templateService;
+      this.templateServiceOrNull = deps.templateService;
     } else if (deps.jsExpressionService) {
-      this.templateService = createTemplateService(deps.jsExpressionService, deps.logger);
+      this.templateServiceOrNull = createTemplateService(deps.jsExpressionService, deps.logger);
     } else {
-      // Fallback: TemplateService requires JsExpressionService. If neither is
-      // provided the service will throw at render time — but construction
-      // should not fail so tests that never call resolveTemplateParams still work.
-      this.templateService = createTemplateService(
-        undefined as unknown as JsExpressionService,
-        deps.logger,
+      this.templateServiceOrNull = null;
+    }
+  }
+
+  private get templateService(): TemplateService {
+    if (!this.templateServiceOrNull) {
+      throw new Error(
+        'NodeExecutionCoordinator: templateService is unavailable — neither templateService ' +
+          'nor jsExpressionService was supplied at construction time. Wire one in ServiceFactory.',
       );
     }
+    return this.templateServiceOrNull;
   }
 
   /**

@@ -110,6 +110,15 @@ export {
   type MapperConfig,
 } from './services/flow-versions/schemas-fresh';
 
+// Run / execution boundary schemas (used by the HTTP adapter to validate
+// request bodies; also handy for any host wiring its own routes).
+export {
+  ExecuteFlowOptionsSchema,
+  FlowInputsSchema,
+  RunFlowBodySchema,
+  type RunFlowBody,
+} from './schemas/flow/flow-executions.schema';
+
 export type { FlowNodeDefinitions as FlowNode } from './services/flow-versions/schemas-fresh';
 
 // Re-export service types for API clients

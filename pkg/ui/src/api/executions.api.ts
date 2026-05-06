@@ -162,9 +162,14 @@ export function useResumeFlowRun() {
   return useMutation({
     mutationFn: (executionId: string) => apiClient.resumeFlowRun(executionId),
     onSuccess: (_, executionId) => {
-      queryClient.invalidateQueries({ queryKey: ['executions'] });
+      // The bare ['executions'] prefix used to invalidate every per-flow runs
+      // list AND every flow-run detail in the cache (the two query-key shapes
+      // collide on `['executions', ...]`). Narrow to the specific run and the
+      // cross-flow "all runs" list — sibling per-flow lists don't change just
+      // because we resumed one run, and they refresh via SSE when needed.
       queryClient.invalidateQueries({ queryKey: queryKeys.flowRun(executionId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.nodeExecutions(executionId) });
+      queryClient.invalidateQueries({ queryKey: ['executions', 'all'], exact: false });
     },
     onError: (error) => {
       console.error('Failed to resume execution:', error);

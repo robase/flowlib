@@ -140,6 +140,16 @@ export interface FlowRunsAPI {
     options?: ExecuteFlowOptions,
   ): Promise<FlowRunResult>;
   resume(executionId: string): Promise<{ message: string; timestamp: string }>;
+  /**
+   * Execute a flow run that's already been created in PENDING state.
+   *
+   * Intended for external job runner consumers (Cloudflare Queues, SQS)
+   * picking up FLOW_RUN jobs produced by `startAsync`. Loads the run by id,
+   * re-loads the flow at the pinned version, and runs orchestration. Errors
+   * are persisted on the run as FAILED; this method does not throw on
+   * flow-level errors.
+   */
+  executePending(flowRunId: string, options?: { useBatchProcessing?: boolean }): Promise<void>;
   list(options?: QueryOptions<FlowRun>): Promise<PaginatedResponse<FlowRun>>;
   listByFlowId(
     flowId: string,

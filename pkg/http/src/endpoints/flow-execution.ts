@@ -8,10 +8,44 @@
  *   POST /node-executions/list
  */
 
-import type { ExecuteFlowOptions, FlowInputs, NodeExecution, QueryOptions } from '@flowlib/core';
+import {
+  FlowInputsSchema,
+  RunFlowBodySchema,
+  flowlibDefinitionSchema,
+  type NodeExecution,
+  type QueryOptions,
+} from '@flowlib/core';
+import { z } from 'zod/v4';
 import { defineEndpoint, type FlowlibHttpEndpoint } from './types';
 
 const flowResource = (id: string) => ({ type: 'flow' as const, id });
+
+/**
+ * Format a Zod failure into a 400 response. Returned as JSON so clients can
+ * surface field-level errors; we don't echo the raw issues object because it
+ * leaks internal field names — just the high-signal `path` + `message`.
+ */
+function badRequest(error: z.ZodError): {
+  kind: 'json';
+  status: 400;
+  body: { error: string; message: string; issues: Array<{ path: string; message: string }> };
+} {
+  return {
+    kind: 'json',
+    status: 400,
+    body: {
+      error: 'Bad Request',
+      message: 'Request body failed validation',
+      issues: error.issues.map((i) => ({ path: i.path.join('.'), message: i.message })),
+    },
+  };
+}
+
+const EphemeralBodySchema = z.object({
+  definition: flowlibDefinitionSchema,
+  inputs: FlowInputsSchema.optional(),
+  name: z.string().optional(),
+});
 
 const startRun = defineEndpoint({
   id: 'flow-execution.startRun',
@@ -23,14 +57,15 @@ const startRun = defineEndpoint({
     getResource: (request) => flowResource(request.params.flowId),
   },
   async handle({ flowlib, request }) {
-    const { inputs = {}, options } = (request.body ?? {}) as {
-      inputs?: FlowInputs;
-      options?: ExecuteFlowOptions;
-    };
+    const parsed = RunFlowBodySchema.safeParse(request.body ?? {});
+    if (!parsed.success) {
+      return badRequest(parsed.error);
+    }
+    const { inputs, options } = parsed.data;
     return {
       kind: 'json',
       status: 201,
-      body: await flowlib.runs.startAsync(request.params.flowId, inputs, options),
+      body: await flowlib.runs.startAsync(request.params.flowId, inputs ?? {}, options),
     };
   },
 });
@@ -45,17 +80,18 @@ const runToNode = defineEndpoint({
     getResource: (request) => flowResource(request.params.flowId),
   },
   async handle({ flowlib, request }) {
-    const { inputs = {}, options } = (request.body ?? {}) as {
-      inputs?: FlowInputs;
-      options?: ExecuteFlowOptions;
-    };
+    const parsed = RunFlowBodySchema.safeParse(request.body ?? {});
+    if (!parsed.success) {
+      return badRequest(parsed.error);
+    }
+    const { inputs, options } = parsed.data;
     return {
       kind: 'json',
       status: 201,
       body: await flowlib.runs.executeToNode(
         request.params.flowId,
         request.params.nodeId,
-        inputs,
+        inputs ?? {},
         options,
       ),
     };
@@ -68,25 +104,15 @@ const runToNode = defineEndpoint({
  * `path` differ but the behaviour is identical.
  */
 const ephemeralHandler: FlowlibHttpEndpoint<unknown>['handle'] = async ({ flowlib, request }) => {
-  const { definition, inputs, name } = (request.body ?? {}) as {
-    definition?: unknown;
-    inputs?: Record<string, unknown>;
-    name?: string;
-  };
-  if (!definition || typeof definition !== 'object') {
-    return {
-      kind: 'json',
-      status: 400,
-      body: {
-        error: 'Bad Request',
-        message: 'Body.definition (FlowlibDefinition) is required',
-      },
-    };
+  const parsed = EphemeralBodySchema.safeParse(request.body ?? {});
+  if (!parsed.success) {
+    return badRequest(parsed.error);
   }
+  const { definition, inputs, name } = parsed.data;
   return {
     kind: 'json',
     status: 200,
-    body: await flowlib.runs.runEphemeral(definition as never, inputs ?? {}, {
+    body: await flowlib.runs.runEphemeral(definition, inputs ?? {}, {
       name,
       initiatedBy: request.identity?.id,
     }),

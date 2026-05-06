@@ -34,6 +34,89 @@ function syntheticTraceId(): string {
   return globalThis.crypto.randomUUID();
 }
 
+const VALID_NODE_EXECUTION_STATUSES = new Set<string>(Object.values(NodeExecutionStatus));
+
+/**
+ * Coerce an arbitrary value into a `NodeExecutionStatus`, falling back to
+ * `PENDING` when the value isn't one of the known enum variants. Logs a
+ * warning so schema drift is visible instead of silently casting through.
+ */
+function coerceNodeExecutionStatus(raw: unknown, logger: Logger): NodeExecutionStatus {
+  if (typeof raw === 'string' && VALID_NODE_EXECUTION_STATUSES.has(raw)) {
+    return raw as NodeExecutionStatus;
+  }
+  if (raw !== undefined && raw !== null) {
+    logger.warn('Unexpected NodeExecution.status in serialized blob; defaulting to PENDING', {
+      raw: typeof raw === 'string' ? raw : typeof raw,
+    });
+  }
+  return NodeExecutionStatus.PENDING;
+}
+
+interface RawTraceRow {
+  id?: unknown;
+  flowRunId?: unknown;
+  flow_run_id?: unknown;
+  parentNodeExecutionId?: unknown;
+  parent_node_execution_id?: unknown;
+  nodeId?: unknown;
+  node_id?: unknown;
+  nodeType?: unknown;
+  node_type?: unknown;
+  toolId?: unknown;
+  tool_id?: unknown;
+  toolName?: unknown;
+  tool_name?: unknown;
+  iteration?: unknown;
+  status?: unknown;
+  inputs?: unknown;
+  outputs?: unknown;
+  error?: unknown;
+  errorDetails?: unknown;
+  fieldErrors?: unknown;
+  startedAt?: unknown;
+  started_at?: unknown;
+  completedAt?: unknown;
+  completed_at?: unknown;
+  duration?: unknown;
+  retryCount?: unknown;
+  retry_count?: unknown;
+}
+
+function asNullableString(v: unknown): string | null {
+  if (typeof v === 'string') {
+    return v;
+  }
+  if (v === null || v === undefined) {
+    return null;
+  }
+  return String(v);
+}
+
+function asOptionalString(v: unknown): string | undefined {
+  return typeof v === 'string' ? v : undefined;
+}
+
+function asNumberOrNull(v: unknown): number | null {
+  if (v === null || v === undefined) {
+    return null;
+  }
+  const n = Number(v);
+  return Number.isFinite(n) ? n : null;
+}
+
+function asNumberOrUndefined(v: unknown): number | undefined {
+  if (v === null || v === undefined) {
+    return undefined;
+  }
+  const n = Number(v);
+  return Number.isFinite(n) ? n : undefined;
+}
+
+function asPlainRecord(v: unknown): Record<string, unknown> {
+  return v && typeof v === 'object' && !Array.isArray(v) ? (v as Record<string, unknown>) : {};
+}
+
 /**
  * Parse a `flow_runs.node_outputs` blob (set by `'per-run'` mode at flush
  * time) back into the same `NodeExecution[]` shape consumers expect.
@@ -43,7 +126,7 @@ function syntheticTraceId(): string {
  * - JSON-encoded string (PostgreSQL text fallback)
  * - any other shape → returns null (caller falls through to action_traces)
  */
-function parseNodeOutputsBlob(raw: unknown): NodeExecution[] | null {
+function parseNodeOutputsBlob(raw: unknown, logger: Logger): NodeExecution[] | null {
   let arr: unknown = raw;
   if (typeof raw === 'string') {
     try {
@@ -55,31 +138,38 @@ function parseNodeOutputsBlob(raw: unknown): NodeExecution[] | null {
   if (!Array.isArray(arr)) {
     return null;
   }
-  // Trust the shape — anything we wrote in flushBuffer is already a
-  // NodeExecution. Tolerate Date strings vs Date instances.
+  // Anything we wrote in flushBuffer is already a NodeExecution; this just
+  // narrows the unknowns one field at a time, and validates the closed-enum
+  // fields (`status`) against their canonical values so schema drift surfaces
+  // as a warning instead of a silent miscast.
   return arr.map((row) => {
-    const r = row as Record<string, unknown>;
+    const r: RawTraceRow = row && typeof row === 'object' ? (row as RawTraceRow) : {};
+    const startedAt = r.startedAt ?? r.started_at;
+    const completedAt = r.completedAt ?? r.completed_at;
     return {
-      id: String(r.id ?? syntheticTraceId()),
-      flowRunId: String(r.flowRunId ?? r.flow_run_id ?? ''),
-      parentNodeExecutionId: (r.parentNodeExecutionId ?? r.parent_node_execution_id ?? null) as
-        | string
-        | null,
-      nodeId: String(r.nodeId ?? r.node_id ?? ''),
-      nodeType: String(r.nodeType ?? r.node_type ?? ''),
-      toolId: (r.toolId ?? r.tool_id ?? null) as string | null,
-      toolName: (r.toolName ?? r.tool_name ?? null) as string | null,
-      iteration: r.iteration === null || r.iteration === undefined ? null : Number(r.iteration),
-      status: (r.status ?? 'PENDING') as NodeExecutionStatus,
-      inputs: (r.inputs ?? {}) as Record<string, unknown>,
+      id: typeof r.id === 'string' && r.id.length > 0 ? r.id : syntheticTraceId(),
+      flowRunId: asNullableString(r.flowRunId ?? r.flow_run_id) ?? '',
+      parentNodeExecutionId: asNullableString(
+        r.parentNodeExecutionId ?? r.parent_node_execution_id,
+      ),
+      nodeId: asNullableString(r.nodeId ?? r.node_id) ?? '',
+      nodeType: asNullableString(r.nodeType ?? r.node_type) ?? '',
+      toolId: asNullableString(r.toolId ?? r.tool_id),
+      toolName: asNullableString(r.toolName ?? r.tool_name),
+      iteration: asNumberOrNull(r.iteration),
+      status: coerceNodeExecutionStatus(r.status, logger),
+      inputs: asPlainRecord(r.inputs),
       outputs: r.outputs as NodeOutput | undefined,
-      error: r.error as string | undefined,
+      error: asOptionalString(r.error),
       errorDetails: r.errorDetails as NodeErrorDetails | undefined,
       fieldErrors: r.fieldErrors as Record<string, string> | undefined,
-      startedAt: (r.startedAt ?? r.started_at ?? new Date()) as Date | string,
-      completedAt: (r.completedAt ?? r.completed_at) as Date | string | undefined,
-      duration: r.duration === null || r.duration === undefined ? undefined : Number(r.duration),
-      retryCount: Number(r.retryCount ?? r.retry_count ?? 0),
+      startedAt: (startedAt instanceof Date || typeof startedAt === 'string'
+        ? startedAt
+        : new Date()) as Date | string,
+      completedAt:
+        completedAt instanceof Date || typeof completedAt === 'string' ? completedAt : undefined,
+      duration: asNumberOrUndefined(r.duration),
+      retryCount: asNumberOrUndefined(r.retryCount ?? r.retry_count) ?? 0,
     } satisfies NodeExecution;
   });
 }
@@ -372,7 +462,7 @@ export class NodeExecutionService {
       const flowRun = await this.databaseService.flowRuns.findById(flowRunId);
       const blob = flowRun?.nodeOutputs;
       if (blob !== undefined && blob !== null) {
-        const parsed = parseNodeOutputsBlob(blob);
+        const parsed = parseNodeOutputsBlob(blob, this.logger);
         if (parsed && parsed.length > 0) {
           this.logger.debug('Returning flushed per-run execution traces', {
             flowRunId,

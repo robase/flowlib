@@ -31,6 +31,29 @@ export type ExecuteFlowOptions = {
   version?: number | 'latest';
   initiatedBy?: string;
   useBatchProcessing?: boolean;
+  /**
+   * How the run was started. UI-initiated runs SHOULD pass `'manual'` so the
+   * orchestrator falls back to per-node trace persistence — that gives the
+   * Logs panel live in-progress visibility in cross-isolate hosted setups,
+   * where the API isolate that serves `/flow-runs/:id/node-executions` would
+   * otherwise see an empty per-run buffer (the buffer lives in the queue
+   * consumer's isolate). `'webhook'` and `'cron'` keep the configured
+   * default (typically `'per-run'`) since those runs aren't watched live.
+   */
+  triggerType?: 'manual' | 'webhook' | 'cron';
+  /**
+   * When true, `runs.startAsync` creates the PENDING run row but does NOT
+   * enqueue the wired `JobRunnerAdapter`. The caller is responsible for
+   * dispatching execution itself — typically by calling
+   * `runs.executePending(flowRunId)` from a `waitUntil` (Cloudflare) or
+   * `setImmediate` (Node) so the HTTP response can return before the run
+   * finishes. Skipping the queue saves the queue's delivery floor (~1-2s
+   * on Cloudflare Queues even with `max_batch_timeout=0`) plus a consumer
+   * cold-start, but loses the queue's durability and at-least-once retry —
+   * use only for runs the host can re-trigger if the worker dies mid-flight
+   * (e.g. UI runs where the user can simply click Run again).
+   */
+  skipDispatch?: boolean;
 };
 
 /**

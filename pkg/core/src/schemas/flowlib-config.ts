@@ -274,6 +274,26 @@ export const FlowlibConfigSchema = z.object({
   skipDatabaseInit: z.boolean().optional(),
 
   /**
+   * Skip per-startup database health checks (connectivity probe, core-table
+   * existence check, plugin-table existence check, detailed schema verification).
+   *
+   * **Use only when the schema is known to be valid** — typically because the
+   * deploy pipeline already ran `flowlib-cli generate` + `drizzle-kit push`
+   * and you don't want each cold-start isolate to pay for redundant validation.
+   *
+   * Each skipped check normally costs one DB round-trip; on remote D1 / serverless
+   * Postgres that's ~150ms × 4 ≈ 0.5s of cold-start latency per worker invocation.
+   *
+   * The connection itself is still established normally, so model methods work.
+   * If the schema is actually invalid the failure surfaces on first query
+   * instead of at startup — which is the right tradeoff for a worker spawned
+   * once per request.
+   *
+   * @default false
+   */
+  skipStartupChecks: z.boolean().optional(),
+
+  /**
    * Trigger system configuration.
    * Controls webhook and cron scheduler behavior.
    */

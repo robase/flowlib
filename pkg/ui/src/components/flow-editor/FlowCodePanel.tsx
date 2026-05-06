@@ -31,6 +31,16 @@ const DEFAULT_WIDTH = 520;
 const MIN_WIDTH = 360;
 const MAX_WIDTH = 900;
 
+/**
+ * Hoisted out of render so the React Query cache key stays referentially
+ * stable across renders / StrictMode double-mounts. Without this, every
+ * render created a fresh literal — React Query deep-equals keys, so the
+ * cache *technically* hits, but multiple FlowCodePanel mounts (editor +
+ * runs view) plus StrictMode amplify any incidental cache misses into a
+ * burst of identical `/versions/list` POSTs.
+ */
+const LATEST_VERSION_QUERY_OPTIONS = { pagination: { page: 1, limit: 1 } } as const;
+
 interface FlowCodePanelProps {
   flowId: string;
   /**
@@ -64,7 +74,7 @@ export function FlowCodePanel({ flowId, source = 'editor', className }: FlowCode
   const useEditor = source === 'editor' && editorFlowId === flowId && nodes.length > 0;
 
   const { data: flow } = useFlow(flowId);
-  const { data: versionsResponse } = useFlowVersions(flowId, { pagination: { page: 1, limit: 1 } });
+  const { data: versionsResponse } = useFlowVersions(flowId, LATEST_VERSION_QUERY_OPTIONS);
   const latestDefinition = versionsResponse?.data?.[0]?.flowlibDefinition as
     | FlowlibDefinition
     | undefined;

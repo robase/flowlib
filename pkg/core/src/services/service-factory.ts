@@ -108,15 +108,26 @@ export class ServiceFactory {
       // Schema verification always runs on startup to catch missing tables/columns.
       this.logger.debug('Creating DatabaseService...');
       const dbStart = Date.now();
-      const verificationOpts = {
-        strict: false,
-        plugins: (this.config.plugins || []) as import('src/types/plugin.types').FlowlibPlugin[],
-      };
+      // Hosts that already validated the schema at deploy-time (`flowlib-cli
+      // generate` + `drizzle-kit push`) can opt out of every per-startup check
+      // via `skipStartupChecks: true` — saves ~4 DB round-trips on serverless
+      // cold starts. See `FlowlibConfigSchema.skipStartupChecks` for the
+      // tradeoffs. The connection is still established the usual way; only
+      // the redundant existence/verification probes are skipped.
+      const skipStartupChecks = this.config.skipStartupChecks === true;
+      const verificationOpts = skipStartupChecks
+        ? undefined
+        : {
+            strict: false,
+            plugins: (this.config.plugins ||
+              []) as import('src/types/plugin.types').FlowlibPlugin[],
+          };
       const databaseService = new DatabaseService(
         this.config.database,
         this.logger,
         verificationOpts,
         (this.config.plugins || []) as import('src/types/plugin.types').FlowlibPlugin[],
+        { skipStartupChecks },
       );
       await databaseService.initialize();
       this.logger.info(`DatabaseService initialized in ${Date.now() - dbStart}ms`);

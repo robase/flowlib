@@ -1,8 +1,13 @@
 export * from './create-flow.schema';
 export * from './create-flow-version.schema';
 export * from './delete-flow.schema';
-export type { FlowIdParams, GetFlowExecutionsQuery } from './flow-executions.schema';
-export { FlowIdParamsSchema } from './flow-executions.schema';
+export type { FlowIdParams, GetFlowExecutionsQuery, RunFlowBody } from './flow-executions.schema';
+export {
+  ExecuteFlowOptionsSchema,
+  FlowIdParamsSchema,
+  FlowInputsSchema,
+  RunFlowBodySchema,
+} from './flow-executions.schema';
 export * from './get-flow-by-id-response.schema';
 export * from './get-flow-versions-response.schema';
 export * from './get-flows-response.schema';

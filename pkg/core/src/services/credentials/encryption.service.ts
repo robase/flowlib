@@ -58,6 +58,28 @@ export interface EncryptedData {
   version?: number;
 }
 
+/**
+ * Narrowing predicate for an encrypted-envelope JSON blob. Validates the four
+ * required base64 fields plus `algorithm` are present and string-shaped — the
+ * subsequent `decrypt()` call relies on every field, so failing here gives a
+ * clearer error than letting WebCrypto throw "InvalidAccessError" on an
+ * undefined IV.
+ */
+export function isEncryptedData(value: unknown): value is EncryptedData {
+  if (!value || typeof value !== 'object') {
+    return false;
+  }
+  const v = value as Record<string, unknown>;
+  return (
+    typeof v.ciphertext === 'string' &&
+    typeof v.iv === 'string' &&
+    typeof v.authTag === 'string' &&
+    typeof v.salt === 'string' &&
+    typeof v.algorithm === 'string' &&
+    (v.version === undefined || typeof v.version === 'number')
+  );
+}
+
 // ─── base64 helpers (no Buffer required for the hot path) ────────────
 
 function base64ToBytes(b64: string): Uint8Array {
@@ -354,8 +376,24 @@ export class EncryptionService {
    * Returns the original object
    */
   async decryptObject<T extends object>(encryptedString: string): Promise<T> {
-    const encrypted = JSON.parse(encryptedString) as EncryptedData;
-    const decrypted = await this.decrypt(encrypted);
+    let envelope: unknown;
+    try {
+      envelope = JSON.parse(encryptedString);
+    } catch (err) {
+      throw new Error(
+        `decryptObject: input is not valid JSON (${err instanceof Error ? err.message : 'parse failure'})`,
+      );
+    }
+    if (!isEncryptedData(envelope)) {
+      throw new Error(
+        'decryptObject: input is not a recognised EncryptedData envelope (missing one or more of ciphertext/iv/authTag/salt/algorithm)',
+      );
+    }
+    const decrypted = await this.decrypt(envelope);
+    // The plaintext shape `T` is the caller's contract — they pass the same
+    // type they passed to `encryptObject<T>` and we deserialize back into it.
+    // We can't structurally validate `T` here without a runtime schema, so the
+    // caller validates if they need to.
     return JSON.parse(decrypted) as T;
   }
 

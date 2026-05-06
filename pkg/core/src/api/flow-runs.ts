@@ -46,6 +46,11 @@ export function createFlowRunsAPI(sf: ServiceFactory, logger: Logger): FlowRunsA
       return flowRunsService.resumeRun(executionId);
     },
 
+    executePending(flowRunId, options) {
+      logger.debug('executePending called', { flowRunId });
+      return orchestration.executePendingRun(flowRunId, options);
+    },
+
     list(options) {
       logger.debug('listFlowRuns called');
       return flowRunsService.listRuns(options);
