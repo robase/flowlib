@@ -203,7 +203,7 @@ function mapPartUpdated(
   state: OpencodeMapperState,
 ): AgentEvent[] {
   const part = props.part;
-  if (!part || typeof part !== 'object') return [];
+  if (!part || typeof part !== 'object') {return [];}
 
   // Track the most-recent assistant message so terminators (idle/error) can
   // attach a sensible messageId.
@@ -216,7 +216,7 @@ function mapPartUpdated(
     const text = typeof props.delta === 'string' && props.delta.length > 0
       ? props.delta
       : textPart.text;
-    if (!text) return [];
+    if (!text) {return [];}
     return [{ type: 'text-delta', messageId: textPart.messageID, text }];
   }
 
@@ -278,9 +278,9 @@ function mapMessageUpdated(
   state: OpencodeMapperState,
 ): AgentEvent[] {
   const info = props.info;
-  if (!info || info.role !== 'assistant') return [];
-  if (info.time?.completed === undefined) return [];
-  if (state.completedMessages.has(info.id)) return [];
+  if (!info || info.role !== 'assistant') {return [];}
+  if (info.time?.completed === undefined) {return [];}
+  if (state.completedMessages.has(info.id)) {return [];}
 
   state.completedMessages.add(info.id);
   state.lastMessageId = info.id;
@@ -320,7 +320,7 @@ function mapFileEdited(
   props: { file: string },
   state: OpencodeMapperState,
 ): AgentEvent[] {
-  if (!props.file) return [];
+  if (!props.file) {return [];}
   return [
     {
       type: 'file-edit',
@@ -335,8 +335,8 @@ function mapSessionIdle(state: OpencodeMapperState): AgentEvent[] {
   // emitted a `message-complete` from `message.updated`, suppress this
   // one to avoid duplicates.
   const messageId = state.lastMessageId;
-  if (!messageId) return [];
-  if (state.completedMessages.has(messageId)) return [];
+  if (!messageId) {return [];}
+  if (state.completedMessages.has(messageId)) {return [];}
   state.completedMessages.add(messageId);
   return [{ type: 'message-complete', messageId }];
 }
@@ -364,11 +364,11 @@ function mapSessionError(props: {
  * is the authoritative signal.
  */
 function filePathFromToolInput(tool: string, input: Record<string, unknown>): string | undefined {
-  if (!FILE_EDIT_TOOLS.has(tool.toLowerCase())) return undefined;
+  if (!FILE_EDIT_TOOLS.has(tool.toLowerCase())) {return undefined;}
   const candidates = ['file_path', 'path', 'filepath'];
   for (const key of candidates) {
     const v = input?.[key];
-    if (typeof v === 'string' && v.length > 0) return v;
+    if (typeof v === 'string' && v.length > 0) {return v;}
   }
   return undefined;
 }

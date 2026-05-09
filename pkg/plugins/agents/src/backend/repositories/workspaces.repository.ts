@@ -122,8 +122,8 @@ export class WorkspacesRepository {
       query = query.where('visibility', '=', filter.visibility);
     }
     query = query.orderBy('created_at', 'desc');
-    if (filter.limit !== undefined) query = query.limit(filter.limit);
-    if (filter.offset !== undefined) query = query.offset(filter.offset);
+    if (filter.limit !== undefined) {query = query.limit(filter.limit);}
+    if (filter.offset !== undefined) {query = query.offset(filter.offset);}
     const rows = await query.execute();
     return rows.map((row) => mapRow(row as unknown as AgentWorkspaceRow));
   }
@@ -165,18 +165,18 @@ export class WorkspacesRepository {
     orgId?: string | null,
   ): Promise<AgentWorkspace | null> {
     const set: Record<string, unknown> = {};
-    if (patch.name !== undefined) set.name = patch.name;
+    if (patch.name !== undefined) {set.name = patch.name;}
     if (patch.workspaceProviderId !== undefined) {
       set.workspace_provider_id = patch.workspaceProviderId;
     }
-    if (patch.rootPath !== undefined) set.root_path = patch.rootPath;
-    if (patch.gitRemote !== undefined) set.git_remote = patch.gitRemote;
-    if (patch.gitBranch !== undefined) set.git_branch = patch.gitBranch;
+    if (patch.rootPath !== undefined) {set.root_path = patch.rootPath;}
+    if (patch.gitRemote !== undefined) {set.git_remote = patch.gitRemote;}
+    if (patch.gitBranch !== undefined) {set.git_branch = patch.gitBranch;}
     if (patch.sandboxConfig !== undefined) {
       set.sandbox_config = encodeJsonOrNull(patch.sandboxConfig);
     }
-    if (patch.projectId !== undefined) set.project_id = patch.projectId;
-    if (patch.visibility !== undefined) set.visibility = patch.visibility;
+    if (patch.projectId !== undefined) {set.project_id = patch.projectId;}
+    if (patch.visibility !== undefined) {set.visibility = patch.visibility;}
 
     if (Object.keys(set).length === 0) {
       return this.findById(id, orgId);

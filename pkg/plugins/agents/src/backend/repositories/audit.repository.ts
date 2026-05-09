@@ -99,13 +99,13 @@ export class AuditRepository {
         ? query.where('org_id', 'is', null)
         : query.where('org_id', '=', filter.orgId);
     }
-    if (filter.sessionId !== undefined) query = query.where('session_id', '=', filter.sessionId);
-    if (filter.userId !== undefined) query = query.where('user_id', '=', filter.userId);
-    if (filter.eventType !== undefined) query = query.where('event_type', '=', filter.eventType);
-    if (filter.toolName !== undefined) query = query.where('tool_name', '=', filter.toolName);
+    if (filter.sessionId !== undefined) {query = query.where('session_id', '=', filter.sessionId);}
+    if (filter.userId !== undefined) {query = query.where('user_id', '=', filter.userId);}
+    if (filter.eventType !== undefined) {query = query.where('event_type', '=', filter.eventType);}
+    if (filter.toolName !== undefined) {query = query.where('tool_name', '=', filter.toolName);}
     query = query.orderBy('created_at', 'desc');
-    if (filter.limit !== undefined) query = query.limit(filter.limit);
-    if (filter.offset !== undefined) query = query.offset(filter.offset);
+    if (filter.limit !== undefined) {query = query.limit(filter.limit);}
+    if (filter.offset !== undefined) {query = query.offset(filter.offset);}
     const rows = await query.execute();
     return rows.map((row) => mapRow(row as unknown as AgentAuditEventRow));
   }

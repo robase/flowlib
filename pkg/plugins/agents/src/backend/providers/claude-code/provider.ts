@@ -407,7 +407,7 @@ export function claudeCodeProvider(
 
     async closeSession(providerSessionId: string) {
       const session = sessions.get(providerSessionId);
-      if (!session) return;
+      if (!session) {return;}
       sessions.delete(providerSessionId);
       try {
         await session.close();
@@ -429,7 +429,7 @@ export function claudeCodeProvider(
       handler: ClaudePermissionHandler | undefined,
     ): boolean {
       const session = sessions.get(providerSessionId);
-      if (!session) return false;
+      if (!session) {return false;}
       session.setPermissionHandler(handler);
       return true;
     },

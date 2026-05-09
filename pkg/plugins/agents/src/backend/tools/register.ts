@@ -120,7 +120,7 @@ export function registerTools(ctx: PluginContext): {
 
   const toolOutputStore: ToolOutputStoreFactory = (inputs) => {
     return createToolOutputStore({
-      ...(inputs ?? {}),
+      ...inputs,
       logger: inputs?.logger ?? logger,
     });
   };
@@ -166,7 +166,7 @@ function resolveCredentialsLister(ctx: PluginContext): CredentialsLister | undef
         }
         resolved = true;
       }
-      if (!cached) return [];
+      if (!cached) {return [];}
       return cached.list(filters);
     },
   };

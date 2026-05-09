@@ -103,7 +103,7 @@ let cachedSdk: OpencodeSdkModule | undefined;
  * it on their resolver path.
  */
 export async function getSdk(): Promise<OpencodeSdkModule> {
-  if (cachedSdk) return cachedSdk;
+  if (cachedSdk) {return cachedSdk;}
   try {
     // Dynamic import keeps this off the module-load path and avoids
     // bundlers from inlining the SDK into provider-thin builds.
@@ -145,7 +145,7 @@ const clientByBaseUrl = new Map<string, OpencodeClientLike>();
 export async function getClient(baseUrl: string, directory?: string): Promise<OpencodeClientLike> {
   const cacheKey = `${baseUrl}::${directory ?? ''}`;
   const existing = clientByBaseUrl.get(cacheKey);
-  if (existing) return existing;
+  if (existing) {return existing;}
   const sdk = await getSdk();
   const client = sdk.createOpencodeClient({ baseUrl, directory });
   clientByBaseUrl.set(cacheKey, client);
@@ -181,7 +181,7 @@ const embeddedByDirectory = new Map<string, EmbeddedOpencode>();
  */
 export async function getEmbedded(directory: string): Promise<EmbeddedOpencode> {
   const existing = embeddedByDirectory.get(directory);
-  if (existing) return existing;
+  if (existing) {return existing;}
   const sdk = await getSdk();
   if (typeof sdk.createOpencode !== 'function') {
     throw new Error(
@@ -234,15 +234,15 @@ export function resolveBaseUrl(input: {
   const fromMetadata = typeof fromWorkspace.opencodeBaseUrl === 'string'
     ? (fromWorkspace.opencodeBaseUrl as string)
     : undefined;
-  if (fromMetadata) return fromMetadata;
+  if (fromMetadata) {return fromMetadata;}
 
   const fromExtras = input.extras?.baseUrl;
-  if (typeof fromExtras === 'string' && fromExtras.length > 0) return fromExtras;
+  if (typeof fromExtras === 'string' && fromExtras.length > 0) {return fromExtras;}
 
-  if (input.factoryBaseUrl && input.factoryBaseUrl.length > 0) return input.factoryBaseUrl;
+  if (input.factoryBaseUrl && input.factoryBaseUrl.length > 0) {return input.factoryBaseUrl;}
 
   const fromEnv = typeof process !== 'undefined' ? process.env?.OPENCODE_BASE_URL : undefined;
-  if (typeof fromEnv === 'string' && fromEnv.length > 0) return fromEnv;
+  if (typeof fromEnv === 'string' && fromEnv.length > 0) {return fromEnv;}
 
   throw new Error(
     '[agents/opencode] no opencode baseUrl resolved — expected `workspace.metadata.opencodeBaseUrl` ' +
@@ -296,8 +296,8 @@ export async function getClientForMode(input: {
 export function unwrapSessionId(resp: unknown): string {
   if (resp && typeof resp === 'object') {
     const r = resp as { id?: unknown; data?: { id?: unknown } };
-    if (typeof r.id === 'string') return r.id;
-    if (r.data && typeof r.data === 'object' && typeof r.data.id === 'string') return r.data.id;
+    if (typeof r.id === 'string') {return r.id;}
+    if (r.data && typeof r.data === 'object' && typeof r.data.id === 'string') {return r.data.id;}
   }
   throw new Error('[agents/opencode] session.create returned no session id');
 }
@@ -310,12 +310,12 @@ export function unwrapSessionId(resp: unknown): string {
  * leave providerID undefined — opencode will fall back to its config.
  */
 export function splitModelId(model: string | undefined): { providerID: string; modelID: string } | undefined {
-  if (!model) return undefined;
+  if (!model) {return undefined;}
   const slash = model.indexOf('/');
-  if (slash === -1) return undefined;
+  if (slash === -1) {return undefined;}
   const providerID = model.slice(0, slash);
   const modelID = model.slice(slash + 1);
-  if (!providerID || !modelID) return undefined;
+  if (!providerID || !modelID) {return undefined;}
   return { providerID, modelID };
 }
 
@@ -332,7 +332,7 @@ export function buildToolsMap(input: {
 }): Record<string, boolean> | undefined {
   if (input.enabledTools && input.enabledTools.length > 0) {
     const map: Record<string, boolean> = {};
-    for (const tool of input.enabledTools) map[tool] = true;
+    for (const tool of input.enabledTools) {map[tool] = true;}
     // Anything not listed defaults to disabled — but opencode's API
     // semantics for "absent key" is "use default", so we explicitly
     // set the deny side as well when it's a whitelist context.
@@ -340,7 +340,7 @@ export function buildToolsMap(input: {
   }
   if (input.extraDenied && input.extraDenied.length > 0) {
     const map: Record<string, boolean> = {};
-    for (const tool of input.extraDenied) map[tool] = false;
+    for (const tool of input.extraDenied) {map[tool] = false;}
     return map;
   }
   return undefined;

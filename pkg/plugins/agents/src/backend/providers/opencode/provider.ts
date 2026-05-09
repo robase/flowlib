@@ -129,7 +129,7 @@ interface OpenCodeConfig {
 }
 
 function validateOpenCodeConfig(config: unknown): AgentProviderConfig {
-  if (config === undefined || config === null) return {};
+  if (config === undefined || config === null) {return {};}
   if (typeof config !== 'object') {
     throw new Error('[agents/opencode] provider config must be an object');
   }
@@ -232,7 +232,7 @@ export function openCodeProvider(options: OpenCodeProviderOptions = {}): AgentPr
       const { client, baseUrl } = await getClientForMode({
         mode,
         workspace: input.workspace,
-        extras: { baseUrl: cfg.baseUrl, ...(input.extras ?? {}) },
+        extras: { baseUrl: cfg.baseUrl, ...input.extras },
         factoryBaseUrl,
       });
 
@@ -281,7 +281,7 @@ export function openCodeProvider(options: OpenCodeProviderOptions = {}): AgentPr
       // Translate the user's input into opencode `parts`. We support text
       // and base64 inline images via the FilePartInput escape hatch.
       const parts = input.parts.map((p) => {
-        if (p.type === 'text') return { type: 'text', text: p.text };
+        if (p.type === 'text') {return { type: 'text', text: p.text };}
         // image — opencode's FilePartInput wants a URL; we inline as
         // a data URL since the kernel may have already pre-uploaded.
         return {
@@ -346,10 +346,10 @@ export function openCodeProvider(options: OpenCodeProviderOptions = {}): AgentPr
 
       try {
         for await (const raw of stream.stream as AsyncIterable<unknown>) {
-          if (input.abortSignal.aborted) break;
+          if (input.abortSignal.aborted) {break;}
 
           const evt = raw as OpencodeEvent;
-          if (!isForThisSession(evt, input.providerSessionId)) continue;
+          if (!isForThisSession(evt, input.providerSessionId)) {continue;}
 
           // Best-effort tool-deny enforcement: if a `tool-call` is
           // about to fire for a denied tool, abort the session BEFORE
@@ -384,7 +384,7 @@ export function openCodeProvider(options: OpenCodeProviderOptions = {}): AgentPr
               break;
             }
           }
-          if (terminated) break;
+          if (terminated) {break;}
         }
       } finally {
         input.abortSignal.removeEventListener('abort', onAbort);
@@ -397,7 +397,7 @@ export function openCodeProvider(options: OpenCodeProviderOptions = {}): AgentPr
 
     async listMessages(input: ListMessagesInput): Promise<AgentProviderMessage[]> {
       const session = sessionsById.get(input.providerSessionId);
-      if (!session) return [];
+      if (!session) {return [];}
       const client = await resolveSessionClient(session);
       const resp = (await client.session.messages({
         path: { id: input.providerSessionId },
@@ -415,7 +415,7 @@ export function openCodeProvider(options: OpenCodeProviderOptions = {}): AgentPr
           };
           parts?: Array<{ type: string; text?: string }>;
         };
-        if (!m.info) continue;
+        if (!m.info) {continue;}
         const parts = (m.parts ?? []).map((p) =>
           p.type === 'text' && typeof p.text === 'string'
             ? { type: 'text' as const, text: p.text }
@@ -448,7 +448,7 @@ export function openCodeProvider(options: OpenCodeProviderOptions = {}): AgentPr
 
     async closeSession(providerSessionId: string): Promise<void> {
       const session = sessionsById.get(providerSessionId);
-      if (!session) return;
+      if (!session) {return;}
       sessionsById.delete(providerSessionId);
       try {
         const client = await resolveSessionClient(session);
@@ -495,15 +495,15 @@ async function resolveSessionClient(session: {
 
 function isForThisSession(evt: OpencodeEvent, sessionId: string): boolean {
   const props = (evt as { properties?: unknown }).properties;
-  if (!props || typeof props !== 'object') return true;
+  if (!props || typeof props !== 'object') {return true;}
   const p = props as {
     sessionID?: string;
     info?: { sessionID?: string };
     part?: { sessionID?: string };
   };
-  if (typeof p.sessionID === 'string') return p.sessionID === sessionId;
-  if (p.info && typeof p.info.sessionID === 'string') return p.info.sessionID === sessionId;
-  if (p.part && typeof p.part.sessionID === 'string') return p.part.sessionID === sessionId;
+  if (typeof p.sessionID === 'string') {return p.sessionID === sessionId;}
+  if (p.info && typeof p.info.sessionID === 'string') {return p.info.sessionID === sessionId;}
+  if (p.part && typeof p.part.sessionID === 'string') {return p.part.sessionID === sessionId;}
   // Global events (e.g. `file.edited`) have no sessionID — let them
   // through so workspace-level signals reach the consumer.
   return true;

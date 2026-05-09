@@ -63,11 +63,11 @@ function createFakeClient(): FakeClient {
         yield queue.shift();
         continue;
       }
-      if (closed) return;
+      if (closed) {return;}
       const result = await new Promise<IteratorResult<unknown>>((resolve) => {
         waiters.push(resolve);
       });
-      if (result.done) return;
+      if (result.done) {return;}
       yield result.value;
     }
   }
@@ -606,8 +606,8 @@ describe('runtime helpers', () => {
       try {
         expect(resolveBaseUrl({})).toBe('http://env');
       } finally {
-        if (prev === undefined) delete process.env.OPENCODE_BASE_URL;
-        else process.env.OPENCODE_BASE_URL = prev;
+        if (prev === undefined) {delete process.env.OPENCODE_BASE_URL;}
+        else {process.env.OPENCODE_BASE_URL = prev;}
       }
     });
     it('honours factoryBaseUrl as a fallback after extras.baseUrl', () => {
@@ -628,7 +628,7 @@ describe('runtime helpers', () => {
       try {
         expect(() => resolveBaseUrl({})).toThrow(/baseUrl/);
       } finally {
-        if (prev !== undefined) process.env.OPENCODE_BASE_URL = prev;
+        if (prev !== undefined) {process.env.OPENCODE_BASE_URL = prev;}
       }
     });
   });

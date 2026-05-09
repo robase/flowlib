@@ -23,7 +23,7 @@ function fakeWorkspace(
     },
     async readFile(p) {
       const c = fs.get(p);
-      if (c === undefined) throw new Error(`ENOENT: ${p}`);
+      if (c === undefined) {throw new Error(`ENOENT: ${p}`);}
       return c;
     },
     async writeFile() {},

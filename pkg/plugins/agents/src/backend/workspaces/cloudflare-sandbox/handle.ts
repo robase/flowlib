@@ -265,7 +265,7 @@ export class CloudflareSandboxHandle implements WorkspaceHandle {
       );
     }
     // Normalise leading ./ and trailing /.
-    let p = path.replace(/^\.\//, '').replace(/\/+$/, '');
+    const p = path.replace(/^\.\//, '').replace(/\/+$/, '');
     if (p === '' || p === '.') {
       return SANDBOX_WORKSPACE_ROOT;
     }

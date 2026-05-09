@@ -92,11 +92,11 @@ export class ProjectsRepository {
         ? query.where('org_id', 'is', null)
         : query.where('org_id', '=', filter.orgId);
     }
-    if (filter.createdBy !== undefined) query = query.where('created_by', '=', filter.createdBy);
-    if (filter.gitRemote !== undefined) query = query.where('git_remote', '=', filter.gitRemote);
+    if (filter.createdBy !== undefined) {query = query.where('created_by', '=', filter.createdBy);}
+    if (filter.gitRemote !== undefined) {query = query.where('git_remote', '=', filter.gitRemote);}
     query = query.orderBy('created_at', 'desc');
-    if (filter.limit !== undefined) query = query.limit(filter.limit);
-    if (filter.offset !== undefined) query = query.offset(filter.offset);
+    if (filter.limit !== undefined) {query = query.limit(filter.limit);}
+    if (filter.offset !== undefined) {query = query.offset(filter.offset);}
     const rows = await query.execute();
     return rows.map((row) => mapRow(row as unknown as AgentProjectRow));
   }
@@ -133,11 +133,11 @@ export class ProjectsRepository {
     orgId?: string | null,
   ): Promise<AgentProject | null> {
     const set: Record<string, unknown> = {};
-    if (patch.name !== undefined) set.name = patch.name;
-    if (patch.description !== undefined) set.description = patch.description;
-    if (patch.gitRemote !== undefined) set.git_remote = patch.gitRemote;
+    if (patch.name !== undefined) {set.name = patch.name;}
+    if (patch.description !== undefined) {set.description = patch.description;}
+    if (patch.gitRemote !== undefined) {set.git_remote = patch.gitRemote;}
 
-    if (Object.keys(set).length === 0) return this.findById(id, orgId);
+    if (Object.keys(set).length === 0) {return this.findById(id, orgId);}
     set.updated_at = nowFor(this.database);
 
     let query = this.database

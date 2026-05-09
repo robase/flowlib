@@ -94,8 +94,8 @@ export class MessagesRepository {
       query = query.where('sequence', '>', filter.afterSequence);
     }
     query = query.orderBy('sequence', 'asc');
-    if (filter.limit !== undefined) query = query.limit(filter.limit);
-    if (filter.offset !== undefined) query = query.offset(filter.offset);
+    if (filter.limit !== undefined) {query = query.limit(filter.limit);}
+    if (filter.offset !== undefined) {query = query.offset(filter.offset);}
     const rows = await query.execute();
     return rows.map((row) => mapRow(row as unknown as AgentMessageRow));
   }

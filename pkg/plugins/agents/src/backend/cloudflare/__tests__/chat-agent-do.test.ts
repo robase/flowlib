@@ -108,7 +108,7 @@ function makeRuntime(opts: {
   noRepositories?: boolean;
 }): AgentsRuntimeRegistries {
   const providers = new Map<string, AgentProvider>();
-  if (opts.provider) providers.set(opts.provider.id, opts.provider);
+  if (opts.provider) {providers.set(opts.provider.id, opts.provider);}
 
   const repositories = opts.noRepositories
     ? undefined

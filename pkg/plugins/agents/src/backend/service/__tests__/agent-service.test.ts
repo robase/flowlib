@@ -44,7 +44,7 @@ function trivialProvider(events: AgentEvent[]): AgentProvider {
       return { providerSessionId: 'p' };
     },
     async *prompt(): AsyncGenerator<AgentEvent> {
-      for (const e of events) yield e;
+      for (const e of events) {yield e;}
     },
   };
 }

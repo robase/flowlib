@@ -150,13 +150,13 @@ export function createResolver(
       const allowed = new Set(whitelist);
       const knownTools = new Set<string>();
       if (input.agentEnabledTools) {
-        for (const tool of input.agentEnabledTools) knownTools.add(tool);
+        for (const tool of input.agentEnabledTools) {knownTools.add(tool);}
       }
-      for (const row of roleRows) knownTools.add(row.toolName);
-      for (const tool of deny) knownTools.add(tool);
+      for (const row of roleRows) {knownTools.add(row.toolName);}
+      for (const tool of deny) {knownTools.add(tool);}
       // The whitelist itself is part of the universe; tools in the
       // whitelist obviously shouldn't be denied.
-      for (const tool of whitelist) knownTools.add(tool);
+      for (const tool of whitelist) {knownTools.add(tool);}
 
       for (const tool of knownTools) {
         if (!allowed.has(tool)) {

@@ -216,17 +216,17 @@ export class AgentsRepository {
     orgId?: string | null,
   ): Promise<AgentDefinition | null> {
     const set: Record<string, unknown> = {};
-    if (patch.name !== undefined) set.name = patch.name;
-    if (patch.description !== undefined) set.description = patch.description;
-    if (patch.providerId !== undefined) set.provider_id = patch.providerId;
+    if (patch.name !== undefined) {set.name = patch.name;}
+    if (patch.description !== undefined) {set.description = patch.description;}
+    if (patch.providerId !== undefined) {set.provider_id = patch.providerId;}
     if (patch.providerConfig !== undefined) {
       set.provider_config = encodeJson(patch.providerConfig);
     }
-    if (patch.workspaceId !== undefined) set.workspace_id = patch.workspaceId;
-    if (patch.personaId !== undefined) set.persona_id = patch.personaId;
-    if (patch.personaText !== undefined) set.persona_text = patch.personaText;
-    if (patch.defaultModel !== undefined) set.default_model = patch.defaultModel;
-    if (patch.mcpServers !== undefined) set.mcp_servers = encodeJson(patch.mcpServers);
+    if (patch.workspaceId !== undefined) {set.workspace_id = patch.workspaceId;}
+    if (patch.personaId !== undefined) {set.persona_id = patch.personaId;}
+    if (patch.personaText !== undefined) {set.persona_text = patch.personaText;}
+    if (patch.defaultModel !== undefined) {set.default_model = patch.defaultModel;}
+    if (patch.mcpServers !== undefined) {set.mcp_servers = encodeJson(patch.mcpServers);}
     if (patch.enabledTools !== undefined) {
       set.enabled_tools = encodeJsonOrNull(patch.enabledTools);
     }
@@ -239,7 +239,7 @@ export class AgentsRepository {
     if (patch.toolOutputBudget !== undefined) {
       set.tool_output_budget = encodeJson(patch.toolOutputBudget);
     }
-    if (patch.visibility !== undefined) set.visibility = patch.visibility;
+    if (patch.visibility !== undefined) {set.visibility = patch.visibility;}
 
     if (Object.keys(set).length === 0) {
       return this.findById(id, orgId);

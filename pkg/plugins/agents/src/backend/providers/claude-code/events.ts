@@ -180,7 +180,7 @@ function mapAssistantMessage(msg: AssistantMessage): AgentEvent[] {
       // Skip empty deltas — they add nothing for consumers and can
       // confuse the UI. The SDK occasionally emits an empty trailing
       // text block on stop.
-      if (text.length === 0) continue;
+      if (text.length === 0) {continue;}
       const ev: TextDeltaEvent = { type: 'text-delta', messageId, text };
       events.push(ev);
       continue;
@@ -209,7 +209,7 @@ function mapAssistantMessage(msg: AssistantMessage): AgentEvent[] {
 
 function mapUserMessage(msg: UserMessage): AgentEvent[] {
   const content = msg.message?.content;
-  if (!content || typeof content === 'string') return [];
+  if (!content || typeof content === 'string') {return [];}
   // The matching message id for a tool result is the parent assistant
   // message that issued the call. The SDK exposes this on
   // `parent_tool_use_id` when the user message is a tool result, but
@@ -221,7 +221,7 @@ function mapUserMessage(msg: UserMessage): AgentEvent[] {
   const events: AgentEvent[] = [];
 
   for (const block of content) {
-    if (block.type !== 'tool_result') continue;
+    if (block.type !== 'tool_result') {continue;}
     const tr = block as {
       tool_use_id: string;
       content?: unknown;
@@ -295,7 +295,7 @@ export function isFileEditTool(name: string): boolean {
  * `undefined` if the shape doesn't match.
  */
 export function extractFileEditPath(input: unknown): string | undefined {
-  if (typeof input !== 'object' || input === null) return undefined;
+  if (typeof input !== 'object' || input === null) {return undefined;}
   const rec = input as Record<string, unknown>;
   // Claude Code's Write/Edit tools both use `file_path`.
   const fp = rec.file_path;
@@ -316,7 +316,7 @@ export function extractFileEditContents(
   toolName: string,
   input: unknown,
 ): { before?: string; after?: string } {
-  if (typeof input !== 'object' || input === null) return {};
+  if (typeof input !== 'object' || input === null) {return {};}
   const rec = input as Record<string, unknown>;
 
   if (toolName === 'Write') {

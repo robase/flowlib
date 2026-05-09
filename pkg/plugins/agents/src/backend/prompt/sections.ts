@@ -47,7 +47,7 @@ export interface WorkspaceContextInput {
 export async function renderWorkspaceContext(
   input: WorkspaceContextInput | undefined,
 ): Promise<string | null> {
-  if (!input) return null;
+  if (!input) {return null;}
 
   const lines: string[] = ['## Workspace', `cwd: ${input.rootPath}`];
   if (input.branch) {
@@ -104,7 +104,7 @@ async function listTopLevel(handle: WorkspaceHandle): Promise<string[]> {
  * inline so the agent knows the full content was clipped.
  */
 export function renderClaudeMd(files: ClaudeMdFile[]): string | null {
-  if (files.length === 0) return null;
+  if (files.length === 0) {return null;}
   const lines: string[] = ['## Project directives'];
   for (const file of files) {
     lines.push('');
@@ -124,7 +124,7 @@ export function renderClaudeMd(files: ClaudeMdFile[]): string | null {
 export function renderSkillSummaries(
   skills: ReadonlyArray<{ name: string; description: string }>,
 ): string | null {
-  if (skills.length === 0) return null;
+  if (skills.length === 0) {return null;}
   const lines: string[] = [
     '## Available skills',
     'Each skill below is fetchable on demand via `skills.read`. Only the name and description are shown here.',
@@ -144,7 +144,7 @@ export function renderSkillSummaries(
  * tools.
  */
 export function renderDenyList(denyList: ReadonlyArray<string>): string | null {
-  if (denyList.length === 0) return null;
+  if (denyList.length === 0) {return null;}
   return [
     '## Tool restrictions',
     `You are not permitted to use: ${denyList.join(', ')}.`,
@@ -157,7 +157,7 @@ export function renderDenyList(denyList: ReadonlyArray<string>): string | null {
 export function renderAvailableTools(
   tools: ReadonlyArray<{ name: string; description: string }>,
 ): string | null {
-  if (tools.length === 0) return null;
+  if (tools.length === 0) {return null;}
   const lines: string[] = ['## Available tools'];
   for (const t of tools) {
     lines.push(`- **${t.name}** — ${t.description}`);
@@ -170,7 +170,7 @@ export function renderAvailableTools(
 export function renderMemory(
   memory: ReadonlyArray<{ scope: string; content: string }>,
 ): string | null {
-  if (memory.length === 0) return null;
+  if (memory.length === 0) {return null;}
   const lines: string[] = ['## Relevant memories'];
   for (const m of memory) {
     lines.push(`- (${m.scope}) ${m.content}`);
@@ -183,7 +183,7 @@ export function renderMemory(
 export function renderPlan(
   plan: { checkpoints: ReadonlyArray<{ id: string; label: string; status: string }> } | undefined,
 ): string | null {
-  if (!plan || plan.checkpoints.length === 0) return null;
+  if (!plan || plan.checkpoints.length === 0) {return null;}
   const lines: string[] = ['## Session plan'];
   for (const c of plan.checkpoints) {
     const box = checkpointBox(c.status);
@@ -210,7 +210,7 @@ function checkpointBox(status: string): string {
 export function renderAttachments(
   attachments: ReadonlyArray<{ name: string; mediaType: string; description?: string }>,
 ): string | null {
-  if (attachments.length === 0) return null;
+  if (attachments.length === 0) {return null;}
   const lines: string[] = ['## Attachments'];
   for (const a of attachments) {
     const desc = a.description ? ` — ${a.description}` : '';

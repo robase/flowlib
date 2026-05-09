@@ -70,10 +70,10 @@ class SelectBuilder {
     let result = this.rows.filter((row) =>
       this.wheres.every((w) => {
         const v = row[w.column];
-        if (w.op === '=') return v === w.value;
-        if (w.op === '>') return typeof v === 'number' && typeof w.value === 'number' && v > w.value;
-        if (w.op === '<') return typeof v === 'number' && typeof w.value === 'number' && v < w.value;
-        if (w.op === 'is' && w.value === null) return v === null || v === undefined;
+        if (w.op === '=') {return v === w.value;}
+        if (w.op === '>') {return typeof v === 'number' && typeof w.value === 'number' && v > w.value;}
+        if (w.op === '<') {return typeof v === 'number' && typeof w.value === 'number' && v < w.value;}
+        if (w.op === 'is' && w.value === null) {return v === null || v === undefined;}
         return false;
       }),
     );
@@ -82,17 +82,17 @@ class SelectBuilder {
         for (const o of this.orders) {
           const av = a[o.column];
           const bv = b[o.column];
-          if (av === bv) continue;
-          if (av === null || av === undefined) return o.dir === 'asc' ? -1 : 1;
-          if (bv === null || bv === undefined) return o.dir === 'asc' ? 1 : -1;
-          if ((av as number) < (bv as number)) return o.dir === 'asc' ? -1 : 1;
-          if ((av as number) > (bv as number)) return o.dir === 'asc' ? 1 : -1;
+          if (av === bv) {continue;}
+          if (av === null || av === undefined) {return o.dir === 'asc' ? -1 : 1;}
+          if (bv === null || bv === undefined) {return o.dir === 'asc' ? 1 : -1;}
+          if ((av as number) < (bv as number)) {return o.dir === 'asc' ? -1 : 1;}
+          if ((av as number) > (bv as number)) {return o.dir === 'asc' ? 1 : -1;}
         }
         return 0;
       });
     }
-    if (this._offset !== undefined) result = result.slice(this._offset);
-    if (this._limit !== undefined) result = result.slice(0, this._limit);
+    if (this._offset !== undefined) {result = result.slice(this._offset);}
+    if (this._limit !== undefined) {result = result.slice(0, this._limit);}
     return result;
   }
 
@@ -142,8 +142,8 @@ class UpdateBuilder {
     for (const row of this.rows) {
       const matches = this.wheres.every((w) => {
         const v = row[w.column];
-        if (w.op === '=') return v === w.value;
-        if (w.op === 'is' && w.value === null) return v === null || v === undefined;
+        if (w.op === '=') {return v === w.value;}
+        if (w.op === 'is' && w.value === null) {return v === null || v === undefined;}
         return false;
       });
       if (matches) {
@@ -168,8 +168,8 @@ class DeleteBuilder {
     const remaining = current.filter((row) =>
       !this.wheres.every((w) => {
         const v = row[w.column];
-        if (w.op === '=') return v === w.value;
-        if (w.op === 'is' && w.value === null) return v === null || v === undefined;
+        if (w.op === '=') {return v === w.value;}
+        if (w.op === 'is' && w.value === null) {return v === null || v === undefined;}
         return false;
       }),
     );

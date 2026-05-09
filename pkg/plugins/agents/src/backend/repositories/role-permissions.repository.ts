@@ -74,14 +74,14 @@ export class RolePermissionsRepository {
       .kysely<AgentsDB>()
       .selectFrom('agent_role_permissions')
       .selectAll();
-    if (filter.roleId !== undefined) query = query.where('role_id', '=', filter.roleId);
-    if (filter.toolName !== undefined) query = query.where('tool_name', '=', filter.toolName);
+    if (filter.roleId !== undefined) {query = query.where('role_id', '=', filter.roleId);}
+    if (filter.toolName !== undefined) {query = query.where('tool_name', '=', filter.toolName);}
     if (filter.enabled !== undefined) {
       query = query.where('enabled', '=', boolFor(this.database, filter.enabled));
     }
     query = query.orderBy('role_id', 'asc').orderBy('tool_name', 'asc');
-    if (filter.limit !== undefined) query = query.limit(filter.limit);
-    if (filter.offset !== undefined) query = query.offset(filter.offset);
+    if (filter.limit !== undefined) {query = query.limit(filter.limit);}
+    if (filter.offset !== undefined) {query = query.offset(filter.offset);}
     const rows = await query.execute();
     return rows.map((row) => mapRow(row as unknown as AgentRolePermissionRow));
   }
@@ -104,7 +104,7 @@ export class RolePermissionsRepository {
       } as never)
       .execute();
     const created = await this.findById(input.roleId, input.toolName);
-    if (!created) throw new Error('Failed to load created role permission');
+    if (!created) {throw new Error('Failed to load created role permission');}
     return created;
   }
 
@@ -115,10 +115,10 @@ export class RolePermissionsRepository {
     patch: Partial<Omit<UpsertRolePermissionInput, 'roleId' | 'toolName'>>,
   ): Promise<AgentRolePermission | null> {
     const set: Record<string, unknown> = {};
-    if (patch.enabled !== undefined) set.enabled = boolFor(this.database, patch.enabled);
-    if (patch.reason !== undefined) set.reason = patch.reason;
+    if (patch.enabled !== undefined) {set.enabled = boolFor(this.database, patch.enabled);}
+    if (patch.reason !== undefined) {set.reason = patch.reason;}
 
-    if (Object.keys(set).length === 0) return this.findById(roleId, toolName);
+    if (Object.keys(set).length === 0) {return this.findById(roleId, toolName);}
     set.updated_at = nowFor(this.database);
 
     await this.database
@@ -145,7 +145,7 @@ export class RolePermissionsRepository {
         enabled: input.enabled,
         reason: input.reason ?? null,
       });
-      if (!updated) throw new Error('Failed to upsert role permission');
+      if (!updated) {throw new Error('Failed to upsert role permission');}
       return updated;
     }
     return this.create(input);

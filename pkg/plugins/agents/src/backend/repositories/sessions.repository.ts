@@ -199,18 +199,18 @@ export class SessionsRepository {
     orgId?: string | null,
   ): Promise<AgentSession | null> {
     const set: Record<string, unknown> = {};
-    if (patch.title !== undefined) set.title = patch.title;
-    if (patch.model !== undefined) set.model = patch.model;
-    if (patch.permissionMode !== undefined) set.permission_mode = patch.permissionMode;
-    if (patch.workspaceId !== undefined) set.workspace_id = patch.workspaceId;
+    if (patch.title !== undefined) {set.title = patch.title;}
+    if (patch.model !== undefined) {set.model = patch.model;}
+    if (patch.permissionMode !== undefined) {set.permission_mode = patch.permissionMode;}
+    if (patch.workspaceId !== undefined) {set.workspace_id = patch.workspaceId;}
     if (patch.enabledTools !== undefined) {
       set.enabled_tools = encodeJsonOrNull(patch.enabledTools);
     }
     if (patch.extraDenied !== undefined) {
       set.extra_denied = encodeJsonOrNull(patch.extraDenied);
     }
-    if (patch.visibility !== undefined) set.visibility = patch.visibility;
-    if (patch.status !== undefined) set.status = patch.status;
+    if (patch.visibility !== undefined) {set.visibility = patch.visibility;}
+    if (patch.status !== undefined) {set.status = patch.status;}
     if (patch.lastMessageAt !== undefined) {
       set.last_message_at = patch.lastMessageAt === null
         ? null
@@ -218,10 +218,10 @@ export class SessionsRepository {
           ? (this.database.type === 'sqlite' ? patch.lastMessageAt.toISOString() : patch.lastMessageAt)
           : patch.lastMessageAt;
     }
-    if (patch.messageCount !== undefined) set.message_count = patch.messageCount;
-    if (patch.inputTokensTotal !== undefined) set.input_tokens_total = patch.inputTokensTotal;
-    if (patch.outputTokensTotal !== undefined) set.output_tokens_total = patch.outputTokensTotal;
-    if (patch.costUsd !== undefined) set.cost_usd = patch.costUsd;
+    if (patch.messageCount !== undefined) {set.message_count = patch.messageCount;}
+    if (patch.inputTokensTotal !== undefined) {set.input_tokens_total = patch.inputTokensTotal;}
+    if (patch.outputTokensTotal !== undefined) {set.output_tokens_total = patch.outputTokensTotal;}
+    if (patch.costUsd !== undefined) {set.cost_usd = patch.costUsd;}
 
     if (Object.keys(set).length === 0) {
       return this.findById(id, orgId);

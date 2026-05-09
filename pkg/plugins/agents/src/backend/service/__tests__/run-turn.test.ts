@@ -106,12 +106,12 @@ function makeMockProvider(events: AgentEvent[], opts?: { onPrompt?: (input: Prom
     },
     prompt(input) {
       opts?.onPrompt?.(input);
-      if (opts?.throwOnPrompt) throw opts.throwOnPrompt;
+      if (opts?.throwOnPrompt) {throw opts.throwOnPrompt;}
       // Return an async generator that yields the fixed events.
       // Honour the input.abortSignal so abort tests can short-circuit.
       return (async function* () {
         for (const e of events) {
-          if (input.abortSignal.aborted) return;
+          if (input.abortSignal.aborted) {return;}
           yield e;
         }
       })();
@@ -395,7 +395,7 @@ describe('runTurn — abort handling', () => {
       async *prompt(input: PromptInput): AsyncGenerator<AgentEvent> {
         yield { type: 'text-delta', messageId: 'm1', text: 'first' };
         await gate; // wait for the test to abort
-        if (input.abortSignal.aborted) return;
+        if (input.abortSignal.aborted) {return;}
         yield { type: 'text-delta', messageId: 'm1', text: 'should not arrive' };
       },
     };

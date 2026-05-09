@@ -95,7 +95,7 @@ describe('walkClaudeMd', () => {
       async readFile(path) {
         reads.push(path);
         // Pretend root has a CLAUDE.md so we know the walker reached it.
-        if (path === 'CLAUDE.md') return '# root';
+        if (path === 'CLAUDE.md') {return '# root';}
         throw new Error(`ENOENT: ${path}`);
       },
       async writeFile() {},

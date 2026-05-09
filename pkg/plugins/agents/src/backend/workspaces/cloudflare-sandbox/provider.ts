@@ -174,8 +174,8 @@ export function cloudflareSandbox(
    *   3. throw — caller must wire one before invoking lifecycle methods
    */
   const getEnv = (): CloudflareSandboxEnv => {
-    if (activeEnv) return activeEnv;
-    if (options.envAccessor) return options.envAccessor();
+    if (activeEnv) {return activeEnv;}
+    if (options.envAccessor) {return options.envAccessor();}
     throw new Error(
       'cloudflareSandbox: no Worker env set. Call `setEnv(env)` from your request handler or supply `envAccessor` at construction.',
     );
@@ -232,10 +232,10 @@ export function cloudflareSandbox(
     sandbox: SandboxStub,
     auth: AgentsAuthContext,
   ): Promise<void> => {
-    if (!options.persistentBucketBinding) return;
+    if (!options.persistentBucketBinding) {return;}
     const env = getEnv();
     const bucket = env[options.persistentBucketBinding];
-    if (!bucket) return;
+    if (!bucket) {return;}
     // We don't enforce mount semantics here in v1 — the SDK call is
     // wrapped because it may not exist on test stubs. Use a per-org
     // prefix so multiple orgs sharing one bucket stay isolated.
@@ -246,7 +246,7 @@ export function cloudflareSandbox(
         options: Record<string, unknown>,
       ) => Promise<void>;
     };
-    if (typeof stub.mountBucket !== 'function') return;
+    if (typeof stub.mountBucket !== 'function') {return;}
     await stub.mountBucket(
       options.persistentBucketBinding,
       '/workspace/persistent',
@@ -282,7 +282,7 @@ export function cloudflareSandbox(
     },
 
     async create(input: CreateWorkspaceInput): Promise<WorkspaceHandle> {
-      if (!input.auth?.orgId) throw makeAuthRequiredError('create');
+      if (!input.auth?.orgId) {throw makeAuthRequiredError('create');}
       const sandboxName = buildSandboxName(input.auth, input.workspaceId);
       const sandbox = await lookupSandbox(sandboxName);
 
@@ -306,7 +306,7 @@ export function cloudflareSandbox(
       workspaceId: string,
       auth: AgentsAuthContext,
     ): Promise<WorkspaceHandle> {
-      if (!auth?.orgId) throw makeAuthRequiredError('resolve');
+      if (!auth?.orgId) {throw makeAuthRequiredError('resolve');}
       const sandboxName = buildSandboxName(auth, workspaceId);
       const sandbox = await lookupSandbox(sandboxName);
       return buildHandle(workspaceId, sandbox, sandboxName);
@@ -316,7 +316,7 @@ export function cloudflareSandbox(
       workspaceId: string,
       auth: AgentsAuthContext,
     ): Promise<void> {
-      if (!auth?.orgId) throw makeAuthRequiredError('destroy');
+      if (!auth?.orgId) {throw makeAuthRequiredError('destroy');}
       const sandboxName = buildSandboxName(auth, workspaceId);
       const sandbox = await lookupSandbox(sandboxName);
       await sandbox.destroy();

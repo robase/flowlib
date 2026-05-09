@@ -139,7 +139,7 @@ export async function runTurn(
   if (iterator) {
     try {
       for await (const event of iterator) {
-        if (stopRequested) break;
+        if (stopRequested) {break;}
 
         switch (event.type) {
           case 'text-delta': {
@@ -402,7 +402,7 @@ export async function runTurn(
           }
         }
 
-        if (stopRequested) break;
+        if (stopRequested) {break;}
       }
     } catch (err) {
       endReason = 'error';

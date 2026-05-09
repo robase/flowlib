@@ -118,7 +118,7 @@ export interface SessionEndEvent {
 
 /** Narrowed type-guards for individual event variants. */
 export const isAgentEvent = (value: unknown): value is AgentEvent => {
-  if (typeof value !== 'object' || value === null) return false;
+  if (typeof value !== 'object' || value === null) {return false;}
   const t = (value as { type?: unknown }).type;
   return (
     t === 'text-delta' ||

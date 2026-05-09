@@ -234,7 +234,7 @@ export function createFlowlibActionsMcpServer(
 
   // ─── Subscribe to registry events ────────────────────────────────
   const offRegister = registry.onRegister(() => {
-    if (closed) return;
+    if (closed) {return;}
     // Cache becomes stale; clear it so the next list call rebuilds.
     visibleTools.clear();
     userCredentialTypes = null;
@@ -243,7 +243,7 @@ export function createFlowlibActionsMcpServer(
     });
   });
   const offUnregister = registry.onUnregister(() => {
-    if (closed) return;
+    if (closed) {return;}
     visibleTools.clear();
     userCredentialTypes = null;
     notifyToolListChanged(server, logger).catch(() => {
@@ -275,9 +275,9 @@ export function createFlowlibActionsMcpServer(
     const flattenedToOriginal = new Map<string, string>();
 
     for (const action of registry.getAll()) {
-      if (!isToolCompatible(action)) continue;
-      if (denySet.has(action.id)) continue;
-      if (!credentialFilter.permits(action)) continue;
+      if (!isToolCompatible(action)) {continue;}
+      if (denySet.has(action.id)) {continue;}
+      if (!credentialFilter.permits(action)) {continue;}
 
       const baseName = flattenActionId(action.id);
       const uniqueName = uniquifyName(baseName, flattenedToOriginal, action.id, logger);
@@ -394,9 +394,9 @@ interface VisibleTool {
  * `ActionRegistry.toAgentToolDefinition()` filtering.
  */
 function isToolCompatible(action: ActionDefinition): boolean {
-  if (action.excludeFromTools === true) return false;
-  if (action.provider?.id === 'triggers') return false;
-  if (action.id.startsWith('trigger.')) return false;
+  if (action.excludeFromTools === true) {return false;}
+  if (action.provider?.id === 'triggers') {return false;}
+  if (action.id.startsWith('trigger.')) {return false;}
   return true;
 }
 
@@ -414,12 +414,12 @@ function uniquifyName(
   newId: string,
   logger: Logger,
 ): string {
-  if (!taken.has(base)) return base;
+  if (!taken.has(base)) {return base;}
 
   // Same id collision shouldn't happen — the registry de-dups. But two
   // different action ids could flatten to the same name.
   const existingId = taken.get(base);
-  if (existingId === newId) return base;
+  if (existingId === newId) {return base;}
 
   let n = 1;
   let candidate = `${base}_${n}`;
@@ -467,7 +467,7 @@ function buildJsonSchemaFromAction(
   const required: string[] = [];
 
   for (const field of action.params.fields) {
-    if ((field as { aiProvided?: boolean }).aiProvided === false) continue;
+    if ((field as { aiProvided?: boolean }).aiProvided === false) {continue;}
 
     const prop: Record<string, unknown> = {
       description: field.description ?? field.label,
@@ -486,10 +486,10 @@ function buildJsonSchemaFromAction(
       default:
         prop.type = 'string';
     }
-    if (field.placeholder) prop.examples = [field.placeholder];
+    if (field.placeholder) {prop.examples = [field.placeholder];}
 
     properties[field.name] = prop;
-    if (field.required) required.push(field.name);
+    if (field.required) {required.push(field.name);}
   }
 
   return {
@@ -509,7 +509,7 @@ async function safeResolveDenyList(
   resolveInput: CreateFlowlibActionsMcpServerOptions['resolveDenyListInput'],
   logger: Logger,
 ): Promise<DenyResolution> {
-  if (!resolveInput) return { denied: new Set(), failClosed: false };
+  if (!resolveInput) {return { denied: new Set(), failClosed: false };}
   try {
     const input = resolveInput();
     return { denied: await permissions.getEffectiveDenyList(input), failClosed: false };
@@ -568,10 +568,10 @@ async function resolveCredentialFilter(
     userTypes,
     permits(action) {
       const cred = action.credential;
-      if (!cred?.required) return true;
+      if (!cred?.required) {return true;}
       // OAuth2 actions match by oauth2 provider id (treated as type).
-      if (cred.oauth2Provider) return types.has(cred.oauth2Provider);
-      if (cred.type) return types.has(cred.type);
+      if (cred.oauth2Provider) {return types.has(cred.oauth2Provider);}
+      if (cred.type) {return types.has(cred.type);}
       // Required-but-untyped credential — let it through; runtime will
       // surface "missing credential" if the agent doesn't pass one.
       void registry;
@@ -760,8 +760,8 @@ function stringifyResult(result: AgentToolResult): string {
     return result.error ?? 'Tool failed without an error message.';
   }
   const out = result.output;
-  if (out === undefined || out === null) return 'OK';
-  if (typeof out === 'string') return out;
+  if (out === undefined || out === null) {return 'OK';}
+  if (typeof out === 'string') {return out;}
   try {
     return JSON.stringify(out, null, 2);
   } catch {

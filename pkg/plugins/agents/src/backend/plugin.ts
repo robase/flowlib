@@ -135,7 +135,7 @@ function preflightCheck(
   options: ResolvedAgentsOptions,
   flowlib: FlowlibPluginContext,
 ): void {
-  if (options.orgScope !== 'required') return;
+  if (options.orgScope !== 'required') {return;}
 
   const hasAuthPlugin = flowlib.hasPlugin('user-auth') || flowlib.hasPlugin('auth');
   const hasStaticOrg = options.staticOrgId !== DEFAULT_ORG_ID;
