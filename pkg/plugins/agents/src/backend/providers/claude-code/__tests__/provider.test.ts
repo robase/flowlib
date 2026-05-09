@@ -18,6 +18,8 @@ interface MockSdkSession {
   runCalls: Array<{ text: string; model?: string }>;
   closed: boolean;
   interrupted: boolean;
+  /** Tracks the most recent value passed to setPermissionHandler. */
+  permissionHandler?: unknown;
 }
 
 const mockSessions: MockSdkSession[] = [];
@@ -45,6 +47,9 @@ vi.mock('../runtime', async () => {
           state.interrupted = true;
         },
         async setPermissionMode() {},
+        setPermissionHandler(handler: unknown) {
+          state.permissionHandler = handler;
+        },
         async close() {
           state.closed = true;
         },
@@ -431,6 +436,26 @@ describe('prompt', () => {
     expect(events[0]).toMatchObject({ type: 'session-end', reason: 'error' });
   });
 
+  it('emits session-end with reason=stopped when abortSignal is already aborted', async () => {
+    const { provider, sessionId } = await setup();
+
+    const ac = new AbortController();
+    ac.abort();
+
+    const events = await collect<AgentEvent>(
+      provider.prompt({
+        providerSessionId: sessionId,
+        parts: [{ type: 'text', text: 'hello' }],
+        abortSignal: ac.signal,
+      }),
+    );
+
+    // Iterator yields nothing from the SDK (the mock checks abort before
+    // each yield), then the provider emits the terminal session-end.
+    const terminal = events[events.length - 1];
+    expect(terminal).toMatchObject({ type: 'session-end', reason: 'stopped' });
+  });
+
   it('emits session-end with reason=error when no text part is supplied', async () => {
     const { provider, sessionId } = await setup();
     const ac = new AbortController();
@@ -443,6 +468,58 @@ describe('prompt', () => {
     );
     expect(events).toHaveLength(1);
     expect(events[0]).toMatchObject({ type: 'session-end', reason: 'error' });
+  });
+});
+
+describe('setPermissionHandler', () => {
+  beforeEach(() => {
+    mockSessions.length = 0;
+  });
+
+  it('forwards the handler to the underlying session and returns true', async () => {
+    const provider = claudeCodeProvider({
+      credentialId: 'cred-1',
+      apiKeyResolver: makeApiKeyResolver(),
+    });
+    const { providerSessionId } = await provider.createSession({
+      auth: FAKE_AUTH,
+      config: {},
+      workspace: FAKE_WORKSPACE,
+    });
+
+    const handler = vi.fn(async () => ({ behavior: 'allow' as const }));
+    const ok = provider.setPermissionHandler(providerSessionId, handler);
+
+    expect(ok).toBe(true);
+    expect(mockSessions[0].permissionHandler).toBe(handler);
+  });
+
+  it('returns false for unknown session ids', () => {
+    const provider = claudeCodeProvider({
+      credentialId: 'cred-1',
+      apiKeyResolver: makeApiKeyResolver(),
+    });
+    const handler = vi.fn(async () => ({ behavior: 'allow' as const }));
+    expect(provider.setPermissionHandler('unknown', handler)).toBe(false);
+  });
+
+  it('accepts undefined to clear the handler', async () => {
+    const provider = claudeCodeProvider({
+      credentialId: 'cred-1',
+      apiKeyResolver: makeApiKeyResolver(),
+    });
+    const { providerSessionId } = await provider.createSession({
+      auth: FAKE_AUTH,
+      config: {},
+      workspace: FAKE_WORKSPACE,
+    });
+
+    const handler = vi.fn(async () => ({ behavior: 'allow' as const }));
+    provider.setPermissionHandler(providerSessionId, handler);
+    expect(mockSessions[0].permissionHandler).toBe(handler);
+
+    provider.setPermissionHandler(providerSessionId, undefined);
+    expect(mockSessions[0].permissionHandler).toBeUndefined();
   });
 });
 

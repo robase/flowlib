@@ -133,6 +133,22 @@ export interface ClaudeSession {
   /** Update the active permission mode. */
   setPermissionMode(mode: ClaudePermissionMode): Promise<void>;
 
+  /**
+   * Swap the active permission handler (canUseTool callback).
+   *
+   * Called by the kernel before turn-start to wire a fresh handler that
+   * emits `permission-request` `AgentEvent`s out of the in-flight
+   * iterator and awaits the user's decision. Pass `undefined` to clear
+   * the handler — the SDK will fall back to its default behaviour
+   * (which depends on `permissionMode`).
+   *
+   * Note: the SDK fixes its `canUseTool` option at `query()` creation
+   * time; we route every call through a mutable holder so swapping
+   * handlers takes effect for the *next* tool-use request without
+   * recreating the Query.
+   */
+  setPermissionHandler(handler: ClaudePermissionHandler | undefined): void;
+
   /** Close the session — drains the input queue and stops the generator. */
   close(): Promise<void>;
 }
@@ -153,22 +169,34 @@ export async function createClaudeSession(
   let sdkSessionId: string | undefined;
   let closed = false;
 
-  const canUseTool: SdkCanUseTool | undefined = input.onPermissionRequest
-    ? async (toolName, toolInput, opts) => {
-        const decision = await input.onPermissionRequest!({
-          toolName,
-          input: toolInput,
-          signal: opts.signal,
-        });
-        if (decision.behavior === 'allow') {
-          return { behavior: 'allow' };
-        }
-        return {
-          behavior: 'deny',
-          message: decision.message ?? 'denied by host',
-        };
-      }
-    : undefined;
+  // Permission-handler holder. The SDK fixes `canUseTool` at query()
+  // creation time, so we always register a callback that dispatches
+  // through a mutable holder. The kernel can swap handlers between
+  // turns via `setPermissionHandler()` without recreating the Query.
+  //
+  // Behaviour when the holder is `undefined`: we return `behavior: 'allow'`,
+  // which is equivalent to "no host-level permission policy" — the
+  // SDK's own `permissionMode` (`acceptEdits`, `default`, …) and the
+  // platform hooks layer (Stream A) decide what actually runs.
+  let permissionHandler: ClaudePermissionHandler | undefined =
+    input.onPermissionRequest;
+
+  const canUseTool: SdkCanUseTool = async (toolName, toolInput, opts) => {
+    const handler = permissionHandler;
+    if (!handler) return { behavior: 'allow' };
+    const decision = await handler({
+      toolName,
+      input: toolInput,
+      signal: opts.signal,
+    });
+    if (decision.behavior === 'allow') {
+      return { behavior: 'allow' };
+    }
+    return {
+      behavior: 'deny',
+      message: decision.message ?? 'denied by host',
+    };
+  };
 
   const options: SdkOptions = {
     cwd: input.cwd,
@@ -261,6 +289,10 @@ export async function createClaudeSession(
       } catch (err) {
         // Same swallow rationale as interrupt().
       }
+    },
+
+    setPermissionHandler(handler) {
+      permissionHandler = handler;
     },
 
     async close() {

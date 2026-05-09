@@ -25,6 +25,7 @@ import type {
 import type { AgentEvent } from '../../../shared/events';
 import {
   createClaudeSession,
+  type ClaudePermissionHandler,
   type ClaudeSession,
   type ClaudePermissionMode,
 } from './runtime';
@@ -118,9 +119,38 @@ const DEFAULT_MODELS: ReadonlyArray<AgentModel> = [
 
 // ─── Factory ───────────────────────────────────────────────────────────
 
+/**
+ * Extended provider surface for `claudeCodeProvider`. Adds a
+ * `setPermissionHandler(sessionId, handler)` method on top of the
+ * standard {@link AgentProvider} contract — the orchestration kernel
+ * uses this to install a fresh `canUseTool` callback before each
+ * turn-start, so `permission-request` `AgentEvent`s can be surfaced
+ * out of the in-flight iterator and the user's allow/deny decision
+ * can be plumbed back into the SDK.
+ *
+ * The interface is intentionally open: the standard kernel path
+ * (`runTurn` in `service/run-turn.ts`) feature-detects this method
+ * and falls back to the SDK's built-in permission flow when the
+ * provider doesn't expose it (e.g. opencode).
+ */
+export interface ClaudeCodeAgentProvider extends AgentProvider {
+  /**
+   * Swap the permission handler for a previously-created session.
+   *
+   * Returns `true` when the handler was installed; `false` when the
+   * session id is unknown (e.g. already closed). Pass `undefined` for
+   * `handler` to clear the handler — the SDK then falls back to its
+   * `permissionMode`-driven default.
+   */
+  setPermissionHandler(
+    providerSessionId: string,
+    handler: ClaudePermissionHandler | undefined,
+  ): boolean;
+}
+
 export function claudeCodeProvider(
   options: ClaudeCodeProviderOptions,
-): AgentProvider {
+): ClaudeCodeAgentProvider {
   if (!options.credentialId || typeof options.credentialId !== 'string') {
     throw new Error(
       '[agents/claude-code] claudeCodeProvider({ credentialId }) is required',
@@ -392,6 +422,16 @@ export function claudeCodeProvider(
       const all = Array.from(sessions.values());
       sessions.clear();
       await Promise.allSettled(all.map((s) => s.close()));
+    },
+
+    setPermissionHandler(
+      providerSessionId: string,
+      handler: ClaudePermissionHandler | undefined,
+    ): boolean {
+      const session = sessions.get(providerSessionId);
+      if (!session) return false;
+      session.setPermissionHandler(handler);
+      return true;
     },
   };
 }
