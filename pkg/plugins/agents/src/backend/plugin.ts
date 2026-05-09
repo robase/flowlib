@@ -16,6 +16,7 @@ import type {
   FlowlibPlugin,
   FlowlibPluginDefinition,
   FlowlibPluginContext,
+  FlowlibPluginEndpoint,
 } from '@flowlib/core';
 import { getGlobalActionRegistry } from '@flowlib/actions/registry';
 import { agentSchema } from './schema/tables';
@@ -43,6 +44,7 @@ import { registerAudit as registerAuditImpl } from './audit/register';
 import { registerPromptComposer as registerPromptComposerImpl } from './prompt/register';
 import { registerCloudflareDO as registerCloudflareDOImpl } from './cloudflare/register';
 import { registerRepositories as registerRepositoriesImpl } from './repositories/register';
+import { registerEndpoints as registerEndpointsImpl } from './endpoints/register';
 
 function registerProviders(ctx: PluginContext): void {
   registerProvidersImpl(ctx, ctx.options.providers ?? []);
@@ -64,8 +66,11 @@ function registerTools(ctx: PluginContext): void {
   registerToolsImpl(ctx);
 }
 
-function registerEndpoints(ctx: PluginContext): void {
-  ctx.logger.debug('[agents] registerEndpoints: stub — Stream I will replace');
+function registerEndpoints(
+  ctx: PluginContext,
+  endpoints: FlowlibPluginEndpoint[],
+): void {
+  registerEndpointsImpl(ctx, endpoints);
 }
 
 function registerPermissions(ctx: PluginContext): void {
@@ -189,10 +194,17 @@ function preflightCheck(
 export function agents(options: AgentsPluginOptions = {}): FlowlibPluginDefinition {
   const resolved = resolveOptions(options);
 
+  // Stream I owns this array: it's mounted on the FlowlibPlugin at
+  // factory time (so framework adapters see a stable reference) and
+  // populated during `init()` by `registerEndpoints`. Mutating in
+  // place keeps the same `endpoints` reference live through restart.
+  const endpoints: FlowlibPluginEndpoint[] = [];
+
   const backend: FlowlibPlugin = {
     id: 'agents',
     name: 'Agents',
     schema: agentSchema,
+    endpoints,
     setupInstructions:
       'Run `npx flowlib-cli generate` to create the agent_* tables, then `npx flowlib-cli migrate`.',
 
@@ -220,7 +232,7 @@ export function agents(options: AgentsPluginOptions = {}): FlowlibPluginDefiniti
       registerPromptComposer(ctx);
       registerTools(ctx);
       registerCloudflareDO(ctx);
-      registerEndpoints(ctx);
+      registerEndpoints(ctx, endpoints);
 
       ctx.logger.info('[agents] plugin initialised', {
         orgScope: resolved.orgScope,
