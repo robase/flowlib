@@ -64,7 +64,11 @@ function makeStubDO(args: { name: string; messages?: FakeMessage[] }): StubDO {
   const stub = Object.create(AgentChatDO.prototype) as unknown as StubDO;
   stub.broadcasts = broadcasts;
   stub.messages = args.messages ?? [];
-  stub.name = args.name;
+  Object.defineProperty(stub, 'name', {
+    value: args.name,
+    writable: true,
+    configurable: true,
+  });
   stub.broadcast = (msg: string) => {
     broadcasts.push(msg);
   };

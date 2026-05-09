@@ -13,6 +13,7 @@ import { ActionRegistry } from '@flowlib/actions/registry';
 import type {
   ActionDefinition,
   AgentToolResult,
+  NodeExecutionContext,
   ProviderDef,
 } from '@flowlib/action-kit';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
@@ -693,7 +694,7 @@ describe('createFlowlibActionsMcpServer — credential plumbing', () => {
             nodes: [],
             skippedNodeIds: new Set(),
             functions: { getCredential },
-          }) as unknown as Parameters<NonNullable<Parameters<typeof createFlowlibActionsMcpServer>[0]['callHooks']>>[0] extends never ? never : import('@flowlib/action-kit').NodeExecutionContext,
+          }) as unknown as NodeExecutionContext,
         staticParams: { credentialId: 'cred_1' },
       }),
     });
@@ -748,7 +749,7 @@ describe('createFlowlibActionsMcpServer — credential plumbing', () => {
             nodes: [],
             skippedNodeIds: new Set(),
             functions: { getCredential },
-          }) as unknown as import('@flowlib/action-kit').NodeExecutionContext,
+          }) as unknown as NodeExecutionContext,
         staticParams: { credentialId: 'cred_missing' },
       }),
     });
