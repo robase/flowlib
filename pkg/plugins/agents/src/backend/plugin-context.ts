@@ -16,14 +16,35 @@ import type { AgentsPluginPublicOptions } from '../shared/types';
  * Subsystem registries the plugin maintains in-process. v1 streams
  * populate these during `init()`; the orchestrator (Stream A) and
  * endpoints (Stream I) read them at request time.
+ *
+ * **All Phase 1 slots are declared upfront** so streams can populate
+ * them without all editing the same interface block. Slots are
+ * `undefined` until their stream's `register*()` runs; consumers
+ * (Stream A, Stream I) check before use.
  */
 export interface AgentsRuntimeRegistries {
   /** Agent provider registry — Stream B. */
-  providers: import('./providers/types').AgentProvider extends infer P
-    ? Map<string, P>
-    : never;
+  providers: Map<string, import('./providers/types').AgentProvider>;
   /** Workspace provider registry — Stream E. */
   workspaces: Map<string, import('./workspaces/types').WorkspaceProvider>;
+  /** AgentService singleton — Stream A. */
+  agentService?: unknown;
+  /** Repositories bag — Stream F. */
+  repositories?: unknown;
+  /** Permissions resolver — Stream J. */
+  permissions?: unknown;
+  /** Audit log writer — Stream J. */
+  auditWriter?: unknown;
+  /** System prompt composer — Stream K. */
+  promptComposer?: unknown;
+  /** Flowlib-actions MCP bridge factory — Stream G. */
+  flowlibActionsMcp?: unknown;
+  /** Tool output store — Stream G. */
+  toolOutputStore?: unknown;
+  /** Hook pipeline — Stream A (kernel) + S1+ (handlers populate it). */
+  hookPipeline?: unknown;
+  /** Cloudflare AIChatAgent DO class export — Stream H. */
+  cloudflareDoClass?: unknown;
 }
 
 /**
