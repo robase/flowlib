@@ -49,6 +49,11 @@
       "types": "./dist/shared/events.d.mts",
       "import": "./dist/shared/events.mjs",
       "require": "./dist/shared/events.cjs"
+    },
+    "./schema": {
+      "types": "./dist/backend/schema-only.d.mts",
+      "import": "./dist/backend/schema-only.mjs",
+      "require": "./dist/backend/schema-only.cjs"
     }
   },
   "scripts": {

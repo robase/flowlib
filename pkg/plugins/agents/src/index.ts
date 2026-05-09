@@ -64,6 +64,16 @@ export {
 } from './backend/providers/registry';
 export { registerProviders } from './backend/providers/register';
 
+// Provider factories — consumers import these to wire `agents({ providers: [...] })`.
+export { claudeCodeProvider } from './backend/providers/claude-code/provider';
+export type { ClaudeCodeProviderOptions } from './backend/providers/claude-code/provider';
+export { openCodeProvider } from './backend/providers/opencode/provider';
+export type { OpenCodeProviderOptions } from './backend/providers/opencode/provider';
+
+// Workspace provider factory.
+export { cloudflareSandbox } from './backend/workspaces/cloudflare-sandbox/provider';
+export type { CloudflareSandboxOptions } from './backend/workspaces/cloudflare-sandbox/provider';
+
 export {
   AgentsRepository,
 } from './backend/repositories/agents.repository';

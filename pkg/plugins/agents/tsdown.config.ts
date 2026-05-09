@@ -8,6 +8,11 @@ export default defineConfig({
     'shared/types': 'src/shared/types.ts',
     'shared/events': 'src/shared/events.ts',
     'shared/auth-context': 'src/shared/auth-context.ts',
+    // Standalone schema entry — used by `flowlib-cli generate` running in
+    // Node, which can't load the main backend bundle (it re-exports the
+    // Cloudflare DO class which transitively imports `cloudflare:workers`).
+    // Pure schema declarations, no runtime imports.
+    'backend/schema-only': 'src/backend/schema/tables.ts',
   },
   format: ['esm', 'cjs'],
   dts: true,
