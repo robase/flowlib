@@ -6,20 +6,34 @@
  * stream split is explicit about Stream M shipping its own composable
  * plugin object so the two streams stay merge-clean.
  *
- * Hosts compose the two like this:
+ * **Wiring (one-time follow-up needed after both streams land):**
+ *
+ * The package's `browser.ts` (Stream L's territory) re-exports
+ * `agentsFrontendPlugin` from the browser bundle entry. To make
+ * `agentsChatFrontendPlugin` discoverable through the same import,
+ * Stream L should add the matching re-export:
+ *
+ * ```ts
+ * // pkg/plugins/agents/src/browser.ts
+ * export { agentsChatFrontendPlugin, agentsChatRoutes }
+ *   from './frontend/routes/chat-routes';
+ * ```
+ *
+ * Once that lands, hosts compose the two like this:
  *
  * ```ts
  * import { agentsFrontendPlugin, agentsChatFrontendPlugin }
- *   from '@flowlib/agents/ui';
+ *   from '@flowlib/agents';
  *
  * <Flowlib config={{
  *   plugins: [agentsFrontendPlugin, agentsChatFrontendPlugin],
  * }} />
  * ```
  *
- * `agentsChatRoutes` is also re-exported as a plain array for Stream L
- * (or anyone) who prefers to fold the chat routes directly into
- * `agentsFrontendPlugin.routes`.
+ * Until then the chat surface is reachable via the deep import
+ * `@flowlib/agents/src/frontend/routes/chat-routes` (development only)
+ * or by Stream L folding `agentsChatRoutes` directly into
+ * `agentsFrontendPlugin.routes` and republishing.
  */
 import type { ComponentType, ReactNode } from 'react';
 import { ChatPage } from './ChatPage';
