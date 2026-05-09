@@ -2,14 +2,23 @@
 /**
  * Builds the .vsix.
  *
- * The npm package name is `@flowlib/vscode` (scoped — required for the pnpm
- * workspace dependency graph). vsce rejects scoped names in `package.json`,
+ * The npm package name is `@flowlib/vsix` (scoped — keeps the workspace
+ * `@flowlib/*` convention). vsce rejects scoped names in `package.json`,
  * so we temporarily swap the manifest to an unscoped variant for the
- * duration of `vsce package`, then restore the original. The original
- * manifest is also restored on Ctrl-C / unexpected exit.
+ * duration of `vsce package`, then restore the original. We also stage
+ * the repo's root LICENSE into the package dir so the Marketplace
+ * listing shows it. Both swaps are undone on success, failure, or
+ * Ctrl-C / unexpected exit.
  */
 import { spawnSync } from 'node:child_process';
-import { copyFileSync, readFileSync, renameSync, writeFileSync, existsSync } from 'node:fs';
+import {
+  copyFileSync,
+  readFileSync,
+  renameSync,
+  writeFileSync,
+  existsSync,
+  unlinkSync,
+} from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -17,27 +26,41 @@ const here = dirname(fileURLToPath(import.meta.url));
 const pkgRoot = resolve(here, '..');
 const manifestPath = resolve(pkgRoot, 'package.json');
 const backupPath = resolve(pkgRoot, 'package.json.vsce-backup');
+const stagedLicensePath = resolve(pkgRoot, 'LICENSE');
+const repoLicensePath = resolve(pkgRoot, '..', '..', 'LICENSE');
 
-const PUBLISHED_NAME = 'flowlib-vscode';
-const VSIX_OUT = resolve(pkgRoot, 'flowlib-vscode.vsix');
+const PUBLISHED_NAME = 'flowlib-vsix';
+const VSIX_OUT = resolve(pkgRoot, 'flowlib-vsix.vsix');
 
-function restoreManifest() {
+let stagedLicense = false;
+
+function restore() {
   if (existsSync(backupPath)) {
     renameSync(backupPath, manifestPath);
+  }
+  // Only delete the LICENSE if we staged it — never touch one that
+  // already existed before we ran.
+  if (stagedLicense && existsSync(stagedLicensePath)) {
+    unlinkSync(stagedLicensePath);
   }
 }
 
 process.on('SIGINT', () => {
-  restoreManifest();
+  restore();
   process.exit(130);
 });
 process.on('SIGTERM', () => {
-  restoreManifest();
+  restore();
   process.exit(143);
 });
 
 const original = readFileSync(manifestPath, 'utf-8');
 copyFileSync(manifestPath, backupPath);
+
+if (!existsSync(stagedLicensePath) && existsSync(repoLicensePath)) {
+  copyFileSync(repoLicensePath, stagedLicensePath);
+  stagedLicense = true;
+}
 
 try {
   const manifest = JSON.parse(original);
@@ -54,5 +77,5 @@ try {
     process.exitCode = result.status ?? 1;
   }
 } finally {
-  restoreManifest();
+  restore();
 }

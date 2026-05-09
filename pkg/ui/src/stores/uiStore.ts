@@ -32,6 +32,12 @@ interface UIState {
   nodeSidebarOpen: boolean;
   nodeSidebarExpandedGroups: string[];
 
+  // Editor sidebar — VSCode-style multi-section list (Nodes, Runs, …).
+  // Section ids in this set are expanded; absent ids are collapsed.
+  // Sections not yet in the set fall back to defaultExpandedSections (initial
+  // value) — see initialState for which sections start expanded.
+  editorSidebarExpandedSections: string[];
+
   // Bottom toolbar
   toolbarCollapsed: boolean;
 }
@@ -61,6 +67,9 @@ interface UIActions {
   toggleNodeSidebarGroup: (groupId: string) => void;
   setNodeSidebarExpandedGroups: (groups: string[]) => void;
 
+  // Editor sidebar sections
+  toggleEditorSidebarSection: (sectionId: string) => void;
+
   // Bottom toolbar
   toggleToolbarCollapsed: () => void;
 
@@ -80,6 +89,7 @@ const initialState: UIState = {
   codePanelOpen: false,
   nodeSidebarOpen: true,
   nodeSidebarExpandedGroups: ['core'],
+  editorSidebarExpandedSections: ['nodes', 'runs'],
   toolbarCollapsed: false,
 };
 
@@ -182,6 +192,21 @@ export const useUIStore: UseBoundStore<StoreApi<UIStore>> = create<UIStore>()(
             state.nodeSidebarExpandedGroups = groups;
           }),
 
+        // Editor sidebar sections
+        toggleEditorSidebarSection: (sectionId) =>
+          set((state) => {
+            if (state.editorSidebarExpandedSections.includes(sectionId)) {
+              state.editorSidebarExpandedSections = state.editorSidebarExpandedSections.filter(
+                (id) => id !== sectionId,
+              );
+              return;
+            }
+            state.editorSidebarExpandedSections = [
+              ...state.editorSidebarExpandedSections,
+              sectionId,
+            ];
+          }),
+
         // Bottom toolbar
         toggleToolbarCollapsed: () =>
           set((state) => {
@@ -199,6 +224,7 @@ export const useUIStore: UseBoundStore<StoreApi<UIStore>> = create<UIStore>()(
           activeSidebarTab: state.activeSidebarTab,
           nodeSidebarOpen: state.nodeSidebarOpen,
           nodeSidebarExpandedGroups: state.nodeSidebarExpandedGroups,
+          editorSidebarExpandedSections: state.editorSidebarExpandedSections,
           toolbarCollapsed: state.toolbarCollapsed,
         }),
       },

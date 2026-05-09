@@ -92,6 +92,24 @@ jobs:
           NPM_TOKEN: ${{ secrets.NPM_PUB_TOKEN }}
           NODE_AUTH_TOKEN: ${{ secrets.NPM_PUB_TOKEN }}
 
+      # ----- Publish the VSCode extension to Marketplace + Open VSX -----
+      # The vsix is in the @flowlib/* fixed group, so any successful release
+      # bumps it in lockstep with the rest of the workspace. Build the .vsix
+      # via the package script (which rewrites the scoped name → unscoped
+      # `flowlib-vsix` for vsce, then restores the manifest), then push it
+      # to both registries. Marketplace versions are immutable, so a failed
+      # mid-publish leaves the next release to bump again.
+      - name: Publish VSIX (Marketplace + Open VSX)
+        if: steps.changesets.outputs.published == 'true' || steps.manual-publish.outputs.published == 'true'
+        working-directory: pkg/vsix-extension
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+          OVSX_PAT: ${{ secrets.OVSX_PAT }}
+        run: |
+          pnpm package
+          pnpm exec vsce publish --packagePath flowlib-vsix.vsix --pat "$VSCE_PAT"
+          pnpm exec ovsx publish flowlib-vsix.vsix --pat "$OVSX_PAT"
+
       - name: Create GitHub releases
         if: steps.changesets.outputs.published == 'true' || steps.manual-publish.outputs.published == 'true'
         env:

@@ -7,4 +7,3 @@
 // Key principle: Never duplicate server state in Zustand
 
 export * from './uiStore';
-export * from './executionViewStore';

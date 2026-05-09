@@ -1,57 +1,38 @@
 import React, { useRef, useCallback, useState, useMemo } from 'react';
-import { useNavigate } from 'react-router';
+import { useNavigate, useSearchParams, useLocation } from 'react-router';
+import { X } from 'lucide-react';
+import { Button } from '../ui/button';
 import { FlowLayout } from './FlowLayout';
-import { ModeSwitcher } from './ModeSwitcher';
 import { RunControls } from './RunControls';
+import { FlowWorkbenchView } from './FlowWorkbenchView';
+import { InspectViewport } from '../flow-viewer/InspectViewport';
 import { NodeSidebar } from './NodeSidebar';
+import { EditorSidebar, createNodesSection, createRunsSection } from './sidebar';
+import { FlowBottomToolbar } from './FlowBottomToolbar';
 import { ValidationPanel } from './ValidationPanel';
-import { LayoutSelector } from '../graph/LayoutSelector';
-import { BatchFlowEdge, defaultEdgeOptions } from '../graph';
-import { applyLayout, type LayoutAlgorithm } from '~/utils/layoutUtils';
-import {
-  NodeTypes,
-  EdgeTypes,
-  ReactFlow,
-  Controls,
-  Background,
-  BackgroundVariant,
-  SelectionMode,
-  useReactFlow,
-  useNodesInitialized,
-  type Node,
-} from '@xyflow/react';
-import { UniversalNode, AgentNode } from '../nodes';
-import { getNodeComponent } from '../nodes/nodeRegistry';
-import { NodeConfigPanel } from './node-config-panel/NodeConfigPanel';
 import { ToolConfigPanel } from './ToolConfigPanel';
 import { ChatPanel, ChatToggleButton, ChatPromptOverlay } from '~/components/chat';
 import { ViewCodeToggleButton } from './ViewCodeToggleButton';
 import { FlowCodePanel } from './FlowCodePanel';
-import { useNodeRegistry } from '~/contexts/NodeRegistryContext';
 import { useFlowEditorStore } from './flow-editor.store';
 import { useFlowReactFlowData } from '../../api/flows.api';
+import { useNodeExecutions } from '../../api/executions.api';
+import { useFlowRunStream } from '../../api/use-flow-run-stream';
+import type { NodeExecutionStatus, ReactFlowNode } from '@flowlib/core/types';
+import {
+  ResizableHandle,
+  ResizablePanel,
+  ResizablePanelGroup,
+} from '../ui/resizable';
+import { LogsPanel } from '../flow-viewer/logs-panel';
+import {
+  useExecutionLogData,
+  type SelectedExecutionAttempt,
+} from '../flow-viewer/use-execution-log-data';
 import { useFlowActions } from '../../routes/flow-route-layout';
 import { useUIStore } from '~/stores/uiStore';
-import { useTheme } from '~/contexts/ThemeProvider';
-import { AgentToolCallbacksProvider } from '~/contexts/AgentToolCallbacksContext';
 import { Skeleton } from '../ui/skeleton';
-import { useCopyPaste } from './use-copy-paste';
-import { useKeyboardShortcuts } from './use-keyboard-shortcuts';
-import { FlowCommandPalette } from './FlowCommandPalette';
-import { ShortcutsHelpDialog } from './ShortcutsHelpDialog';
 import { useToolPanel } from './use-tool-panel';
-import { useNodeCreation } from './use-node-creation';
-import { useRunDataFromQueryParams } from './use-run-data-from-query-params';
-
-// Stable references for React Flow - defined at module scope to avoid re-renders
-const EDGE_TYPES: EdgeTypes = {
-  default: BatchFlowEdge,
-};
-
-const FIT_VIEW_OPTIONS = {
-  duration: 0,
-  padding: 0.2,
-} as const;
 
 export interface FlowEditorProps {
   flowId: string;
@@ -60,7 +41,10 @@ export interface FlowEditorProps {
   initialName?: string;
 }
 
-// Edit view shell - displays the flow editor
+// Route-level shell. Owns view-mode decisions (edit / edit-live / inspect),
+// the SSE subscription, the bottom logs panel state for edit-live, and the
+// sidebar + right-panel JSX. The actual canvas (React Flow) lives in
+// FlowWorkbenchView, which is mounted in edit and edit-live modes.
 export function FlowEditor({ flowId, flowVersion, basePath = '' }: FlowEditorProps) {
   const viewportRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
@@ -74,21 +58,18 @@ export function FlowEditor({ flowId, flowVersion, basePath = '' }: FlowEditorPro
     version: flowVersion,
   });
 
-  // Sidebar visibility (persisted)
+  // Sidebar visibility (persisted across the app)
   const nodeSidebarOpen = useUIStore((s) => s.nodeSidebarOpen);
   const toggleNodeSidebar = useUIStore((s) => s.toggleNodeSidebar);
 
   // Flow actions from parent layout context (execute, active state)
   const flowActions = useFlowActions();
 
-  const handleModeChange = (newMode: 'edit' | 'runs') => {
-    if (newMode === 'runs') {
-      const runsPath = flowVersion
-        ? `${basePath}/flow/${flowId}/runs/version/${flowVersion}`
-        : `${basePath}/flow/${flowId}/runs`;
-      navigate(runsPath);
-    }
-  };
+  // Inspect mode is signalled by the URL path containing `/runs`. The sidebar's
+  // RunsSection navigates there on click; the Run button stays on the editor
+  // path (edit-live). Both modes share this single shell — no Edit/Runs tab.
+  const location = useLocation();
+  const isInspectRoute = location.pathname.includes('/runs');
 
   const handleRegisterAddNode = useCallback((fn: (type: string) => void) => {
     addNodeFnRef.current = fn;
@@ -98,9 +79,148 @@ export function FlowEditor({ flowId, flowVersion, basePath = '' }: FlowEditorPro
     addNodeFnRef.current(type);
   }, []);
 
-  // Sidebar & right panel render state (lifted from FlowWorkbenchView)
-  const [sidebarElement, setSidebarElement] = useState<React.ReactNode>(null);
-  const [rightPanelElement, setRightPanelElement] = useState<React.ReactNode>(null);
+  // Consume `?addNode=<type>` set by NodesSection when clicked from inspect
+  // mode. The sidebar can't add directly there because FlowWorkbenchView (and
+  // therefore the registered add handler) isn't mounted; bouncing through this
+  // param lets us land in edit mode and add on arrival.
+  React.useEffect(() => {
+    const addType = new URLSearchParams(location.search).get('addNode');
+    if (!addType || isInspectRoute) {
+      return;
+    }
+    // Defer one tick so FlowWorkbenchView's onRegisterAddNode effect has had a
+    // chance to populate addNodeFnRef before we call into it.
+    const id = setTimeout(() => {
+      handleAddNode(addType);
+      // Clear the param so a refresh doesn't re-add the node.
+      const next = new URLSearchParams(location.search);
+      next.delete('addNode');
+      const search = next.toString();
+      navigate(`${location.pathname}${search ? `?${search}` : ''}`, { replace: true });
+    }, 0);
+    return () => clearTimeout(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.search, isInspectRoute]);
+
+  // Tool panel state (agent tool selection, tool config).
+  // Lifted here so the sidebar + right panel can be rendered directly in this
+  // component's JSX rather than pushed up via render-prop callbacks from the
+  // canvas. FlowWorkbenchView receives the API as a single `toolPanel` prop.
+  const toolPanel = useToolPanel();
+
+  // --- Edit-live: read ?runId=, subscribe to SSE, build node-status map ---
+  const [searchParams, setSearchParams] = useSearchParams();
+  const liveRunId = searchParams.get('runId');
+  useFlowRunStream(flowId, liveRunId);
+  const { data: liveNodeExecutions, isLoading: liveExecutionsLoading } = useNodeExecutions(
+    liveRunId ?? '',
+  );
+
+  const liveStatusByNodeId = useMemo(() => {
+    const map = new Map<string, NodeExecutionStatus>();
+    if (!liveRunId || !liveNodeExecutions) {
+      return map;
+    }
+    for (const exec of liveNodeExecutions) {
+      // Latest attempt wins (API returns executions in chronological order).
+      map.set(exec.nodeId, exec.status);
+    }
+    return map;
+  }, [liveRunId, liveNodeExecutions]);
+
+  // --- Edit-live bottom logs panel state ---
+  const liveStoreNodes = useFlowEditorStore((s) => s.nodes);
+  const { nodes: executionLogNodes } = useExecutionLogData({
+    nodes: liveStoreNodes as ReactFlowNode[],
+    nodeExecutions: liveNodeExecutions ?? [],
+  });
+  const [isLogsExpanded, setIsLogsExpanded] = useState(false);
+  const [selectedAttempt, setSelectedAttempt] = useState<SelectedExecutionAttempt | null>(null);
+
+  const handleExitLiveRun = useCallback(() => {
+    // From inspect (/flow/:id/runs?runId=X) we need a path change back to the
+    // editor route too — just clearing the search param leaves us on /runs
+    // which auto-selects the latest run.
+    if (isInspectRoute) {
+      navigate(`${basePath}/flow/${flowId}`);
+    } else {
+      setSearchParams(
+        (prev) => {
+          const next = new URLSearchParams(prev);
+          next.delete('runId');
+          return next;
+        },
+        { replace: true },
+      );
+    }
+    setIsLogsExpanded(false);
+    setSelectedAttempt(null);
+  }, [isInspectRoute, navigate, basePath, flowId, setSearchParams]);
+
+  // Toolbar contents — rendered either by FlowLayout (plain edit) or inline
+  // inside the canvas ResizablePanel (edit-live, so the toolbar floats above
+  // the LogsPanel strip rather than overlapping it).
+  const editorToolbarExtra = (
+    <div className="flex items-center gap-1.5">
+      {liveRunId && (
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={handleExitLiveRun}
+          className="h-8 gap-1.5 text-xs text-muted-foreground hover:text-foreground"
+          title="Exit run view"
+        >
+          <X className="w-3.5 h-3.5" />
+          Exit run view
+        </Button>
+      )}
+      <RunControls
+        onExecute={flowActions?.onExecute}
+        isExecuting={flowActions?.isExecuting}
+        isActive={flowActions?.isActive}
+        isTogglingActive={flowActions?.isTogglingActive}
+        onToggleActive={flowActions?.onToggleActive}
+      />
+    </div>
+  );
+
+  // Sidebar — agent-actions mode swap based on toolPanel.sidebarMode. Both
+  // modes share the same shell width and sidebar-open toggle.
+  const sidebarElement =
+    toolPanel.sidebarMode === 'actions' ? (
+      <NodeSidebar
+        mode="actions"
+        onAddNode={handleAddNode}
+        onCollapse={toggleNodeSidebar}
+        onClose={toolPanel.handleCloseToolSelector}
+        availableTools={toolPanel.availableTools}
+        addedTools={toolPanel.currentNodeAddedTools}
+        onAddTool={toolPanel.handleAddToolToNode}
+        onRemoveTool={toolPanel.handleRemoveToolFromNode}
+        onSelectTool={toolPanel.handleSelectToolInstance}
+        selectedInstanceId={toolPanel.selectedToolInstanceId}
+      />
+    ) : (
+      <EditorSidebar
+        flowId={flowId}
+        basePath={basePath}
+        sections={[createNodesSection({ onAddNode: handleAddNode }), createRunsSection()]}
+        onCollapse={toggleNodeSidebar}
+      />
+    );
+
+  // Right panel — ToolConfigPanel when an agent-tool instance is selected.
+  const rightPanelElement =
+    toolPanel.toolConfigPanelOpen && toolPanel.selectedToolDef && toolPanel.selectedToolInstance ? (
+      <ToolConfigPanel
+        open={toolPanel.toolConfigPanelOpen}
+        onClose={toolPanel.handleCloseToolConfig}
+        tool={toolPanel.selectedToolDef}
+        instance={toolPanel.selectedToolInstance}
+        onUpdate={toolPanel.handleUpdateToolInNode}
+        onRemove={toolPanel.handleRemoveToolFromNode}
+      />
+    ) : null;
 
   if (loading) {
     return (
@@ -167,14 +287,9 @@ export function FlowEditor({ flowId, flowVersion, basePath = '' }: FlowEditorPro
     <div className="flex h-full min-h-0">
       <div className="flex flex-col flex-1 min-h-0 bg-background text-foreground">
         <FlowLayout
-          modeSwitcher={<ModeSwitcher mode="edit" onModeChange={handleModeChange} />}
           layoutSelector={layoutSelector}
           viewportRef={viewportRef}
-          sidebar={
-            sidebarElement ?? (
-              <NodeSidebar mode="nodes" onAddNode={handleAddNode} onCollapse={toggleNodeSidebar} />
-            )
-          }
+          sidebar={sidebarElement}
           sidebarOpen={nodeSidebarOpen}
           onToggleSidebar={toggleNodeSidebar}
           rightPanel={rightPanelElement}
@@ -183,24 +298,83 @@ export function FlowEditor({ flowId, flowVersion, basePath = '' }: FlowEditorPro
           chatPanel={<ChatPanel flowId={flowId} basePath={basePath} />}
           codePanel={<FlowCodePanel flowId={flowId} />}
           chatOverlay={<ChatPromptOverlay />}
-          toolbarExtra={
-            <RunControls
-              onExecute={flowActions?.onExecute}
-              isExecuting={flowActions?.isExecuting}
-              isActive={flowActions?.isActive}
-              isTogglingActive={flowActions?.isTogglingActive}
-              onToggleActive={flowActions?.onToggleActive}
-            />
-          }
+          toolbarExtra={editorToolbarExtra}
+          hideToolbar={Boolean(liveRunId)}
           viewport={
-            <FlowWorkbenchView
-              flowId={flowId}
-              onRegisterAddNode={handleRegisterAddNode}
-              onLayoutSelectorRender={setLayoutSelector}
-              onAddNode={handleAddNode}
-              onSidebarRender={setSidebarElement}
-              onRightPanelRender={setRightPanelElement}
-            />
+            isInspectRoute && liveRunId ? (
+              // Inspect mode: read-only canvas + expanded logs.
+              <InspectViewport
+                flowId={flowId}
+                flowVersion={flowVersion}
+                basePath={basePath}
+                runId={liveRunId}
+              />
+            ) : liveRunId ? (
+              // Edit-live mode: editable canvas + collapsed logs by default.
+              <ResizablePanelGroup direction="vertical" className="h-full min-h-0">
+                <ResizablePanel defaultSize={isLogsExpanded ? 60 : 100} minSize={20}>
+                  {/* `relative h-full` anchors the FlowBottomToolbar to the
+                      canvas region only, so the toolbar always sits above the
+                      LogsPanel strip below. */}
+                  <div className="relative h-full">
+                    <FlowWorkbenchView
+                      flowId={flowId}
+                      basePath={basePath}
+                      onRegisterAddNode={handleRegisterAddNode}
+                      onLayoutSelectorRender={setLayoutSelector}
+                      onAddNode={handleAddNode}
+                      toolPanel={toolPanel}
+                      liveRunId={liveRunId}
+                      liveStatusByNodeId={liveStatusByNodeId}
+                    />
+                    <FlowBottomToolbar
+                      layoutSelector={layoutSelector}
+                      toolbarExtra={editorToolbarExtra}
+                      sidebarOpen={nodeSidebarOpen}
+                      onToggleSidebar={toggleNodeSidebar}
+                    />
+                  </div>
+                </ResizablePanel>
+                {isLogsExpanded ? (
+                  <>
+                    <ResizableHandle withHandle />
+                    <ResizablePanel defaultSize={40} minSize={10}>
+                      <LogsPanel
+                        nodes={executionLogNodes}
+                        selectedAttempt={selectedAttempt}
+                        onSelectAttempt={setSelectedAttempt}
+                        isExpanded={isLogsExpanded}
+                        loading={liveExecutionsLoading}
+                        onToggle={() => setIsLogsExpanded((v) => !v)}
+                      />
+                    </ResizablePanel>
+                  </>
+                ) : (
+                  <div className="shrink-0">
+                    <LogsPanel
+                      nodes={executionLogNodes}
+                      selectedAttempt={selectedAttempt}
+                      onSelectAttempt={setSelectedAttempt}
+                      isExpanded={isLogsExpanded}
+                      loading={liveExecutionsLoading}
+                      onToggle={() => setIsLogsExpanded((v) => !v)}
+                    />
+                  </div>
+                )}
+              </ResizablePanelGroup>
+            ) : (
+              // Plain edit mode.
+              <FlowWorkbenchView
+                flowId={flowId}
+                basePath={basePath}
+                onRegisterAddNode={handleRegisterAddNode}
+                onLayoutSelectorRender={setLayoutSelector}
+                onAddNode={handleAddNode}
+                toolPanel={toolPanel}
+                liveRunId={liveRunId}
+                liveStatusByNodeId={liveStatusByNodeId}
+              />
+            )
           }
         />
       </div>
@@ -208,412 +382,5 @@ export function FlowEditor({ flowId, flowVersion, basePath = '' }: FlowEditorPro
       {/* Validation panel slides in from right */}
       {showValidation && <ValidationPanel />}
     </div>
-  );
-}
-
-interface FlowWorkbenchViewProps {
-  flowId: string;
-  onRegisterAddNode?: (fn: (type: string) => void) => void;
-  onLayoutSelectorRender?: (layoutSelector: React.ReactNode) => void;
-  /** Callback to add a node (passed from shell, used for sidebar) */
-  onAddNode: (type: string) => void;
-  /** Renders the sidebar element (NodeSidebar with current mode + props) */
-  onSidebarRender: (sidebar: React.ReactNode) => void;
-  /** Renders the right panel element (ToolConfigPanel when active) */
-  onRightPanelRender: (rightPanel: React.ReactNode | null) => void;
-}
-
-export function FlowWorkbenchView({
-  flowId,
-  onRegisterAddNode,
-  onLayoutSelectorRender,
-  onAddNode,
-  onSidebarRender,
-  onRightPanelRender,
-}: FlowWorkbenchViewProps) {
-  const { resolvedTheme } = useTheme();
-
-  // === Zustand store: Fine-grained selectors ===
-  const storeNodes = useFlowEditorStore((s) => s.nodes);
-  const storeEdges = useFlowEditorStore((s) => s.edges);
-  const edgesReady = useFlowEditorStore((s) => s.edgesReady);
-  const currentLayout = useFlowEditorStore((s) => s.currentLayout);
-  const currentDirection = useFlowEditorStore((s) => s.layoutDirection);
-  const configNodeId = useFlowEditorStore((s) => s.selectedNodeId);
-  const configPanelOpen = useFlowEditorStore((s) => s.configPanelOpen);
-
-  // Actions
-  const onNodesChange = useFlowEditorStore((s) => s.applyNodeChanges);
-  const onEdgesChange = useFlowEditorStore((s) => s.applyEdgeChanges);
-  const onConnect = useFlowEditorStore((s) => s.onConnect);
-  const setLayout = useFlowEditorStore((s) => s.setLayout);
-  const setLayoutedNodes = useFlowEditorStore((s) => s.setLayoutedNodes);
-  const closeConfigPanel = useFlowEditorStore((s) => s.closeConfigPanel);
-  const selectNode = useFlowEditorStore((s) => s.selectNode);
-  const setRegistryLoading = useFlowEditorStore((s) => s.setRegistryLoading);
-  const setNodesInitialized = useFlowEditorStore((s) => s.setNodesInitialized);
-  const setAllNodesHaveDefinitions = useFlowEditorStore((s) => s.setAllNodesHaveDefinitions);
-
-  const { getNodeDefinition, isLoading: registryLoading } = useNodeRegistry();
-  const reactFlowInstance = useReactFlow();
-  const { fitView } = reactFlowInstance;
-
-  // --- Extracted hooks ---
-  const toolPanel = useToolPanel();
-  const createNewNode = useNodeCreation();
-  useRunDataFromQueryParams();
-  useCopyPaste({ flowId, reactFlowInstance });
-
-  const {
-    commandPaletteOpen,
-    setCommandPaletteOpen,
-    shortcutsHelpOpen,
-    setShortcutsHelpOpen,
-    commandPaletteActions,
-  } = useKeyboardShortcuts();
-
-  // Sync React Flow / registry state to Zustand for edge readiness tracking
-  const nodesInitializedFromHook = useNodesInitialized();
-
-  const allNodesHaveDefinitions = useMemo(() => {
-    if (storeNodes.length === 0) {
-      return false;
-    }
-    return storeNodes.every((node) => {
-      const nodeType = (node.data as { type?: string })?.type;
-      return nodeType && getNodeDefinition(nodeType);
-    });
-  }, [storeNodes, getNodeDefinition]);
-
-  React.useEffect(() => {
-    setRegistryLoading(registryLoading);
-  }, [registryLoading, setRegistryLoading]);
-
-  React.useEffect(() => {
-    setNodesInitialized(nodesInitializedFromHook);
-  }, [nodesInitializedFromHook, setNodesInitialized]);
-
-  React.useEffect(() => {
-    setAllNodesHaveDefinitions(allNodesHaveDefinitions);
-  }, [allNodesHaveDefinitions, setAllNodesHaveDefinitions]);
-
-  // --- Interaction refs ---
-  const dialogContainerRef = useRef<HTMLDivElement | null>(null);
-  const isDraggingNodeRef = useRef(false);
-  const isShiftKeyHeldRef = useRef(false);
-  const dragEndTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  // Track shift key state to prevent config panel opening during drag selection
-  React.useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Shift') {
-        isShiftKeyHeldRef.current = true;
-      }
-    };
-    const handleKeyUp = (e: KeyboardEvent) => {
-      if (e.key === 'Shift') {
-        isShiftKeyHeldRef.current = false;
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    window.addEventListener('keyup', handleKeyUp);
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-      window.removeEventListener('keyup', handleKeyUp);
-    };
-  }, []);
-
-  // Only pass edges to React Flow after edgesReady
-  const edges = edgesReady ? storeEdges : [];
-
-  // --- Layout ---
-  const handleLayoutChange = useCallback(
-    async (algorithm: LayoutAlgorithm, direction: 'TB' | 'BT' | 'LR' | 'RL' = 'LR') => {
-      setLayout(algorithm, direction);
-      const { nodes: currentNodes, edges: currentEdges } = useFlowEditorStore.getState();
-
-      // If 2+ nodes are selected, realign only that subset and preserve its
-      // centroid so the rest of the graph stays put.
-      const selectedIds = new Set(currentNodes.filter((n) => n.selected).map((n) => n.id));
-      if (selectedIds.size >= 2) {
-        const selectedNodes = currentNodes.filter((n) => selectedIds.has(n.id));
-        const subEdges = currentEdges.filter(
-          (e) => selectedIds.has(e.source) && selectedIds.has(e.target),
-        );
-
-        const centroid = (nodes: Node[]) => {
-          const sum = nodes.reduce(
-            (acc, n) => ({ x: acc.x + n.position.x, y: acc.y + n.position.y }),
-            { x: 0, y: 0 },
-          );
-          return { x: sum.x / nodes.length, y: sum.y / nodes.length };
-        };
-
-        const before = centroid(selectedNodes);
-        const { nodes: laidOut } = await applyLayout(selectedNodes, subEdges, algorithm, direction);
-        const after = centroid(laidOut);
-        const dx = before.x - after.x;
-        const dy = before.y - after.y;
-
-        const translatedById = new Map(
-          laidOut.map((n) => [
-            n.id,
-            { ...n, position: { x: n.position.x + dx, y: n.position.y + dy } },
-          ]),
-        );
-        const merged = currentNodes.map((n) => translatedById.get(n.id) ?? n);
-        setLayoutedNodes(merged);
-        return;
-      }
-
-      const { nodes: layoutedNodes } = await applyLayout(
-        currentNodes,
-        currentEdges,
-        algorithm,
-        direction,
-      );
-      setLayoutedNodes(layoutedNodes);
-      setTimeout(() => {
-        fitView({ padding: 0.2, duration: 200 });
-      }, 50);
-    },
-    [setLayout, setLayoutedNodes, fitView],
-  );
-
-  const handleReactFlowInit = useCallback(() => {
-    const currentNodes = useFlowEditorStore.getState().nodes;
-    if (currentNodes.length > 0) {
-      const hasValidPositions = currentNodes.some(
-        (node) => node.position.x !== 0 || node.position.y !== 0,
-      );
-      if (hasValidPositions) {
-        fitView({ padding: 0.2, duration: 0 });
-      } else {
-        setTimeout(() => {
-          fitView({ padding: 0.2, duration: 0 });
-        }, 100);
-      }
-    }
-  }, [fitView]);
-
-  // --- Node interaction callbacks ---
-  React.useEffect(() => {
-    if (configNodeId && !storeNodes.some((candidate) => candidate.id === configNodeId)) {
-      closeConfigPanel();
-      selectNode(null);
-    }
-  }, [configNodeId, storeNodes, closeConfigPanel, selectNode]);
-
-  const handleNodeDoubleClick = useCallback(
-    (_event: React.MouseEvent, clickedNode: Node) => {
-      if (isDraggingNodeRef.current || isShiftKeyHeldRef.current) {
-        return;
-      }
-      toolPanel.setConfigPanelToolInstanceId(null);
-      toolPanel.openConfigPanel(clickedNode.id);
-    },
-    [toolPanel.openConfigPanel],
-  );
-
-  const handleSelectionChange = useCallback<
-    NonNullable<React.ComponentProps<typeof ReactFlow>['onSelectionChange']>
-  >(
-    ({ nodes: selectedNodes }) => {
-      if (isDraggingNodeRef.current || isShiftKeyHeldRef.current) {
-        return;
-      }
-      if (selectedNodes.length === 0) {
-        closeConfigPanel();
-        selectNode(null);
-      }
-    },
-    [closeConfigPanel, selectNode],
-  );
-
-  const handlePanelOpenChange = useCallback(
-    (open: boolean) => {
-      if (!open) {
-        closeConfigPanel();
-        selectNode(null);
-        toolPanel.setConfigPanelToolInstanceId(null);
-      }
-    },
-    [closeConfigPanel, selectNode],
-  );
-
-  const handleNodeDragStart = useCallback(() => {
-    if (dragEndTimeoutRef.current) {
-      clearTimeout(dragEndTimeoutRef.current);
-      dragEndTimeoutRef.current = null;
-    }
-    isDraggingNodeRef.current = true;
-  }, []);
-
-  const handleNodeDragStop = useCallback(() => {
-    if (dragEndTimeoutRef.current) {
-      clearTimeout(dragEndTimeoutRef.current);
-    }
-    dragEndTimeoutRef.current = setTimeout(() => {
-      isDraggingNodeRef.current = false;
-      dragEndTimeoutRef.current = null;
-    }, 150);
-  }, []);
-
-  React.useEffect(() => {
-    return () => {
-      if (dragEndTimeoutRef.current) {
-        clearTimeout(dragEndTimeoutRef.current);
-        dragEndTimeoutRef.current = null;
-      }
-    };
-  }, []);
-
-  // --- Register addNode + layout selector ---
-  React.useEffect(() => {
-    if (onRegisterAddNode) {
-      onRegisterAddNode(createNewNode);
-    }
-  }, [onRegisterAddNode, createNewNode]);
-
-  React.useEffect(() => {
-    if (onLayoutSelectorRender) {
-      onLayoutSelectorRender(
-        <LayoutSelector onRealign={() => handleLayoutChange(currentLayout, currentDirection)} />,
-      );
-    }
-  }, [currentLayout, currentDirection, handleLayoutChange, onLayoutSelectorRender]);
-
-  // --- Push sidebar/right panel to shell ---
-  const toggleNodeSidebar = useUIStore((s) => s.toggleNodeSidebar);
-
-  React.useEffect(() => {
-    onSidebarRender(
-      <NodeSidebar
-        mode={toolPanel.sidebarMode}
-        onAddNode={onAddNode}
-        onCollapse={toggleNodeSidebar}
-        onClose={
-          toolPanel.sidebarMode === 'actions' ? toolPanel.handleCloseToolSelector : undefined
-        }
-        availableTools={toolPanel.availableTools}
-        addedTools={toolPanel.currentNodeAddedTools}
-        onAddTool={toolPanel.handleAddToolToNode}
-        onRemoveTool={toolPanel.handleRemoveToolFromNode}
-        onSelectTool={toolPanel.handleSelectToolInstance}
-        selectedInstanceId={toolPanel.selectedToolInstanceId}
-      />,
-    );
-  }, [
-    toolPanel.sidebarMode,
-    onAddNode,
-    toggleNodeSidebar,
-    toolPanel.handleCloseToolSelector,
-    toolPanel.availableTools,
-    toolPanel.currentNodeAddedTools,
-    toolPanel.handleAddToolToNode,
-    toolPanel.handleRemoveToolFromNode,
-    toolPanel.handleSelectToolInstance,
-    toolPanel.selectedToolInstanceId,
-    onSidebarRender,
-  ]);
-
-  React.useEffect(() => {
-    if (
-      toolPanel.toolConfigPanelOpen &&
-      toolPanel.selectedToolDef &&
-      toolPanel.selectedToolInstance
-    ) {
-      onRightPanelRender(
-        <ToolConfigPanel
-          open={toolPanel.toolConfigPanelOpen}
-          onClose={toolPanel.handleCloseToolConfig}
-          tool={toolPanel.selectedToolDef}
-          instance={toolPanel.selectedToolInstance}
-          onUpdate={toolPanel.handleUpdateToolInNode}
-          onRemove={toolPanel.handleRemoveToolFromNode}
-          portalContainer={dialogContainerRef.current}
-        />,
-      );
-    } else {
-      onRightPanelRender(null);
-    }
-  }, [
-    toolPanel.toolConfigPanelOpen,
-    toolPanel.selectedToolDef,
-    toolPanel.selectedToolInstance,
-    toolPanel.handleCloseToolConfig,
-    toolPanel.handleUpdateToolInNode,
-    toolPanel.handleRemoveToolFromNode,
-    onRightPanelRender,
-  ]);
-
-  // --- Node types ---
-  const { nodeDefinitions } = useNodeRegistry();
-  const nodeTypes: NodeTypes = useMemo(() => {
-    // @ts-ignore React 19 vs 18 type mismatch in @xyflow/react
-    // eslint-disable-next-line typescript/no-explicit-any -- React node components require generic any props
-    const mapping: Record<string, React.ComponentType<any>> = {
-      'core.agent': AgentNode,
-      default: UniversalNode,
-    };
-    for (const def of nodeDefinitions) {
-      if (!(def.type in mapping)) {
-        mapping[def.type] = getNodeComponent(def.type);
-      }
-    }
-    return mapping;
-  }, [nodeDefinitions]);
-
-  // --- Render ---
-  return (
-    <>
-      <div
-        style={{ width: '100%', height: '100%', background: 'var(--canvas-background)' }}
-        ref={dialogContainerRef}
-      >
-        <AgentToolCallbacksProvider value={toolPanel.agentToolCallbacks}>
-          <ReactFlow
-            nodes={storeNodes}
-            edges={edges}
-            onNodesChange={onNodesChange}
-            onEdgesChange={onEdgesChange}
-            onConnect={onConnect}
-            onNodeDoubleClick={handleNodeDoubleClick}
-            onSelectionChange={handleSelectionChange}
-            onNodeDragStart={handleNodeDragStart}
-            onNodeDragStop={handleNodeDragStop}
-            nodeTypes={nodeTypes}
-            edgeTypes={EDGE_TYPES}
-            defaultEdgeOptions={defaultEdgeOptions}
-            colorMode={resolvedTheme}
-            fitView
-            fitViewOptions={FIT_VIEW_OPTIONS}
-            onInit={handleReactFlowInit}
-            panOnDrag={[1, 2]}
-            selectionOnDrag
-            selectionMode={SelectionMode.Partial}
-            panOnScroll
-          >
-            <Controls />
-            <Background variant={BackgroundVariant.Dots} gap={20} size={1.2} />
-          </ReactFlow>
-        </AgentToolCallbacksProvider>
-      </div>
-      <NodeConfigPanel
-        open={configPanelOpen}
-        nodeId={configNodeId}
-        flowId={flowId}
-        onOpenChange={handlePanelOpenChange}
-        portalContainer={dialogContainerRef.current}
-        availableTools={toolPanel.availableTools}
-        initialToolInstanceId={toolPanel.configPanelToolInstanceId}
-      />
-      <FlowCommandPalette
-        open={commandPaletteOpen}
-        onOpenChange={setCommandPaletteOpen}
-        actions={commandPaletteActions}
-      />
-      <ShortcutsHelpDialog open={shortcutsHelpOpen} onOpenChange={setShortcutsHelpOpen} />
-    </>
   );
 }

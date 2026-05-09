@@ -2,8 +2,9 @@ import React, { useRef, useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router';
 import { FlowLayout } from '../flow-editor/FlowLayout';
 import { FlowBottomToolbar } from '../flow-editor/FlowBottomToolbar';
-import { ModeSwitcher } from '../flow-editor/ModeSwitcher';
 import { RunControls } from '../flow-editor/RunControls';
+import { EditorSidebar, createRunsSection } from '../flow-editor/sidebar';
+import { useUIStore } from '../../stores/uiStore';
 import { FlowStatusView } from './FlowStatusView';
 import { LogsPanel } from './logs-panel';
 import { ChatPanel, ChatToggleButton } from '~/components/chat';
@@ -12,7 +13,6 @@ import { FlowCodePanel } from '../flow-editor/FlowCodePanel';
 import { useFlowRuns, useFlowRun, useNodeExecutions } from '../../api/executions.api';
 import { useFlowRunStream } from '../../api/use-flow-run-stream';
 import { useFlowReactFlowData } from '../../api/flows.api';
-import { FlowRun } from '@flowlib/core/types';
 import { useExecutionLogData, SelectedExecutionAttempt } from './use-execution-log-data';
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '../ui/resizable';
 import { useFlowActions } from '../../routes/flow-route-layout';
@@ -112,18 +112,6 @@ export function FlowRunsView({ flowId, flowVersion, basePath }: FlowRunsViewProp
     }
   }, [executionLogNodes, selectedAttempt]);
 
-  const handleModeChange = (newMode: 'edit' | 'runs') => {
-    if (newMode === 'edit') {
-      // Always switch to the latest version on Edit. Pinning the
-      // editor to a historical `flowVersion` (the version this run
-      // executed against) would let the user accidentally edit an old
-      // snapshot rather than the live definition; the runs view is the
-      // place to inspect history, the editor is the place to change
-      // the current flow.
-      navigate(`${basePath}/flow/${flowId}`);
-    }
-  };
-
   // Navigate to editor and open the node config panel for the given node
   const handleEditNode = (nodeId: string) => {
     const editPath = flowVersion
@@ -170,20 +158,16 @@ export function FlowRunsView({ flowId, flowVersion, basePath }: FlowRunsViewProp
     setFocusNodeId(attempt.nodeId);
   };
 
-  const runSelectorItems = runs.map((r: FlowRun) => ({
-    id: r.id,
-    status: r.status,
-    startedAt: r.startedAt,
-    completedAt: r.completedAt,
-  }));
-
   // Flow actions from parent layout context (execute, active state)
   const flowActions = useFlowActions();
+
+  // Sidebar visibility (shared with editor — same persisted toggle).
+  const sidebarOpen = useUIStore((s) => s.nodeSidebarOpen);
+  const toggleSidebar = useUIStore((s) => s.toggleNodeSidebar);
 
   return (
     <div className="flex flex-col flex-1 h-full min-h-0 fl-page bg-fl-background text-fl-foreground">
       <FlowLayout
-        modeSwitcher={<ModeSwitcher mode="runs" onModeChange={handleModeChange} />}
         viewportRef={viewportRef}
         chatToggle={<ChatToggleButton />}
         viewCodeToggle={<ViewCodeToggleButton />}
@@ -196,8 +180,16 @@ export function FlowRunsView({ flowId, flowVersion, basePath }: FlowRunsViewProp
           />
         }
         codePanel={<FlowCodePanel flowId={flowId} source="version" />}
-        sidebar={null}
-        sidebarOpen={false}
+        sidebar={
+          <EditorSidebar
+            flowId={flowId}
+            basePath={basePath}
+            sections={[createRunsSection()]}
+            onCollapse={toggleSidebar}
+          />
+        }
+        sidebarOpen={sidebarOpen}
+        onToggleSidebar={toggleSidebar}
         hideToolbar
         viewport={
           <ResizablePanelGroup direction="vertical" className="h-full min-h-0">
@@ -248,9 +240,6 @@ export function FlowRunsView({ flowId, flowVersion, basePath }: FlowRunsViewProp
                     isExpanded={isLogsExpanded}
                     loading={nodeExecutionsLoading && !!selectedRunId}
                     onToggle={() => setIsLogsExpanded(!isLogsExpanded)}
-                    runs={runSelectorItems}
-                    selectedRunId={selectedRunId}
-                    onSelectRun={setSelectedRunId}
                   />
                 </ResizablePanel>
               </>
@@ -264,9 +253,6 @@ export function FlowRunsView({ flowId, flowVersion, basePath }: FlowRunsViewProp
                   isExpanded={isLogsExpanded}
                   loading={nodeExecutionsLoading && !!selectedRunId}
                   onToggle={() => setIsLogsExpanded(!isLogsExpanded)}
-                  runs={runSelectorItems}
-                  selectedRunId={selectedRunId}
-                  onSelectRun={setSelectedRunId}
                 />
               </div>
             )}
