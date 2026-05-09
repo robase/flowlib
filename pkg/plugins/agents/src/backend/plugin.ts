@@ -27,27 +27,41 @@ import type {
 import type { AgentsPluginPublicOptions } from '../shared/types';
 import { DEFAULT_ORG_ID } from './auth/resolve-auth-context';
 
-// ─── Stub register* functions ──────────────────────────────────────────
+// ─── Real subsystem registrars (Phase 1 streams' work) ─────────────────
 //
-// Each stub is a no-op that records its invocation in the plugin's
-// store. Phase 1 streams replace these with the real registrars. The
-// list of register calls is the load-bearing piece — the order here
-// is the order subsystems initialise in.
+// `plugin.ts` wires together fixed-order calls into each owned
+// subsystem's `register.ts`. Stream INT swapped P0's stubs for the
+// real imports here. Anything Stream I lands later (endpoints) gets
+// wired in the same fashion.
+
+import { registerProviders as registerProvidersImpl } from './providers/register';
+import { registerWorkspaces as registerWorkspacesImpl } from './workspaces/cloudflare-sandbox/register';
+import { registerService as registerServiceImpl } from './service/register';
+import { registerTools as registerToolsImpl } from './tools/register';
+import { registerPermissions as registerPermissionsImpl } from './permissions/register';
+import { registerAudit as registerAuditImpl } from './audit/register';
+import { registerPromptComposer as registerPromptComposerImpl } from './prompt/register';
+import { registerCloudflareDO as registerCloudflareDOImpl } from './cloudflare/register';
+import { registerRepositories as registerRepositoriesImpl } from './repositories/register';
 
 function registerProviders(ctx: PluginContext): void {
-  ctx.logger.debug('[agents] registerProviders: stub — Stream B will replace');
+  registerProvidersImpl(ctx, ctx.options.providers ?? []);
 }
 
 function registerWorkspaces(ctx: PluginContext): void {
-  ctx.logger.debug('[agents] registerWorkspaces: stub — Stream E will replace');
+  registerWorkspacesImpl(ctx);
+}
+
+function registerRepositories(ctx: PluginContext): void {
+  registerRepositoriesImpl(ctx);
 }
 
 function registerService(ctx: PluginContext): void {
-  ctx.logger.debug('[agents] registerService: stub — Stream A will replace');
+  registerServiceImpl(ctx);
 }
 
 function registerTools(ctx: PluginContext): void {
-  ctx.logger.debug('[agents] registerTools: stub — Stream G will replace');
+  registerToolsImpl(ctx);
 }
 
 function registerEndpoints(ctx: PluginContext): void {
@@ -55,15 +69,19 @@ function registerEndpoints(ctx: PluginContext): void {
 }
 
 function registerPermissions(ctx: PluginContext): void {
-  ctx.logger.debug('[agents] registerPermissions: stub — Stream J will replace');
+  registerPermissionsImpl(ctx);
+}
+
+function registerAudit(ctx: PluginContext): void {
+  registerAuditImpl(ctx);
 }
 
 function registerPromptComposer(ctx: PluginContext): void {
-  ctx.logger.debug('[agents] registerPromptComposer: stub — Stream K will replace');
+  registerPromptComposerImpl(ctx);
 }
 
 function registerCloudflareDO(ctx: PluginContext): void {
-  ctx.logger.debug('[agents] registerCloudflareDO: stub — Stream H will replace');
+  registerCloudflareDOImpl(ctx);
 }
 
 // ─── Options + context plumbing ────────────────────────────────────────
@@ -184,16 +202,23 @@ export function agents(options: AgentsPluginOptions = {}): FlowlibPluginDefiniti
       const ctx = buildPluginContext(flowlib, resolved);
 
       // The fixed register-call sequence. Order matters:
-      //  1. Providers + workspaces stand up first (no deps).
-      //  2. Service kernel binds against them.
-      //  3. Tools layer subscribes to action-registry events.
-      //  4. Endpoints register last, since they consume everything.
+      //  1. Repositories stand up first — everything else may consume them.
+      //  2. Permissions + audit (depend on repositories).
+      //  3. Providers + workspaces (no deps).
+      //  4. Service kernel + prompt composer (depend on the above).
+      //  5. Tools layer (subscribes to action-registry events; consumes
+      //     permissions + workspace handle factories).
+      //  6. Cloudflare DO surface (depends on the runtime singleton being
+      //     populated with everything above).
+      //  7. Endpoints register last, since they consume everything.
+      registerRepositories(ctx);
+      registerPermissions(ctx);
+      registerAudit(ctx);
       registerProviders(ctx);
       registerWorkspaces(ctx);
       registerService(ctx);
-      registerTools(ctx);
-      registerPermissions(ctx);
       registerPromptComposer(ctx);
+      registerTools(ctx);
       registerCloudflareDO(ctx);
       registerEndpoints(ctx);
 

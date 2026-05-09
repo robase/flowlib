@@ -71,7 +71,7 @@ describe('agents() plugin factory', () => {
     expect(warnings.some((w) => /default-org/.test(w.msg))).toBe(true);
   });
 
-  it('does not warn when staticOrgId is configured', async () => {
+  it('does not warn about org tenancy when staticOrgId is configured', async () => {
     const def = agents({ orgScope: 'required', staticOrgId: 'acme' });
     const ctx = makeFlowlibCtx();
     const init = (def.backend as { init?: (c: unknown) => Promise<void> }).init;
@@ -79,7 +79,12 @@ describe('agents() plugin factory', () => {
     const warnings = (ctx as unknown as { logs: Array<{ level: string; msg: string }> }).logs.filter(
       (l) => l.level === 'warn',
     );
-    expect(warnings).toHaveLength(0);
+    // Subsystem registrars (permissions, audit) emit fallback warnings at
+    // plugin init time because the repositories slot holds a per-request
+    // factory, not a built bag — that's by design (Stream F's contract).
+    // Those are scope-unrelated. Assert no org-tenancy warning is present.
+    const orgWarnings = warnings.filter((w) => /default-org|orgScope/.test(w.msg));
+    expect(orgWarnings).toHaveLength(0);
   });
 
   it('passes through frontend option', () => {
