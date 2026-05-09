@@ -39,6 +39,14 @@ interface AgentsBrowserOptions {
  */
 export { agentsFrontendPlugin } from './frontend/plugins/agentsFrontendPlugin';
 
+/**
+ * Chat-surface plugin (Stream M). Hosts compose with
+ * `agentsFrontendPlugin` to add the streaming chat route at
+ * `/agents/:agentId/sessions/:sessionId`. Kept as a separate plugin
+ * definition so consumers that don't want the chat UI can omit it.
+ */
+export { agentsChatFrontendPlugin, agentsChatRoutes } from './frontend/routes/chat-routes';
+
 import { agentsFrontendPlugin as defaultAgentsFrontend } from './frontend/plugins/agentsFrontendPlugin';
 
 /**
