@@ -128,7 +128,7 @@ export function activate(ctx: vscode.ExtensionContext): void {
           FlowEditorProvider.viewType,
         );
         // Pin to the run's version when known. The `runs/version/:n`
-        // route maps to the same FlowRunsView component but passes
+        // route maps to the unified FlowEditor (inspect mode) and passes
         // `flowVersion` through to `useFlowReactFlowData`.
         const versionSegment =
           typeof flowVersion === 'number'

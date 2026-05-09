@@ -70,7 +70,7 @@ export function FlowStatusView({
   const { resolvedTheme } = useTheme();
 
   // Get flow data — execution status is streamed via SSE (useFlowRunStream in
-  // FlowRunsView), so we only need a single fetch of the graph structure here.
+  // FlowEditor), so we only need a single fetch of the graph structure here.
   const { flowData, loading, queryError, nodes, onNodesChange, edges, onEdgesChange } = useFlowData(
     flowId,
     flowVersion,

@@ -3,8 +3,8 @@
  *
  * Opens a fetch-based SSE connection to GET /flow-runs/:flowRunId/stream.
  * On each event it updates the relevant React Query caches so every
- * existing consumer (FlowRunsView, FlowStatusView, logs panel) stays in sync
- * without any additional polling.
+ * existing consumer (FlowEditor, FlowStatusView, InspectViewport, logs panel)
+ * stays in sync without any additional polling.
  */
 import { useEffect, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';

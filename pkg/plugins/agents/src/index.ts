@@ -130,6 +130,11 @@ export type {
   AgentsRuntimeRegistries,
 } from './backend/plugin-context';
 
+// Stream H — Cloudflare Durable Object surface. Re-exported here so
+// the consumer Worker can forward the DO class:
+//   export { AgentChatDO } from '@flowlib/agents';
+export { AgentChatDO } from './backend/cloudflare/chat-agent-do';
+
 // Browser-safe DTOs + the AgentEvent union — re-exported here for
 // convenience so backend consumers can pull everything from one path.
 export type {

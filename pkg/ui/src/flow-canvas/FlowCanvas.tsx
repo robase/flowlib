@@ -6,13 +6,16 @@
  * `<Flowlib>` component but without `ApiProvider` (a prop-backed
  * `InMemoryApiClient` replaces it) or `PluginRegistryProvider`.
  *
- * Two routes live inside the canvas's MemoryRouter:
- *   - `/flow-canvas/flow/__canvas__`        → `<FlowEditor>` (edit)
- *   - `/flow-canvas/flow/__canvas__/runs`   → `<FlowRunsView>` (runs)
+ * All routes resolve to `<FlowEditor>`. The component decides view mode
+ * (edit / edit-live / inspect) from the URL — `/runs` in the path means
+ * inspect, `?runId=…` without `/runs` means edit-live, neither means edit.
  *
- * The `Edit | Runs` toggle in the toolbar uses `useNavigate()` to switch
- * between them. Hosts can also drive navigation programmatically via the
- * `viewRunId` / `initialMode` props.
+ *   - `/flow-canvas/flow/__canvas__`               → edit
+ *   - `/flow-canvas/flow/__canvas__?runId=X`       → edit-live
+ *   - `/flow-canvas/flow/__canvas__/runs?runId=X`  → inspect
+ *
+ * Hosts can drive navigation programmatically via the `viewRunId` /
+ * `initialMode` props (see `FlowCanvasProvider`).
  *
  * Usage:
  *
@@ -31,7 +34,6 @@ import React from 'react';
 import { Route, Routes } from 'react-router';
 import { FlowCanvasProvider, CANVAS_FLOW_ID, CANVAS_BASE_PATH } from './FlowCanvasProvider';
 import { FlowEditor } from '../components/flow-editor/FlowEditor';
-import { FlowRunsView } from '../components/flow-viewer/FlowRunsView';
 import type { FlowCanvasProps } from './types';
 
 export function FlowCanvas(props: FlowCanvasProps): React.ReactElement {
@@ -39,10 +41,14 @@ export function FlowCanvas(props: FlowCanvasProps): React.ReactElement {
     <FlowCanvasProvider {...props}>
       <Routes>
         {/*
-         * Both routes mount under `/flow-canvas/flow/:flowId`. The flow
-         * id is the synthetic CANVAS_FLOW_ID; `:flowId` matches it but
+         * All routes mount under `/flow-canvas/flow/:flowId`. The flow id
+         * is the synthetic CANVAS_FLOW_ID; `:flowId` matches it but
          * `useParams()` will surface it for the underlying components
          * (which read `flowId` to scope React Query keys).
+         *
+         * `<FlowEditor>` handles all three view modes — edit, edit-live,
+         * inspect — branching internally on `useLocation().pathname`
+         * containing `/runs` and on `?runId=`.
          */}
         <Route
           path={`${CANVAS_BASE_PATH}/flow/:flowId`}
@@ -52,11 +58,15 @@ export function FlowCanvas(props: FlowCanvasProps): React.ReactElement {
         />
         <Route
           path={`${CANVAS_BASE_PATH}/flow/:flowId/runs`}
-          element={<FlowRunsView flowId={CANVAS_FLOW_ID} basePath={CANVAS_BASE_PATH} />}
+          element={
+            <FlowEditor flowId={CANVAS_FLOW_ID} flowVersion="1" basePath={CANVAS_BASE_PATH} />
+          }
         />
         <Route
           path={`${CANVAS_BASE_PATH}/flow/:flowId/runs/version/:version`}
-          element={<FlowRunsView flowId={CANVAS_FLOW_ID} basePath={CANVAS_BASE_PATH} />}
+          element={
+            <FlowEditor flowId={CANVAS_FLOW_ID} flowVersion="1" basePath={CANVAS_BASE_PATH} />
+          }
         />
       </Routes>
     </FlowCanvasProvider>
