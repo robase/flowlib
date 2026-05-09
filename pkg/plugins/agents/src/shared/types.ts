@@ -1,0 +1,172 @@
+/**
+ * Browser-safe DTOs for the agents plugin.
+ *
+ * Pure type definitions — no runtime imports — so this module is safe to
+ * pull into Vite/Webpack bundles via `@flowlib/agents/types`.
+ *
+ * The schema source-of-truth lives in `backend/schema/tables.ts`; this file
+ * is the API surface mirror, intentionally narrower (no `created_at_unix`
+ * leakage, etc.).
+ */
+
+export type { AgentEvent } from './events';
+export type { AgentsAuthContext } from './auth-context';
+
+// ─── Provider / capability surface ──────────────────────────────────────
+
+export type AgentProviderId = 'claude-code' | 'opencode' | 'raw-llm' | (string & {});
+
+export type AgentVisibility = 'private' | 'shared' | 'public';
+
+export type AgentSessionStatus = 'active' | 'archived';
+
+export type WorkspaceProviderId =
+  | 'local-fs'
+  | 'git-clone'
+  | 'cloudflare-sandbox'
+  | 'remote-sandbox'
+  | 'none';
+
+// ─── Public DTOs (returned by REST endpoints) ──────────────────────────
+
+/** Tool-output truncation budget (see `plans/agents/tools-and-mcp.md`). */
+export interface ToolOutputBudget {
+  /** Max lines surfaced inline before truncation. */
+  lines: number;
+  /** Max bytes surfaced inline before truncation. */
+  bytes: number;
+}
+
+/** A user-configured agent definition. */
+export interface AgentDefinition {
+  id: string;
+  orgId: string | null;
+  name: string;
+  description: string | null;
+  providerId: AgentProviderId;
+  providerConfig: Record<string, unknown>;
+  workspaceId: string | null;
+  personaId: string | null;
+  personaText: string | null;
+  defaultModel: string | null;
+  mcpServers: Record<string, unknown>;
+  enabledTools: string[] | null;
+  denyList: string[] | null;
+  exposeFlowlibActions: boolean;
+  toolOutputBudget: ToolOutputBudget;
+  createdBy: string;
+  visibility: AgentVisibility;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** A workspace — provider-agnostic shape. */
+export interface AgentWorkspace {
+  id: string;
+  orgId: string | null;
+  name: string;
+  workspaceProviderId: WorkspaceProviderId;
+  rootPath: string | null;
+  gitRemote: string | null;
+  gitBranch: string | null;
+  sandboxConfig: Record<string, unknown> | null;
+  projectId: string | null;
+  createdBy: string;
+  visibility: AgentVisibility;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** A live (or archived) chat session bound to an agent. */
+export interface AgentSession {
+  id: string;
+  orgId: string | null;
+  agentId: string;
+  providerSessionId: string;
+  title: string;
+  model: string | null;
+  permissionMode: string | null;
+  workspaceId: string | null;
+  enabledTools: string[] | null;
+  extraDenied: string[] | null;
+  createdBy: string;
+  visibility: AgentVisibility;
+  status: AgentSessionStatus;
+  lastMessageAt: string | null;
+  messageCount: number;
+  inputTokensTotal: number;
+  outputTokensTotal: number;
+  costUsd: string;
+  createdAt: string;
+  updatedAt: string;
+  /**
+   * Tenant-scoped Durable Object name the frontend should pass to
+   * `useAgent({ agent: 'AgentChatDO', name: doAgentName })`. Computed
+   * server-side so the naming scheme stays on the backend.
+   */
+  doAgentName?: string;
+}
+
+/** An assistant or user message — message parts encode rich content. */
+export interface AgentMessage {
+  id: string;
+  orgId: string | null;
+  sessionId: string;
+  sequence: number;
+  parentMessageId: string | null;
+  role: 'user' | 'assistant' | 'system';
+  parts: AgentMessagePart[];
+  usage: AgentMessageUsage | null;
+  costUsd: string;
+  createdAt: string;
+  userId: string | null;
+}
+
+export type AgentMessagePart =
+  | { type: 'text'; text: string }
+  | { type: 'tool-call'; id: string; name: string; input: unknown }
+  | {
+      type: 'tool-result';
+      id: string;
+      output: unknown;
+      truncated?: boolean;
+      fullOutputRef?: string;
+    }
+  | { type: 'image'; mediaType: string; data: string };
+
+export interface AgentMessageUsage {
+  inputTokens: number;
+  outputTokens: number;
+  cacheReadTokens?: number;
+  cacheWriteTokens?: number;
+}
+
+// ─── Plugin options surface ────────────────────────────────────────────
+
+/**
+ * Mode for tenant scoping enforcement. Controls how aggressively the
+ * plugin pre-flight checks the auth wiring.
+ */
+export type OrgScope =
+  /** No org id required — single-tenant fallback always wins. */
+  | 'optional'
+  /**
+   * `orgId` must come from a real auth context. The plugin still boots
+   * if it doesn't; it just logs a warning. Structural isolation degrades
+   * to "everything is `default-org`" but the plugin is functional.
+   */
+  | 'required';
+
+/** Public option shape exposed to plugin consumers. */
+export interface AgentsPluginPublicOptions {
+  /**
+   * Static org id used when the host's auth plugin doesn't populate
+   * `identity.metadata.orgId`. Defaults to `'default-org'`.
+   */
+  staticOrgId?: string;
+  /**
+   * Tenancy enforcement mode. See {@link OrgScope}.
+   * @default 'optional'
+   */
+  orgScope?: OrgScope;
+}

@@ -1,0 +1,56 @@
+/**
+ * `PluginContext` — the bag of dependencies the plugin's `init()` builds
+ * once and hands to every `register*()` subsystem.
+ *
+ * Each Phase 1 stream owns one `register.ts` file per subsystem; that
+ * file accepts a `PluginContext` and extends the runtime with its
+ * registrations (provider, workspace, endpoint, hook, …). P0 ships
+ * stub `register*` functions that no-op.
+ */
+
+import type { ActionRegistry } from '@flowlib/actions/registry';
+import type { FlowlibPluginContext } from '@flowlib/core';
+import type { AgentsPluginPublicOptions } from '../shared/types';
+
+/**
+ * Subsystem registries the plugin maintains in-process. v1 streams
+ * populate these during `init()`; the orchestrator (Stream A) and
+ * endpoints (Stream I) read them at request time.
+ */
+export interface AgentsRuntimeRegistries {
+  /** Agent provider registry — Stream B. */
+  providers: import('./providers/types').AgentProvider extends infer P
+    ? Map<string, P>
+    : never;
+  /** Workspace provider registry — Stream E. */
+  workspaces: Map<string, import('./workspaces/types').WorkspaceProvider>;
+}
+
+/**
+ * Resolved options object — internal use only. `staticOrgId` and
+ * `orgScope` are normalised, with defaults filled in.
+ */
+export interface ResolvedAgentsOptions extends AgentsPluginPublicOptions {
+  staticOrgId: string;
+  orgScope: 'optional' | 'required';
+}
+
+/**
+ * The context every subsystem registrar receives.
+ *
+ * v1 keeps this intentionally small — it grows as Phase 1 streams add
+ * their own services (repositories, tool-output store, audit writer,
+ * …). Each addition is a small P0 patch, not a Phase 1 surface change.
+ */
+export interface PluginContext {
+  /** Resolved plugin options (defaults applied). */
+  options: ResolvedAgentsOptions;
+  /** Flowlib's plugin init context (logger, store, getFlowlib, …). */
+  flowlib: FlowlibPluginContext;
+  /** The shared `@flowlib/actions` registry — used by the MCP bridge. */
+  actionRegistry: ActionRegistry;
+  /** Per-subsystem in-process registries. */
+  registries: AgentsRuntimeRegistries;
+  /** Logger bound to the agents plugin scope. */
+  logger: FlowlibPluginContext['logger'];
+}
