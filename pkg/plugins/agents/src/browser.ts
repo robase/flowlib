@@ -5,9 +5,10 @@
  * only the frontend plugin definition — no server-side modules (schema,
  * provider SDKs, durable-object class) are bundled.
  *
- * In Phase 0 the frontend plugin is a stub: it carries no sidebar
- * entries, routes, or panel tabs. Stream L wires the real
- * `agentsFrontendPlugin` and Stream M ships the chat surface.
+ * Stream L wires the real `agentsFrontendPlugin` (sidebar entry +
+ * /agents listing/form/detail routes + AgentsApiProvider). Stream M
+ * ships the chat surface as a separate plugin definition that
+ * consumers compose alongside this one.
  *
  * Importing `agents` from this module is safe in any browser bundler:
  * Vite, webpack, esbuild — none of them try to resolve Node-only
@@ -31,25 +32,14 @@ interface AgentsBrowserOptions {
 }
 
 /**
- * Stub frontend plugin — Stream L will replace it with sidebar entries,
- * routes, and panels. Shape mirrors `FlowlibFrontendPlugin` but is left
- * untyped here so the browser bundle doesn't have to import the UI
- * package's type definitions.
+ * Real frontend plugin — Stream L wires sidebar, routes (/agents,
+ * /agents/new, /agents/:agentId) and the `AgentsApiProvider`. Stream M
+ * ships the chat surface as a separate plugin definition that
+ * consumers compose alongside this one.
  */
-export const agentsFrontendPlugin: {
-  id: string;
-  name: string;
-  /** Phase 1 stream L will populate these arrays. */
-  sidebar: unknown[];
-  routes: unknown[];
-  panelTabs: unknown[];
-} = {
-  id: 'agents',
-  name: 'Agents',
-  sidebar: [],
-  routes: [],
-  panelTabs: [],
-};
+export { agentsFrontendPlugin } from './frontend/plugins/agentsFrontendPlugin';
+
+import { agentsFrontendPlugin as defaultAgentsFrontend } from './frontend/plugins/agentsFrontendPlugin';
 
 /**
  * Browser-side `agents()` factory mirror.
@@ -62,6 +52,6 @@ export function agents(options: AgentsBrowserOptions = {}): FlowlibPluginDefinit
   return {
     id: 'agents',
     name: 'Agents',
-    frontend: options.frontend ?? agentsFrontendPlugin,
+    frontend: options.frontend ?? defaultAgentsFrontend,
   };
 }
