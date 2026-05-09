@@ -71,6 +71,27 @@ function registerCloudflareDO(ctx: PluginContext): void {
 /** Public options shape exposed to consumers. */
 export interface AgentsPluginOptions extends AgentsPluginPublicOptions {
   /**
+   * Provider singletons to register (Claude Code, opencode, …). Order
+   * matters for the picker UI — first is the default.
+   */
+  providers?: ReadonlyArray<import('./providers/types').AgentProvider>;
+  /**
+   * Workspace provider (cloudflareSandbox in v1). Optional — raw-LLM
+   * agents (post-v1) operate without a workspace.
+   */
+  workspaceProvider?: import('./workspaces/types').WorkspaceProvider;
+  /**
+   * Whether new agents default `exposeFlowlibActions: true`. Per-agent
+   * config can still override. Default false (opt-in).
+   */
+  exposeFlowlibActions?: boolean;
+  /**
+   * Tool ids hard-denied for every agent in this deployment (e.g.
+   * `['Bash']` to block bash globally). Per-role/per-agent denies stack
+   * on top.
+   */
+  defaultDenyList?: ReadonlyArray<string>;
+  /**
    * Frontend plugin contributed via `agents({ frontend: agentsFrontendPlugin })`.
    * The backend extracts `.backend`; `<Flowlib>` extracts `.frontend`.
    */
@@ -81,6 +102,10 @@ function resolveOptions(opts: AgentsPluginOptions = {}): ResolvedAgentsOptions {
   return {
     staticOrgId: opts.staticOrgId ?? DEFAULT_ORG_ID,
     orgScope: opts.orgScope ?? 'optional',
+    providers: opts.providers ?? [],
+    workspaceProvider: opts.workspaceProvider,
+    exposeFlowlibActions: opts.exposeFlowlibActions ?? false,
+    defaultDenyList: opts.defaultDenyList ?? [],
   };
 }
 

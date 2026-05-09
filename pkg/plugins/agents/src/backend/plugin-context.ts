@@ -48,12 +48,19 @@ export interface AgentsRuntimeRegistries {
 }
 
 /**
- * Resolved options object — internal use only. `staticOrgId` and
- * `orgScope` are normalised, with defaults filled in.
+ * Resolved options object — internal use only. Defaults filled in.
  */
 export interface ResolvedAgentsOptions extends AgentsPluginPublicOptions {
   staticOrgId: string;
   orgScope: 'optional' | 'required';
+  /** Provider singletons (Claude Code, opencode, etc.) registered at init. */
+  providers: ReadonlyArray<import('./providers/types').AgentProvider>;
+  /** Workspace provider (cloudflareSandbox in v1). Optional — not all agents need a workspace. */
+  workspaceProvider?: import('./workspaces/types').WorkspaceProvider;
+  /** Whether new agents default `exposeFlowlibActions: true`. Default false. */
+  exposeFlowlibActions: boolean;
+  /** Tool ids hard-denied for every agent in this deployment (e.g. `['Bash']`). */
+  defaultDenyList: ReadonlyArray<string>;
 }
 
 /**

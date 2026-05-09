@@ -55,6 +55,57 @@ export type {
   PersistenceCallbacks,
   RunResult,
 } from './backend/service/types';
+export { AgentService as AgentServiceImpl, createAgentService } from './backend/service/agent-service';
+export { runTurn } from './backend/service/run-turn';
+
+export {
+  ProviderRegistry,
+  createProviderRegistry,
+} from './backend/providers/registry';
+export { registerProviders } from './backend/providers/register';
+
+export {
+  AgentsRepository,
+} from './backend/repositories/agents.repository';
+export {
+  WorkspacesRepository,
+} from './backend/repositories/workspaces.repository';
+export {
+  SessionsRepository,
+} from './backend/repositories/sessions.repository';
+export {
+  MessagesRepository,
+} from './backend/repositories/messages.repository';
+export {
+  ProjectsRepository,
+} from './backend/repositories/projects.repository';
+export {
+  AuditRepository,
+} from './backend/repositories/audit.repository';
+export {
+  RolePermissionsRepository,
+} from './backend/repositories/role-permissions.repository';
+export type { Repositories, RepositoriesFactory } from './backend/repositories/register';
+export {
+  buildRepositories,
+  registerRepositories,
+} from './backend/repositories/register';
+
+export {
+  createPermissionsResolver,
+  registerPermissions,
+} from './backend/permissions/register';
+export {
+  createAuditWriter,
+  registerAudit,
+} from './backend/audit/register';
+export type { AuditWriter, AuditEventInput } from './backend/audit/writer';
+
+export { composeSystemPrompt } from './backend/prompt/compose';
+export type { ComposeInput } from './backend/prompt/compose';
+export { registerPromptComposer } from './backend/prompt/register';
+export type { PromptComposer } from './backend/prompt/register';
+export { walkClaudeMd, OutOfRootError } from './backend/prompt/claude-md-walk';
 
 export type {
   HookPipeline,

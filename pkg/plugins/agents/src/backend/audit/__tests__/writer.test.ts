@@ -219,7 +219,13 @@ function makePluginContext(repos?: { audit?: AuditRepository }): PluginContext {
       logCalls.push({ level, msg, meta });
     };
   const ctx = {
-    options: { staticOrgId: 'default-org', orgScope: 'optional' as const },
+    options: {
+      staticOrgId: 'default-org',
+      orgScope: 'optional' as const,
+      providers: [],
+      exposeFlowlibActions: false,
+      defaultDenyList: [],
+    },
     flowlib: {} as PluginContext['flowlib'],
     actionRegistry: {} as PluginContext['actionRegistry'],
     registries: {

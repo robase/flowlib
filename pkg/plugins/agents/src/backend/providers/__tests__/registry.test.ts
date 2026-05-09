@@ -39,7 +39,13 @@ function makePluginContext(): PluginContext {
       logs.push({ level, msg, meta });
     };
   const ctx = {
-    options: { staticOrgId: 'default-org', orgScope: 'optional' as const },
+    options: {
+      staticOrgId: 'default-org',
+      orgScope: 'optional' as const,
+      providers: [],
+      exposeFlowlibActions: false,
+      defaultDenyList: [],
+    },
     flowlib: {} as never,
     actionRegistry: {} as never,
     registries: {
