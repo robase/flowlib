@@ -44,7 +44,12 @@
 
 import type { AgentsAuthContext } from '../../../shared/auth-context';
 import type { CreateWorkspaceInput, WorkspaceHandle, WorkspaceProvider } from '../types';
-import { CloudflareSandboxHandle, type OpencodeStarter, type SandboxStub } from './handle';
+import {
+  CloudflareSandboxHandle,
+  type OpencodeBootOptions,
+  type OpencodeLoader,
+  type SandboxStub,
+} from './handle';
 
 /**
  * Lookup contract the provider uses to materialise a sandbox stub by id.
@@ -76,16 +81,20 @@ export interface CloudflareSandboxOptions {
   /** Optional R2 bucket binding name for `/workspace/persistent`. */
   persistentBucketBinding?: string;
   /**
-   * Optional hostname used when exposing ports for opencode serve.
-   * Required if you want `metadata.startOpencode()` to return a real
-   * URL. Without it the starter returns `'opencode-not-configured'`.
+   * Default options forwarded to `createOpencode()` when the workspace's
+   * `metadata.getOpencode()` is invoked. Typical use: pin the OpenCode
+   * `Config` (provider keys, AI Gateway routing) and forward env vars
+   * (e.g. `ANTHROPIC_API_KEY`) into the in-container OpenCode process.
+   *
+   * Per-call overrides supplied to `getOpencode()` shallow-merge on top
+   * of these defaults (with `config` and `env` merged key-by-key).
    */
-  exposeHostname?: string;
+  opencodeOptions?: OpencodeBootOptions;
   /**
-   * Custom opencode starter. Stream D / H may inject one to swap in a
-   * different server (raw HTTP server, sidecar process, …).
+   * Test seam — overrides the dynamic import of
+   * `@cloudflare/sandbox/opencode`. Production code leaves this unset.
    */
-  opencodeStarter?: OpencodeStarter;
+  opencodeLoader?: OpencodeLoader;
   /**
    * Test seam — supply a sandbox lookup that bypasses
    * `@cloudflare/sandbox`. When set, the provider ignores
@@ -178,8 +187,8 @@ export function cloudflareSandbox(options: CloudflareSandboxOptions): Cloudflare
   }
 
   let activeEnv: CloudflareSandboxEnv | undefined;
-  const exposeHostname = options.exposeHostname;
-  const opencodeStarter = options.opencodeStarter;
+  const defaultOpencodeOptions = options.opencodeOptions;
+  const opencodeLoader = options.opencodeLoader;
 
   /**
    * Resolve the active env. Order:
@@ -285,8 +294,8 @@ export function cloudflareSandbox(options: CloudflareSandboxOptions): Cloudflare
       workspaceId,
       sandbox,
       sandboxName,
-      opencodeStarter,
-      exposeHostname,
+      defaultOpencodeOptions,
+      opencodeLoader,
     });
 
   return {

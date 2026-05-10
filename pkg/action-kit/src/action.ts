@@ -78,6 +78,17 @@ export interface ParamField {
   aiProvided?: boolean;
   loadOptions?: LoadOptionsConfig;
   helper?: FieldHelperSpec;
+  /**
+   * Optional "create new" affordance rendered alongside a select/combobox
+   * field. Surfaces a button (e.g. at the bottom of the popover) that
+   * navigates to `href` so the user can configure a new option without
+   * leaving the editor entirely.
+   */
+  addNew?: {
+    label: string;
+    /** Path relative to the Flowlib frontend basePath (e.g. "/webhooks"). */
+    href: string;
+  };
 }
 
 /**

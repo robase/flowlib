@@ -16,7 +16,7 @@
  * routes out so the two streams stay merge-clean.
  */
 
-import { MessageSquare, Plug } from 'lucide-react';
+import { MessageSquare } from 'lucide-react';
 import type { ComponentType, ReactNode } from 'react';
 import { AgentsApiProvider } from '../api/context';
 import { AgentsPage } from '../routes/AgentsPage';
@@ -61,12 +61,6 @@ export const agentsFrontendPlugin: FlowlibFrontendPluginShape = {
       label: 'Chats',
       icon: MessageSquare,
       path: '/agents',
-      position: 'top',
-    },
-    {
-      label: 'MCP servers',
-      icon: Plug,
-      path: '/agents/mcp-servers',
       position: 'top',
     },
   ],

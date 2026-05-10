@@ -1078,10 +1078,35 @@ function collectEnumTypeAnnotations(schema: MergedSchema): Set<string> {
 }
 
 /**
- * Built-in TypeScript types that don't need an import statement.
- * Includes primitive arrays, utility types, and inline union literals.
+ * Built-in TypeScript types that don't need an import statement OR a local
+ * `type X = string;` alias. If we emitted an alias for `unknown`, the
+ * generated file would shadow the global `unknown` type and fail to compile.
+ *
+ * Includes:
+ *   - Bare TS primitives (`unknown`, `any`, `string`, `number`, `boolean`,
+ *     `null`, `undefined`, `void`, `never`, `object`)
+ *   - Primitive arrays
+ *   - `Record<>` utility types
+ *   - Inline union literals
  */
+const BUILTIN_TS_TYPES = new Set([
+  'unknown',
+  'any',
+  'string',
+  'number',
+  'boolean',
+  'null',
+  'undefined',
+  'void',
+  'never',
+  'object',
+]);
+
 function isBuiltinType(annotation: string): boolean {
+  // Bare primitives
+  if (BUILTIN_TS_TYPES.has(annotation)) {
+    return true;
+  }
   // Primitive array types
   if (annotation === 'string[]' || annotation === 'number[]' || annotation === 'boolean[]') {
     return true;

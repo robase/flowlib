@@ -255,18 +255,46 @@ export function resolveBaseUrl(input: {
 /**
  * Mode selector for the opencode connection.
  *
- *   - `'external'`: HTTP client → existing `opencode serve` (recommended for
- *     production with `cloudflareSandbox`).
- *   - `'embedded'`: in-process server via `createOpencode()`. Useful for
- *     local dev or single-tenant non-CF deployments.
+ *   - `'sandbox'`: typed client returned by `@cloudflare/sandbox/opencode`'s
+ *     `createOpencode()`. The transport routes through `sandbox.containerFetch`,
+ *     so no `exposePort` / wildcard DNS is required and the helper handles
+ *     container cold-start + port readiness internally. This is the v1
+ *     production path when the workspace is a `cloudflareSandbox`.
+ *   - `'external'`: HTTP client → an existing `opencode serve` reachable
+ *     by URL. Useful when ops runs OpenCode out-of-band.
+ *   - `'embedded'`: in-process server via the SDK's own `createOpencode()`.
+ *     Useful for local dev or single-tenant non-CF deployments.
  */
-export type OpencodeMode = 'embedded' | 'external';
+export type OpencodeMode = 'sandbox' | 'embedded' | 'external';
+
+/**
+ * Workspace metadata shape exposed by `cloudflareSandbox` for the
+ * sandbox-managed mode. Defined structurally so we don't import the
+ * cloudflare-sandbox handle type into the opencode provider.
+ */
+export interface SandboxOpencodeMetadata {
+  getOpencode: (options?: {
+    port?: number;
+    directory?: string;
+    config?: Record<string, unknown>;
+    env?: Record<string, string>;
+  }) => Promise<{ client: OpencodeClientLike; server: { url: string } }>;
+}
+
+function asSandboxMeta(workspace?: WorkspaceHandle): SandboxOpencodeMetadata | undefined {
+  const meta = workspace?.metadata as Record<string, unknown> | undefined;
+  if (meta && typeof meta.getOpencode === 'function') {
+    return meta as unknown as SandboxOpencodeMetadata;
+  }
+  return undefined;
+}
 
 /**
  * Resolve the right `OpencodeClientLike` for the requested mode.
  *
- * Embedded mode caches one server per `directory`. External mode falls
- * back to `resolveBaseUrl` for the connection target.
+ * Sandbox mode delegates to `workspace.metadata.getOpencode` (cached on
+ * the handle). Embedded mode caches one server per `directory`. External
+ * mode falls back to `resolveBaseUrl` for the connection target.
  */
 export async function getClientForMode(input: {
   mode: OpencodeMode;
@@ -275,6 +303,17 @@ export async function getClientForMode(input: {
   factoryBaseUrl?: string;
 }): Promise<{ client: OpencodeClientLike; baseUrl?: string }> {
   const directory = input.workspace?.rootPath;
+  if (input.mode === 'sandbox') {
+    const meta = asSandboxMeta(input.workspace);
+    if (!meta) {
+      throw new Error(
+        '[agents/opencode] mode="sandbox" requires a workspace whose metadata exposes `getOpencode` ' +
+          '(supplied by `cloudflareSandbox`). Use mode "external" or "embedded" for non-sandbox deployments.',
+      );
+    }
+    const bundle = await meta.getOpencode(directory ? { directory } : undefined);
+    return { client: bundle.client, baseUrl: bundle.server.url };
+  }
   if (input.mode === 'embedded') {
     const handle = await getEmbedded(directory ?? '');
     return { client: handle.client, baseUrl: handle.server.url };

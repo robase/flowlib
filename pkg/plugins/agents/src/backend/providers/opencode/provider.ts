@@ -17,11 +17,17 @@
  *
  * **Modes** (factory option `mode`):
  *
- *   - `'external'` (default): `createOpencodeClient({ baseUrl })` against
- *     a long-running `opencode serve`. The baseUrl resolves from (in
- *     priority order) `workspace.metadata.opencodeBaseUrl` (set by
- *     `cloudflareSandbox`), `extras.baseUrl`, factory `baseUrl`, or
- *     `$OPENCODE_BASE_URL`. Used in production with the CF Sandbox.
+ *   - `'sandbox'` (auto-selected when the workspace is a `cloudflareSandbox`):
+ *     uses `@cloudflare/sandbox/opencode`'s `createOpencode()` via
+ *     `workspace.metadata.getOpencode`. The transport routes through
+ *     `sandbox.containerFetch`, so SDK traffic never leaves the Worker
+ *     and the helper handles container cold-start + port readiness
+ *     internally — no `exposePort`, no preview-URL DNS, no boot-race
+ *     retries.
+ *   - `'external'`: `createOpencodeClient({ baseUrl })` against a
+ *     long-running external `opencode serve`. The baseUrl resolves from
+ *     (in priority order) `extras.baseUrl`, factory `baseUrl`, or
+ *     `$OPENCODE_BASE_URL`. Used when ops manages OpenCode out-of-band.
  *   - `'embedded'`: `createOpencode()` — starts an in-process opencode
  *     server. Cached per workspace `directory`; many sessions share one
  *     server. Useful for local dev.
@@ -51,6 +57,7 @@ import type {
   AgentModel,
 } from '../types';
 import type { AgentEvent } from '../../../shared/events';
+import type { WorkspaceHandle } from '../../workspaces/types';
 import { createMapperState, mapOpencodeEvent, type OpencodeEvent } from './events';
 import {
   buildToolsMap,
@@ -100,9 +107,11 @@ const OPENCODE_CAPABILITIES: AgentCapabilities = {
 interface SessionState {
   /** Connection mode at session-create time (sticks for the session's life). */
   mode: OpencodeMode;
-  /** Resolved baseUrl (external) or embedded server URL. May be undefined if the embedded handle pre-dates URL exposure. */
+  /** Resolved baseUrl (external) or embedded server URL. May be undefined for sandbox-mode where the SDK transports through `containerFetch`. */
   baseUrl?: string;
   directory?: string;
+  /** Workspace handle — kept so subsequent `prompt()` calls can re-resolve the sandbox-mode client without re-running creation. */
+  workspace?: WorkspaceHandle;
   defaultModel?: string;
   systemPrompt?: string;
 }
@@ -178,21 +187,22 @@ export interface OpenCodeProviderOptions {
    */
   defaultModel?: string;
   /**
-   * Connection mode:
+   * Connection mode. When unset the provider auto-selects `'sandbox'`
+   * if the workspace exposes `metadata.getOpencode` (i.e. it's a
+   * `cloudflareSandbox`), and falls back to `'external'` otherwise.
    *
-   *   - `'external'` (default): use `createOpencodeClient({ baseUrl })` —
-   *     the v1 production posture: opencode runs inside a `cloudflareSandbox`
-   *     workspace and the provider talks to it over HTTP.
-   *   - `'embedded'`: use `createOpencode()` — starts an in-process server
-   *     and multiplexes sessions over it. Cached per workspace `directory`.
-   *     Use this for local dev or single-tenant non-CF deployments.
+   *   - `'sandbox'`: use `@cloudflare/sandbox/opencode`'s `createOpencode()`
+   *     via the workspace's `getOpencode` helper. The v1 production posture.
+   *   - `'external'`: `createOpencodeClient({ baseUrl })` against an
+   *     external `opencode serve`. baseUrl resolves from `extras.baseUrl`,
+   *     factory `baseUrl`, or `$OPENCODE_BASE_URL`.
+   *   - `'embedded'`: in-process server via the SDK's `createOpencode()`.
+   *     Useful for local dev or single-tenant non-CF deployments.
    */
   mode?: OpencodeMode;
   /**
    * Optional fixed baseUrl for external mode — used when ops runs an
-   * `opencode serve` instance independent of any workspace and you want
-   * the provider to default to it. Lower priority than
-   * `workspace.metadata.opencodeBaseUrl` and `extras.baseUrl`.
+   * `opencode serve` instance independent of any workspace.
    */
   baseUrl?: string;
   /**
@@ -205,9 +215,34 @@ export interface OpenCodeProviderOptions {
 
 export function openCodeProvider(options: OpenCodeProviderOptions = {}): AgentProvider {
   const factoryDefaultModel = options.defaultModel;
-  const factoryMode: OpencodeMode = options.mode ?? 'external';
+  const factoryMode: OpencodeMode | undefined = options.mode;
   const factoryBaseUrl = options.baseUrl;
   const factoryDefaultDenied = options.defaultDenied ?? [];
+
+  /**
+   * Resolve the effective mode. Per-call overrides (extras / config)
+   * take precedence; otherwise we auto-pick `'sandbox'` when the
+   * workspace exposes `metadata.getOpencode` and `'external'` otherwise.
+   */
+  const resolveMode = (input: {
+    extras?: Record<string, unknown>;
+    cfg: OpenCodeConfig;
+    workspace?: CreateSessionInput['workspace'];
+  }): OpencodeMode => {
+    const fromExtras =
+      typeof input.extras?.mode === 'string' ? (input.extras.mode as OpencodeMode) : undefined;
+    if (fromExtras) {
+      return fromExtras;
+    }
+    if (input.cfg.mode) {
+      return input.cfg.mode;
+    }
+    if (factoryMode) {
+      return factoryMode;
+    }
+    const meta = input.workspace?.metadata as { getOpencode?: unknown } | undefined;
+    return meta && typeof meta.getOpencode === 'function' ? 'sandbox' : 'external';
+  };
 
   return {
     id: 'opencode',
@@ -220,38 +255,7 @@ export function openCodeProvider(options: OpenCodeProviderOptions = {}): AgentPr
     async createSession(input: CreateSessionInput): Promise<{ providerSessionId: string }> {
       const cfg = (input.config ?? {}) as OpenCodeConfig;
       const directory = input.workspace?.rootPath;
-
-      // Mode resolution: per-session config beats factory option.
-      const mode: OpencodeMode =
-        (typeof input.extras?.mode === 'string'
-          ? (input.extras.mode as OpencodeMode)
-          : undefined) ??
-        cfg.mode ??
-        factoryMode;
-
-      // External mode needs `workspace.metadata.opencodeBaseUrl` set
-      // before `getClientForMode` runs. The cloudflareSandbox handle
-      // exposes a lazy `startOpencode()` that boots `opencode serve`
-      // inside the sandbox and caches the resulting URL on
-      // `metadata.opencodeBaseUrl`. Call it first so the resolver can
-      // pick the URL up — unless an explicit baseUrl was supplied (then
-      // the caller is pinning their own opencode instance).
-      if (mode === 'external' && input.workspace?.metadata) {
-        const meta = input.workspace.metadata as {
-          opencodeBaseUrl?: string | null;
-          startOpencode?: () => Promise<string>;
-        };
-        const explicitBaseUrl =
-          (typeof input.extras?.baseUrl === 'string' && input.extras.baseUrl) ||
-          (typeof cfg.baseUrl === 'string' && cfg.baseUrl) ||
-          factoryBaseUrl;
-        if (!meta.opencodeBaseUrl && !explicitBaseUrl && typeof meta.startOpencode === 'function') {
-          const url = await meta.startOpencode();
-          if (url && url !== 'opencode-not-configured') {
-            meta.opencodeBaseUrl = url;
-          }
-        }
-      }
+      const mode = resolveMode({ extras: input.extras, cfg, workspace: input.workspace });
 
       const { client, baseUrl } = await getClientForMode({
         mode,
@@ -263,35 +267,20 @@ export function openCodeProvider(options: OpenCodeProviderOptions = {}): AgentPr
       const titleExtra = input.extras?.title;
       const title = typeof titleExtra === 'string' ? titleExtra : `flowlib-${Date.now()}`;
 
-      // `exposePort` returns as soon as the port is published, but
-      // `opencode serve` inside the sandbox may take a few seconds to
-      // start accepting requests. Retry the session.create with linear
-      // backoff so we don't 500 just because of a boot race.
-      const maxAttempts = 8;
-      const backoffMs = 500;
+      // `createOpencode()` (sandbox mode) and the embedded SDK both wait
+      // for the OpenCode HTTP port internally before returning, and the
+      // external mode talks to a server the operator has already booted —
+      // so a single `session.create` attempt is correct in every mode.
       let resp: unknown;
-      let lastErr: unknown;
-      for (let attempt = 0; attempt < maxAttempts; attempt++) {
-        try {
-          resp = await client.session.create({
-            body: { title },
-            ...(directory ? { query: { directory } } : {}),
-          });
-          lastErr = undefined;
-          break;
-        } catch (err) {
-          lastErr = err;
-          if (attempt < maxAttempts - 1) {
-            await new Promise((r) => setTimeout(r, backoffMs));
-          }
-        }
-      }
-      if (lastErr) {
-        const message = lastErr instanceof Error ? lastErr.message : String(lastErr);
+      try {
+        resp = await client.session.create({
+          body: { title },
+          ...(directory ? { query: { directory } } : {}),
+        });
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
         throw new Error(
-          `[agents/opencode] session.create failed against ${baseUrl ?? '<unknown>'} after ${maxAttempts} attempts: ${message}. ` +
-            'Check that the opencode server is reachable from this Worker — the cloudflareSandbox preview URL may not resolve in local dev unless you have wildcard DNS / CF tunnel set up; ' +
-            'in that case configure `agents({ providers: [openCodeProvider({ baseUrl: "http://…" })] })` to point at a directly-reachable opencode instance, or set `OPENCODE_BASE_URL`.',
+          `[agents/opencode] session.create failed (mode=${mode}, target=${baseUrl ?? '<unknown>'}): ${message}`,
         );
       }
       const id = unwrapSessionId(resp);
@@ -300,6 +289,7 @@ export function openCodeProvider(options: OpenCodeProviderOptions = {}): AgentPr
         mode,
         baseUrl,
         directory,
+        workspace: input.workspace,
         defaultModel: cfg.defaultModel ?? factoryDefaultModel,
         systemPrompt: cfg.systemPrompt ?? input.systemPrompt,
       });
@@ -318,8 +308,8 @@ export function openCodeProvider(options: OpenCodeProviderOptions = {}): AgentPr
         return;
       }
 
-      const { mode, baseUrl, directory, defaultModel, systemPrompt } = session;
-      const client = await resolveSessionClient({ mode, baseUrl, directory });
+      const { mode, baseUrl, directory, workspace, defaultModel, systemPrompt } = session;
+      const client = await resolveSessionClient({ mode, baseUrl, directory, workspace });
 
       // Open the SSE event stream first so we don't miss the assistant's
       // first part. Filter by sessionID inside the loop.
@@ -539,7 +529,24 @@ async function resolveSessionClient(session: {
   mode: OpencodeMode;
   baseUrl?: string;
   directory?: string;
+  workspace?: WorkspaceHandle;
 }): Promise<OpencodeClientLike> {
+  if (session.mode === 'sandbox') {
+    const meta = session.workspace?.metadata as
+      | {
+          getOpencode?: (opts?: { directory?: string }) => Promise<{ client: OpencodeClientLike }>;
+        }
+      | undefined;
+    if (!meta?.getOpencode) {
+      throw new Error(
+        '[agents/opencode] sandbox session lost its workspace handle — was the provider restarted?',
+      );
+    }
+    const bundle = await meta.getOpencode(
+      session.directory ? { directory: session.directory } : undefined,
+    );
+    return bundle.client;
+  }
   if (session.mode === 'embedded') {
     const handle = await getEmbedded(session.directory ?? '');
     return handle.client;

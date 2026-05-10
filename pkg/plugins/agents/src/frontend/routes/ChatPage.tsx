@@ -108,7 +108,7 @@ export const ChatPage: React.FC<ChatPageProps> = ({ basePath, adapters }) => {
         </div>
       </header>
 
-      {showSettings && session ? <ChatSettings session={session} /> : null}
+      {showSettings && session ? <ChatSettings session={session} basePath={basePath} /> : null}
 
       <ChatStream
         events={events}
@@ -138,7 +138,13 @@ ChatPage.displayName = 'ChatPage';
  * Inline settings panel — model picker, system prompt textarea, and
  * org-MCP toggles. Each control writes through to `PATCH /sessions/:id`.
  */
-function ChatSettings({ session }: { session: AgentSession }): React.ReactElement {
+function ChatSettings({
+  session,
+  basePath,
+}: {
+  session: AgentSession;
+  basePath: string;
+}): React.ReactElement {
   const update = useUpdateSession();
   const mcpServers = useMcpServers();
 
@@ -197,12 +203,27 @@ function ChatSettings({ session }: { session: AgentSession }): React.ReactElemen
         />
       </label>
       <div>
-        <div className="text-xs font-medium text-fl-muted-foreground mb-1">MCP servers</div>
+        <div className="flex items-center justify-between mb-1">
+          <div className="text-xs font-medium text-fl-muted-foreground">MCP servers</div>
+          <Link
+            to={`${basePath}/agents/mcp-servers`}
+            className="text-xs text-fl-muted-foreground hover:text-fl-foreground underline"
+          >
+            Manage MCP servers
+          </Link>
+        </div>
         {mcpServers.isLoading ? (
           <div className="text-xs text-fl-muted-foreground">Loading…</div>
         ) : !mcpServers.data || mcpServers.data.length === 0 ? (
           <div className="text-xs text-fl-muted-foreground">
-            No MCP servers configured. Add some on the MCP servers page.
+            No MCP servers configured.{' '}
+            <Link
+              to={`${basePath}/agents/mcp-servers`}
+              className="underline hover:text-fl-foreground"
+            >
+              Add one
+            </Link>
+            .
           </div>
         ) : (
           <ul className="space-y-1">

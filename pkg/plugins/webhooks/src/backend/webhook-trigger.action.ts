@@ -20,8 +20,6 @@ import { z } from 'zod/v4';
 const paramsSchema = z.object({
   /** Configured webhook trigger this flow should listen on. */
   webhookTriggerId: z.string().optional(),
-  /** HTTP method(s) to accept. Defaults to POST. */
-  method: z.enum(['POST', 'GET', 'PUT', 'ANY']).default('POST'),
 });
 
 /**
@@ -68,19 +66,10 @@ export const webhookTriggerAction = defineAction({
           dependsOn: [],
           handler: loadWebhookTriggerOptions,
         },
-      },
-      {
-        name: 'method',
-        label: 'HTTP Method',
-        type: 'select',
-        description: 'HTTP method(s) the webhook endpoint accepts',
-        defaultValue: 'POST',
-        options: [
-          { label: 'POST', value: 'POST' },
-          { label: 'GET', value: 'GET' },
-          { label: 'PUT', value: 'PUT' },
-          { label: 'Any', value: 'ANY' },
-        ],
+        addNew: {
+          label: 'Configure new webhook',
+          href: '/webhooks',
+        },
       },
     ],
   },

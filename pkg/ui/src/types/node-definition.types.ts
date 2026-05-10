@@ -46,6 +46,15 @@ export interface NodeParamField {
    * adornment so older UIs ignore future kinds gracefully.
    */
   helper?: FieldHelperSpec;
+
+  /**
+   * Optional "create new" affordance rendered inside a select/combobox.
+   * `href` is treated as a path relative to the Flowlib frontend basePath.
+   */
+  addNew?: {
+    label: string;
+    href: string;
+  };
 }
 
 export type FieldHelperSpec =

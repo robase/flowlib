@@ -270,6 +270,28 @@ describe('openCodeProvider.createSession', () => {
       /baseUrl/,
     );
   });
+
+  it('auto-selects sandbox mode when workspace.metadata.getOpencode is present', async () => {
+    const provider = openCodeProvider();
+    const sandboxClient = activeClient as unknown;
+    const getOpencode = vi.fn(async () => ({
+      client: sandboxClient,
+      server: { url: 'http://sandbox-managed' },
+    }));
+    const out = await provider.createSession({
+      auth: { orgId: 'o', userId: 'u', roles: [] } as never,
+      config: {},
+      workspace: {
+        id: 'ws-cf',
+        rootPath: '/work',
+        metadata: { getOpencode },
+      } as never,
+    });
+    expect(out.providerSessionId).toMatch(/^session-/);
+    expect(getOpencode).toHaveBeenCalledWith({ directory: '/work' });
+    // Sandbox mode should NOT touch the HTTP client factory.
+    expect(createOpencodeClient).not.toHaveBeenCalled();
+  });
 });
 
 // ─── prompt — streaming events ─────────────────────────────────────────
