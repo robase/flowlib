@@ -58,6 +58,7 @@ export interface AgentSessionsTable {
   provider_id: string;
   /** JSON-encoded `Record<string, unknown>`. */
   provider_config: string | unknown;
+  credential_id: string | null;
   model: string | null;
   permission_mode: string | null;
   // ── System prompt ──

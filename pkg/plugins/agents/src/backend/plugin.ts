@@ -96,8 +96,20 @@ export interface AgentsPluginOptions extends AgentsPluginPublicOptions {
    */
   providers?: ReadonlyArray<import('./providers/types').AgentProvider>;
   /**
-   * Workspace provider (cloudflareSandbox in v1). Optional — raw-LLM
-   * agents (post-v1) operate without a workspace.
+   * Workspace providers. Multiple entries are supported so a single
+   * deployment can host (for example) both `cloudflareSandbox` (opencode
+   * image) and `cloudflareSandboxClaude` (claude-code image) side by
+   * side. Each persisted workspace row carries the chosen provider's
+   * id; endpoints look up the right provider by that id.
+   *
+   * For backwards compatibility with the singular `workspaceProvider`
+   * field, callers may still pass a single provider — the factory
+   * promotes it into a one-element array.
+   */
+  workspaceProviders?: ReadonlyArray<import('./workspaces/types').WorkspaceProvider>;
+  /**
+   * @deprecated Use `workspaceProviders` (plural). When both are
+   * supplied, `workspaceProviders` wins and this field is ignored.
    */
   workspaceProvider?: import('./workspaces/types').WorkspaceProvider;
   /**
@@ -119,11 +131,15 @@ export interface AgentsPluginOptions extends AgentsPluginPublicOptions {
 }
 
 function resolveOptions(opts: AgentsPluginOptions = {}): ResolvedAgentsOptions {
+  // Promote the deprecated singular `workspaceProvider` into the
+  // canonical array form. Plural always wins when both are provided.
+  const workspaceProviders =
+    opts.workspaceProviders ?? (opts.workspaceProvider ? [opts.workspaceProvider] : []);
   return {
     staticOrgId: opts.staticOrgId ?? DEFAULT_ORG_ID,
     orgScope: opts.orgScope ?? 'optional',
     providers: opts.providers ?? [],
-    workspaceProvider: opts.workspaceProvider,
+    workspaceProviders,
     exposeFlowlibActions: opts.exposeFlowlibActions ?? false,
     defaultDenyList: opts.defaultDenyList ?? [],
     // opencode is the chat-first default — it talks to an opencode server

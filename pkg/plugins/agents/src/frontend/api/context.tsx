@@ -20,11 +20,13 @@ import { useApiBaseURL } from '@flowlib/ui';
 import { McpServersApiClient } from './mcp-servers.api';
 import { SessionsApiClient } from './sessions.api';
 import { WorkspacesApiClient } from './workspaces.api';
+import { CredentialsApiClient } from './credentials.api';
 
 export interface AgentsApiClients {
   mcpServers: McpServersApiClient;
   sessions: SessionsApiClient;
   workspaces: WorkspacesApiClient;
+  credentials: CredentialsApiClient;
 }
 
 const AgentsApiContext = React.createContext<AgentsApiClients | undefined>(undefined);
@@ -62,6 +64,7 @@ export function AgentsApiProvider({
       mcpServers: new McpServersApiClient({ baseUrl: resolvedBase }),
       sessions: new SessionsApiClient({ baseUrl: resolvedBase }),
       workspaces: new WorkspacesApiClient({ baseUrl: resolvedBase }),
+      credentials: new CredentialsApiClient({ baseUrl: resolvedBase }),
     };
   }, [value, resolvedBase]);
 

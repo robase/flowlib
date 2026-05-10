@@ -7,8 +7,12 @@
  *      Stream I).
  *   2. Wrap `useAgent({ agent: 'AgentChatDO', name: doAgentName })` from
  *      `agents/react` (Cloudflare Agents SDK 0.12.x).
- *   3. Layer `useAgentChat` from `@cloudflare/ai-chat/react` on top to
- *      get a `sendMessage` we can call.
+ *   3. Speak the `cf_agent_use_chat_request` envelope directly on the
+ *      socket to submit the user's text. We used to layer
+ *      `useAgentChat` from `@cloudflare/ai-chat/react` here, but that
+ *      hook calls `React.use(...)` which is a React 19 API; consumer
+ *      bundles pinned to React 18 crash with `E.use is not a function`.
+ *      The wire format is small and stable, so we emit it inline.
  *   4. Listen for `flowlib.agent-event` envelopes on the same socket and
  *      accumulate the `AgentEvent[]` the chat UI renders.
  *   5. Send typed envelopes for `interrupt`, permission responses, and
@@ -18,22 +22,22 @@
  * **SDK divergence notes (probed against `agents@0.12.3`):**
  *
  * - `useAgent` returns a PartySocket-like object with `send` and
- *   `addEventListener`. We hold it and pass it straight to
- *   `useAgentChat`.
- * - `useAgentChat` is built around AI SDK v5 `UIMessage`s, which is a
- *   different shape than our `AgentEvent` union. We use `useAgentChat`
- *   only for its `sendMessage` (text submission) and `setMessages([])`
- *   (clear) helpers, NOT for rendering. Rendering uses the
- *   `flowlib.agent-event` envelope stream we manage ourselves on the
- *   underlying socket — that union IS the canonical wire format
- *   (`pkg/plugins/agents/src/shared/events.ts`).
- * - `useAgentChat`'s `stop()` cancels the local fetch but does NOT push
- *   anything back over the WS. Our `interrupt()` sends a typed envelope
- *   the DO is expected to handle, and also calls `stop()` for parity.
+ *   `addEventListener`. We hold it and emit `cf_agent_use_chat_request`
+ *   frames directly through `send`.
+ * - The CF SDK's persisted-messages table (`cf_ai_chat_agent_messages`
+ *   on the DO) is not consulted by flowlib — the backend reads the last
+ *   user-message text out of `self.messages` only. We send a
+ *   single-element `messages: [user]` array each turn.
+ * - The CF SDK's `stop()` cancels the local fetch but does NOT push
+ *   anything back over the WS. Our `interrupt()` sends a typed
+ *   `flowlib.interrupt` envelope the DO handles, plus a
+ *   `cf_agent_chat_request_cancel` for the latest in-flight request id
+ *   (parity with what `useAgentChat.stop()` used to send).
  *
- * For tests, the SDK calls are isolated behind two small adapter
- * factories (`defaultUseAgent`, `defaultUseAgentChat`). Tests inject
- * mocks via `useChatStream`'s second parameter.
+ * For tests, the SDK call to `useAgent` is isolated behind a small
+ * adapter factory. The chat helpers (`sendMessage`/`stop`) are also
+ * exposed via the adapter so tests can substitute fakes; the default
+ * implementation is the inline one described above.
  */
 import * as React from 'react';
 import type { AgentSession } from '../../shared/types';
@@ -57,7 +61,9 @@ export interface ChatSocketLike {
 }
 
 /**
- * Subset of `useAgentChat`'s return value we use.
+ * Outbound chat helpers we hand back to consumers. Mirrors the subset of
+ * the old `useAgentChat` surface we relied on, but is now produced by an
+ * inline implementation that speaks `cf_agent_use_chat_request` directly.
  */
 export interface ChatHelpers {
   sendMessage: (message: { text: string }) => void;
@@ -164,28 +170,71 @@ async function defaultLoadSession(sessionId: string, baseUrl = ''): Promise<Agen
   return (await response.json()) as AgentSession;
 }
 
-// The `@ts-ignore`s are necessary because `agents/react` declares
+// The `@ts-ignore` is necessary because `agents/react` declares
 // `react@^19` peer-dep types but the consumer bundle pins react 18. The
-// runtime contract is identical — we only use `useAgent`'s return shape,
-// which is stable across the two react majors. Both are listed in
-// `tsdown.config.ts` `neverBundle`, so static imports stay as bare
-// specifiers in the emitted ESM.
+// runtime contract for `useAgent({ agent, name })` (no `query` option)
+// is identical across the two react majors — `agents/react` only calls
+// `React.use()` on the `query` code path, which we don't use. The
+// import is listed in `tsdown.config.ts` `neverBundle`, so the static
+// import stays as a bare specifier in the emitted ESM.
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore — peer dep, resolved by host bundler
 // eslint-disable-next-line import/no-unresolved
 import { useAgent as agentsUseAgent } from 'agents/react';
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore — peer dep, resolved by host bundler
-// eslint-disable-next-line import/no-unresolved
-import { useAgentChat as aiChatUseAgentChat } from '@cloudflare/ai-chat/react';
 
 /**
- * Default adapters resolve `agents/react` and `@cloudflare/ai-chat/react`
- * via static `import`. Both are marked as `neverBundle` peer deps in
- * `tsdown.config.ts`, so the bundler emits bare specifiers and the
- * consumer's package manager satisfies them at runtime.
+ * Generate a short opaque id for a chat request / message. Browsers all
+ * have `crypto.randomUUID`; if for some reason it's missing we fall
+ * back to `Math.random` which is fine for the purpose (uniqueness over
+ * a single tab's session).
+ */
+function newId(): string {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
+  return Math.random().toString(36).slice(2) + Date.now().toString(36);
+}
+
+/**
+ * Build the `cf_agent_use_chat_request` envelope expected by
+ * `AIChatAgent` (the base class `AgentChatDO` extends). This is the
+ * same shape `@cloudflare/ai-chat`'s `useAgentChat` would emit, minus
+ * the AI-SDK-specific fields the flowlib backend ignores.
  *
- * For tests that don't have those peer deps installed (the workerd
+ * The backend reads `self.messages[self.messages.length - 1]` and
+ * extracts the text from its `parts`; flowlib's runtime persists its
+ * own session-level history elsewhere, so sending only the new user
+ * message each turn is correct.
+ */
+function buildChatRequestEnvelope(requestId: string, text: string): string {
+  return JSON.stringify({
+    id: requestId,
+    type: 'cf_agent_use_chat_request',
+    init: {
+      method: 'POST',
+      body: JSON.stringify({
+        trigger: 'submit-user-message',
+        messages: [
+          {
+            id: newId(),
+            role: 'user',
+            parts: [{ type: 'text', text }],
+          },
+        ],
+      }),
+    },
+  });
+}
+
+/**
+ * Default adapters: `useAgent` resolves `agents/react` (peer dep,
+ * `neverBundle`d). The chat helpers are produced inline — we used to
+ * import `useAgentChat` from `@cloudflare/ai-chat/react`, but that
+ * hook calls `React.use()` (a React 19 API) and crashed consumer
+ * bundles pinned to React 18. The wire format
+ * (`cf_agent_use_chat_request`) is documented and small.
+ *
+ * For tests that don't have `agents/react` available (the workerd
  * vitest pool, for example), pass an `adapters` override on
  * `useChatStream(sessionId, adapters)` — the default adapter is only
  * invoked when no override is supplied.
@@ -196,12 +245,37 @@ function loadDefaultAdapters(): ChatStreamAdapters {
       (agentsUseAgent as unknown as (opts: { agent: string; name: string }) => ChatSocketLike)(
         options,
       ),
-    useAgentChat: (options) =>
-      (
-        aiChatUseAgentChat as unknown as (opts: {
-          agent: ChatSocketLike & { agent: string; name: string };
-        }) => ChatHelpers
-      )(options),
+    useAgentChat: ({ agent }) => {
+      // Track the most recent in-flight request id so `stop()` can send
+      // a `cf_agent_chat_request_cancel` for it. Using a module-level
+      // ref-by-closure here is fine: the adapter is invoked once per
+      // `useChatStream` instance (the outer hook caches `adapters` in a
+      // ref), and each instance gets its own closure.
+      let lastRequestId: string | null = null;
+      return {
+        sendMessage: ({ text }) => {
+          const requestId = newId();
+          lastRequestId = requestId;
+          try {
+            agent.send(buildChatRequestEnvelope(requestId, text));
+          } catch {
+            // Swallow — readyState may briefly be CONNECTING. The
+            // consumer can re-attempt by re-clicking send.
+          }
+        },
+        stop: () => {
+          if (!lastRequestId) {
+            return;
+          }
+          try {
+            agent.send(JSON.stringify({ id: lastRequestId, type: 'cf_agent_chat_request_cancel' }));
+          } catch {
+            // Swallow — same readyState reasoning as `sendMessage`.
+          }
+          lastRequestId = null;
+        },
+      };
+    },
   };
 }
 

@@ -19,7 +19,8 @@
     "directory": "pkg/plugins/agents"
   },
   "files": [
-    "dist/**/*"
+    "dist/**/*",
+    "runtime/**/*"
   ],
   "type": "module",
   "main": "dist/backend/index.cjs",

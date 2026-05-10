@@ -24,6 +24,7 @@ export type WorkspaceProviderId =
   | 'local-fs'
   | 'git-clone'
   | 'cloudflare-sandbox'
+  | 'cloudflare-sandbox-claude'
   | 'remote-sandbox'
   | 'none';
 
@@ -87,6 +88,12 @@ export interface AgentSession {
   // Provider / model
   providerId: AgentProviderId;
   providerConfig: Record<string, unknown>;
+  /**
+   * Optional FK to the Flowlib credential whose API key the LLM provider
+   * should use. When null, providers fall back to their factory-default
+   * credential. Set per-session via `POST /sessions { credentialId }`.
+   */
+  credentialId: string | null;
   model: string | null;
   permissionMode: string | null;
   // System prompt (free-form preamble for the LLM)

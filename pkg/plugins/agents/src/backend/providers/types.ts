@@ -42,6 +42,17 @@ export interface AgentCapabilities {
    * available for sessions on this provider.
    */
   permissionPrompts: boolean;
+  /**
+   * Optional preferred workspace provider id for this agent. When set
+   * and registered, the sessions endpoint uses it to auto-provision a
+   * workspace for sessions that omit `workspaceId`. Falls back to the
+   * first registered workspace provider when unset or unregistered.
+   *
+   * Example: claude-code prefers `'cloudflare-sandbox-claude'` (image
+   * with the `claude` CLI baked in); opencode prefers
+   * `'cloudflare-sandbox'` (image with the `opencode` CLI baked in).
+   */
+  preferredWorkspaceProviderId?: import('../workspaces/types').WorkspaceProviderId;
 }
 
 // ─── Inputs ─────────────────────────────────────────────────────────────
@@ -65,6 +76,14 @@ export interface CreateSessionInput {
   workspace?: import('../workspaces/types').WorkspaceHandle;
   /** Initial system prompt (composed by Stream K). */
   systemPrompt?: string;
+  /**
+   * Optional Flowlib credential id selected by the user when starting
+   * the session. The provider resolves it via the credentials service
+   * to source the LLM API key — overriding any factory-default
+   * credential. When absent, providers fall back to their factory
+   * credential (or fail if none is configured).
+   */
+  credentialId?: string;
   /** Provider-specific extras (Claude Code: permissionMode, MCP, hooks). */
   extras?: Record<string, unknown>;
 }

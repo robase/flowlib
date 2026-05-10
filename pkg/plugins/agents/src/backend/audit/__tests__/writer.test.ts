@@ -222,6 +222,7 @@ function makePluginContext(repos?: { audit?: AuditRepository }): PluginContext {
       staticOrgId: 'default-org',
       orgScope: 'optional' as const,
       providers: [],
+      workspaceProviders: [],
       exposeFlowlibActions: false,
       defaultDenyList: [],
       defaultProviderId: 'opencode',

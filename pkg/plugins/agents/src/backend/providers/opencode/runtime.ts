@@ -268,17 +268,24 @@ export function resolveBaseUrl(input: {
 export type OpencodeMode = 'sandbox' | 'embedded' | 'external';
 
 /**
+ * Options accepted by `cloudflareSandbox`'s `metadata.getOpencode`.
+ */
+export interface SandboxOpencodeOptions {
+  port?: number;
+  directory?: string;
+  config?: Record<string, unknown>;
+  env?: Record<string, string>;
+}
+
+/**
  * Workspace metadata shape exposed by `cloudflareSandbox` for the
  * sandbox-managed mode. Defined structurally so we don't import the
  * cloudflare-sandbox handle type into the opencode provider.
  */
 export interface SandboxOpencodeMetadata {
-  getOpencode: (options?: {
-    port?: number;
-    directory?: string;
-    config?: Record<string, unknown>;
-    env?: Record<string, string>;
-  }) => Promise<{ client: OpencodeClientLike; server: { url: string } }>;
+  getOpencode: (
+    options?: SandboxOpencodeOptions,
+  ) => Promise<{ client: OpencodeClientLike; server: { url: string } }>;
 }
 
 function asSandboxMeta(workspace?: WorkspaceHandle): SandboxOpencodeMetadata | undefined {
@@ -295,12 +302,20 @@ function asSandboxMeta(workspace?: WorkspaceHandle): SandboxOpencodeMetadata | u
  * Sandbox mode delegates to `workspace.metadata.getOpencode` (cached on
  * the handle). Embedded mode caches one server per `directory`. External
  * mode falls back to `resolveBaseUrl` for the connection target.
+ *
+ * `opencodeOverride` is the per-call options blob passed through to
+ * `metadata.getOpencode` — typically the multi-provider OpenCode
+ * `Config` built from the org's LLM credentials. Only applied to
+ * sandbox mode (the other modes don't accept runtime config). The
+ * cloudflare-sandbox handle merges this with any factory-level
+ * `defaultOpencodeOptions`; first-call wins for caching purposes.
  */
 export async function getClientForMode(input: {
   mode: OpencodeMode;
   workspace?: WorkspaceHandle;
   extras?: Record<string, unknown>;
   factoryBaseUrl?: string;
+  opencodeOverride?: SandboxOpencodeOptions;
 }): Promise<{ client: OpencodeClientLike; baseUrl?: string }> {
   const directory = input.workspace?.rootPath;
   if (input.mode === 'sandbox') {
@@ -311,7 +326,11 @@ export async function getClientForMode(input: {
           '(supplied by `cloudflareSandbox`). Use mode "external" or "embedded" for non-sandbox deployments.',
       );
     }
-    const bundle = await meta.getOpencode(directory ? { directory } : undefined);
+    const opts: SandboxOpencodeOptions = {
+      ...(directory ? { directory } : {}),
+      ...input.opencodeOverride,
+    };
+    const bundle = await meta.getOpencode(opts);
     return { client: bundle.client, baseUrl: bundle.server.url };
   }
   if (input.mode === 'embedded') {

@@ -32,6 +32,8 @@ export interface CreateSessionInput {
   title?: string;
   providerId?: AgentProviderId;
   providerConfig?: Record<string, unknown>;
+  /** Flowlib credential id whose API key the LLM provider should use. */
+  credentialId?: string | null;
   model?: string | null;
   permissionMode?: string | null;
   systemPrompt?: string | null;
@@ -48,6 +50,7 @@ export interface UpdateSessionInput {
   title?: string;
   providerId?: AgentProviderId;
   providerConfig?: Record<string, unknown>;
+  credentialId?: string | null;
   model?: string | null;
   permissionMode?: string | null;
   systemPrompt?: string | null;

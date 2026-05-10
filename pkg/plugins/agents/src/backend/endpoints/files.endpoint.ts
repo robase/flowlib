@@ -22,8 +22,8 @@ async function listFiles(deps: EndpointDeps): Promise<PluginEndpointResponse> {
     return notFound('Workspace not found');
   }
 
-  const provider = deps.pluginCtx.options.workspaceProvider;
-  if (!provider || provider.id !== ws.workspaceProviderId) {
+  const provider = deps.pluginCtx.registries.workspaces.get(ws.workspaceProviderId);
+  if (!provider) {
     return badRequest('Workspace provider not registered', {
       workspaceProviderId: ws.workspaceProviderId,
     });
@@ -57,8 +57,8 @@ async function readFile(deps: EndpointDeps): Promise<PluginEndpointResponse> {
     return badRequest('path query parameter is required');
   }
 
-  const provider = deps.pluginCtx.options.workspaceProvider;
-  if (!provider || provider.id !== ws.workspaceProviderId) {
+  const provider = deps.pluginCtx.registries.workspaces.get(ws.workspaceProviderId);
+  if (!provider) {
     return badRequest('Workspace provider not registered', {
       workspaceProviderId: ws.workspaceProviderId,
     });

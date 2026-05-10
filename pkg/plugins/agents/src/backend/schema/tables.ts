@@ -149,6 +149,11 @@ export const agentSchema: FlowlibPluginSchema = {
         typeAnnotation: 'Record<string, unknown>',
         jsonMode: true,
       },
+      // Optional FK to the credential whose API key the LLM provider
+      // should use. When null, providers fall back to their factory-
+      // default credential (or fail if none is configured). Set per
+      // session via POST /sessions { credentialId }.
+      credentialId: { type: 'string', required: false, index: true },
       model: { type: 'string', required: false },
       permissionMode: { type: 'string', required: false },
       // ── System prompt (free-form preamble for the LLM) ──

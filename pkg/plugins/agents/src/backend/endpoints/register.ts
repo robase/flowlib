@@ -29,6 +29,7 @@ import { createWorkspacesEndpoints } from './workspaces.endpoint';
 import { createSessionsEndpoints } from './sessions.endpoint';
 import { createProjectsEndpoints } from './projects.endpoint';
 import { createFilesEndpoints } from './files.endpoint';
+import { createCredentialsEndpoints } from './credentials.endpoint';
 
 /**
  * Build all REST endpoints for the agents plugin.
@@ -47,6 +48,7 @@ export function buildEndpoints(ctx: PluginContext): FlowlibPluginEndpoint[] {
     ...createSessionsEndpoints(ctx),
     ...createProjectsEndpoints(ctx),
     ...createFilesEndpoints(ctx),
+    ...createCredentialsEndpoints(ctx),
   ];
 }
 

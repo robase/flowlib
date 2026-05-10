@@ -50,6 +50,7 @@ import {
   type OpencodeLoader,
   type SandboxStub,
 } from './handle';
+import type { OutboundCredentialKVStore } from '../../cloudflare/outbound-auth';
 
 /**
  * Lookup contract the provider uses to materialise a sandbox stub by id.
@@ -107,6 +108,38 @@ export interface CloudflareSandboxOptions {
    * skip the per-request `setEnv()` dance.
    */
   envAccessor?: () => CloudflareSandboxEnv;
+  /**
+   * Hostname forwarded to `sandbox.exposePort(port, { hostname })` when
+   * the opencode helper publishes its preview URL. Without one, the
+   * helper returns an `'opencode-not-configured'` sentinel and the
+   * opencode provider can't dial in.
+   *
+   * Currently consumed at the host level (the hosted Worker passes
+   * this through to `@cloudflare/sandbox/opencode` via its own
+   * configuration). The plugin accepts it here for forward-compat so
+   * the option doesn't trip the typecheck.
+   */
+  exposeHostname?: string;
+  /**
+   * Outbound-Workers auth wiring. When set, every workspace handle
+   * exposes `metadata.outboundAuth` (bind/unbind credential helpers)
+   * and the agents plugin uses outbound-Worker injection instead of
+   * baking LLM API keys into OpenCode's `Config.provider.*.apiKey`.
+   *
+   * - `kvBinding`: name of the KV binding the consumer Worker has
+   *   declared. The factory looks up `env[kvBinding]` at request time
+   *   (via the same accessor `setEnv` / `envAccessor` chain used for
+   *   the sandbox DO namespace).
+   * - `ttlSeconds`: optional override for credential TTL (default 24h).
+   *
+   * The matching outbound handlers ship from
+   * `@flowlib/agents` via `buildFlowlibOutboundHandlers()` — the
+   * consumer Worker assigns them to its `Sandbox.outboundByHost`.
+   */
+  outboundAuth?: {
+    kvBinding: string;
+    ttlSeconds?: number;
+  };
 }
 
 /**
@@ -285,6 +318,33 @@ export function cloudflareSandbox(options: CloudflareSandboxOptions): Cloudflare
     });
   };
 
+  /**
+   * Resolve the outbound-auth KV namespace from `env` for the current
+   * request. Returns `undefined` when the option isn't configured or
+   * the binding is missing — the handle simply skips the
+   * `outboundAuth` namespace on metadata, and the opencode provider
+   * falls back to in-container key injection.
+   */
+  const resolveOutboundAuth = (): {
+    kv: OutboundCredentialKVStore;
+    ttlSeconds?: number;
+  } | undefined => {
+    if (!options.outboundAuth) {
+      return undefined;
+    }
+    let env: CloudflareSandboxEnv;
+    try {
+      env = getEnv();
+    } catch {
+      return undefined;
+    }
+    const kv = env[options.outboundAuth.kvBinding] as OutboundCredentialKVStore | undefined;
+    if (!kv || typeof kv.put !== 'function' || typeof kv.get !== 'function') {
+      return undefined;
+    }
+    return { kv, ttlSeconds: options.outboundAuth.ttlSeconds };
+  };
+
   const buildHandle = (
     workspaceId: string,
     sandbox: SandboxStub,
@@ -296,6 +356,7 @@ export function cloudflareSandbox(options: CloudflareSandboxOptions): Cloudflare
       sandboxName,
       defaultOpencodeOptions,
       opencodeLoader,
+      outboundAuth: resolveOutboundAuth(),
     });
 
   return {

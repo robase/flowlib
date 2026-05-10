@@ -66,6 +66,36 @@ describe('CloudflareSandboxHandle', () => {
     expect(handle.metadata.sandbox).toBe(stub);
     expect(handle.metadata.opencode).toBe(null);
     expect(typeof handle.metadata.getOpencode).toBe('function');
+    expect(handle.metadata.outboundAuth).toBeUndefined();
+  });
+
+  it('exposes outboundAuth bind/unbind helpers when configured', async () => {
+    const stub = makeStub();
+    const kvStore = new Map<string, string>();
+    const kv = {
+      get: vi.fn(async (k: string) => kvStore.get(k) ?? null),
+      put: vi.fn(async (k: string, v: string) => {
+        kvStore.set(k, v);
+      }),
+      delete: vi.fn(async (k: string) => {
+        kvStore.delete(k);
+      }),
+    };
+    const handle = new CloudflareSandboxHandle({
+      workspaceId: 'ws-1',
+      sandbox: stub,
+      sandboxName: 'org:o1/ws:ws-1',
+      outboundAuth: { kv },
+    });
+    expect(handle.metadata.outboundAuth).toBeDefined();
+    await handle.metadata.outboundAuth!.bindCredential('sess-1', 'anthropic', 'sk-real');
+    expect(kv.put).toHaveBeenCalledWith(
+      'agents/cred/session/sess-1/anthropic',
+      'sk-real',
+      expect.objectContaining({ expirationTtl: expect.any(Number) }),
+    );
+    await handle.metadata.outboundAuth!.unbindCredential('sess-1', 'anthropic');
+    expect(kv.delete).toHaveBeenCalledWith('agents/cred/session/sess-1/anthropic');
   });
 
   describe('exec', () => {

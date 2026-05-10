@@ -28,6 +28,11 @@
  */
 
 import type { WorkspaceExecOptions, WorkspaceExecResult, WorkspaceHandle } from '../types';
+import {
+  OutboundCredentialKV,
+  type OutboundCredentialKVStore,
+  type OutboundVendor,
+} from '../../cloudflare/outbound-auth';
 
 /**
  * Subset of the `@cloudflare/sandbox` `Sandbox` stub surface this handle
@@ -153,6 +158,15 @@ export interface CloudflareSandboxHandleOptions {
    * `@cloudflare/sandbox/opencode`. Production code leaves this unset.
    */
   opencodeLoader?: OpencodeLoader;
+  /**
+   * When set, the workspace exposes an `outboundAuth` namespace on its
+   * metadata (`bindCredential` / `unbindCredential`). The agents
+   * endpoint writes per-session credential bindings into this KV store;
+   * the consumer Worker's `Sandbox.outboundByHost` handlers read from
+   * the same keys to inject auth headers — keeping the LLM API key
+   * out of the sandbox container. See [outbound-auth.ts](../../cloudflare/outbound-auth.ts).
+   */
+  outboundAuth?: { kv: OutboundCredentialKVStore; ttlSeconds?: number };
 }
 
 /**
@@ -176,6 +190,25 @@ export class CloudflareSandboxHandle implements WorkspaceHandle {
      * (the first call wins).
      */
     getOpencode: (options?: OpencodeBootOptions) => Promise<OpencodeBundle>;
+    /**
+     * Outbound-Workers credential binding surface. Present iff the
+     * `cloudflareSandbox()` factory was configured with an
+     * `outboundAuth` KV namespace. The opencode provider uses this
+     * to pre-decrypt + bind LLM API keys for the session before
+     * booting OpenCode with a placeholder header.
+     *
+     * Absent on workspaces where outbound-Workers auth isn't
+     * configured — providers fall back to the legacy in-container
+     * key injection path.
+     */
+    outboundAuth?: {
+      bindCredential: (
+        sessionId: string,
+        vendor: OutboundVendor,
+        apiKey: string,
+      ) => Promise<void>;
+      unbindCredential: (sessionId: string, vendor: OutboundVendor) => Promise<void>;
+    };
   };
 
   private readonly sandbox: SandboxStub;
@@ -220,11 +253,21 @@ export class CloudflareSandboxHandle implements WorkspaceHandle {
       return inflight;
     };
 
+    let outboundAuth: CloudflareSandboxHandle['metadata']['outboundAuth'];
+    if (opts.outboundAuth) {
+      const credKv = new OutboundCredentialKV(opts.outboundAuth.kv, opts.outboundAuth.ttlSeconds);
+      outboundAuth = {
+        bindCredential: (sessionId, vendor, apiKey) => credKv.bind(sessionId, vendor, apiKey),
+        unbindCredential: (sessionId, vendor) => credKv.unbind(sessionId, vendor),
+      };
+    }
+
     this.metadata = {
       sandboxName: opts.sandboxName,
       sandbox: opts.sandbox,
       opencode: null,
       getOpencode,
+      outboundAuth,
     };
   }
 

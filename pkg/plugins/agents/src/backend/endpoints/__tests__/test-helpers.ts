@@ -70,7 +70,7 @@ export function makeFakePluginCtx(opts: FakePluginCtxOptions = {}): {
       staticOrgId: opts.staticOrgId ?? 'default-org',
       orgScope: opts.orgScope ?? 'optional',
       providers: opts.providers ?? [],
-      workspaceProvider: opts.workspaceProvider,
+      workspaceProviders: opts.workspaceProvider ? [opts.workspaceProvider] : [],
       exposeFlowlibActions: opts.exposeFlowlibActions ?? false,
       defaultDenyList: [],
       defaultProviderId: 'opencode',

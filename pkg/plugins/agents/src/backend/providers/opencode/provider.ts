@@ -58,6 +58,7 @@ import type {
 } from '../types';
 import type { AgentEvent } from '../../../shared/events';
 import type { WorkspaceHandle } from '../../workspaces/types';
+import { FLOWLIB_SESSION_HEADER, type OutboundVendor } from '../../cloudflare/outbound-auth';
 import { createMapperState, mapOpencodeEvent, type OpencodeEvent } from './events';
 import {
   buildToolsMap,
@@ -94,6 +95,10 @@ const OPENCODE_CAPABILITIES: AgentCapabilities = {
    * sandbox is the security boundary.
    */
   permissionPrompts: false,
+  // Opencode requires the `opencode` CLI in the sandbox image; the
+  // standard `cloudflareSandbox` provider boots it via
+  // `@cloudflare/sandbox/opencode`.
+  preferredWorkspaceProviderId: 'cloudflare-sandbox',
 };
 
 // ─── Per-session state ─────────────────────────────────────────────────
@@ -114,6 +119,38 @@ interface SessionState {
   workspace?: WorkspaceHandle;
   defaultModel?: string;
   systemPrompt?: string;
+  /**
+   * Auth context captured at create time — needed by the lazy boot path
+   * (sandbox mode) so `loadProviderConfig` can gather org-scoped LLM
+   * credentials.
+   */
+  auth?: CreateSessionInput['auth'];
+  /**
+   * Credential id selected by the user for this session, if any. Used
+   * for audit/billing attribution; the actual provider routing is
+   * driven by the model id.
+   */
+  credentialId?: string;
+  /**
+   * Title to use when we lazily call upstream `client.session.create`.
+   * Captured so the chat title we picked at API time is preserved when
+   * the upstream session finally gets created.
+   */
+  title: string;
+  /** Extras passed to createSession — replayed when we lazily create the upstream session. */
+  extras?: Record<string, unknown>;
+  /**
+   * Upstream opencode session id, populated lazily on the first
+   * `prompt()` call. Until then we operate on the placeholder id we
+   * returned from `createSession` (stored as the row's
+   * `provider_session_id`).
+   */
+  upstreamSessionId: string | null;
+  /**
+   * In-flight lazy-boot promise — coalesces concurrent prompts so we
+   * don't create two upstream sessions for the same placeholder.
+   */
+  upstreamSessionPromise?: Promise<string>;
 }
 
 const sessionsById = new Map<string, SessionState>();
@@ -211,6 +248,23 @@ export interface OpenCodeProviderOptions {
    * `extraDenied`.
    */
   defaultDenied?: ReadonlyArray<string>;
+  /**
+   * Async loader that returns the OpenCode `Config.provider` map for a
+   * given org. Wired by the host to `flowlib.credentials` — the
+   * agents plugin gathers every active `type: 'llm'` credential for
+   * the org, decrypts each, and translates them into the opencode
+   * provider config. Per the v1 design, OpenCode boots once per
+   * workspace with the union of all the org's keys; per-session
+   * routing then happens via the model id.
+   *
+   * The loader receives the per-session `credentialId` for audit /
+   * future filtering, but the returned config should reflect the
+   * full org-wide key set so the user can switch models freely.
+   */
+  loadProviderConfig?: (input: {
+    auth: CreateSessionInput['auth'];
+    credentialId?: string;
+  }) => Promise<Record<string, unknown> | undefined> | Record<string, unknown> | undefined;
 }
 
 export function openCodeProvider(options: OpenCodeProviderOptions = {}): AgentProvider {
@@ -218,6 +272,94 @@ export function openCodeProvider(options: OpenCodeProviderOptions = {}): AgentPr
   const factoryMode: OpencodeMode | undefined = options.mode;
   const factoryBaseUrl = options.baseUrl;
   const factoryDefaultDenied = options.defaultDenied ?? [];
+  const loadProviderConfig = options.loadProviderConfig;
+
+  function newPlaceholderSessionId(): string {
+    const c = (globalThis as { crypto?: { randomUUID?: () => string } }).crypto;
+    return (
+      c?.randomUUID?.() ?? `oc-pending-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`
+    );
+  }
+
+  /**
+   * Lazily ensure the upstream opencode session exists for the given
+   * placeholder id. Idempotent — concurrent callers share the same
+   * in-flight promise; the resolved upstream id is cached on
+   * `session.upstreamSessionId`.
+   *
+   * Returns the resolved upstream id usable with `client.session.*`,
+   * plus the live OpencodeClient (so callers don't have to re-resolve).
+   */
+  async function ensureUpstream(
+    placeholderId: string,
+  ): Promise<{ session: SessionState; upstreamId: string; client: OpencodeClientLike }> {
+    const session = sessionsById.get(placeholderId);
+    if (!session) {
+      throw new Error(`[agents/opencode] unknown session id ${placeholderId}`);
+    }
+    if (!session.upstreamSessionPromise && !session.upstreamSessionId) {
+      session.upstreamSessionPromise = (async () => {
+        // OpenCode `Config.provider` to pass to the workspace's
+        // `getOpencode`. Three flows:
+        //   1. Sandbox + outboundAuth on workspace metadata → boot with
+        //      placeholder API keys + a session-id header. The Worker's
+        //      outbound handlers inject the real keys at request time.
+        //      The container never sees credentials.
+        //   2. Sandbox without outboundAuth → fall back to the legacy
+        //      "load all org credentials, bake into Config.provider"
+        //      path via `loadProviderConfig`.
+        //   3. External / embedded mode → no provider config needed
+        //      from this layer.
+        let providerCfg: Record<string, unknown> | undefined;
+        const outboundMode =
+          session.mode === 'sandbox' && hasOutboundAuth(session.workspace);
+        if (outboundMode) {
+          providerCfg = buildOutboundProviderConfig(placeholderId);
+        } else if (session.mode === 'sandbox' && loadProviderConfig && session.auth) {
+          try {
+            const loaded = await loadProviderConfig({
+              auth: session.auth,
+              credentialId: session.credentialId,
+            });
+            providerCfg = loaded ?? undefined;
+          } catch (err) {
+            const message = err instanceof Error ? err.message : String(err);
+            throw new Error(`[agents/opencode] loadProviderConfig failed: ${message}`);
+          }
+        }
+        const { client, baseUrl } = await getClientForMode({
+          mode: session.mode,
+          workspace: session.workspace,
+          extras: { ...session.extras },
+          factoryBaseUrl,
+          opencodeOverride: providerCfg ? { config: { provider: providerCfg } } : undefined,
+        });
+        let resp: unknown;
+        try {
+          resp = await client.session.create({
+            body: { title: session.title },
+            ...(session.directory ? { query: { directory: session.directory } } : {}),
+          });
+        } catch (err) {
+          const message = err instanceof Error ? err.message : String(err);
+          throw new Error(
+            `[agents/opencode] session.create failed (mode=${session.mode}, target=${baseUrl ?? '<unknown>'}): ${message}`,
+          );
+        }
+        const upstreamId = unwrapSessionId(resp);
+        session.upstreamSessionId = upstreamId;
+        session.baseUrl = baseUrl;
+        return upstreamId;
+      })().catch((err) => {
+        // Allow retry on the next call if boot fails.
+        session.upstreamSessionPromise = undefined;
+        throw err;
+      });
+    }
+    const upstreamId = session.upstreamSessionId ?? (await session.upstreamSessionPromise!);
+    const client = await resolveSessionClient(session);
+    return { session, upstreamId, client };
+  }
 
   /**
    * Resolve the effective mode. Per-call overrides (extras / config)
@@ -257,49 +399,36 @@ export function openCodeProvider(options: OpenCodeProviderOptions = {}): AgentPr
       const directory = input.workspace?.rootPath;
       const mode = resolveMode({ extras: input.extras, cfg, workspace: input.workspace });
 
-      const { client, baseUrl } = await getClientForMode({
-        mode,
-        workspace: input.workspace,
-        extras: { baseUrl: cfg.baseUrl, ...input.extras },
-        factoryBaseUrl,
-      });
-
       const titleExtra = input.extras?.title;
       const title = typeof titleExtra === 'string' ? titleExtra : `flowlib-${Date.now()}`;
 
-      // `createOpencode()` (sandbox mode) and the embedded SDK both wait
-      // for the OpenCode HTTP port internally before returning, and the
-      // external mode talks to a server the operator has already booted —
-      // so a single `session.create` attempt is correct in every mode.
-      let resp: unknown;
-      try {
-        resp = await client.session.create({
-          body: { title },
-          ...(directory ? { query: { directory } } : {}),
-        });
-      } catch (err) {
-        const message = err instanceof Error ? err.message : String(err);
-        throw new Error(
-          `[agents/opencode] session.create failed (mode=${mode}, target=${baseUrl ?? '<unknown>'}): ${message}`,
-        );
-      }
-      const id = unwrapSessionId(resp);
-
-      sessionsById.set(id, {
+      // 522 fix: do NOT boot opencode or call `client.session.create`
+      // synchronously here. Container cold-start + opencode boot can
+      // exceed the Worker request budget (~100s on Cloudflare's edge).
+      // Return a placeholder id immediately and lazily provision the
+      // upstream session on the first `prompt()`. The placeholder is
+      // what the DB row's `provider_session_id` stores; the chat WS DO
+      // calls `prompt()` which does the boot + upstream `session.create`
+      // once, then caches the upstream id for subsequent turns.
+      const placeholderId = newPlaceholderSessionId();
+      sessionsById.set(placeholderId, {
         mode,
-        baseUrl,
         directory,
         workspace: input.workspace,
+        auth: input.auth,
+        credentialId: input.credentialId,
+        title,
+        extras: input.extras,
         defaultModel: cfg.defaultModel ?? factoryDefaultModel,
         systemPrompt: cfg.systemPrompt ?? input.systemPrompt,
+        upstreamSessionId: null,
       });
 
-      return { providerSessionId: id };
+      return { providerSessionId: placeholderId };
     },
 
     async *prompt(input: PromptInput): AsyncIterable<AgentEvent> {
-      const session = sessionsById.get(input.providerSessionId);
-      if (!session) {
+      if (!sessionsById.has(input.providerSessionId)) {
         yield {
           type: 'session-end',
           reason: 'error',
@@ -308,8 +437,19 @@ export function openCodeProvider(options: OpenCodeProviderOptions = {}): AgentPr
         return;
       }
 
-      const { mode, baseUrl, directory, workspace, defaultModel, systemPrompt } = session;
-      const client = await resolveSessionClient({ mode, baseUrl, directory, workspace });
+      let upstreamHandle: { session: SessionState; upstreamId: string; client: OpencodeClientLike };
+      try {
+        upstreamHandle = await ensureUpstream(input.providerSessionId);
+      } catch (err) {
+        yield {
+          type: 'session-end',
+          reason: 'error',
+          error: err instanceof Error ? err.message : String(err),
+        };
+        return;
+      }
+      const { session, upstreamId, client } = upstreamHandle;
+      const { directory, defaultModel, systemPrompt } = session;
 
       // Open the SSE event stream first so we don't miss the assistant's
       // first part. Filter by sessionID inside the loop.
@@ -354,7 +494,7 @@ export function openCodeProvider(options: OpenCodeProviderOptions = {}): AgentPr
       const onAbort = () => {
         void client.session
           .abort({
-            path: { id: input.providerSessionId },
+            path: { id: upstreamId },
             ...(directory ? { query: { directory } } : {}),
           })
           .catch(() => {
@@ -368,7 +508,7 @@ export function openCodeProvider(options: OpenCodeProviderOptions = {}): AgentPr
       // channel, and the prompt promise only resolves at the end of the
       // turn (after the message-complete event has already gone out).
       const promptPromise = client.session.prompt({
-        path: { id: input.providerSessionId },
+        path: { id: upstreamId },
         body: {
           parts,
           ...(modelOverride ? { model: modelOverride } : {}),
@@ -394,7 +534,7 @@ export function openCodeProvider(options: OpenCodeProviderOptions = {}): AgentPr
           }
 
           const evt = raw as OpencodeEvent;
-          if (!isForThisSession(evt, input.providerSessionId)) {
+          if (!isForThisSession(evt, upstreamId)) {
             continue;
           }
 
@@ -445,9 +585,15 @@ export function openCodeProvider(options: OpenCodeProviderOptions = {}): AgentPr
       if (!session) {
         return [];
       }
+      // The upstream session may not have been provisioned yet (the user
+      // created the chat but hasn't sent a prompt). Return [] in that
+      // case — there can't be any messages to list.
+      if (!session.upstreamSessionId) {
+        return [];
+      }
       const client = await resolveSessionClient(session);
       const resp = (await client.session.messages({
-        path: { id: input.providerSessionId },
+        path: { id: session.upstreamSessionId },
         ...(session.directory ? { query: { directory: session.directory } } : {}),
       })) as unknown as { data?: Array<unknown> } | Array<unknown>;
 
@@ -501,10 +647,14 @@ export function openCodeProvider(options: OpenCodeProviderOptions = {}): AgentPr
         return;
       }
       sessionsById.delete(providerSessionId);
+      // Nothing to delete upstream if we never provisioned it.
+      if (!session.upstreamSessionId) {
+        return;
+      }
       try {
         const client = await resolveSessionClient(session);
         await client.session.delete({
-          path: { id: providerSessionId },
+          path: { id: session.upstreamSessionId },
           ...(session.directory ? { query: { directory: session.directory } } : {}),
         });
       } catch {
@@ -558,6 +708,60 @@ async function resolveSessionClient(session: {
 }
 
 // ─── Helpers ───────────────────────────────────────────────────────────
+
+/**
+ * Detect whether the workspace's `cloudflareSandbox` was configured
+ * with `outboundAuth`. When true, the opencode provider boots
+ * OpenCode with placeholder API keys + a session-id header, and the
+ * consumer Worker's `Sandbox.outboundByHost` handler injects the real
+ * key at egress.
+ */
+function hasOutboundAuth(workspace: WorkspaceHandle | undefined): boolean {
+  const meta = workspace?.metadata as { outboundAuth?: unknown } | undefined;
+  return Boolean(
+    meta?.outboundAuth &&
+      typeof (meta.outboundAuth as { bindCredential?: unknown }).bindCredential === 'function',
+  );
+}
+
+/**
+ * Vendors we boot OpenCode with placeholders for under outbound mode.
+ * Mirrors `buildFlowlibOutboundHandlers()`'s host map — the consumer
+ * Worker's outbound handlers must cover every vendor listed here.
+ *
+ * Cloudflare AI Gateway uses a different config shape (no bare
+ * `apiKey`), so it isn't pre-populated here; users wanting it in
+ * outbound mode declare it explicitly in their factory config.
+ */
+const OUTBOUND_VENDORS: ReadonlyArray<OutboundVendor> = [
+  'anthropic',
+  'openai',
+  'openrouter',
+  'google',
+];
+
+const OUTBOUND_PLACEHOLDER_KEY = 'flowlib-outbound-placeholder';
+
+/**
+ * Build the OpenCode `Config.provider` map used in outbound mode.
+ * Every supported vendor gets a placeholder `apiKey` + a
+ * `X-Flowlib-Session-Id` header so the request, when it leaves the
+ * container, is identifiable to the outbound handler. The handler
+ * looks up the real key in KV by session id and replaces the
+ * vendor-specific auth header before forwarding upstream.
+ */
+function buildOutboundProviderConfig(sessionId: string): Record<string, unknown> {
+  const provider: Record<string, unknown> = {};
+  for (const vendor of OUTBOUND_VENDORS) {
+    provider[vendor] = {
+      options: {
+        apiKey: OUTBOUND_PLACEHOLDER_KEY,
+        headers: { [FLOWLIB_SESSION_HEADER]: sessionId },
+      },
+    };
+  }
+  return provider;
+}
 
 function isForThisSession(evt: OpencodeEvent, sessionId: string): boolean {
   const props = (evt as { properties?: unknown }).properties;

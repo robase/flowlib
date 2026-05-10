@@ -15,6 +15,8 @@ import * as React from 'react';
 import { Link, useNavigate } from 'react-router';
 import type { AgentSession } from '../../shared/types';
 import { useSessions, useCreateSession } from '../hooks/useSessions';
+import { useLlmCredentials } from '../hooks/useCredentials';
+import { NewChatDialog } from '../components/NewChatDialog';
 
 export interface AgentsPageProps {
   basePath: string;
@@ -24,11 +26,28 @@ export function AgentsPage({ basePath }: AgentsPageProps): React.ReactElement {
   const { data: sessions, isLoading, error } = useSessions();
   const createSession = useCreateSession();
   const navigate = useNavigate();
+  const [dialogOpen, setDialogOpen] = React.useState(false);
+  const credentialsQuery = useLlmCredentials();
 
-  const handleNewChat = React.useCallback(async () => {
-    const session = await createSession.mutateAsync();
-    navigate(chatHref(basePath, session.id));
-  }, [basePath, createSession, navigate]);
+  const handleOpenDialog = React.useCallback(() => {
+    setDialogOpen(true);
+  }, []);
+
+  const handleCancelDialog = React.useCallback(() => {
+    if (createSession.isPending) {
+      return;
+    }
+    setDialogOpen(false);
+  }, [createSession.isPending]);
+
+  const handleStart = React.useCallback(
+    async ({ credentialId }: { credentialId: string | null }) => {
+      const session = await createSession.mutateAsync({ credentialId });
+      setDialogOpen(false);
+      navigate(chatHref(basePath, session.id));
+    },
+    [basePath, createSession, navigate],
+  );
 
   const visible = React.useMemo(
     () => (sessions ?? []).filter((s) => s.status === 'active'),
@@ -50,7 +69,7 @@ export function AgentsPage({ basePath }: AgentsPageProps): React.ReactElement {
         </div>
         <button
           type="button"
-          onClick={handleNewChat}
+          onClick={handleOpenDialog}
           disabled={createSession.isPending}
           className="inline-flex items-center rounded-md bg-fl-primary px-4 py-2 text-sm font-medium text-fl-primary-foreground hover:opacity-90 disabled:opacity-50"
           data-testid="agents-new-chat-button"
@@ -65,7 +84,7 @@ export function AgentsPage({ basePath }: AgentsPageProps): React.ReactElement {
         ) : error ? (
           <ErrorState message={(error as Error).message} />
         ) : visible.length === 0 ? (
-          <EmptyState onNewChat={handleNewChat} disabled={createSession.isPending} />
+          <EmptyState onNewChat={handleOpenDialog} disabled={createSession.isPending} />
         ) : (
           <ul className="divide-y divide-fl-border" data-testid="sessions-list">
             {visible.map((session) => (
@@ -74,6 +93,16 @@ export function AgentsPage({ basePath }: AgentsPageProps): React.ReactElement {
           </ul>
         )}
       </div>
+
+      <NewChatDialog
+        open={dialogOpen}
+        credentials={credentialsQuery.data ?? []}
+        isLoading={credentialsQuery.isLoading}
+        error={(credentialsQuery.error as Error | null) ?? null}
+        isStarting={createSession.isPending}
+        onCancel={handleCancelDialog}
+        onStart={handleStart}
+      />
     </div>
   );
 }

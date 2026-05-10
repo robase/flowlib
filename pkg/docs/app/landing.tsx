@@ -303,6 +303,7 @@ export default function LandingPage() {
           <div className="container">
             <a href="#" className="logo">
               flowlib
+              <span className="logo-beta">Beta</span>
             </a>
             <ul className="nav-links">
               <li>
@@ -892,8 +893,9 @@ const landingStyles = `
   /* Nav */
   .landing nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; padding: 16px 0; background: color-mix(in srgb, var(--bg) 82%, transparent); backdrop-filter: blur(16px); border-bottom: 1px solid var(--border); }
   .landing nav .container { display: flex; align-items: center; justify-content: space-between; }
-  .landing .logo { font-size: 20px; font-weight: 800; letter-spacing: -0.5px; color: var(--text); text-decoration: none; }
+  .landing .logo { font-size: 20px; font-weight: 800; letter-spacing: -0.5px; color: var(--text); text-decoration: none; display: inline-flex; align-items: center; gap: 8px; }
   .landing .logo span { color: var(--accent); }
+  .landing .logo .logo-beta { font-size: 10px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; color: var(--accent-bright, var(--accent)); background: color-mix(in srgb, var(--accent) 15%, transparent); border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent); padding: 2px 6px; border-radius: 4px; line-height: 1; }
   .landing .nav-links { display: flex; align-items: center; gap: 32px; list-style: none; }
   .landing .nav-links a { color: var(--text-muted); text-decoration: none; font-size: 14px; font-weight: 500; transition: color 0.2s; }
   .landing .nav-links a:hover { color: var(--text); }

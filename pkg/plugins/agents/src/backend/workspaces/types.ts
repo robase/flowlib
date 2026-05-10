@@ -15,6 +15,7 @@ export type WorkspaceProviderId =
   | 'local-fs'
   | 'git-clone'
   | 'cloudflare-sandbox'
+  | 'cloudflare-sandbox-claude'
   | 'remote-sandbox'
   | 'none';
 
