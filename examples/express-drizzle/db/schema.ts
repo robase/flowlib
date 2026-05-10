@@ -279,6 +279,17 @@ export const vc_sync_history = sqliteTable('flowlib_vc_sync_history', {
   createdBy: text('created_by'),
 });
 
+export const settings = sqliteTable('flowlib_settings', {
+  key: text('key').primaryKey().notNull(),
+  namespace: text('namespace').notNull(),
+  value: text('value', { mode: 'json' }).$type<unknown>(),
+  encrypted: integer('encrypted', { mode: 'boolean' }).notNull().default(false),
+  updatedAt: text('updated_at')
+    .notNull()
+    .default(sql`CURRENT_TIMESTAMP`),
+  updatedBy: text('updated_by'),
+});
+
 export const chatMessages = sqliteTable('flowlib_chat_messages', {
   id: text('id')
     .primaryKey()

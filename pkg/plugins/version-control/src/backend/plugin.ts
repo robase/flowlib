@@ -87,6 +87,100 @@ function _vcBackendPlugin(options: Omit<VersionControlPluginOptions, 'frontend'>
     setupInstructions:
       'Run `npx flowlib-cli generate` then `npx flowlib-cli migrate` to create the flowlib_vc_sync_config, flowlib_vc_sync_history, and flowlib_vc_instance_state tables.',
 
+    // Generic /settings page renders this group automatically.
+    //
+    // V1 scope: values are persisted to `flowlib_settings` (encrypted where
+    // marked) so they survive restarts and other operators can see what's
+    // been overridden, but the running plugin doesn't yet hot-reload them
+    // — `flowlib.config.ts` constructor options remain authoritative until
+    // a process restart picks up the override. Per-flow sync (the existing
+    // `VcSyncPanel` panel) is unaffected.
+    settings: {
+      namespace: 'vc',
+      label: 'Version Control',
+      description:
+        'Defaults for syncing flows to git. Provider, repo, environment, and promotion chain stay in flowlib.config.ts — those are display-only here.',
+      fields: [
+        {
+          key: 'vc.provider',
+          label: 'Provider',
+          description: 'Configured in flowlib.config.ts.',
+          type: 'string',
+          readOnly: true,
+          defaultValue: options.provider.id,
+        },
+        {
+          key: 'vc.repo',
+          label: 'Repository',
+          description: 'owner/name. Configured in flowlib.config.ts.',
+          type: 'string',
+          readOnly: true,
+          defaultValue: options.repo,
+        },
+        {
+          key: 'vc.environment',
+          label: 'Environment',
+          description:
+            "Drives the read-only gate on prod. Locked to flowlib.config.ts so a UI toggle can't accidentally disable production safeguards.",
+          type: 'string',
+          readOnly: true,
+          defaultValue: environment,
+        },
+        {
+          key: 'vc.defaultBranch',
+          label: 'Default branch',
+          description: 'Branch to push to / pull from when a flow has no explicit override.',
+          type: 'string',
+          defaultValue: branch,
+        },
+        {
+          key: 'vc.path',
+          label: 'Flow path',
+          description: 'Directory in the repo where flow files are written (with trailing slash).',
+          type: 'string',
+          defaultValue: options.path ?? 'workflows/',
+        },
+        {
+          key: 'vc.mode',
+          label: 'Sync mode',
+          description: 'pr-per-publish opens a PR for each push; auto-commit writes directly.',
+          type: 'select',
+          options: [
+            { value: 'pr-per-publish', label: 'PR per publish' },
+            { value: 'auto-commit', label: 'Auto-commit' },
+          ],
+          defaultValue: options.mode ?? 'pr-per-publish',
+        },
+        {
+          key: 'vc.syncDirection',
+          label: 'Sync direction',
+          description: 'Default direction when both sides have changes.',
+          type: 'select',
+          options: [
+            { value: 'push', label: 'Push (DB → remote)' },
+            { value: 'pull', label: 'Pull (remote → DB)' },
+            { value: 'bidirectional', label: 'Bidirectional' },
+          ],
+          defaultValue: options.syncDirection ?? 'bidirectional',
+        },
+        {
+          key: 'vc.reconcilerIntervalMs',
+          label: 'Reconciler interval (ms)',
+          description:
+            'How often the polling reconciler ticks. Lower = faster convergence, higher = less API quota. Restart required.',
+          type: 'number',
+          defaultValue: options.reconcilerIntervalMs ?? 30_000,
+        },
+        {
+          key: 'vc.webhookSecret',
+          label: 'Webhook secret',
+          description: 'HMAC secret used to verify inbound provider webhooks. Encrypted at rest.',
+          type: 'secret',
+          sensitive: true,
+        },
+      ],
+    },
+
     // =======================================================================
     // Initialization
     // =======================================================================

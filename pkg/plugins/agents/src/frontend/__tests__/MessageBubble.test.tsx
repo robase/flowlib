@@ -19,33 +19,25 @@ import { MessageBubble } from '../components/MessageBubble';
 
 describe('MessageBubble', () => {
   it('renders user text inside a user-styled bubble', () => {
-    const html = renderToString(
-      <MessageBubble role="user" text="hello" />,
-    );
+    const html = renderToString(<MessageBubble role="user" text="hello" />);
     expect(html).toContain('hello');
     expect(html).toContain('data-role="user"');
   });
 
   it('splits paragraphs on blank lines', () => {
-    const html = renderToString(
-      <MessageBubble role="assistant" text="first\n\nsecond" />,
-    );
+    const html = renderToString(<MessageBubble role="assistant" text="first\n\nsecond" />);
     expect(html).toContain('first');
     expect(html).toContain('second');
   });
 
   it('shows a streaming cursor when streaming=true', () => {
-    const html = renderToString(
-      <MessageBubble role="assistant" text="partial" streaming />,
-    );
+    const html = renderToString(<MessageBubble role="assistant" text="partial" streaming />);
     expect(html).toContain('animate-pulse');
     expect(html).toContain('data-streaming="true"');
   });
 
   it('renders nothing visible when text is empty and not streaming', () => {
-    const html = renderToString(
-      <MessageBubble role="assistant" text="" />,
-    );
+    const html = renderToString(<MessageBubble role="assistant" text="" />);
     // No paragraphs produced; cursor only when streaming.
     expect(html).not.toContain('animate-pulse');
   });

@@ -66,7 +66,9 @@ function normalisePath(p: string): string {
  * `dir`, strip leading slashes, collapse "" to ".".
  */
 function relativeFromRoot(dir: string, rootPath: string): string {
-  if (dir === rootPath) {return '.';}
+  if (dir === rootPath) {
+    return '.';
+  }
   const stripped = dir.slice(rootPath.length).replace(/^\/+/, '');
   return stripped === '' ? '.' : stripped;
 }
@@ -109,8 +111,7 @@ export async function walkClaudeMd(
   // Both paths normalised: cwd must equal root or be a strict descendant.
   // We require `cwd === root` OR `cwd.startsWith(root + '/')` so a path
   // like `/tmp/wsfoo/...` doesn't accidentally pass when root is `/tmp/ws`.
-  const isInside =
-    normCwd === normRoot || normCwd.startsWith(normRoot + '/');
+  const isInside = normCwd === normRoot || normCwd.startsWith(normRoot + '/');
   if (!isInside) {
     throw new OutOfRootError(currentDir, rootPath);
   }
@@ -120,11 +121,15 @@ export async function walkClaudeMd(
   let dir = normCwd;
   while (dir.length >= normRoot.length) {
     dirs.push(dir);
-    if (dir === normRoot) {break;}
+    if (dir === normRoot) {
+      break;
+    }
     const lastSlash = dir.lastIndexOf('/');
     // Defensive: if normalisation produced something pathological,
     // bail rather than infinite-loop.
-    if (lastSlash <= 0) {break;}
+    if (lastSlash <= 0) {
+      break;
+    }
     dir = dir.slice(0, lastSlash);
   }
 
@@ -161,11 +166,10 @@ export async function walkClaudeMd(
  * length check (matches what the LLM actually pays for) and walk back
  * from `maxBytes` until we land on a valid char boundary.
  */
-function truncateUtf8(
-  s: string,
-  maxBytes: number,
-): { content: string; truncated: boolean } {
-  if (maxBytes <= 0) {return { content: '', truncated: s.length > 0 };}
+function truncateUtf8(s: string, maxBytes: number): { content: string; truncated: boolean } {
+  if (maxBytes <= 0) {
+    return { content: '', truncated: s.length > 0 };
+  }
   const encoder = new TextEncoder();
   const decoder = new TextDecoder('utf-8', { fatal: false });
   const bytes = encoder.encode(s);

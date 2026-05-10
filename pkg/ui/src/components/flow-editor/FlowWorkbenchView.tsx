@@ -87,9 +87,7 @@ export function FlowWorkbenchView({
   const closeConfigPanel = useFlowEditorStore((s) => s.closeConfigPanel);
   const selectNode = useFlowEditorStore((s) => s.selectNode);
   const openConfigPanel = useFlowEditorStore((s) => s.openConfigPanel);
-  const setConfigPanelToolInstanceId = useFlowEditorStore(
-    (s) => s.setConfigPanelToolInstanceId,
-  );
+  const setConfigPanelToolInstanceId = useFlowEditorStore((s) => s.setConfigPanelToolInstanceId);
   const setRegistryLoading = useFlowEditorStore((s) => s.setRegistryLoading);
   const setNodesInitialized = useFlowEditorStore((s) => s.setNodesInitialized);
   const setAllNodesHaveDefinitions = useFlowEditorStore((s) => s.setAllNodesHaveDefinitions);

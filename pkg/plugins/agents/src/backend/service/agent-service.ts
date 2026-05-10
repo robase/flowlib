@@ -14,11 +14,7 @@
  * flow-editor chat assistant share this kernel later.
  */
 
-import type {
-  AgentService as AgentServiceContract,
-  RunResult,
-  SessionContext,
-} from './types';
+import type { AgentService as AgentServiceContract, RunResult, SessionContext } from './types';
 import type { PromptInput } from '../providers/types';
 import { runTurn } from './run-turn';
 

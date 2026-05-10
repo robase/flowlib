@@ -63,10 +63,10 @@ declare module '@cloudflare/ai-chat' {
    * `onFinish` once the stream resolves so the SDK can persist the
    * assistant message.
    */
-  export class AIChatAgent<
-    Env = unknown,
-    State = unknown,
-  > extends Agent<Env extends Cloudflare.Env ? Env : Cloudflare.Env, State> {
+  export class AIChatAgent<Env = unknown, State = unknown> extends Agent<
+    Env extends Cloudflare.Env ? Env : Cloudflare.Env,
+    State
+  > {
     /** Chat history maintained by the SDK across hibernations. */
     messages: UIMessage[];
 
@@ -84,10 +84,7 @@ declare module '@cloudflare/ai-chat' {
 
     /** Persist additional messages outside of `onChatMessage`. */
     saveMessages(messages: UIMessage[]): Promise<void>;
-    persistMessages(
-      messages: UIMessage[],
-      excludeBroadcastIds?: string[],
-    ): Promise<void>;
+    persistMessages(messages: UIMessage[], excludeBroadcastIds?: string[]): Promise<void>;
 
     /** WebSocket connection lifecycle (inherited; declared here for ergonomics). */
     onConnect(connection: Connection, ctx: ConnectionContext): Promise<void>;

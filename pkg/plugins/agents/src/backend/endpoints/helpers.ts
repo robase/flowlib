@@ -11,10 +11,7 @@
 
 import type { PluginEndpointContext, PluginEndpointResponse } from '@flowlib/core';
 import type { PluginContext, ResolvedAgentsOptions } from '../plugin-context';
-import {
-  resolveAuthContext,
-  type ResolveAuthContextOptions,
-} from '../auth/resolve-auth-context';
+import { resolveAuthContext, type ResolveAuthContextOptions } from '../auth/resolve-auth-context';
 import type { AgentsAuthContext } from '../../shared/auth-context';
 import type { Repositories, RepositoriesFactory } from '../repositories/register';
 
@@ -37,9 +34,7 @@ export function resolveDeps(
   pluginCtx: PluginContext,
   endpointCtx: PluginEndpointContext,
 ): EndpointDeps {
-  const factory = pluginCtx.registries.repositories as
-    | RepositoriesFactory
-    | undefined;
+  const factory = pluginCtx.registries.repositories as RepositoriesFactory | undefined;
   if (!factory) {
     throw new Error(
       '[agents] endpoints: repositories factory missing on registries — ' +
@@ -72,7 +67,9 @@ export function badRequest(
   details?: Record<string, unknown>,
 ): PluginEndpointResponse {
   const body: Record<string, unknown> = { error: message };
-  if (details) body.details = details;
+  if (details) {
+    body.details = details;
+  }
   return { status: 400, body };
 }
 
@@ -85,7 +82,9 @@ export function notImplemented(
   hint?: Record<string, unknown>,
 ): PluginEndpointResponse {
   const body: Record<string, unknown> = { error: message };
-  if (hint) body.hint = hint;
+  if (hint) {
+    body.hint = hint;
+  }
   return { status: 501, body };
 }
 
@@ -96,9 +95,7 @@ export function notImplemented(
  */
 export function safeHandler(
   pluginCtx: PluginContext,
-  fn: (
-    deps: EndpointDeps,
-  ) => Promise<PluginEndpointResponse>,
+  fn: (deps: EndpointDeps) => Promise<PluginEndpointResponse>,
 ): (endpointCtx: PluginEndpointContext) => Promise<PluginEndpointResponse> {
   return async (endpointCtx) => {
     try {
@@ -120,7 +117,9 @@ export function bodyString(
   body: Record<string, unknown> | undefined,
   key: string,
 ): string | undefined {
-  if (!body) return undefined;
+  if (!body) {
+    return undefined;
+  }
   const v = body[key];
   return typeof v === 'string' ? v : undefined;
 }
@@ -129,8 +128,6 @@ export function bodyString(
  * Helper that mirrors the plugin options surface some tests need.
  * Useful when wiring tests that don't have a real `PluginContext`.
  */
-export function readResolvedOptions(
-  pluginCtx: PluginContext,
-): ResolvedAgentsOptions {
+export function readResolvedOptions(pluginCtx: PluginContext): ResolvedAgentsOptions {
   return pluginCtx.options;
 }

@@ -35,6 +35,10 @@ export default defineConfig({
       'react',
       'react-dom',
       'react/jsx-runtime',
+      'react-router',
+      '@tanstack/react-query',
+      'zustand',
+      'lucide-react',
     ],
   },
   outExtensions({ format }) {

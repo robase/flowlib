@@ -48,19 +48,13 @@ export function splitParagraphs(text: string): string[] {
 }
 
 const roleStyles: Record<MessageBubbleProps['role'], string> = {
-  user:
-    'self-end max-w-[80%] rounded-lg bg-fl-primary text-fl-primary-foreground px-3 py-2',
+  user: 'self-end max-w-[80%] rounded-lg bg-fl-primary text-fl-primary-foreground px-3 py-2',
   assistant:
     'self-start max-w-[80%] rounded-lg bg-fl-card text-fl-card-foreground border border-fl-border px-3 py-2',
-  system:
-    'self-center max-w-[80%] text-xs italic text-fl-muted-foreground px-3 py-1',
+  system: 'self-center max-w-[80%] text-xs italic text-fl-muted-foreground px-3 py-1',
 };
 
-export const MessageBubble: React.FC<MessageBubbleProps> = ({
-  role,
-  text,
-  streaming = false,
-}) => {
+export const MessageBubble: React.FC<MessageBubbleProps> = ({ role, text, streaming = false }) => {
   const paragraphs = splitParagraphs(text);
   return (
     <div
@@ -72,10 +66,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
         <span className="inline-block w-2 h-4 bg-fl-foreground/60 animate-pulse" />
       ) : null}
       {paragraphs.map((p, i) => (
-        <p
-          key={i}
-          className="whitespace-pre-wrap text-sm leading-relaxed m-0"
-        >
+        <p key={i} className="whitespace-pre-wrap text-sm leading-relaxed m-0">
           {p}
           {streaming && i === paragraphs.length - 1 ? (
             <span className="inline-block w-2 h-4 ml-0.5 align-text-bottom bg-fl-foreground/60 animate-pulse" />

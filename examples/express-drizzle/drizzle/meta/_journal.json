@@ -15,6 +15,13 @@
       "when": 1777920263258,
       "tag": "0001_crazy_sunfire",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1778367493353,
+      "tag": "0002_easy_blue_shield",
+      "breakpoints": true
     }
   ]
 }

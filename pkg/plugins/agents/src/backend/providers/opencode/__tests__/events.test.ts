@@ -8,11 +8,7 @@
  * job.
  */
 import { describe, it, expect } from 'vitest';
-import {
-  mapOpencodeEvent,
-  createMapperState,
-  type OpencodeEvent,
-} from '../events';
+import { mapOpencodeEvent, createMapperState, type OpencodeEvent } from '../events';
 import type { AgentEvent } from '../../../../shared/events';
 
 // ─── Fixture builders ───────────────────────────────────────────────────
@@ -65,9 +61,7 @@ describe('mapOpencodeEvent — text', () => {
   it('emits text-delta from a part.updated with a delta', () => {
     const state = createMapperState();
     const out = mapOpencodeEvent(textDelta('m1', 'Hello'), state);
-    expect(out).toEqual<AgentEvent[]>([
-      { type: 'text-delta', messageId: 'm1', text: 'Hello' },
-    ]);
+    expect(out).toEqual<AgentEvent[]>([{ type: 'text-delta', messageId: 'm1', text: 'Hello' }]);
   });
 
   it('falls back to part.text when no delta supplied', () => {
@@ -173,7 +167,13 @@ describe('mapOpencodeEvent — tool', () => {
       state,
     );
     expect(out).toEqual<AgentEvent[]>([
-      { type: 'tool-call', messageId: 'm1', id: 'c1', name: 'bash', input: { command: 'rm -rf /' } },
+      {
+        type: 'tool-call',
+        messageId: 'm1',
+        id: 'c1',
+        name: 'bash',
+        input: { command: 'rm -rf /' },
+      },
       {
         type: 'tool-result',
         messageId: 'm1',
@@ -272,13 +272,8 @@ describe('mapOpencodeEvent — file.edited', () => {
   it('emits file-edit using the last tracked messageId', () => {
     const state = createMapperState();
     state.lastMessageId = 'm77';
-    const out = mapOpencodeEvent(
-      { type: 'file.edited', properties: { file: '/a/b.ts' } },
-      state,
-    );
-    expect(out).toEqual<AgentEvent[]>([
-      { type: 'file-edit', messageId: 'm77', path: '/a/b.ts' },
-    ]);
+    const out = mapOpencodeEvent({ type: 'file.edited', properties: { file: '/a/b.ts' } }, state);
+    expect(out).toEqual<AgentEvent[]>([{ type: 'file-edit', messageId: 'm77', path: '/a/b.ts' }]);
   });
 
   it('drops file.edited when no messageId is known yet (pre-prompt)', () => {
@@ -286,13 +281,8 @@ describe('mapOpencodeEvent — file.edited', () => {
     // We *do* still emit an event, with an empty messageId — this is the
     // documented behaviour. UI clients can decide to drop or attach
     // it. Locking this in via test so it doesn't regress silently.
-    const out = mapOpencodeEvent(
-      { type: 'file.edited', properties: { file: '/x' } },
-      state,
-    );
-    expect(out).toEqual<AgentEvent[]>([
-      { type: 'file-edit', messageId: '', path: '/x' },
-    ]);
+    const out = mapOpencodeEvent({ type: 'file.edited', properties: { file: '/x' } }, state);
+    expect(out).toEqual<AgentEvent[]>([{ type: 'file-edit', messageId: '', path: '/x' }]);
   });
 });
 
@@ -361,13 +351,8 @@ describe('mapOpencodeEvent — message-complete', () => {
   it('emits message-complete from session.idle if message.updated did not', () => {
     const state = createMapperState();
     state.lastMessageId = 'm1';
-    const out = mapOpencodeEvent(
-      { type: 'session.idle', properties: { sessionID: 's' } },
-      state,
-    );
-    expect(out).toEqual<AgentEvent[]>([
-      { type: 'message-complete', messageId: 'm1' },
-    ]);
+    const out = mapOpencodeEvent({ type: 'session.idle', properties: { sessionID: 's' } }, state);
+    expect(out).toEqual<AgentEvent[]>([{ type: 'message-complete', messageId: 'm1' }]);
   });
 
   it('does not double-fire message-complete (suppresses idle when already completed)', () => {
@@ -386,10 +371,7 @@ describe('mapOpencodeEvent — message-complete', () => {
       },
       state,
     );
-    const out = mapOpencodeEvent(
-      { type: 'session.idle', properties: { sessionID: 's' } },
-      state,
-    );
+    const out = mapOpencodeEvent({ type: 'session.idle', properties: { sessionID: 's' } }, state);
     expect(out).toEqual([]);
   });
 });

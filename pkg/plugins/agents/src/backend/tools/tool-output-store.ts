@@ -7,7 +7,7 @@
  *
  * - **Inline budget** per tool result is the first **100 lines OR 4 KB**,
  *   whichever comes first. Configurable per-agent via
- *   `agent_definitions.toolOutputBudget`.
+ *   `agent_sessions.toolOutputBudget`.
  * - When the output exceeds budget the *full* output is persisted in one
  *   of two places, depending on whether the call has a workspace handle:
  *   - **Workspace-attached** (Claude Code, opencode): the full output is
@@ -136,9 +136,7 @@ const DEFAULT_SUBDIR = '.flowlib/tool-outputs';
  * workspace-less path (it owns the in-memory `Map`); workspace-attached
  * calls write straight through to the supplied handle.
  */
-export function createToolOutputStore(
-  opts: CreateToolOutputStoreOptions = {},
-): ToolOutputStore {
+export function createToolOutputStore(opts: CreateToolOutputStoreOptions = {}): ToolOutputStore {
   const defaultBudget = mergeBudget(DEFAULT_TOOL_OUTPUT_BUDGET, opts.budget);
   const subdir = opts.subdir ?? DEFAULT_SUBDIR;
   const logger = opts.logger;
@@ -242,7 +240,9 @@ export function createToolOutputStore(
     sliceOpts?: { offset?: number; limit?: number; grep?: string },
   ): Promise<string | undefined> {
     const full = inMemoryFullOutputs.get(toolCallId);
-    if (full === undefined) {return undefined;}
+    if (full === undefined) {
+      return undefined;
+    }
 
     const lines = full.split('\n');
     let view = lines;
@@ -281,8 +281,12 @@ function mergeBudget(
  * serialised so the agent has something readable to grep across.
  */
 export function stringifyOutput(value: unknown): string {
-  if (value === null || value === undefined) {return '';}
-  if (typeof value === 'string') {return value;}
+  if (value === null || value === undefined) {
+    return '';
+  }
+  if (typeof value === 'string') {
+    return value;
+  }
   try {
     return JSON.stringify(value, null, 2);
   } catch {
@@ -298,13 +302,19 @@ function utf8ByteLength(s: string): number {
 
 /** Count of lines — `\n`-delimited. Empty string is 0 lines. */
 function countLines(s: string): number {
-  if (s.length === 0) {return 0;}
+  if (s.length === 0) {
+    return 0;
+  }
   let count = 1;
   for (let i = 0; i < s.length; i++) {
-    if (s.charCodeAt(i) === 10 /* \n */) {count++;}
+    if (s.charCodeAt(i) === 10 /* \n */) {
+      count++;
+    }
   }
   // A trailing newline shouldn't bump the count past the visible lines.
-  if (s.charCodeAt(s.length - 1) === 10) {count--;}
+  if (s.charCodeAt(s.length - 1) === 10) {
+    count--;
+  }
   return count;
 }
 
@@ -335,7 +345,9 @@ function truncateToBudget(s: string, budget: ToolOutputBudget): string {
   if (budget.bytes > 0) {
     if (utf8ByteLength(s) > budget.bytes) {
       const sliced = sliceByBytes(s, budget.bytes);
-      if (sliced.length < cut) {cut = sliced.length;}
+      if (sliced.length < cut) {
+        cut = sliced.length;
+      }
     }
   }
 
@@ -348,9 +360,11 @@ function sliceByBytes(s: string, maxBytes: number): string {
   for (let i = 0; i < s.length; i++) {
     const code = s.charCodeAt(i);
     let charBytes: number;
-    if (code < 0x80) {charBytes = 1;}
-    else if (code < 0x800) {charBytes = 2;}
-    else if (code >= 0xd800 && code <= 0xdbff) {
+    if (code < 0x80) {
+      charBytes = 1;
+    } else if (code < 0x800) {
+      charBytes = 2;
+    } else if (code >= 0xd800 && code <= 0xdbff) {
       // Surrogate pair → 4-byte UTF-8
       charBytes = 4;
       i++; // consume low surrogate
@@ -392,25 +406,37 @@ function appendFooter(input: FooterInput): string {
       `[call read_tool_output with toolCallId="${input.fullOutputRef}" to fetch slices]`,
     );
   }
-  if (input.extra) {lines.push(input.extra);}
+  if (input.extra) {
+    lines.push(input.extra);
+  }
   return input.head + lines.join('\n');
 }
 
 function describeBudget(budget: ToolOutputBudget): string {
   const parts: string[] = [];
-  if (budget.lines > 0) {parts.push(`line ${budget.lines}`);}
-  if (budget.bytes > 0) {parts.push(`${budget.bytes} bytes`);}
+  if (budget.lines > 0) {
+    parts.push(`line ${budget.lines}`);
+  }
+  if (budget.bytes > 0) {
+    parts.push(`${budget.bytes} bytes`);
+  }
   return parts.length > 0 ? parts.join(' / ') : 'unbounded';
 }
 
 function formatBytes(n: number): string {
-  if (n < 1024) {return `${n} B`;}
-  if (n < 1024 * 1024) {return `${(n / 1024).toFixed(1)} KB`;}
+  if (n < 1024) {
+    return `${n} B`;
+  }
+  if (n < 1024 * 1024) {
+    return `${(n / 1024).toFixed(1)} KB`;
+  }
   return `${(n / (1024 * 1024)).toFixed(1)} MB`;
 }
 
 function joinPath(dir: string, file: string): string {
-  if (!dir) {return file;}
+  if (!dir) {
+    return file;
+  }
   return dir.endsWith('/') ? dir + file : `${dir}/${file}`;
 }
 

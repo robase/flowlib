@@ -6,11 +6,7 @@
  * marshalling, path normalisation, and metadata wiring in isolation.
  */
 import { describe, it, expect, vi } from 'vitest';
-import {
-  CloudflareSandboxHandle,
-  SANDBOX_WORKSPACE_ROOT,
-  type SandboxStub,
-} from '../handle';
+import { CloudflareSandboxHandle, SANDBOX_WORKSPACE_ROOT, type SandboxStub } from '../handle';
 
 function makeStub(overrides: Partial<SandboxStub> = {}): SandboxStub {
   return {
@@ -74,10 +70,7 @@ describe('CloudflareSandboxHandle', () => {
       const handle = buildHandle(stub);
       const result = await handle.exec('ls');
       expect(result).toEqual({ stdout: 'ok', stderr: '', exitCode: 0 });
-      expect(stub.exec).toHaveBeenCalledWith(
-        'ls',
-        expect.objectContaining({ cwd: '/workspace' }),
-      );
+      expect(stub.exec).toHaveBeenCalledWith('ls', expect.objectContaining({ cwd: '/workspace' }));
     });
 
     it('resolves cwd relative to the workspace root', async () => {
@@ -122,24 +115,17 @@ describe('CloudflareSandboxHandle', () => {
       const stub = makeStub();
       const handle = buildHandle(stub);
       await handle.writeFile('sub/bar.ts', 'export const x = 1');
-      expect(stub.writeFile).toHaveBeenCalledWith(
-        '/workspace/sub/bar.ts',
-        'export const x = 1',
-      );
+      expect(stub.writeFile).toHaveBeenCalledWith('/workspace/sub/bar.ts', 'export const x = 1');
     });
 
     it('rejects path traversal in readFile', async () => {
       const handle = buildHandle();
-      await expect(handle.readFile('../etc/passwd')).rejects.toThrow(
-        /traversal/i,
-      );
+      await expect(handle.readFile('../etc/passwd')).rejects.toThrow(/traversal/i);
     });
 
     it('rejects path traversal in writeFile', async () => {
       const handle = buildHandle();
-      await expect(handle.writeFile('../escape', 'x')).rejects.toThrow(
-        /traversal/i,
-      );
+      await expect(handle.writeFile('../escape', 'x')).rejects.toThrow(/traversal/i);
     });
 
     it('rejects null bytes', async () => {
@@ -149,9 +135,7 @@ describe('CloudflareSandboxHandle', () => {
 
     it('rejects absolute paths outside /workspace', async () => {
       const handle = buildHandle();
-      await expect(handle.readFile('/etc/passwd')).rejects.toThrow(
-        /\/workspace/,
-      );
+      await expect(handle.readFile('/etc/passwd')).rejects.toThrow(/\/workspace/);
     });
 
     it('accepts absolute paths that live under /workspace', async () => {
@@ -174,10 +158,7 @@ describe('CloudflareSandboxHandle', () => {
       const stub = makeStub();
       const handle = buildHandle(stub);
       const files = await handle.listFiles('**');
-      expect(files).toEqual([
-        '/workspace/foo.ts',
-        '/workspace/sub/bar.ts',
-      ]);
+      expect(files).toEqual(['/workspace/foo.ts', '/workspace/sub/bar.ts']);
       expect(stub.listFiles).toHaveBeenCalledWith(
         '/workspace',
         expect.objectContaining({ recursive: true }),
@@ -188,10 +169,7 @@ describe('CloudflareSandboxHandle', () => {
       const stub = makeStub();
       const handle = buildHandle(stub);
       const files = await handle.listFiles('');
-      expect(files).toEqual([
-        '/workspace/foo.ts',
-        '/workspace/sub/bar.ts',
-      ]);
+      expect(files).toEqual(['/workspace/foo.ts', '/workspace/sub/bar.ts']);
     });
 
     it('passes a directory prefix through', async () => {

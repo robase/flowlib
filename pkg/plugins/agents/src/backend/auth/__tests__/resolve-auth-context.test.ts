@@ -10,10 +10,7 @@
  */
 import { describe, it, expect } from 'vitest';
 import type { FlowlibIdentity } from '@flowlib/core';
-import {
-  resolveAuthContext,
-  DEFAULT_ORG_ID,
-} from '../resolve-auth-context';
+import { resolveAuthContext, DEFAULT_ORG_ID } from '../resolve-auth-context';
 
 const baseIdentity: FlowlibIdentity = {
   id: 'user-123',
@@ -68,9 +65,7 @@ describe('resolveAuthContext', () => {
   });
 
   it('throws when identity is null and orgScope is required', () => {
-    expect(() => resolveAuthContext(null, { orgScope: 'required' })).toThrow(
-      /no identity present/,
-    );
+    expect(() => resolveAuthContext(null, { orgScope: 'required' })).toThrow(/no identity present/);
   });
 
   it('still resolves when identity is present and orgScope is required', () => {

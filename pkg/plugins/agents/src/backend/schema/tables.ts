@@ -24,9 +24,9 @@ const SESSION_STATUS_VALUES = ['active', 'archived'] as const;
 const MESSAGE_ROLE_VALUES = ['user', 'assistant', 'system'] as const;
 const FILE_EDIT_KIND_VALUES = ['create', 'edit', 'delete'] as const;
 const SHARE_ROLE_VALUES = ['viewer', 'editor'] as const;
-const SKILL_SCOPE_VALUES = ['personal', 'agent', 'global'] as const;
-const PERSONA_SCOPE_VALUES = ['personal', 'global'] as const;
-const MEMORY_SCOPE_VALUES = ['personal', 'agent', 'project', 'global'] as const;
+const SKILL_SCOPE_VALUES = ['personal', 'global'] as const;
+const MEMORY_SCOPE_VALUES = ['personal', 'project', 'global'] as const;
+const MCP_TRANSPORT_VALUES = ['stdio', 'http', 'sse'] as const;
 const HIL_STATE_VALUES = ['pending', 'resolved', 'timed_out', 'cancelled'] as const;
 const AUDIT_EVENT_TYPE_VALUES = [
   'tool_blocked',
@@ -45,63 +45,31 @@ const WORKSPACE_PROVIDER_VALUES = [
 
 /** All `agent_*` tables, keyed by their logical names. */
 export const agentSchema: FlowlibPluginSchema = {
-  // ─── Agent definitions ──────────────────────────────────────────────
-  agent_definitions: {
-    tableName: 'agent_definitions',
+  // ─── MCP servers (org-scoped catalogue) ─────────────────────────────
+  // MCP servers are configured once at the org level and toggled per
+  // session via `agent_sessions.enabledMcpServerIds`. Mirrors how
+  // credentials are scoped — define once, opt in per chat.
+  agent_mcp_servers: {
+    tableName: 'agent_mcp_servers',
     fields: {
       id: { type: 'uuid', primaryKey: true, defaultValue: 'uuid()' },
       orgId: { type: 'string', required: false, index: true },
       name: { type: 'string', required: true },
       description: { type: 'text', required: false },
-      providerId: { type: 'string', required: true, index: true },
-      providerConfig: {
+      transport: {
+        type: MCP_TRANSPORT_VALUES as unknown as string[],
+        required: true,
+      },
+      // Transport-specific. For `stdio`: `{ command, args, env }`.
+      // For `http` / `sse`: `{ url, headers }`.
+      config: {
         type: 'json',
         required: true,
         defaultValue: '{}',
         typeAnnotation: 'Record<string, unknown>',
-        jsonMode: true,
-      },
-      workspaceId: {
-        type: 'uuid',
-        required: false,
-        index: true,
-      },
-      personaId: { type: 'uuid', required: false },
-      personaText: { type: 'text', required: false },
-      defaultModel: { type: 'string', required: false },
-      mcpServers: {
-        type: 'json',
-        required: true,
-        defaultValue: '{}',
-        typeAnnotation: 'Record<string, unknown>',
-        jsonMode: true,
-      },
-      enabledTools: {
-        type: 'json',
-        required: false,
-        typeAnnotation: 'string[]',
-        jsonMode: true,
-      },
-      denyList: {
-        type: 'json',
-        required: false,
-        typeAnnotation: 'string[]',
-        jsonMode: true,
-      },
-      exposeFlowlibActions: { type: 'boolean', required: true, defaultValue: false },
-      toolOutputBudget: {
-        type: 'json',
-        required: true,
-        defaultValue: '{"lines":100,"bytes":4096}',
-        typeAnnotation: '{ lines: number; bytes: number }',
         jsonMode: true,
       },
       createdBy: { type: 'string', required: true, index: true },
-      visibility: {
-        type: VISIBILITY_VALUES as unknown as string[],
-        required: true,
-        defaultValue: 'private',
-      },
       createdAt: { type: 'date', required: true, defaultValue: 'now()' },
       updatedAt: { type: 'date', required: true, defaultValue: 'now()' },
     },
@@ -161,25 +129,44 @@ export const agentSchema: FlowlibPluginSchema = {
   },
 
   // ─── Sessions ───────────────────────────────────────────────────────
+  // A session is a chat. It holds its own provider/model/MCP/tool config
+  // — there is no separate "agent definition" preset. Sensible defaults
+  // are filled in at create time so `POST /sessions { }` is enough to
+  // start chatting.
   agent_sessions: {
     tableName: 'agent_sessions',
     fields: {
       id: { type: 'uuid', primaryKey: true, defaultValue: 'uuid()' },
       orgId: { type: 'string', required: false, index: true },
-      agentId: {
-        type: 'uuid',
-        required: true,
-        index: true,
-        references: { table: 'agent_definitions', field: 'id', onDelete: 'cascade' },
-      },
       providerSessionId: { type: 'string', required: true, index: true },
       title: { type: 'string', required: true, defaultValue: 'New chat' },
+      // ── Provider / model ──
+      providerId: { type: 'string', required: true, index: true },
+      providerConfig: {
+        type: 'json',
+        required: true,
+        defaultValue: '{}',
+        typeAnnotation: 'Record<string, unknown>',
+        jsonMode: true,
+      },
       model: { type: 'string', required: false },
       permissionMode: { type: 'string', required: false },
+      // ── System prompt (free-form preamble for the LLM) ──
+      systemPrompt: { type: 'text', required: false },
+      // ── Workspace ──
       workspaceId: {
         type: 'uuid',
         required: false,
         references: { table: 'agent_workspaces', field: 'id' },
+      },
+      // ── MCP / tools ──
+      // Org-defined MCP servers opted in for this chat.
+      enabledMcpServerIds: {
+        type: 'json',
+        required: true,
+        defaultValue: '[]',
+        typeAnnotation: 'string[]',
+        jsonMode: true,
       },
       enabledTools: {
         type: 'json',
@@ -187,12 +174,21 @@ export const agentSchema: FlowlibPluginSchema = {
         typeAnnotation: 'string[]',
         jsonMode: true,
       },
-      extraDenied: {
+      denyList: {
         type: 'json',
         required: false,
         typeAnnotation: 'string[]',
         jsonMode: true,
       },
+      exposeFlowlibActions: { type: 'boolean', required: true, defaultValue: false },
+      toolOutputBudget: {
+        type: 'json',
+        required: true,
+        defaultValue: '{"lines":100,"bytes":4096}',
+        typeAnnotation: '{ lines: number; bytes: number }',
+        jsonMode: true,
+      },
+      // ── Ownership / lifecycle ──
       createdBy: { type: 'string', required: true, index: true },
       visibility: {
         type: VISIBILITY_VALUES as unknown as string[],
@@ -373,34 +369,9 @@ export const agentSchema: FlowlibPluginSchema = {
     order: 130,
   },
 
-  // ─── Personas ───────────────────────────────────────────────────────
-  agent_personas: {
-    tableName: 'agent_personas',
-    fields: {
-      id: { type: 'uuid', primaryKey: true, defaultValue: 'uuid()' },
-      orgId: { type: 'string', required: false, index: true },
-      name: { type: 'string', required: true },
-      description: { type: 'string', required: true },
-      systemPrompt: { type: 'text', required: true },
-      recommendedTools: {
-        type: 'json',
-        required: false,
-        typeAnnotation: 'string[]',
-        jsonMode: true,
-      },
-      scope: {
-        type: PERSONA_SCOPE_VALUES as unknown as string[],
-        required: true,
-        defaultValue: 'personal',
-      },
-      ownerId: { type: 'string', required: false, index: true },
-      createdAt: { type: 'date', required: true, defaultValue: 'now()' },
-      updatedAt: { type: 'date', required: true, defaultValue: 'now()' },
-    },
-    order: 140,
-  },
-
   // ─── Memories ──────────────────────────────────────────────────────
+  // Memories are scoped to a user, project, or org-globally. There's no
+  // per-agent scope because there's no agent_definitions table.
   agent_memories: {
     tableName: 'agent_memories',
     fields: {
@@ -412,12 +383,6 @@ export const agentSchema: FlowlibPluginSchema = {
         index: true,
       },
       userId: { type: 'string', required: false, index: true },
-      agentId: {
-        type: 'uuid',
-        required: false,
-        index: true,
-        references: { table: 'agent_definitions', field: 'id', onDelete: 'cascade' },
-      },
       projectId: {
         type: 'uuid',
         required: false,

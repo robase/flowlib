@@ -12,17 +12,9 @@
  * Tenant-scoped on every read; cross-tenant access returns 404.
  */
 
-import type {
-  FlowlibPluginEndpoint,
-  PluginEndpointResponse,
-} from '@flowlib/core';
+import type { FlowlibPluginEndpoint, PluginEndpointResponse } from '@flowlib/core';
 import type { PluginContext } from '../plugin-context';
-import {
-  badRequest,
-  notFound,
-  safeHandler,
-  type EndpointDeps,
-} from './helpers';
+import { badRequest, notFound, safeHandler, type EndpointDeps } from './helpers';
 
 interface CreateProjectBody {
   name?: string;
@@ -32,9 +24,7 @@ interface CreateProjectBody {
 
 interface UpdateProjectBody extends CreateProjectBody {}
 
-async function listProjects(
-  deps: EndpointDeps,
-): Promise<PluginEndpointResponse> {
+async function listProjects(deps: EndpointDeps): Promise<PluginEndpointResponse> {
   const rows = await deps.repos.projects.list({ orgId: deps.auth.orgId });
   return { body: { data: rows } };
 }
@@ -42,13 +32,13 @@ async function listProjects(
 async function getProject(deps: EndpointDeps): Promise<PluginEndpointResponse> {
   const id = deps.endpointCtx.params.id;
   const row = await deps.repos.projects.findById(id, deps.auth.orgId);
-  if (!row) return notFound('Project not found');
+  if (!row) {
+    return notFound('Project not found');
+  }
   return { body: row };
 }
 
-async function createProject(
-  deps: EndpointDeps,
-): Promise<PluginEndpointResponse> {
+async function createProject(deps: EndpointDeps): Promise<PluginEndpointResponse> {
   const body = (deps.endpointCtx.body ?? {}) as CreateProjectBody;
   if (!body.name || typeof body.name !== 'string') {
     return badRequest('name is required');
@@ -63,12 +53,12 @@ async function createProject(
   return { status: 201, body: created };
 }
 
-async function updateProject(
-  deps: EndpointDeps,
-): Promise<PluginEndpointResponse> {
+async function updateProject(deps: EndpointDeps): Promise<PluginEndpointResponse> {
   const id = deps.endpointCtx.params.id;
   const existing = await deps.repos.projects.findById(id, deps.auth.orgId);
-  if (!existing) return notFound('Project not found');
+  if (!existing) {
+    return notFound('Project not found');
+  }
   const body = (deps.endpointCtx.body ?? {}) as UpdateProjectBody;
   const updated = await deps.repos.projects.update(
     id,
@@ -79,23 +69,23 @@ async function updateProject(
     },
     deps.auth.orgId,
   );
-  if (!updated) return notFound('Project not found');
+  if (!updated) {
+    return notFound('Project not found');
+  }
   return { body: updated };
 }
 
-async function deleteProject(
-  deps: EndpointDeps,
-): Promise<PluginEndpointResponse> {
+async function deleteProject(deps: EndpointDeps): Promise<PluginEndpointResponse> {
   const id = deps.endpointCtx.params.id;
   const existing = await deps.repos.projects.findById(id, deps.auth.orgId);
-  if (!existing) return notFound('Project not found');
+  if (!existing) {
+    return notFound('Project not found');
+  }
   await deps.repos.projects.delete(id, deps.auth.orgId);
   return { body: { success: true } };
 }
 
-export function createProjectsEndpoints(
-  ctx: PluginContext,
-): FlowlibPluginEndpoint[] {
+export function createProjectsEndpoints(ctx: PluginContext): FlowlibPluginEndpoint[] {
   return [
     {
       method: 'GET',

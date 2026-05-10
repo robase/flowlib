@@ -40,11 +40,7 @@ function makeHooks(
   };
 }
 import { runTurn } from '../run-turn';
-import type {
-  PersistenceCallbacks,
-  SessionContext,
-  SessionLogger,
-} from '../types';
+import type { PersistenceCallbacks, SessionContext, SessionLogger } from '../types';
 
 // ─── Helpers ──────────────────────────────────────────────────────────
 
@@ -55,7 +51,9 @@ const auth: AgentsAuthContext = {
   teamIds: [],
 };
 
-function makeLogger(): SessionLogger & { entries: Array<{ level: string; msg: string; meta?: unknown }> } {
+function makeLogger(): SessionLogger & {
+  entries: Array<{ level: string; msg: string; meta?: unknown }>;
+} {
   const entries: Array<{ level: string; msg: string; meta?: unknown }> = [];
   const log = (level: string) => (msg: string, meta?: Record<string, unknown>) => {
     entries.push({ level, msg, meta });
@@ -69,11 +67,15 @@ function makeLogger(): SessionLogger & { entries: Array<{ level: string; msg: st
   };
 }
 
-function makePersistence(): PersistenceCallbacks & { calls: Array<{ name: string; arg: unknown }> } {
+function makePersistence(): PersistenceCallbacks & {
+  calls: Array<{ name: string; arg: unknown }>;
+} {
   const calls: Array<{ name: string; arg: unknown }> = [];
-  const record = <T>(name: keyof PersistenceCallbacks) => async (arg: T) => {
-    calls.push({ name, arg });
-  };
+  const record =
+    <T>(name: keyof PersistenceCallbacks) =>
+    async (arg: T) => {
+      calls.push({ name, arg });
+    };
   return {
     onMessageStart: record('onMessageStart'),
     onTextDelta: record('onTextDelta'),
@@ -86,7 +88,10 @@ function makePersistence(): PersistenceCallbacks & { calls: Array<{ name: string
   };
 }
 
-function makeMockProvider(events: AgentEvent[], opts?: { onPrompt?: (input: PromptInput) => void; throwOnPrompt?: Error }): AgentProvider {
+function makeMockProvider(
+  events: AgentEvent[],
+  opts?: { onPrompt?: (input: PromptInput) => void; throwOnPrompt?: Error },
+): AgentProvider {
   return {
     id: 'mock',
     name: 'Mock',
@@ -106,12 +111,16 @@ function makeMockProvider(events: AgentEvent[], opts?: { onPrompt?: (input: Prom
     },
     prompt(input) {
       opts?.onPrompt?.(input);
-      if (opts?.throwOnPrompt) {throw opts.throwOnPrompt;}
+      if (opts?.throwOnPrompt) {
+        throw opts.throwOnPrompt;
+      }
       // Return an async generator that yields the fixed events.
       // Honour the input.abortSignal so abort tests can short-circuit.
       return (async function* () {
         for (const e of events) {
-          if (input.abortSignal.aborted) {return;}
+          if (input.abortSignal.aborted) {
+            return;
+          }
           yield e;
         }
       })();
@@ -127,10 +136,7 @@ interface BuiltCtx {
   abortController: AbortController;
 }
 
-function buildCtx(opts: {
-  provider: AgentProvider;
-  hooks?: HookPipeline;
-}): BuiltCtx {
+function buildCtx(opts: { provider: AgentProvider; hooks?: HookPipeline }): BuiltCtx {
   const persistence = makePersistence();
   const logger = makeLogger();
   const emitted: AgentEvent[] = [];
@@ -208,7 +214,13 @@ describe('runTurn — text-delta + message-complete', () => {
 describe('runTurn — tool flow', () => {
   it('fires preToolUse before emit, postToolUse before tool-result emit', async () => {
     const events: AgentEvent[] = [
-      { type: 'tool-call', messageId: 'm1', id: 't1', name: 'gmail_send', input: { to: 'a@b.com' } },
+      {
+        type: 'tool-call',
+        messageId: 'm1',
+        id: 't1',
+        name: 'gmail_send',
+        input: { to: 'a@b.com' },
+      },
       { type: 'tool-result', messageId: 'm1', id: 't1', output: { ok: true } },
     ];
     const provider = makeMockProvider(events);
@@ -260,7 +272,10 @@ describe('runTurn — tool flow', () => {
 
     await runTurn(built.ctx, defaultPrompt(built.ctx.abortSignal));
 
-    const toolCallEmit = built.emitted.find((e) => e.type === 'tool-call')! as Extract<AgentEvent, { type: 'tool-call' }>;
+    const toolCallEmit = built.emitted.find((e) => e.type === 'tool-call')! as Extract<
+      AgentEvent,
+      { type: 'tool-call' }
+    >;
     expect(toolCallEmit.input).toEqual({ secret: 'REDACTED' });
 
     const persistedToolCall = built.persistence.calls.find((c) => c.name === 'onToolCall');
@@ -269,7 +284,13 @@ describe('runTurn — tool flow', () => {
 
   it('preToolUse { continue: false } synthesises error tool-result and suppresses provider result', async () => {
     const events: AgentEvent[] = [
-      { type: 'tool-call', messageId: 'm1', id: 't1', name: 'dangerous', input: { cmd: 'rm -rf /' } },
+      {
+        type: 'tool-call',
+        messageId: 'm1',
+        id: 't1',
+        name: 'dangerous',
+        input: { cmd: 'rm -rf /' },
+      },
       { type: 'tool-result', messageId: 'm1', id: 't1', output: 'should be suppressed' },
     ];
     const provider = makeMockProvider(events);
@@ -282,7 +303,9 @@ describe('runTurn — tool flow', () => {
 
     const result = await runTurn(built.ctx, defaultPrompt(built.ctx.abortSignal));
 
-    const toolResultEvents = built.emitted.filter((e) => e.type === 'tool-result') as Array<Extract<AgentEvent, { type: 'tool-result' }>>;
+    const toolResultEvents = built.emitted.filter((e) => e.type === 'tool-result') as Array<
+      Extract<AgentEvent, { type: 'tool-result' }>
+    >;
     expect(toolResultEvents).toHaveLength(1);
     expect(toolResultEvents[0].isError).toBe(true);
     expect(toolResultEvents[0].output).toEqual({ error: 'denied: dangerous' });
@@ -364,7 +387,10 @@ describe('runTurn — tool flow', () => {
 
     await runTurn(built.ctx, defaultPrompt(built.ctx.abortSignal));
 
-    const toolResult = built.emitted.find((e) => e.type === 'tool-result') as Extract<AgentEvent, { type: 'tool-result' }>;
+    const toolResult = built.emitted.find((e) => e.type === 'tool-result') as Extract<
+      AgentEvent,
+      { type: 'tool-result' }
+    >;
     expect(toolResult.output).toEqual({ secret: 'REDACTED' });
   });
 });
@@ -373,7 +399,9 @@ describe('runTurn — abort handling', () => {
   it('abortSignal aborting mid-stream ends with reason "stopped"', async () => {
     // Yield events with a delay so abort can land between them.
     let resolveGate: () => void = () => {};
-    const gate = new Promise<void>((r) => { resolveGate = r; });
+    const gate = new Promise<void>((r) => {
+      resolveGate = r;
+    });
 
     const provider: AgentProvider = {
       id: 'mock-async',
@@ -395,7 +423,9 @@ describe('runTurn — abort handling', () => {
       async *prompt(input: PromptInput): AsyncGenerator<AgentEvent> {
         yield { type: 'text-delta', messageId: 'm1', text: 'first' };
         await gate; // wait for the test to abort
-        if (input.abortSignal.aborted) {return;}
+        if (input.abortSignal.aborted) {
+          return;
+        }
         yield { type: 'text-delta', messageId: 'm1', text: 'should not arrive' };
       },
     };
@@ -412,7 +442,9 @@ describe('runTurn — abort handling', () => {
 
     expect(result.reason).toBe('stopped');
     expect(built.emitted.some((e) => e.type === 'text-delta' && e.text === 'first')).toBe(true);
-    expect(built.emitted.some((e) => e.type === 'text-delta' && e.text === 'should not arrive')).toBe(false);
+    expect(
+      built.emitted.some((e) => e.type === 'text-delta' && e.text === 'should not arrive'),
+    ).toBe(false);
     // Closing session-end with reason 'stopped'.
     const last = built.emitted[built.emitted.length - 1];
     expect(last).toMatchObject({ type: 'session-end', reason: 'stopped' });

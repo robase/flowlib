@@ -148,13 +148,9 @@ export interface ClaudeCodeAgentProvider extends AgentProvider {
   ): boolean;
 }
 
-export function claudeCodeProvider(
-  options: ClaudeCodeProviderOptions,
-): ClaudeCodeAgentProvider {
+export function claudeCodeProvider(options: ClaudeCodeProviderOptions): ClaudeCodeAgentProvider {
   if (!options.credentialId || typeof options.credentialId !== 'string') {
-    throw new Error(
-      '[agents/claude-code] claudeCodeProvider({ credentialId }) is required',
-    );
+    throw new Error('[agents/claude-code] claudeCodeProvider({ credentialId }) is required');
   }
   if (typeof options.apiKeyResolver !== 'function') {
     throw new Error(
@@ -221,9 +217,7 @@ export function claudeCodeProvider(
           !Array.isArray(cfg.disallowedTools) ||
           !cfg.disallowedTools.every((t) => typeof t === 'string')
         ) {
-          throw new Error(
-            '[agents/claude-code] disallowedTools must be an array of strings',
-          );
+          throw new Error('[agents/claude-code] disallowedTools must be an array of strings');
         }
         out.disallowedTools = [...(cfg.disallowedTools as string[])];
       }
@@ -233,9 +227,7 @@ export function claudeCodeProvider(
           !Array.isArray(cfg.allowedTools) ||
           !cfg.allowedTools.every((t) => typeof t === 'string')
         ) {
-          throw new Error(
-            '[agents/claude-code] allowedTools must be an array of strings',
-          );
+          throw new Error('[agents/claude-code] allowedTools must be an array of strings');
         }
         out.allowedTools = [...(cfg.allowedTools as string[])];
       }
@@ -272,8 +264,7 @@ export function claudeCodeProvider(
         apiKey,
         cwd: workspace.rootPath,
         systemPrompt: input.systemPrompt,
-        permissionMode:
-          extras.permissionMode ?? cfg.permissionMode ?? 'acceptEdits',
+        permissionMode: extras.permissionMode ?? cfg.permissionMode ?? 'acceptEdits',
         defaultModel: cfg.defaultModel ?? options.defaultModel,
         disallowedTools: cfg.disallowedTools,
         allowedTools: cfg.allowedTools,
@@ -354,10 +345,7 @@ export function claudeCodeProvider(
               const pending = pendingFileEdits.get(ev.id);
               if (pending && !ev.isError) {
                 const path = extractFileEditPath(pending.input);
-                const { before, after } = extractFileEditContents(
-                  pending.toolName,
-                  pending.input,
-                );
+                const { before, after } = extractFileEditContents(pending.toolName, pending.input);
                 if (path) {
                   yield {
                     type: 'file-edit',
@@ -407,7 +395,9 @@ export function claudeCodeProvider(
 
     async closeSession(providerSessionId: string) {
       const session = sessions.get(providerSessionId);
-      if (!session) {return;}
+      if (!session) {
+        return;
+      }
       sessions.delete(providerSessionId);
       try {
         await session.close();
@@ -429,7 +419,9 @@ export function claudeCodeProvider(
       handler: ClaudePermissionHandler | undefined,
     ): boolean {
       const session = sessions.get(providerSessionId);
-      if (!session) {return false;}
+      if (!session) {
+        return false;
+      }
       session.setPermissionHandler(handler);
       return true;
     },

@@ -6,11 +6,7 @@
  * matching what real implementations do.
  */
 import { describe, it, expect } from 'vitest';
-import {
-  walkClaudeMd,
-  OutOfRootError,
-  DEFAULT_MAX_BYTES_PER_FILE,
-} from '../claude-md-walk';
+import { walkClaudeMd, OutOfRootError, DEFAULT_MAX_BYTES_PER_FILE } from '../claude-md-walk';
 import type { WorkspaceHandle } from '../../workspaces/types';
 
 /** Build a fake WorkspaceHandle backed by a `Map<path, content>`. */
@@ -70,11 +66,7 @@ describe('walkClaudeMd', () => {
       'pkg/CLAUDE.md': '# pkg',
       'pkg/plugins/agents/CLAUDE.md': '# agents',
     });
-    const files = await walkClaudeMd(
-      handle,
-      '/ws/pkg/plugins/agents',
-      '/ws',
-    );
+    const files = await walkClaudeMd(handle, '/ws/pkg/plugins/agents', '/ws');
     expect(files.map((f) => f.path)).toEqual([
       'CLAUDE.md',
       'pkg/CLAUDE.md',
@@ -95,7 +87,9 @@ describe('walkClaudeMd', () => {
       async readFile(path) {
         reads.push(path);
         // Pretend root has a CLAUDE.md so we know the walker reached it.
-        if (path === 'CLAUDE.md') {return '# root';}
+        if (path === 'CLAUDE.md') {
+          return '# root';
+        }
         throw new Error(`ENOENT: ${path}`);
       },
       async writeFile() {},
@@ -103,19 +97,10 @@ describe('walkClaudeMd', () => {
         return [];
       },
     };
-    const files = await walkClaudeMd(
-      handle,
-      '/tenants/acme/ws/pkg',
-      '/tenants/acme/ws',
-    );
+    const files = await walkClaudeMd(handle, '/tenants/acme/ws/pkg', '/tenants/acme/ws');
     // Should have attempted reads at exactly two levels: root and pkg.
     // Each level tries CLAUDE.md and AGENTS.md, so 4 attempts total.
-    expect(reads).toEqual([
-      'CLAUDE.md',
-      'AGENTS.md',
-      'pkg/CLAUDE.md',
-      'pkg/AGENTS.md',
-    ]);
+    expect(reads).toEqual(['CLAUDE.md', 'AGENTS.md', 'pkg/CLAUDE.md', 'pkg/AGENTS.md']);
     // No reads at any path that would imply walking past root
     // (e.g. `../CLAUDE.md`, `tenants/CLAUDE.md`, `/CLAUDE.md`).
     for (const r of reads) {
@@ -128,24 +113,24 @@ describe('walkClaudeMd', () => {
 
   it('throws OutOfRootError when currentDir is outside rootPath', async () => {
     const handle = fakeWorkspace({});
-    await expect(
-      walkClaudeMd(handle, '/some/other/path', '/ws'),
-    ).rejects.toBeInstanceOf(OutOfRootError);
+    await expect(walkClaudeMd(handle, '/some/other/path', '/ws')).rejects.toBeInstanceOf(
+      OutOfRootError,
+    );
   });
 
   it('throws OutOfRootError for a sibling path that shares a prefix', async () => {
     // `/ws-other` starts with `/ws` lexically but is NOT inside `/ws`.
     const handle = fakeWorkspace({});
-    await expect(
-      walkClaudeMd(handle, '/ws-other/sub', '/ws'),
-    ).rejects.toBeInstanceOf(OutOfRootError);
+    await expect(walkClaudeMd(handle, '/ws-other/sub', '/ws')).rejects.toBeInstanceOf(
+      OutOfRootError,
+    );
   });
 
   it('throws OutOfRootError when currentDir contains `..` traversal', async () => {
     const handle = fakeWorkspace({});
-    await expect(
-      walkClaudeMd(handle, '/ws/sub/../other', '/ws'),
-    ).rejects.toBeInstanceOf(OutOfRootError);
+    await expect(walkClaudeMd(handle, '/ws/sub/../other', '/ws')).rejects.toBeInstanceOf(
+      OutOfRootError,
+    );
   });
 
   it('truncates files larger than maxBytesPerFile', async () => {

@@ -13,7 +13,7 @@
  */
 
 import type { AgentWorkspace, WorkspaceProviderId } from '../../shared/types';
-import type { AgentsApiClientOptions } from './agents.api';
+import type { AgentsApiClientOptions } from './client-options';
 
 export interface CreateWorkspaceInput {
   name: string;
@@ -88,8 +88,6 @@ export class WorkspacesApiClient {
   }
 }
 
-export function createWorkspacesApiClient(
-  options?: AgentsApiClientOptions,
-): WorkspacesApiClient {
+export function createWorkspacesApiClient(options?: AgentsApiClientOptions): WorkspacesApiClient {
   return new WorkspacesApiClient(options);
 }

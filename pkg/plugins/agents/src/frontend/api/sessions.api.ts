@@ -20,22 +20,43 @@
  * (Stream M).
  */
 
-import type { AgentSession, AgentSessionStatus } from '../../shared/types';
-import type { AgentsApiClientOptions } from './agents.api';
+import type {
+  AgentProviderId,
+  AgentSession,
+  AgentSessionStatus,
+  ToolOutputBudget,
+} from '../../shared/types';
+import type { AgentsApiClientOptions } from './client-options';
 
 export interface CreateSessionInput {
-  agentId: string;
   title?: string;
+  providerId?: AgentProviderId;
+  providerConfig?: Record<string, unknown>;
   model?: string | null;
   permissionMode?: string | null;
+  systemPrompt?: string | null;
   workspaceId?: string | null;
+  enabledMcpServerIds?: string[];
   enabledTools?: string[] | null;
-  extraDenied?: string[] | null;
+  denyList?: string[] | null;
+  exposeFlowlibActions?: boolean;
+  toolOutputBudget?: ToolOutputBudget;
   visibility?: 'private' | 'shared' | 'public';
 }
 
 export interface UpdateSessionInput {
   title?: string;
+  providerId?: AgentProviderId;
+  providerConfig?: Record<string, unknown>;
+  model?: string | null;
+  permissionMode?: string | null;
+  systemPrompt?: string | null;
+  workspaceId?: string | null;
+  enabledMcpServerIds?: string[];
+  enabledTools?: string[] | null;
+  denyList?: string[] | null;
+  exposeFlowlibActions?: boolean;
+  toolOutputBudget?: ToolOutputBudget;
   status?: AgentSessionStatus;
   visibility?: 'private' | 'shared' | 'public';
 }
@@ -80,10 +101,9 @@ export class SessionsApiClient {
     return (await response.json()) as T;
   }
 
-  listSessionsForAgent(agentId: string): Promise<AgentSession[]> {
-    return this.request<AgentSession[]>(
-      `/agents/${encodeURIComponent(agentId)}/sessions`,
-    );
+  /** List all sessions for the active org. */
+  listSessions(): Promise<{ data: AgentSession[] }> {
+    return this.request<{ data: AgentSession[] }>('/sessions');
   }
 
   getSession(sessionId: string): Promise<AgentSession> {

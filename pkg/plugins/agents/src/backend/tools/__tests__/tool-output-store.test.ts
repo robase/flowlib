@@ -151,9 +151,7 @@ describe('createToolOutputStore', () => {
 
     it('falls back to in-memory storage on workspace.writeFile failure', async () => {
       const ws = makeWorkspace();
-      const writeFile = vi
-        .spyOn(ws, 'writeFile')
-        .mockRejectedValueOnce(new Error('disk full'));
+      const writeFile = vi.spyOn(ws, 'writeFile').mockRejectedValueOnce(new Error('disk full'));
 
       const warn = vi.fn();
       const store = createToolOutputStore({
@@ -172,9 +170,7 @@ describe('createToolOutputStore', () => {
       expect(result.fullOutputRef).toBe('call_write_fail');
       expect(result.inline).toContain('workspace write failed');
       expect(result.inline).toContain('session storage fallback');
-      expect(warn).toHaveBeenCalledWith(
-        expect.stringContaining('workspace.writeFile failed'),
-      );
+      expect(warn).toHaveBeenCalledWith(expect.stringContaining('workspace.writeFile failed'));
       expect(writeFile).toHaveBeenCalledTimes(1);
 
       // The full output is now retrievable from the in-memory map.
@@ -217,9 +213,7 @@ describe('createToolOutputStore', () => {
         workspace: ws,
       });
 
-      expect(ws.writes[0].path).toBe(
-        '.flowlib/sessions/abc/outputs/call_subdir.txt',
-      );
+      expect(ws.writes[0].path).toBe('.flowlib/sessions/abc/outputs/call_subdir.txt');
     });
   });
 

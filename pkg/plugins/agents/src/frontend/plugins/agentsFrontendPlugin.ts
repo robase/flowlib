@@ -16,12 +16,11 @@
  * routes out so the two streams stay merge-clean.
  */
 
-import { MessageSquare } from 'lucide-react';
+import { MessageSquare, Plug } from 'lucide-react';
 import type { ComponentType, ReactNode } from 'react';
 import { AgentsApiProvider } from '../api/context';
 import { AgentsPage } from '../routes/AgentsPage';
-import { AgentFormPage } from '../routes/AgentFormPage';
-import { AgentDetailPage } from '../routes/AgentDetailPage';
+import { McpServersPage } from '../routes/McpServersPage';
 
 /**
  * Structural mirror of `FlowlibFrontendPlugin` from `@flowlib/ui`.
@@ -59,15 +58,20 @@ export const agentsFrontendPlugin: FlowlibFrontendPluginShape = {
 
   sidebar: [
     {
-      label: 'Agents',
+      label: 'Chats',
       icon: MessageSquare,
       path: '/agents',
       position: 'top',
     },
+    {
+      label: 'MCP servers',
+      icon: Plug,
+      path: '/agents/mcp-servers',
+      position: 'top',
+    },
   ],
 
-  // The plugin needs access to the three API clients at runtime. Wrap
-  // the entire React tree in `AgentsApiProvider` so any descendant
+  // Wrap the entire React tree in `AgentsApiProvider` so any descendant
   // route can call `useAgentsApiClients()`. Defaults to relative
   // (same-origin) URLs — consumer hosts that mount Flowlib at the same
   // origin as their backend get this for free.
@@ -75,8 +79,7 @@ export const agentsFrontendPlugin: FlowlibFrontendPluginShape = {
 
   routes: [
     { path: '/agents', component: AgentsPage },
-    { path: '/agents/new', component: AgentFormPage },
-    { path: '/agents/:agentId', component: AgentDetailPage },
+    { path: '/agents/mcp-servers', component: McpServersPage },
   ],
 };
 

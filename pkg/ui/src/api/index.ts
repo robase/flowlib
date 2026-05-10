@@ -15,3 +15,4 @@ export * from './credentials.api';
 export * from './triggers.api';
 export * from './agent-tools.api';
 export * from './node-data.api';
+export * from './settings.api';

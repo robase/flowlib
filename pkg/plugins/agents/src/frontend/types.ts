@@ -7,7 +7,7 @@
  */
 
 export type {
-  AgentDefinition,
+  AgentMcpServer,
   AgentWorkspace,
   AgentSession,
   AgentMessage,
@@ -16,6 +16,7 @@ export type {
   AgentVisibility,
   AgentSessionStatus,
   AgentProviderId,
+  McpTransport,
   ToolOutputBudget,
   WorkspaceProviderId,
 } from '../shared/types';

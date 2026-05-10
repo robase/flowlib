@@ -1,6 +1,15 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router';
-import { ChevronLeft, ChevronRight, Home, FileText, KeyRound, Sun, Moon } from 'lucide-react';
+import {
+  ChevronLeft,
+  ChevronRight,
+  Home,
+  FileText,
+  KeyRound,
+  Settings as SettingsIcon,
+  Sun,
+  Moon,
+} from 'lucide-react';
 import { cn } from '~/lib/utils';
 import { Button } from '../ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '../ui/tooltip';
@@ -35,6 +44,7 @@ export function AppSideMenu({ basePath = '' }: AppSideMenuProps) {
     { icon: Home, label: 'Home', href: homeHref },
     { icon: FileText, label: 'Flow Runs', href: buildFrontendRoute(basePath, '/flow-runs') },
     { icon: KeyRound, label: 'Credentials', href: buildFrontendRoute(basePath, '/credentials') },
+    { icon: SettingsIcon, label: 'Settings', href: buildFrontendRoute(basePath, '/settings') },
   ];
 
   // Plugin-contributed sidebar items (top position = after defaults)

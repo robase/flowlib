@@ -14,26 +14,16 @@ import type { AgentEvent } from '../../shared/events';
 describe('ChatStream', () => {
   it('renders aria-live="polite" log container', () => {
     const html = renderToString(
-      <ChatStream
-        events={[]}
-        onPermissionRespond={() => {}}
-        onHilRespond={() => {}}
-      />,
+      <ChatStream events={[]} onPermissionRespond={() => {}} onHilRespond={() => {}} />,
     );
     expect(html).toContain('role="log"');
     expect(html).toContain('aria-live="polite"');
   });
 
   it('renders text-delta as an assistant bubble', () => {
-    const events: AgentEvent[] = [
-      { type: 'text-delta', messageId: 'a', text: 'hello world' },
-    ];
+    const events: AgentEvent[] = [{ type: 'text-delta', messageId: 'a', text: 'hello world' }];
     const html = renderToString(
-      <ChatStream
-        events={events}
-        onPermissionRespond={() => {}}
-        onHilRespond={() => {}}
-      />,
+      <ChatStream events={events} onPermissionRespond={() => {}} onHilRespond={() => {}} />,
     );
     expect(html).toContain('hello world');
     expect(html).toContain('data-role="assistant"');
@@ -62,11 +52,7 @@ describe('ChatStream', () => {
       },
     ];
     const html = renderToString(
-      <ChatStream
-        events={events}
-        onPermissionRespond={() => {}}
-        onHilRespond={() => {}}
-      />,
+      <ChatStream events={events} onPermissionRespond={() => {}} onHilRespond={() => {}} />,
     );
     expect(html).toContain('Approve');
     expect(html).toContain('Bash');
@@ -83,11 +69,7 @@ describe('ChatStream', () => {
       },
     ];
     const html = renderToString(
-      <ChatStream
-        events={events}
-        onPermissionRespond={() => {}}
-        onHilRespond={() => {}}
-      />,
+      <ChatStream events={events} onPermissionRespond={() => {}} onHilRespond={() => {}} />,
     );
     expect(html).toContain('src/foo.ts');
     // React SSR inserts an empty HTML comment between adjacent text
@@ -99,26 +81,15 @@ describe('ChatStream', () => {
 
   it('shows Thinking… when streaming with no events', () => {
     const html = renderToString(
-      <ChatStream
-        events={[]}
-        streaming
-        onPermissionRespond={() => {}}
-        onHilRespond={() => {}}
-      />,
+      <ChatStream events={[]} streaming onPermissionRespond={() => {}} onHilRespond={() => {}} />,
     );
     expect(html).toContain('Thinking');
   });
 
   it('renders session-end status', () => {
-    const events: AgentEvent[] = [
-      { type: 'session-end', reason: 'completed' },
-    ];
+    const events: AgentEvent[] = [{ type: 'session-end', reason: 'completed' }];
     const html = renderToString(
-      <ChatStream
-        events={events}
-        onPermissionRespond={() => {}}
-        onHilRespond={() => {}}
-      />,
+      <ChatStream events={events} onPermissionRespond={() => {}} onHilRespond={() => {}} />,
     );
     expect(html).toContain('Session ended');
     expect(html).toContain('completed');

@@ -43,16 +43,8 @@
  */
 
 import type { AgentsAuthContext } from '../../../shared/auth-context';
-import type {
-  CreateWorkspaceInput,
-  WorkspaceHandle,
-  WorkspaceProvider,
-} from '../types';
-import {
-  CloudflareSandboxHandle,
-  type OpencodeStarter,
-  type SandboxStub,
-} from './handle';
+import type { CreateWorkspaceInput, WorkspaceHandle, WorkspaceProvider } from '../types';
+import { CloudflareSandboxHandle, type OpencodeStarter, type SandboxStub } from './handle';
 
 /**
  * Lookup contract the provider uses to materialise a sandbox stub by id.
@@ -125,8 +117,26 @@ export interface CloudflareSandboxProvider extends WorkspaceProvider {
 
 /**
  * Build the stable sandbox identity used by both `getSandbox` and the
- * UI / audit log. Embeds tenant info so the DO key cannot collide
- * across orgs.
+ * UI / audit log.
+ *
+ * Cloudflare's Sandbox SDK rejects IDs longer than 63 chars and accepts
+ * only alphanumerics + `-` + `_`. With UUID orgIds and workspaceIds the
+ * naive `org:${orgId}/ws:${workspaceId}` form is 80 chars and contains
+ * `:` / `/`, both invalid. We collapse to a short, hyphen-separated form
+ * that keeps a per-org prefix for log readability while staying well
+ * under the limit:
+ *
+ *   o${orgId.slice(0, 8)}-${workspaceId}
+ *
+ * For UUID inputs that's 1 + 8 + 1 + 36 = 46 chars — safe. The
+ * 8-char org prefix is an audit-log hint, not a security boundary;
+ * tenant isolation comes from the DB layer (workspaces.org_id) +
+ * cross-tenant 404s in the endpoint, and the workspaceId UUID is itself
+ * globally unique.
+ *
+ * Non-alphanumeric characters in the inputs are normalised to hyphens
+ * defensively; if the result is still over 63 chars (e.g. caller used a
+ * very long custom workspaceId), we truncate.
  */
 export function buildSandboxName(
   auth: Pick<AgentsAuthContext, 'orgId'>,
@@ -138,7 +148,15 @@ export function buildSandboxName(
   if (!workspaceId) {
     throw new Error('cloudflareSandbox: workspaceId is required');
   }
-  return `org:${auth.orgId}/ws:${workspaceId}`;
+  // Cloudflare's preview-URL routing relies on DNS, which is
+  // case-insensitive. The Sandbox SDK refuses any id with uppercase
+  // letters when previewing exposed ports. Force lowercase here so
+  // mixed-case org/workspace UUIDs don't trip the SDK.
+  const sanitize = (s: string): string => s.toLowerCase().replace(/[^a-z0-9_-]/g, '-');
+  const prefix = sanitize(auth.orgId).slice(0, 8);
+  const ws = sanitize(workspaceId);
+  const id = `o${prefix}-${ws}`;
+  return id.length > 63 ? id.slice(0, 63) : id;
 }
 
 /**
@@ -154,13 +172,9 @@ function makeAuthRequiredError(method: string): Error {
   );
 }
 
-export function cloudflareSandbox(
-  options: CloudflareSandboxOptions,
-): CloudflareSandboxProvider {
+export function cloudflareSandbox(options: CloudflareSandboxOptions): CloudflareSandboxProvider {
   if (!options.namespaceBinding && !options.sandboxLookup) {
-    throw new Error(
-      'cloudflareSandbox: `namespaceBinding` is required',
-    );
+    throw new Error('cloudflareSandbox: `namespaceBinding` is required');
   }
 
   let activeEnv: CloudflareSandboxEnv | undefined;
@@ -174,8 +188,12 @@ export function cloudflareSandbox(
    *   3. throw — caller must wire one before invoking lifecycle methods
    */
   const getEnv = (): CloudflareSandboxEnv => {
-    if (activeEnv) {return activeEnv;}
-    if (options.envAccessor) {return options.envAccessor();}
+    if (activeEnv) {
+      return activeEnv;
+    }
+    if (options.envAccessor) {
+      return options.envAccessor();
+    }
     throw new Error(
       'cloudflareSandbox: no Worker env set. Call `setEnv(env)` from your request handler or supply `envAccessor` at construction.',
     );
@@ -191,9 +209,11 @@ export function cloudflareSandbox(
    * installed (the package is in `peerDependencies`, not `dependencies`).
    * `tsdown.deps.neverBundle` keeps the import external in builds.
    */
-  let sdkPromise: Promise<{
-    getSandbox: (ns: unknown, id: string) => SandboxStub;
-  }> | undefined;
+  let sdkPromise:
+    | Promise<{
+        getSandbox: (ns: unknown, id: string) => SandboxStub;
+      }>
+    | undefined;
 
   const loadSdk = (): Promise<{
     getSandbox: (ns: unknown, id: string) => SandboxStub;
@@ -228,14 +248,15 @@ export function cloudflareSandbox(
    * logged (via thrown errors that the caller can swallow) but don't
    * break workspace creation.
    */
-  const mountPersistent = async (
-    sandbox: SandboxStub,
-    auth: AgentsAuthContext,
-  ): Promise<void> => {
-    if (!options.persistentBucketBinding) {return;}
+  const mountPersistent = async (sandbox: SandboxStub, auth: AgentsAuthContext): Promise<void> => {
+    if (!options.persistentBucketBinding) {
+      return;
+    }
     const env = getEnv();
     const bucket = env[options.persistentBucketBinding];
-    if (!bucket) {return;}
+    if (!bucket) {
+      return;
+    }
     // We don't enforce mount semantics here in v1 — the SDK call is
     // wrapped because it may not exist on test stubs. Use a per-org
     // prefix so multiple orgs sharing one bucket stay isolated.
@@ -246,15 +267,13 @@ export function cloudflareSandbox(
         options: Record<string, unknown>,
       ) => Promise<void>;
     };
-    if (typeof stub.mountBucket !== 'function') {return;}
-    await stub.mountBucket(
-      options.persistentBucketBinding,
-      '/workspace/persistent',
-      {
-        localBucket: true,
-        prefix: `/org/${auth.orgId}`,
-      },
-    );
+    if (typeof stub.mountBucket !== 'function') {
+      return;
+    }
+    await stub.mountBucket(options.persistentBucketBinding, '/workspace/persistent', {
+      localBucket: true,
+      prefix: `/org/${auth.orgId}`,
+    });
   };
 
   const buildHandle = (
@@ -282,7 +301,9 @@ export function cloudflareSandbox(
     },
 
     async create(input: CreateWorkspaceInput): Promise<WorkspaceHandle> {
-      if (!input.auth?.orgId) {throw makeAuthRequiredError('create');}
+      if (!input.auth?.orgId) {
+        throw makeAuthRequiredError('create');
+      }
       const sandboxName = buildSandboxName(input.auth, input.workspaceId);
       const sandbox = await lookupSandbox(sandboxName);
 
@@ -302,21 +323,19 @@ export function cloudflareSandbox(
       return buildHandle(input.workspaceId, sandbox, sandboxName);
     },
 
-    async resolve(
-      workspaceId: string,
-      auth: AgentsAuthContext,
-    ): Promise<WorkspaceHandle> {
-      if (!auth?.orgId) {throw makeAuthRequiredError('resolve');}
+    async resolve(workspaceId: string, auth: AgentsAuthContext): Promise<WorkspaceHandle> {
+      if (!auth?.orgId) {
+        throw makeAuthRequiredError('resolve');
+      }
       const sandboxName = buildSandboxName(auth, workspaceId);
       const sandbox = await lookupSandbox(sandboxName);
       return buildHandle(workspaceId, sandbox, sandboxName);
     },
 
-    async destroy(
-      workspaceId: string,
-      auth: AgentsAuthContext,
-    ): Promise<void> {
-      if (!auth?.orgId) {throw makeAuthRequiredError('destroy');}
+    async destroy(workspaceId: string, auth: AgentsAuthContext): Promise<void> {
+      if (!auth?.orgId) {
+        throw makeAuthRequiredError('destroy');
+      }
       const sandboxName = buildSandboxName(auth, workspaceId);
       const sandbox = await lookupSandbox(sandboxName);
       await sandbox.destroy();

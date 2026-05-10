@@ -230,6 +230,19 @@ export const flowTriggers = pgTable('flowlib_flow_triggers', {
 });
 
 // =============================================================================
+// Settings — generic namespaced key/value store shared by core and plugins
+// =============================================================================
+
+export const settings = pgTable('flowlib_settings', {
+  key: text('key').primaryKey(),
+  namespace: text('namespace').notNull(),
+  value: jsonb('value').$type<unknown>(),
+  encrypted: boolean('encrypted').notNull().default(false),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+  updatedBy: text('updated_by'),
+});
+
+// =============================================================================
 // Chat Messages — persisted chat history scoped to flows
 // =============================================================================
 

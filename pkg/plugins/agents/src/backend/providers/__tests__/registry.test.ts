@@ -34,10 +34,9 @@ function makeProvider(id: string, name: string = id): AgentProvider {
 
 function makePluginContext(): PluginContext {
   const logs: Array<{ level: string; msg: string; meta?: unknown }> = [];
-  const log = (level: string) =>
-    (msg: string, meta?: unknown) => {
-      logs.push({ level, msg, meta });
-    };
+  const log = (level: string) => (msg: string, meta?: unknown) => {
+    logs.push({ level, msg, meta });
+  };
   const ctx = {
     options: {
       staticOrgId: 'default-org',

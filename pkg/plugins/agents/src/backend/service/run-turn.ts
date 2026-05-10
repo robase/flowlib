@@ -16,15 +16,8 @@
 
 import type { AgentEvent, ToolResultEvent } from '../../shared/events';
 import type { PromptInput } from '../providers/types';
-import type {
-  SessionContext,
-  RunResult,
-  PersistenceCallbacks,
-} from './types';
-import type {
-  HookDecision,
-  PostHookDecision,
-} from '../hooks/types';
+import type { SessionContext, RunResult, PersistenceCallbacks } from './types';
+import type { HookDecision, PostHookDecision } from '../hooks/types';
 
 /**
  * The reason we surface as the turn's end state. Mirrors
@@ -56,10 +49,7 @@ async function safeCallback(
  * write that fails shouldn't take down the loop; we just log and keep
  * draining.
  */
-async function safeEmit(
-  ctx: SessionContext,
-  event: AgentEvent,
-): Promise<void> {
+async function safeEmit(ctx: SessionContext, event: AgentEvent): Promise<void> {
   try {
     await ctx.emit(event);
   } catch (err) {
@@ -73,10 +63,7 @@ async function safeEmit(
 /**
  * Drain the provider iterator and run the loop.
  */
-export async function runTurn(
-  ctx: SessionContext,
-  prompt: PromptInput,
-): Promise<RunResult> {
+export async function runTurn(ctx: SessionContext, prompt: PromptInput): Promise<RunResult> {
   const startedAt = Date.now();
 
   // Loop-local state ─────────────────────────────────────────────────
@@ -139,7 +126,9 @@ export async function runTurn(
   if (iterator) {
     try {
       for await (const event of iterator) {
-        if (stopRequested) {break;}
+        if (stopRequested) {
+          break;
+        }
 
         switch (event.type) {
           case 'text-delta': {
@@ -186,9 +175,7 @@ export async function runTurn(
             }
 
             const resolvedInput =
-              decision.modifiedInput !== undefined
-                ? decision.modifiedInput
-                : event.input;
+              decision.modifiedInput !== undefined ? decision.modifiedInput : event.input;
 
             if (decision.terminate) {
               // Hard kill. Persist the (modified) call, then a
@@ -318,10 +305,7 @@ export async function runTurn(
             // `continue: false` here doesn't suppress the result —
             // the tool already ran. We mark it as an error so the
             // model sees the blocked outcome.
-            const isError =
-              postDecision.continue === false
-                ? true
-                : (event.isError ?? false);
+            const isError = postDecision.continue === false ? true : (event.isError ?? false);
 
             const finalEvent: ToolResultEvent = {
               type: 'tool-result',
@@ -402,7 +386,9 @@ export async function runTurn(
           }
         }
 
-        if (stopRequested) {break;}
+        if (stopRequested) {
+          break;
+        }
       }
     } catch (err) {
       endReason = 'error';

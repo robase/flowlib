@@ -1,63 +1,65 @@
 /**
  * REST endpoints for `agent_sessions` + `agent_messages`.
  *
+ * A session is a self-contained chat — provider, model, MCPs, tools all
+ * inline. There is no agent_definitions table to look up first; sensible
+ * defaults are filled in here so `POST /sessions {}` is enough to start
+ * chatting.
+ *
  * Routes:
  *
  *   GET    /sessions
  *   POST   /sessions                                    — create + provider.createSession
  *   GET    /sessions/:id                                — includes `doAgentName`
- *   PATCH  /sessions/:id                                — rename, visibility, archive
+ *   PATCH  /sessions/:id                                — model / MCPs / tools / system prompt
  *   DELETE /sessions/:id                                — provider.closeSession + archive row
  *   GET    /sessions/:id/messages?before=<seq>&limit=50
  *   POST   /sessions/:id/prompt                         — 501 (use WebSocket)
  *   POST   /sessions/:id/interrupt
- *
- * v1 prompts go via WebSocket through the Cloudflare Durable Object;
- * the HTTP `prompt` endpoint exists as a placeholder so the surface
- * stays forward-compatible with the deferred Express SSE deployment.
- *
- * Session responses include `doAgentName` — the tenant-scoped DO name
- * the frontend hands to `useAgent({ agent: 'AgentChatDO', name })`.
  */
 
-import type {
-  FlowlibPluginEndpoint,
-  PluginEndpointResponse,
-} from '@flowlib/core';
+import type { FlowlibPluginEndpoint, PluginEndpointResponse } from '@flowlib/core';
 import type { PluginContext } from '../plugin-context';
 import type { AgentProvider } from '../providers/types';
 import type {
+  AgentProviderId,
   AgentSession,
   AgentSessionStatus,
   AgentVisibility,
+  ToolOutputBudget,
 } from '../../shared/types';
 import { tenantScopedName } from '../cloudflare/tenant-scoped-id';
-import {
-  badRequest,
-  notFound,
-  notImplemented,
-  safeHandler,
-  type EndpointDeps,
-} from './helpers';
+import { badRequest, notFound, notImplemented, safeHandler, type EndpointDeps } from './helpers';
 
 interface CreateSessionBody {
-  agentId?: string;
   title?: string;
+  providerId?: AgentProviderId;
+  providerConfig?: Record<string, unknown>;
   model?: string | null;
   permissionMode?: string | null;
+  systemPrompt?: string | null;
   workspaceId?: string | null;
+  enabledMcpServerIds?: string[];
   enabledTools?: string[] | null;
-  extraDenied?: string[] | null;
+  denyList?: string[] | null;
+  exposeFlowlibActions?: boolean;
+  toolOutputBudget?: ToolOutputBudget;
   visibility?: AgentVisibility;
 }
 
 interface UpdateSessionBody {
   title?: string;
+  providerId?: AgentProviderId;
+  providerConfig?: Record<string, unknown>;
   model?: string | null;
   permissionMode?: string | null;
+  systemPrompt?: string | null;
   workspaceId?: string | null;
+  enabledMcpServerIds?: string[];
   enabledTools?: string[] | null;
-  extraDenied?: string[] | null;
+  denyList?: string[] | null;
+  exposeFlowlibActions?: boolean;
+  toolOutputBudget?: ToolOutputBudget;
   visibility?: AgentVisibility;
   status?: AgentSessionStatus;
 }
@@ -72,77 +74,96 @@ function withDoAgentName(
   };
 }
 
-function getProvider(
-  pluginCtx: PluginContext,
-  providerId: string,
-): AgentProvider | undefined {
+function getProvider(pluginCtx: PluginContext, providerId: string): AgentProvider | undefined {
   return pluginCtx.registries.providers.get(providerId);
 }
 
-async function listSessions(
-  deps: EndpointDeps,
-): Promise<PluginEndpointResponse> {
+async function listSessions(deps: EndpointDeps): Promise<PluginEndpointResponse> {
   const rows = await deps.repos.sessions.list({ orgId: deps.auth.orgId });
   return {
     body: { data: rows.map((r) => withDoAgentName(r, deps.auth.orgId)) },
   };
 }
 
-async function getSession(
-  deps: EndpointDeps,
-): Promise<PluginEndpointResponse> {
+async function getSession(deps: EndpointDeps): Promise<PluginEndpointResponse> {
   const id = deps.endpointCtx.params.id;
   const row = await deps.repos.sessions.findById(id, deps.auth.orgId);
-  if (!row) return notFound('Session not found');
+  if (!row) {
+    return notFound('Session not found');
+  }
   return { body: withDoAgentName(row, deps.auth.orgId) };
 }
 
-async function createSession(
-  deps: EndpointDeps,
-): Promise<PluginEndpointResponse> {
+/**
+ * Create a new chat session. Body is optional — every field has a
+ * sensible default so `POST /sessions {}` is enough to start chatting.
+ *
+ * Defaults:
+ *   - providerId: pluginCtx.options.defaultProviderId ('claude-code')
+ *   - model:      pluginCtx.options.defaultModel ('claude-sonnet-4-5')
+ *   - workspace:  auto-created via the configured workspace provider
+ *                 if the chosen provider declares `workspaceRequired`
+ */
+async function createSession(deps: EndpointDeps): Promise<PluginEndpointResponse> {
   const body = (deps.endpointCtx.body ?? {}) as CreateSessionBody;
-  if (!body.agentId || typeof body.agentId !== 'string') {
-    return badRequest('agentId is required');
-  }
+  const opts = deps.pluginCtx.options;
 
-  // Look up the agent (tenant-scoped — different-org agents 404).
-  const agent = await deps.repos.agents.findById(body.agentId, deps.auth.orgId);
-  if (!agent) return notFound('Agent not found');
-
-  const provider = getProvider(deps.pluginCtx, agent.providerId);
+  const providerId = body.providerId ?? (opts.defaultProviderId as AgentProviderId);
+  const provider = getProvider(deps.pluginCtx, providerId);
   if (!provider) {
-    return badRequest('Agent provider is not registered', {
-      providerId: agent.providerId,
-    });
+    return badRequest('Provider is not registered', { providerId });
   }
 
-  // Provider workspace lookup (if required).
+  // Auto-create or resolve a workspace if the provider requires one.
+  let workspaceId = body.workspaceId ?? null;
   let workspace;
   if (provider.capabilities.workspaceRequired) {
-    if (!agent.workspaceId) {
-      return badRequest('Agent requires a workspace but has none configured');
-    }
-    const wsRow = await deps.repos.workspaces.findById(
-      agent.workspaceId,
-      deps.auth.orgId,
-    );
-    if (!wsRow) {
-      return badRequest('Agent workspace not found', {
-        workspaceId: agent.workspaceId,
+    if (workspaceId) {
+      const wsRow = await deps.repos.workspaces.findById(workspaceId, deps.auth.orgId);
+      if (!wsRow) {
+        return badRequest('Workspace not found', { workspaceId });
+      }
+      const wsProvider = opts.workspaceProvider;
+      if (!wsProvider || wsProvider.id !== wsRow.workspaceProviderId) {
+        return badRequest('Workspace provider not registered', {
+          workspaceProviderId: wsRow.workspaceProviderId,
+        });
+      }
+      try {
+        workspace = await wsProvider.resolve(workspaceId, deps.auth);
+      } catch (err) {
+        return badRequest('Failed to resolve workspace', {
+          message: err instanceof Error ? err.message : String(err),
+        });
+      }
+    } else {
+      const wsProvider = opts.workspaceProvider;
+      if (!wsProvider) {
+        return badRequest('Provider requires a workspace but no workspace provider is configured', {
+          providerId,
+        });
+      }
+      // Auto-provision a workspace row + resolve it.
+      const ws = await deps.repos.workspaces.create({
+        orgId: deps.auth.orgId,
+        name: 'Chat workspace',
+        workspaceProviderId: wsProvider.id,
+        rootPath: null,
+        gitRemote: null,
+        gitBranch: null,
+        sandboxConfig: null,
+        projectId: null,
+        createdBy: deps.auth.userId,
+        visibility: 'private',
       });
-    }
-    const wsProvider = deps.pluginCtx.options.workspaceProvider;
-    if (!wsProvider || wsProvider.id !== wsRow.workspaceProviderId) {
-      return badRequest('Workspace provider not registered', {
-        workspaceProviderId: wsRow.workspaceProviderId,
-      });
-    }
-    try {
-      workspace = await wsProvider.resolve(agent.workspaceId, deps.auth);
-    } catch (err) {
-      return badRequest('Failed to resolve workspace', {
-        message: err instanceof Error ? err.message : String(err),
-      });
+      workspaceId = ws.id;
+      try {
+        workspace = await wsProvider.resolve(ws.id, deps.auth);
+      } catch (err) {
+        return badRequest('Failed to resolve auto-created workspace', {
+          message: err instanceof Error ? err.message : String(err),
+        });
+      }
     }
   }
 
@@ -151,7 +172,7 @@ async function createSession(
   try {
     const result = await provider.createSession({
       auth: deps.auth,
-      config: agent.providerConfig,
+      config: body.providerConfig ?? {},
       workspace,
     });
     providerSessionId = result.providerSessionId;
@@ -163,14 +184,19 @@ async function createSession(
 
   const created = await deps.repos.sessions.create({
     orgId: deps.auth.orgId,
-    agentId: agent.id,
     providerSessionId,
     title: body.title ?? 'New chat',
-    model: body.model ?? agent.defaultModel,
+    providerId,
+    providerConfig: body.providerConfig ?? {},
+    model: body.model ?? opts.defaultModel,
     permissionMode: body.permissionMode ?? null,
-    workspaceId: agent.workspaceId,
+    systemPrompt: body.systemPrompt ?? null,
+    workspaceId,
+    enabledMcpServerIds: body.enabledMcpServerIds ?? [],
     enabledTools: body.enabledTools ?? null,
-    extraDenied: body.extraDenied ?? null,
+    denyList: body.denyList ?? null,
+    exposeFlowlibActions: body.exposeFlowlibActions ?? opts.exposeFlowlibActions,
+    toolOutputBudget: body.toolOutputBudget,
     createdBy: deps.auth.userId,
     visibility: body.visibility ?? 'private',
     status: 'active',
@@ -179,73 +205,71 @@ async function createSession(
   return { status: 201, body: withDoAgentName(created, deps.auth.orgId) };
 }
 
-async function updateSession(
-  deps: EndpointDeps,
-): Promise<PluginEndpointResponse> {
+async function updateSession(deps: EndpointDeps): Promise<PluginEndpointResponse> {
   const id = deps.endpointCtx.params.id;
   const existing = await deps.repos.sessions.findById(id, deps.auth.orgId);
-  if (!existing) return notFound('Session not found');
+  if (!existing) {
+    return notFound('Session not found');
+  }
 
   const body = (deps.endpointCtx.body ?? {}) as UpdateSessionBody;
   const updated = await deps.repos.sessions.update(
     id,
     {
       title: body.title,
+      providerId: body.providerId,
+      providerConfig: body.providerConfig,
       model: body.model,
       permissionMode: body.permissionMode,
+      systemPrompt: body.systemPrompt,
       workspaceId: body.workspaceId,
+      enabledMcpServerIds: body.enabledMcpServerIds,
       enabledTools: body.enabledTools,
-      extraDenied: body.extraDenied,
+      denyList: body.denyList,
+      exposeFlowlibActions: body.exposeFlowlibActions,
+      toolOutputBudget: body.toolOutputBudget,
       visibility: body.visibility,
       status: body.status,
     },
     deps.auth.orgId,
   );
-  if (!updated) return notFound('Session not found');
+  if (!updated) {
+    return notFound('Session not found');
+  }
   return { body: withDoAgentName(updated, deps.auth.orgId) };
 }
 
-async function deleteSession(
-  deps: EndpointDeps,
-): Promise<PluginEndpointResponse> {
+async function deleteSession(deps: EndpointDeps): Promise<PluginEndpointResponse> {
   const id = deps.endpointCtx.params.id;
   const existing = await deps.repos.sessions.findById(id, deps.auth.orgId);
-  if (!existing) return notFound('Session not found');
+  if (!existing) {
+    return notFound('Session not found');
+  }
 
   // Best-effort: tear down the provider's side first; fall through to
   // archiving the row even if the provider call fails.
-  const agent = await deps.repos.agents.findById(
-    existing.agentId,
-    deps.auth.orgId,
-  );
-  if (agent) {
-    const provider = getProvider(deps.pluginCtx, agent.providerId);
-    if (provider?.closeSession) {
-      try {
-        await provider.closeSession(existing.providerSessionId);
-      } catch (err) {
-        deps.pluginCtx.logger.warn(
-          '[agents] provider.closeSession failed; archiving row anyway',
-          { id, error: err instanceof Error ? err.message : String(err) },
-        );
-      }
+  const provider = getProvider(deps.pluginCtx, existing.providerId);
+  if (provider?.closeSession) {
+    try {
+      await provider.closeSession(existing.providerSessionId);
+    } catch (err) {
+      deps.pluginCtx.logger.warn('[agents] provider.closeSession failed; archiving row anyway', {
+        id,
+        error: err instanceof Error ? err.message : String(err),
+      });
     }
   }
 
-  await deps.repos.sessions.update(
-    id,
-    { status: 'archived' },
-    deps.auth.orgId,
-  );
+  await deps.repos.sessions.update(id, { status: 'archived' }, deps.auth.orgId);
   return { body: { success: true, status: 'archived' } };
 }
 
-async function listMessages(
-  deps: EndpointDeps,
-): Promise<PluginEndpointResponse> {
+async function listMessages(deps: EndpointDeps): Promise<PluginEndpointResponse> {
   const id = deps.endpointCtx.params.id;
   const session = await deps.repos.sessions.findById(id, deps.auth.orgId);
-  if (!session) return notFound('Session not found');
+  if (!session) {
+    return notFound('Session not found');
+  }
 
   const limitRaw = deps.endpointCtx.query.limit;
   const beforeRaw = deps.endpointCtx.query.before;
@@ -280,12 +304,12 @@ async function listMessages(
   };
 }
 
-async function promptSession(
-  deps: EndpointDeps,
-): Promise<PluginEndpointResponse> {
+async function promptSession(deps: EndpointDeps): Promise<PluginEndpointResponse> {
   const id = deps.endpointCtx.params.id;
   const session = await deps.repos.sessions.findById(id, deps.auth.orgId);
-  if (!session) return notFound('Session not found');
+  if (!session) {
+    return notFound('Session not found');
+  }
 
   return notImplemented(
     'HTTP prompt is not implemented in v1 — connect over WebSocket to the AgentChatDO instead',
@@ -297,17 +321,13 @@ async function promptSession(
   );
 }
 
-async function interruptSession(
-  deps: EndpointDeps,
-): Promise<PluginEndpointResponse> {
+async function interruptSession(deps: EndpointDeps): Promise<PluginEndpointResponse> {
   const id = deps.endpointCtx.params.id;
   const session = await deps.repos.sessions.findById(id, deps.auth.orgId);
-  if (!session) return notFound('Session not found');
+  if (!session) {
+    return notFound('Session not found');
+  }
 
-  // The DO singleton may not be populated outside of CF mode (e.g. in
-  // a Node deployment that hasn't wired the runtime). In that case we
-  // surface a 501 so callers can fall back to a transport-specific
-  // interrupt path.
   const doClass = deps.pluginCtx.registries.cloudflareDoClass;
   if (!doClass) {
     return notImplemented(
@@ -319,12 +339,6 @@ async function interruptSession(
     );
   }
 
-  // We don't have direct access to a DO stub from inside an endpoint
-  // handler (the DO env is the consumer Worker's env, not ours). The
-  // canonical way to interrupt is for the WebSocket client to send a
-  // typed message — so we surface the DO name + the message payload
-  // the client should send. Backends that want an HTTP interrupt path
-  // can wrap this and forward through their own DO binding.
   return {
     body: {
       status: 'interrupt-requested',
@@ -336,9 +350,7 @@ async function interruptSession(
   };
 }
 
-export function createSessionsEndpoints(
-  ctx: PluginContext,
-): FlowlibPluginEndpoint[] {
+export function createSessionsEndpoints(ctx: PluginContext): FlowlibPluginEndpoint[] {
   return [
     {
       method: 'GET',

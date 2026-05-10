@@ -21,11 +21,7 @@
  */
 
 import type { WorkspaceHandle } from '../workspaces/types';
-import {
-  walkClaudeMd,
-  DEFAULT_MAX_BYTES_PER_FILE,
-  type ClaudeMdFile,
-} from './claude-md-walk';
+import { walkClaudeMd, DEFAULT_MAX_BYTES_PER_FILE, type ClaudeMdFile } from './claude-md-walk';
 import {
   renderAttachments,
   renderAvailableTools,
@@ -33,7 +29,7 @@ import {
   renderDenyList,
   renderMemory,
   renderOperatingDirectives,
-  renderPersona,
+  renderSystemPrompt,
   renderPlan,
   renderSkillSummaries,
   renderWorkspaceContext,
@@ -49,8 +45,8 @@ import {
  * is the one always-rendered section.
  */
 export interface ComposeInput {
-  /** Persona system prompt — the opening of the prompt. */
-  persona: { systemPrompt: string };
+  /** System prompt — the opening of the prompt. May be empty. */
+  systemPrompt: string;
   /**
    * Workspace context — omit for raw-LLM (no-workspace) sessions. When
    * present, the composer also runs the CLAUDE.md walk from
@@ -93,8 +89,8 @@ export interface ComposeInput {
 export async function composeSystemPrompt(input: ComposeInput): Promise<string> {
   const sections: Array<string | null> = [];
 
-  // 1. Persona
-  sections.push(renderPersona(input.persona));
+  // 1. System prompt
+  sections.push(renderSystemPrompt(input.systemPrompt));
 
   // 2. Workspace context (skipped if no workspace)
   sections.push(await renderWorkspaceContext(input.workspace));

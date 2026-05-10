@@ -74,7 +74,9 @@ export interface PromptInput {
   /** Provider-side session id returned by `createSession`. */
   providerSessionId: string;
   /** User's prompt — text + optional images / attachment refs. */
-  parts: ReadonlyArray<{ type: 'text'; text: string } | { type: 'image'; mediaType: string; data: string }>;
+  parts: ReadonlyArray<
+    { type: 'text'; text: string } | { type: 'image'; mediaType: string; data: string }
+  >;
   /** Per-turn override of the agent default model. */
   model?: string;
   /** Per-turn deny list addition (in addition to role-derived denies). */

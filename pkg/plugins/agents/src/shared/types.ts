@@ -37,25 +37,22 @@ export interface ToolOutputBudget {
   bytes: number;
 }
 
-/** A user-configured agent definition. */
-export interface AgentDefinition {
+/** Wire shape for an MCP transport (stdio / http / sse). */
+export type McpTransport = 'stdio' | 'http' | 'sse';
+
+/** Org-scoped MCP server registration — toggled per session by id. */
+export interface AgentMcpServer {
   id: string;
   orgId: string | null;
   name: string;
   description: string | null;
-  providerId: AgentProviderId;
-  providerConfig: Record<string, unknown>;
-  workspaceId: string | null;
-  personaId: string | null;
-  personaText: string | null;
-  defaultModel: string | null;
-  mcpServers: Record<string, unknown>;
-  enabledTools: string[] | null;
-  denyList: string[] | null;
-  exposeFlowlibActions: boolean;
-  toolOutputBudget: ToolOutputBudget;
+  transport: McpTransport;
+  /**
+   * Transport-specific config. For `stdio`: `{ command, args, env }`.
+   * For `http` / `sse`: `{ url, headers }`.
+   */
+  config: Record<string, unknown>;
   createdBy: string;
-  visibility: AgentVisibility;
   createdAt: string;
   updatedAt: string;
 }
@@ -77,18 +74,32 @@ export interface AgentWorkspace {
   updatedAt: string;
 }
 
-/** A live (or archived) chat session bound to an agent. */
+/**
+ * A chat session — the unit of interaction. Carries its own provider /
+ * model / MCP / tool config inline; there is no separate agent
+ * definition to indirect through.
+ */
 export interface AgentSession {
   id: string;
   orgId: string | null;
-  agentId: string;
   providerSessionId: string;
   title: string;
+  // Provider / model
+  providerId: AgentProviderId;
+  providerConfig: Record<string, unknown>;
   model: string | null;
   permissionMode: string | null;
+  // System prompt (free-form preamble for the LLM)
+  systemPrompt: string | null;
+  // Workspace
   workspaceId: string | null;
+  // MCP / tools
+  enabledMcpServerIds: string[];
   enabledTools: string[] | null;
-  extraDenied: string[] | null;
+  denyList: string[] | null;
+  exposeFlowlibActions: boolean;
+  toolOutputBudget: ToolOutputBudget;
+  // Ownership / lifecycle
   createdBy: string;
   visibility: AgentVisibility;
   status: AgentSessionStatus;
@@ -169,4 +180,17 @@ export interface AgentsPluginPublicOptions {
    * @default 'optional'
    */
   orgScope?: OrgScope;
+  /**
+   * Provider id used when `POST /sessions` is called with no
+   * `providerId`. Must match one of the registered provider ids.
+   * @default 'opencode'
+   */
+  defaultProviderId?: string;
+  /**
+   * Model id used when `POST /sessions` omits `model`. Format depends
+   * on the provider — opencode uses `'<vendor>/<model>'`, claude-code
+   * uses Anthropic's bare model id.
+   * @default 'anthropic/claude-sonnet-4-5'
+   */
+  defaultModel?: string;
 }

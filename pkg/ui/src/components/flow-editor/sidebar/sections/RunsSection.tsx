@@ -1,13 +1,6 @@
 import React from 'react';
 import { useNavigate, useSearchParams } from 'react-router';
-import {
-  History,
-  CheckCircle2,
-  XCircle,
-  Clock,
-  AlertCircle,
-  RefreshCw,
-} from 'lucide-react';
+import { History, CheckCircle2, XCircle, Clock, AlertCircle, RefreshCw } from 'lucide-react';
 import { useFlowRuns } from '../../../../api/executions.api';
 import { ScrollArea } from '../../../ui/scroll-area';
 import { Skeleton } from '../../../ui/skeleton';
@@ -143,13 +136,23 @@ function shortId(id: string): string {
 function formatRelativeTime(input: Date | string): string {
   const ts = typeof input === 'string' ? new Date(input).getTime() : input.getTime();
   const diffSec = Math.max(0, Math.round((Date.now() - ts) / 1000));
-  if (diffSec < 5) {return 'just now';}
-  if (diffSec < 60) {return `${diffSec}s ago`;}
+  if (diffSec < 5) {
+    return 'just now';
+  }
+  if (diffSec < 60) {
+    return `${diffSec}s ago`;
+  }
   const diffMin = Math.round(diffSec / 60);
-  if (diffMin < 60) {return `${diffMin}m ago`;}
+  if (diffMin < 60) {
+    return `${diffMin}m ago`;
+  }
   const diffHr = Math.round(diffMin / 60);
-  if (diffHr < 24) {return `${diffHr}h ago`;}
+  if (diffHr < 24) {
+    return `${diffHr}h ago`;
+  }
   const diffDay = Math.round(diffHr / 24);
-  if (diffDay < 7) {return `${diffDay}d ago`;}
+  if (diffDay < 7) {
+    return `${diffDay}d ago`;
+  }
   return new Date(ts).toLocaleDateString();
 }

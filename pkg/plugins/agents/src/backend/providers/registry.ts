@@ -41,9 +41,7 @@ export class ProviderRegistry {
    */
   register(provider: AgentProvider): void {
     if (this.providers.has(provider.id)) {
-      throw new Error(
-        `[agents] provider with id "${provider.id}" is already registered`,
-      );
+      throw new Error(`[agents] provider with id "${provider.id}" is already registered`);
     }
     this.providers.set(provider.id, provider);
   }
@@ -51,16 +49,14 @@ export class ProviderRegistry {
   /**
    * Resolve a provider by id. Throws with the list of known ids when
    * the requested id is unknown — this typically indicates a
-   * misconfigured `agent_definitions.provider_id` row.
+   * misconfigured `agent_sessions.provider_id` row.
    */
   get(id: string): AgentProvider {
     const provider = this.providers.get(id);
     if (!provider) {
       const known = Array.from(this.providers.keys());
       const knownList = known.length > 0 ? known.join(', ') : '(none)';
-      throw new Error(
-        `[agents] unknown provider id "${id}"; registered providers: ${knownList}`,
-      );
+      throw new Error(`[agents] unknown provider id "${id}"; registered providers: ${knownList}`);
     }
     return provider;
   }
@@ -81,8 +77,6 @@ export class ProviderRegistry {
  * symmetry with other Flowlib subsystems that prefer factory
  * functions over `new`.
  */
-export function createProviderRegistry(
-  backing?: Map<string, AgentProvider>,
-): ProviderRegistry {
+export function createProviderRegistry(backing?: Map<string, AgentProvider>): ProviderRegistry {
   return new ProviderRegistry(backing);
 }

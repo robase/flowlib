@@ -83,9 +83,7 @@ export interface HookPipeline {
    * Run all PreToolUse handlers. Returns the (possibly modified)
    * input or a hard-block decision.
    */
-  runPreToolUse<TInput>(
-    ctx: PreToolUseContext<TInput>,
-  ): Promise<HookDecision<TInput>>;
+  runPreToolUse<TInput>(ctx: PreToolUseContext<TInput>): Promise<HookDecision<TInput>>;
   /**
    * Run all PostToolUse handlers. Returns the (possibly modified)
    * output or a hard-block decision.

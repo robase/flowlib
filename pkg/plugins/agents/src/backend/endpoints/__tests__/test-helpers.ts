@@ -39,11 +39,9 @@ export function makeFakePluginCtx(opts: FakePluginCtxOptions = {}): {
   logs: Array<{ level: string; msg: string; meta?: unknown }>;
 } {
   const logs: Array<{ level: string; msg: string; meta?: unknown }> = [];
-  const log =
-    (level: string) =>
-    (msg: string, meta?: unknown) => {
-      logs.push({ level, msg, meta });
-    };
+  const log = (level: string) => (msg: string, meta?: unknown) => {
+    logs.push({ level, msg, meta });
+  };
   const logger = {
     debug: log('debug'),
     info: log('info'),
@@ -52,7 +50,9 @@ export function makeFakePluginCtx(opts: FakePluginCtxOptions = {}): {
   };
 
   const providers = new Map<string, AgentProvider>();
-  for (const p of opts.providers ?? []) providers.set(p.id, p);
+  for (const p of opts.providers ?? []) {
+    providers.set(p.id, p);
+  }
 
   const db = makeFakeDatabase('sqlite');
 
@@ -73,6 +73,8 @@ export function makeFakePluginCtx(opts: FakePluginCtxOptions = {}): {
       workspaceProvider: opts.workspaceProvider,
       exposeFlowlibActions: opts.exposeFlowlibActions ?? false,
       defaultDenyList: [],
+      defaultProviderId: 'opencode',
+      defaultModel: 'anthropic/claude-sonnet-4-5',
     },
     flowlib: {
       config: {},
@@ -155,9 +157,7 @@ export function makeIdentity(
 }
 
 /** Type guard: response body is a JSON record. */
-export function jsonBody(
-  res: PluginEndpointResponse,
-): Record<string, unknown> {
+export function jsonBody(res: PluginEndpointResponse): Record<string, unknown> {
   if ('body' in res && typeof res.body === 'object' && res.body !== null) {
     return res.body as Record<string, unknown>;
   }

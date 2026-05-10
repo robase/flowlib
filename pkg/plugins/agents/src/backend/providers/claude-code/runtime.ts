@@ -33,12 +33,8 @@
 // are imported lazily inside `loadSdk()` via dynamic `import()`.
 type SdkModule = typeof import('@anthropic-ai/claude-agent-sdk');
 type SdkQuery = ReturnType<SdkModule['query']>;
-type SdkMessage = Awaited<ReturnType<SdkQuery['next']>>['value'] extends infer V
-  ? V
-  : unknown;
-type SdkUserMessage = Parameters<SdkModule['query']>[0]['prompt'] extends
-  | infer P
-  | string
+type SdkMessage = Awaited<ReturnType<SdkQuery['next']>>['value'] extends infer V ? V : unknown;
+type SdkUserMessage = Parameters<SdkModule['query']>[0]['prompt'] extends (infer P) | string
   ? P extends AsyncIterable<infer U>
     ? U
     : unknown
@@ -57,7 +53,9 @@ export type ClaudePermissionMode = SdkPermissionMode;
  */
 let cachedSdk: SdkModule | undefined;
 async function loadSdk(): Promise<SdkModule> {
-  if (cachedSdk) {return cachedSdk;}
+  if (cachedSdk) {
+    return cachedSdk;
+  }
   try {
     cachedSdk = await import('@anthropic-ai/claude-agent-sdk');
     return cachedSdk;
@@ -159,9 +157,7 @@ export interface ClaudeSession {
  *
  * **Lazy:** the SDK is only `import()`-ed inside this function.
  */
-export async function createClaudeSession(
-  input: CreateClaudeSessionInput,
-): Promise<ClaudeSession> {
+export async function createClaudeSession(input: CreateClaudeSessionInput): Promise<ClaudeSession> {
   const sdk = await loadSdk();
 
   // Per-session state — guarded so concurrent calls behave.
@@ -178,12 +174,13 @@ export async function createClaudeSession(
   // which is equivalent to "no host-level permission policy" — the
   // SDK's own `permissionMode` (`acceptEdits`, `default`, …) and the
   // platform hooks layer (Stream A) decide what actually runs.
-  let permissionHandler: ClaudePermissionHandler | undefined =
-    input.onPermissionRequest;
+  let permissionHandler: ClaudePermissionHandler | undefined = input.onPermissionRequest;
 
   const canUseTool: SdkCanUseTool = async (toolName, toolInput, opts) => {
     const handler = permissionHandler;
-    if (!handler) {return { behavior: 'allow' };}
+    if (!handler) {
+      return { behavior: 'allow' };
+    }
     const decision = await handler({
       toolName,
       input: toolInput,
@@ -224,8 +221,11 @@ export async function createClaudeSession(
   if (input.abortSignal) {
     const ac = new AbortController();
     options.abortController = ac;
-    if (input.abortSignal.aborted) {ac.abort();}
-    else {input.abortSignal.addEventListener('abort', () => ac.abort(), { once: true });}
+    if (input.abortSignal.aborted) {
+      ac.abort();
+    } else {
+      input.abortSignal.addEventListener('abort', () => ac.abort(), { once: true });
+    }
   }
 
   const query = sdk.query({ prompt: queue.iterable as AsyncIterable<SdkUserMessage>, options });
@@ -260,7 +260,9 @@ export async function createClaudeSession(
           // Capture the session id off the first message that exposes one.
           if (!sdkSessionId) {
             const candidate = (msg as { session_id?: string })?.session_id;
-            if (typeof candidate === 'string') {sdkSessionId = candidate;}
+            if (typeof candidate === 'string') {
+              sdkSessionId = candidate;
+            }
           }
           yield msg as SdkMessage;
         }
@@ -296,7 +298,9 @@ export async function createClaudeSession(
     },
 
     async close() {
-      if (closed) {return;}
+      if (closed) {
+        return;
+      }
       closed = true;
       queue.close();
       // Best-effort drain — Query exposes `return()` via the
@@ -333,8 +337,11 @@ function createUserMessageQueue(): UserMessageQueue {
 
   function deliver(value: unknown): void {
     const w = waiters.shift();
-    if (w) {w({ value, done: false });}
-    else {buffer.push(value);}
+    if (w) {
+      w({ value, done: false });
+    } else {
+      buffer.push(value);
+    }
   }
 
   function deliverDone(): void {
@@ -367,7 +374,9 @@ function createUserMessageQueue(): UserMessageQueue {
   return {
     iterable,
     push(msg) {
-      if (closedFlag) {return;}
+      if (closedFlag) {
+        return;
+      }
       deliver(msg);
     },
     close() {
@@ -402,11 +411,17 @@ async function* iterateUntilResult(
   signal: AbortSignal,
 ): AsyncGenerator<unknown, void, void> {
   while (true) {
-    if (signal.aborted) {return;}
+    if (signal.aborted) {
+      return;
+    }
     const next = await query.next();
-    if (next.done) {return;}
+    if (next.done) {
+      return;
+    }
     const msg = next.value as { type?: string };
     yield msg;
-    if (msg?.type === 'result') {return;}
+    if (msg?.type === 'result') {
+      return;
+    }
   }
 }

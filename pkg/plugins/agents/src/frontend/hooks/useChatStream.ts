@@ -51,10 +51,7 @@ export interface ChatSocketLike {
     listener: (event: MessageEvent) => void,
     options?: { signal?: AbortSignal },
   ) => void;
-  removeEventListener: (
-    type: 'message',
-    listener: (event: MessageEvent) => void,
-  ) => void;
+  removeEventListener: (type: 'message', listener: (event: MessageEvent) => void) => void;
   /** Connection state — exposed by PartySocket. */
   readyState?: number;
 }
@@ -131,11 +128,7 @@ export function parseInboundFrame(data: unknown): ParsedInboundFrame {
     return { kind: 'unknown' };
   }
   const env = parsed as { type?: unknown; event?: unknown; error?: unknown };
-  if (
-    env.type === 'flowlib.agent-event' &&
-    env.event &&
-    isAgentEvent(env.event)
-  ) {
+  if (env.type === 'flowlib.agent-event' && env.event && isAgentEvent(env.event)) {
     return { kind: 'agent-event', event: env.event };
   }
   if (env.type === 'flowlib.agent-error' && env.error && typeof env.error === 'object') {
@@ -171,10 +164,7 @@ export interface ChatStreamAdapters {
  * doesn't import that class — keeping the hook's surface decoupled from
  * the API client choice.
  */
-async function defaultLoadSession(
-  sessionId: string,
-  baseUrl = '',
-): Promise<AgentSession> {
+async function defaultLoadSession(sessionId: string, baseUrl = ''): Promise<AgentSession> {
   const response = await fetch(
     `${baseUrl.replace(/\/$/, '')}/plugins/agents/sessions/${encodeURIComponent(sessionId)}`,
     { credentials: 'include' },
@@ -184,6 +174,21 @@ async function defaultLoadSession(
   }
   return (await response.json()) as AgentSession;
 }
+
+// The `@ts-ignore`s are necessary because `agents/react` declares
+// `react@^19` peer-dep types but the consumer bundle pins react 18. The
+// runtime contract is identical — we only use `useAgent`'s return shape,
+// which is stable across the two react majors. Both are listed in
+// `tsdown.config.ts` `neverBundle`, so static imports stay as bare
+// specifiers in the emitted ESM.
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore — peer dep, resolved by host bundler
+// eslint-disable-next-line import/no-unresolved
+import { useAgent as agentsUseAgent } from 'agents/react';
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore — peer dep, resolved by host bundler
+// eslint-disable-next-line import/no-unresolved
+import { useAgentChat as aiChatUseAgentChat } from '@cloudflare/ai-chat/react';
 
 /**
  * Default adapters resolve `agents/react` and `@cloudflare/ai-chat/react`
@@ -197,27 +202,17 @@ async function defaultLoadSession(
  * invoked when no override is supplied.
  */
 function loadDefaultAdapters(): ChatStreamAdapters {
-  // The `// @ts-ignore` is necessary because `agents/react` declares
-  // `react@^19` peer-dep types but the consumer bundle pins react 18.
-  // The runtime contract is identical — we only use `useAgent`'s
-  // return shape, which is stable across the two react majors.
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-ignore — peer dep, resolved by host bundler
-  // eslint-disable-next-line import/no-unresolved
-  const agentsMod = require('agents/react') as {
-    useAgent: (opts: { agent: string; name: string }) => ChatSocketLike;
-  };
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-ignore — peer dep, resolved by host bundler
-  // eslint-disable-next-line import/no-unresolved
-  const aiChatMod = require('@cloudflare/ai-chat/react') as {
-    useAgentChat: (opts: {
-      agent: ChatSocketLike & { agent: string; name: string };
-    }) => ChatHelpers;
-  };
   return {
-    useAgent: (options) => agentsMod.useAgent(options),
-    useAgentChat: (options) => aiChatMod.useAgentChat(options),
+    useAgent: (options) =>
+      (agentsUseAgent as unknown as (opts: { agent: string; name: string }) => ChatSocketLike)(
+        options,
+      ),
+    useAgentChat: (options) =>
+      (
+        aiChatUseAgentChat as unknown as (opts: {
+          agent: ChatSocketLike & { agent: string; name: string };
+        }) => ChatHelpers
+      )(options),
   };
 }
 
@@ -246,16 +241,12 @@ export function useChatStream(
 
   const [session, setSession] = React.useState<AgentSession | undefined>();
   const [events, setEvents] = React.useState<AgentEvent[]>([]);
-  const [status, setStatus] = React.useState<UseChatStreamReturn['status']>(
-    'connecting',
-  );
+  const [status, setStatus] = React.useState<UseChatStreamReturn['status']>('connecting');
   const [error, setError] = React.useState<string | undefined>();
   const [resolvedPermissions, setResolvedPermissions] = React.useState<
     Record<string, 'allow' | 'deny'>
   >({});
-  const [resolvedHumanInputs, setResolvedHumanInputs] = React.useState<
-    Record<string, true>
-  >({});
+  const [resolvedHumanInputs, setResolvedHumanInputs] = React.useState<Record<string, true>>({});
 
   // Step 1 — load the session.
   React.useEffect(() => {

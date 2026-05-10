@@ -131,10 +131,7 @@ suite('Custom editor + visual ↔ code toggle', () => {
 
     // The active text editor should now be focused on this URI.
     const ed = vscode.window.activeTextEditor;
-    assert.ok(
-      ed,
-      `expected an active text editor after editAsCode. tabs: ${describeTabs(uri)}`,
-    );
+    assert.ok(ed, `expected an active text editor after editAsCode. tabs: ${describeTabs(uri)}`);
     assert.strictEqual(ed!.document.uri.toString(), uri.toString());
   });
 

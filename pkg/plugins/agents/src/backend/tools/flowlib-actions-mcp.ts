@@ -234,7 +234,9 @@ export function createFlowlibActionsMcpServer(
 
   // ─── Subscribe to registry events ────────────────────────────────
   const offRegister = registry.onRegister(() => {
-    if (closed) {return;}
+    if (closed) {
+      return;
+    }
     // Cache becomes stale; clear it so the next list call rebuilds.
     visibleTools.clear();
     userCredentialTypes = null;
@@ -243,7 +245,9 @@ export function createFlowlibActionsMcpServer(
     });
   });
   const offUnregister = registry.onUnregister(() => {
-    if (closed) {return;}
+    if (closed) {
+      return;
+    }
     visibleTools.clear();
     userCredentialTypes = null;
     notifyToolListChanged(server, logger).catch(() => {
@@ -275,9 +279,15 @@ export function createFlowlibActionsMcpServer(
     const flattenedToOriginal = new Map<string, string>();
 
     for (const action of registry.getAll()) {
-      if (!isToolCompatible(action)) {continue;}
-      if (denySet.has(action.id)) {continue;}
-      if (!credentialFilter.permits(action)) {continue;}
+      if (!isToolCompatible(action)) {
+        continue;
+      }
+      if (denySet.has(action.id)) {
+        continue;
+      }
+      if (!credentialFilter.permits(action)) {
+        continue;
+      }
 
       const baseName = flattenActionId(action.id);
       const uniqueName = uniquifyName(baseName, flattenedToOriginal, action.id, logger);
@@ -394,9 +404,15 @@ interface VisibleTool {
  * `ActionRegistry.toAgentToolDefinition()` filtering.
  */
 function isToolCompatible(action: ActionDefinition): boolean {
-  if (action.excludeFromTools === true) {return false;}
-  if (action.provider?.id === 'triggers') {return false;}
-  if (action.id.startsWith('trigger.')) {return false;}
+  if (action.excludeFromTools === true) {
+    return false;
+  }
+  if (action.provider?.id === 'triggers') {
+    return false;
+  }
+  if (action.id.startsWith('trigger.')) {
+    return false;
+  }
   return true;
 }
 
@@ -414,12 +430,16 @@ function uniquifyName(
   newId: string,
   logger: Logger,
 ): string {
-  if (!taken.has(base)) {return base;}
+  if (!taken.has(base)) {
+    return base;
+  }
 
   // Same id collision shouldn't happen — the registry de-dups. But two
   // different action ids could flatten to the same name.
   const existingId = taken.get(base);
-  if (existingId === newId) {return base;}
+  if (existingId === newId) {
+    return base;
+  }
 
   let n = 1;
   let candidate = `${base}_${n}`;
@@ -460,14 +480,18 @@ function buildToolDescriptor(toolName: string, action: ActionDefinition): Tool {
  * `params.fields`. Mirrors `pkg/actions/src/registry/index.ts`'s
  * `buildJsonSchema()` (which is private to that module).
  */
-function buildJsonSchemaFromAction(
-  action: ActionDefinition,
-): { type: 'object'; properties: Record<string, object>; required?: string[] } {
+function buildJsonSchemaFromAction(action: ActionDefinition): {
+  type: 'object';
+  properties: Record<string, object>;
+  required?: string[];
+} {
   const properties: Record<string, object> = {};
   const required: string[] = [];
 
   for (const field of action.params.fields) {
-    if ((field as { aiProvided?: boolean }).aiProvided === false) {continue;}
+    if ((field as { aiProvided?: boolean }).aiProvided === false) {
+      continue;
+    }
 
     const prop: Record<string, unknown> = {
       description: field.description ?? field.label,
@@ -486,10 +510,14 @@ function buildJsonSchemaFromAction(
       default:
         prop.type = 'string';
     }
-    if (field.placeholder) {prop.examples = [field.placeholder];}
+    if (field.placeholder) {
+      prop.examples = [field.placeholder];
+    }
 
     properties[field.name] = prop;
-    if (field.required) {required.push(field.name);}
+    if (field.required) {
+      required.push(field.name);
+    }
   }
 
   return {
@@ -509,7 +537,9 @@ async function safeResolveDenyList(
   resolveInput: CreateFlowlibActionsMcpServerOptions['resolveDenyListInput'],
   logger: Logger,
 ): Promise<DenyResolution> {
-  if (!resolveInput) {return { denied: new Set(), failClosed: false };}
+  if (!resolveInput) {
+    return { denied: new Set(), failClosed: false };
+  }
   try {
     const input = resolveInput();
     return { denied: await permissions.getEffectiveDenyList(input), failClosed: false };
@@ -546,9 +576,7 @@ async function resolveCredentialFilter(
     try {
       const creds = await lister.list();
       userTypes = new Set(
-        creds
-          .map((c) => c.type)
-          .filter((t): t is string => typeof t === 'string' && t.length > 0),
+        creds.map((c) => c.type).filter((t): t is string => typeof t === 'string' && t.length > 0),
       );
     } catch (err) {
       logger.warn?.(
@@ -568,10 +596,16 @@ async function resolveCredentialFilter(
     userTypes,
     permits(action) {
       const cred = action.credential;
-      if (!cred?.required) {return true;}
+      if (!cred?.required) {
+        return true;
+      }
       // OAuth2 actions match by oauth2 provider id (treated as type).
-      if (cred.oauth2Provider) {return types.has(cred.oauth2Provider);}
-      if (cred.type) {return types.has(cred.type);}
+      if (cred.oauth2Provider) {
+        return types.has(cred.oauth2Provider);
+      }
+      if (cred.type) {
+        return types.has(cred.type);
+      }
       // Required-but-untyped credential — let it through; runtime will
       // surface "missing credential" if the agent doesn't pass one.
       void registry;
@@ -607,8 +641,7 @@ async function executeOne(
     logger,
     iteration: hooks?.iteration ?? 0,
     maxIterations: hooks?.maxIterations ?? 1,
-    nodeContext:
-      hooks?.buildNodeContext?.() ?? buildMinimalNodeContext(opts, logger),
+    nodeContext: hooks?.buildNodeContext?.() ?? buildMinimalNodeContext(opts, logger),
     staticParams: hooks?.staticParams,
     abortSignal: hooks?.abortSignal,
   };
@@ -661,9 +694,7 @@ async function executeReadToolOutput(
   logger: Logger,
 ): Promise<CallToolResult> {
   if (!store) {
-    return errorResult(
-      'read_tool_output is unavailable: no tool-output store is configured.',
-    );
+    return errorResult('read_tool_output is unavailable: no tool-output store is configured.');
   }
   const toolCallId = typeof args.toolCallId === 'string' ? args.toolCallId : '';
   if (!toolCallId) {
@@ -760,8 +791,12 @@ function stringifyResult(result: AgentToolResult): string {
     return result.error ?? 'Tool failed without an error message.';
   }
   const out = result.output;
-  if (out === undefined || out === null) {return 'OK';}
-  if (typeof out === 'string') {return out;}
+  if (out === undefined || out === null) {
+    return 'OK';
+  }
+  if (typeof out === 'string') {
+    return out;
+  }
   try {
     return JSON.stringify(out, null, 2);
   } catch {
@@ -792,9 +827,7 @@ function notifyToolListChanged(server: Server, logger: Logger): Promise<void> {
   // microtask gets a chance to attach `.catch`. Checking `transport`
   // up front is the same guard `McpServer.isConnected()` uses.
   if (!isServerConnected(server)) {
-    logger.debug?.(
-      '[flowlib-actions-mcp] sendToolListChanged skipped: server not connected',
-    );
+    logger.debug?.('[flowlib-actions-mcp] sendToolListChanged skipped: server not connected');
     return Promise.resolve();
   }
   return server.sendToolListChanged().catch((err) => {

@@ -44,22 +44,16 @@ export const HumanInputCard: React.FC<HumanInputCardProps> = ({
       data-blocking={event.blocking ? 'true' : 'false'}
     >
       <div className="flex items-center justify-between mb-1">
-        <span className="text-sm font-medium text-fl-foreground">
-          Agent needs input
-        </span>
+        <span className="text-sm font-medium text-fl-foreground">Agent needs input</span>
         <span
           className={`text-xs ${
-            event.blocking
-              ? 'text-fl-destructive'
-              : 'text-fl-muted-foreground'
+            event.blocking ? 'text-fl-destructive' : 'text-fl-muted-foreground'
           }`}
         >
           {event.blocking ? 'blocking' : 'optional'}
         </span>
       </div>
-      <p className="text-sm text-fl-muted-foreground whitespace-pre-wrap mb-2">
-        {event.prompt}
-      </p>
+      <p className="text-sm text-fl-muted-foreground whitespace-pre-wrap mb-2">{event.prompt}</p>
       <textarea
         className="w-full border border-fl-border rounded bg-fl-background text-fl-foreground p-2 text-sm font-sans focus:outline-none focus:ring-2 focus:ring-fl-ring resize-y"
         rows={2}

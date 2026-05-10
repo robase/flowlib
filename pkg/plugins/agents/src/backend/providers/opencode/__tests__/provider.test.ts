@@ -18,8 +18,15 @@ interface FakeClient {
   __pushEvent: (e: unknown) => void;
   __closeStream: () => void;
   session: {
-    create: (opts: { body?: { title?: string }; query?: { directory?: string } }) => Promise<{ id: string }>;
-    prompt: (opts: { path: { id: string }; body: unknown; query?: { directory?: string } }) => Promise<unknown>;
+    create: (opts: {
+      body?: { title?: string };
+      query?: { directory?: string };
+    }) => Promise<{ id: string }>;
+    prompt: (opts: {
+      path: { id: string };
+      body: unknown;
+      query?: { directory?: string };
+    }) => Promise<unknown>;
     abort: (opts: { path: { id: string } }) => Promise<unknown>;
     delete: (opts: { path: { id: string } }) => Promise<unknown>;
     messages: (opts: { path: { id: string } }) => Promise<unknown>;
@@ -63,11 +70,15 @@ function createFakeClient(): FakeClient {
         yield queue.shift();
         continue;
       }
-      if (closed) {return;}
+      if (closed) {
+        return;
+      }
       const result = await new Promise<IteratorResult<unknown>>((resolve) => {
         waiters.push(resolve);
       });
-      if (result.done) {return;}
+      if (result.done) {
+        return;
+      }
       yield result.value;
     }
   }
@@ -210,7 +221,9 @@ describe('openCodeProvider.validateConfig', () => {
   });
 
   it('rejects mixed-type defaultDenied', () => {
-    expect(() => provider.validateConfig({ defaultDenied: ['ok', 1] })).toThrowError(/defaultDenied/);
+    expect(() => provider.validateConfig({ defaultDenied: ['ok', 1] })).toThrowError(
+      /defaultDenied/,
+    );
   });
 
   it('rejects non-object root config', () => {
@@ -253,9 +266,9 @@ describe('openCodeProvider.createSession', () => {
   it('throws when no baseUrl can be resolved', async () => {
     const provider = openCodeProvider();
     delete process.env.OPENCODE_BASE_URL;
-    await expect(
-      provider.createSession({ auth: {} as never, config: {} }),
-    ).rejects.toThrow(/baseUrl/);
+    await expect(provider.createSession({ auth: {} as never, config: {} })).rejects.toThrow(
+      /baseUrl/,
+    );
   });
 });
 
@@ -450,7 +463,9 @@ describe('openCodeProvider.prompt', () => {
     activeClient.__closeStream();
     await iterPromise;
 
-    const sent = activeClient.__sentPrompts[0]?.body as { model?: { providerID: string; modelID: string } };
+    const sent = activeClient.__sentPrompts[0]?.body as {
+      model?: { providerID: string; modelID: string };
+    };
     expect(sent.model).toEqual({ providerID: 'openai', modelID: 'gpt-5' });
   });
 
@@ -564,9 +579,10 @@ describe('runtime helpers', () => {
       expect(buildToolsMap({})).toBeUndefined();
     });
     it('whitelist wins over deny list', () => {
-      expect(
-        buildToolsMap({ enabledTools: ['Read', 'Edit'], extraDenied: ['Bash'] }),
-      ).toEqual({ Read: true, Edit: true });
+      expect(buildToolsMap({ enabledTools: ['Read', 'Edit'], extraDenied: ['Bash'] })).toEqual({
+        Read: true,
+        Edit: true,
+      });
     });
     it('falls back to deny list when no whitelist', () => {
       expect(buildToolsMap({ extraDenied: ['Bash', 'Write'] })).toEqual({
@@ -606,14 +622,15 @@ describe('runtime helpers', () => {
       try {
         expect(resolveBaseUrl({})).toBe('http://env');
       } finally {
-        if (prev === undefined) {delete process.env.OPENCODE_BASE_URL;}
-        else {process.env.OPENCODE_BASE_URL = prev;}
+        if (prev === undefined) {
+          delete process.env.OPENCODE_BASE_URL;
+        } else {
+          process.env.OPENCODE_BASE_URL = prev;
+        }
       }
     });
     it('honours factoryBaseUrl as a fallback after extras.baseUrl', () => {
-      expect(
-        resolveBaseUrl({ factoryBaseUrl: 'http://factory' }),
-      ).toBe('http://factory');
+      expect(resolveBaseUrl({ factoryBaseUrl: 'http://factory' })).toBe('http://factory');
       // workspace metadata still wins
       expect(
         resolveBaseUrl({
@@ -628,7 +645,9 @@ describe('runtime helpers', () => {
       try {
         expect(() => resolveBaseUrl({})).toThrow(/baseUrl/);
       } finally {
-        if (prev !== undefined) {process.env.OPENCODE_BASE_URL = prev;}
+        if (prev !== undefined) {
+          process.env.OPENCODE_BASE_URL = prev;
+        }
       }
     });
   });

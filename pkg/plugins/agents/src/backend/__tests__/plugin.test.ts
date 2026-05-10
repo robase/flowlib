@@ -9,10 +9,9 @@ import { agents } from '../plugin';
 
 function makeFlowlibCtx(overrides: Record<string, unknown> = {}) {
   const logs: Array<{ level: string; msg: string; meta?: unknown }> = [];
-  const log = (level: string) =>
-    (msg: string, meta?: unknown) => {
-      logs.push({ level, msg, meta });
-    };
+  const log = (level: string) => (msg: string, meta?: unknown) => {
+    logs.push({ level, msg, meta });
+  };
   return {
     config: {},
     logger: {
@@ -44,7 +43,7 @@ describe('agents() plugin factory', () => {
     const def = agents();
     const schema = (def.backend as { schema: Record<string, unknown> }).schema;
     expect(schema).toBeDefined();
-    expect(schema).toHaveProperty('agent_definitions');
+    expect(schema).toHaveProperty('agent_mcp_servers');
     expect(schema).toHaveProperty('agent_workspaces');
     expect(schema).toHaveProperty('agent_sessions');
     expect(schema).toHaveProperty('agent_messages');
@@ -65,9 +64,9 @@ describe('agents() plugin factory', () => {
     const ctx = makeFlowlibCtx();
     const init = (def.backend as { init?: (c: unknown) => Promise<void> }).init;
     await init!(ctx);
-    const warnings = (ctx as unknown as { logs: Array<{ level: string; msg: string }> }).logs.filter(
-      (l) => l.level === 'warn',
-    );
+    const warnings = (
+      ctx as unknown as { logs: Array<{ level: string; msg: string }> }
+    ).logs.filter((l) => l.level === 'warn');
     expect(warnings.some((w) => /default-org/.test(w.msg))).toBe(true);
   });
 
@@ -76,9 +75,9 @@ describe('agents() plugin factory', () => {
     const ctx = makeFlowlibCtx();
     const init = (def.backend as { init?: (c: unknown) => Promise<void> }).init;
     await init!(ctx);
-    const warnings = (ctx as unknown as { logs: Array<{ level: string; msg: string }> }).logs.filter(
-      (l) => l.level === 'warn',
-    );
+    const warnings = (
+      ctx as unknown as { logs: Array<{ level: string; msg: string }> }
+    ).logs.filter((l) => l.level === 'warn');
     // Subsystem registrars (permissions, audit) emit fallback warnings at
     // plugin init time because the repositories slot holds a per-request
     // factory, not a built bag — that's by design (Stream F's contract).

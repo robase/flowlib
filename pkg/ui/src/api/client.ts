@@ -37,6 +37,9 @@ import {
   type FlowTriggerRegistration,
   type CreateTriggerInput,
   type UpdateTriggerInput,
+  type SettingsRecord,
+  type SettingsDescriptorGroup,
+  type SetSettingInput,
 } from './types';
 
 class ApiClient {
@@ -885,6 +888,43 @@ class ApiClient {
 
   async deleteChatMessages(flowId: string): Promise<void> {
     return this.request(`/chat/messages/${flowId}`, { method: 'DELETE' });
+  }
+
+  // =====================================
+  // SETTINGS
+  // =====================================
+
+  async listSettings(namespace?: string): Promise<{ settings: SettingsRecord[] }> {
+    const qs = namespace ? `?namespace=${encodeURIComponent(namespace)}` : '';
+    return this.request<{ settings: SettingsRecord[] }>(`/settings${qs}`);
+  }
+
+  async getSetting(key: string): Promise<SettingsRecord | null> {
+    try {
+      return await this.request<SettingsRecord>(`/settings/${encodeURIComponent(key)}`);
+    } catch (err) {
+      if (err instanceof Error && err.message.includes('not found')) {
+        return null;
+      }
+      throw err;
+    }
+  }
+
+  async setSetting(key: string, input: SetSettingInput): Promise<SettingsRecord> {
+    return this.request<SettingsRecord>(`/settings/${encodeURIComponent(key)}`, {
+      method: 'PUT',
+      body: JSON.stringify(input),
+    });
+  }
+
+  async deleteSetting(key: string): Promise<{ removed: boolean }> {
+    return this.request<{ removed: boolean }>(`/settings/${encodeURIComponent(key)}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async getSettingsDescriptors(): Promise<{ groups: SettingsDescriptorGroup[] }> {
+    return this.request<{ groups: SettingsDescriptorGroup[] }>(`/settings/descriptors`);
   }
 }
 

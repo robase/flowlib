@@ -89,19 +89,13 @@ export const FileDiffViewer: React.FC<FileDiffViewerProps> = ({ event, layout = 
       data-path={event.path}
     >
       <div className="flex items-center justify-between px-3 py-1.5 border-b border-fl-border">
-        <span className="font-mono text-xs truncate text-fl-foreground">
-          {event.path}
-        </span>
+        <span className="font-mono text-xs truncate text-fl-foreground">{event.path}</span>
         <span className="text-xs text-fl-muted-foreground shrink-0 ml-2">
           <span className="text-emerald-600 dark:text-emerald-400">+{added}</span>{' '}
           <span className="text-fl-destructive">-{removed}</span>
         </span>
       </div>
-      {layout === 'split' ? (
-        <SplitView lines={lines} />
-      ) : (
-        <UnifiedView lines={lines} />
-      )}
+      {layout === 'split' ? <SplitView lines={lines} /> : <UnifiedView lines={lines} />}
     </div>
   );
 };

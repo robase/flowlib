@@ -10,6 +10,7 @@ import { BatchJobsService } from './batch-jobs/batch-jobs.service';
 import { BaseAIClient } from './ai/base-client';
 import { CredentialsService } from './credentials/credentials.service';
 import { EncryptionService } from './credentials/encryption.service';
+import { SettingsService } from './settings/settings.service';
 import { FlowTriggersService } from './triggers/flow-triggers.service';
 import { CronSchedulerService } from './triggers/cron-scheduler.service';
 import { ChatStreamService } from './chat/chat-stream.service';
@@ -50,6 +51,7 @@ interface CoreServices {
   baseAIClient: BaseAIClient;
   reactFlowRendererService: ReactFlowRendererService;
   credentialsService: CredentialsService;
+  settingsService: SettingsService;
   triggersService: FlowTriggersService;
   cronScheduler: CronSchedulerService;
   chatStreamService: ChatStreamService;
@@ -174,6 +176,16 @@ export class ServiceFactory {
         (overrides?.encryption as EncryptionAdapter | undefined) ??
         new EncryptionService({ masterKey: this.config.encryptionKey });
       const credentialsService = new CredentialsService(
+        databaseService.adapter,
+        encryptionAdapter,
+        this.logger,
+      );
+
+      // 5c. Settings service — generic namespaced key/value store shared by
+      // core and plugins. Reuses the encryption adapter so secrets like
+      // webhook signing keys stored as settings get the same envelope as
+      // credentials.
+      const settingsService = new SettingsService(
         databaseService.adapter,
         encryptionAdapter,
         this.logger,
@@ -308,6 +320,7 @@ export class ServiceFactory {
         baseAIClient,
         reactFlowRendererService,
         credentialsService,
+        settingsService,
         triggersService,
         cronScheduler,
         chatStreamService,
@@ -417,6 +430,13 @@ export class ServiceFactory {
    */
   getCredentialsService(): CredentialsService {
     return this.getServices().credentialsService;
+  }
+
+  /**
+   * Get settings service (generic namespaced key/value store)
+   */
+  getSettingsService(): SettingsService {
+    return this.getServices().settingsService;
   }
 
   /**

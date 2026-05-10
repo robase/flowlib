@@ -108,7 +108,9 @@ function makeRuntime(opts: {
   noRepositories?: boolean;
 }): AgentsRuntimeRegistries {
   const providers = new Map<string, AgentProvider>();
-  if (opts.provider) {providers.set(opts.provider.id, opts.provider);}
+  if (opts.provider) {
+    providers.set(opts.provider.id, opts.provider);
+  }
 
   const repositories = opts.noRepositories
     ? undefined
@@ -308,26 +310,24 @@ describe('AgentChatDO.onChatMessage', () => {
   it('happy path: dispatches to agentService.runTurn with the right SessionContext', async () => {
     let captured: SessionContext | null = null;
     let capturedPrompt: unknown = null;
-    const runTurn = vi.fn(
-      async (ctx: SessionContext, prompt: unknown) => {
-        captured = ctx;
-        capturedPrompt = prompt;
-        // Push a fake event so we can assert the broadcast envelope.
-        await ctx.emit({
-          type: 'text-delta',
-          messageId: 'm1',
-          text: 'hello',
-        });
-        return {
-          reason: 'completed' as const,
-          messageCount: 1,
-          toolCallCount: 0,
-          inputTokensTotal: 12,
-          outputTokensTotal: 34,
-          durationMs: 5,
-        };
-      },
-    );
+    const runTurn = vi.fn(async (ctx: SessionContext, prompt: unknown) => {
+      captured = ctx;
+      capturedPrompt = prompt;
+      // Push a fake event so we can assert the broadcast envelope.
+      await ctx.emit({
+        type: 'text-delta',
+        messageId: 'm1',
+        text: 'hello',
+      });
+      return {
+        reason: 'completed' as const,
+        messageCount: 1,
+        toolCallCount: 0,
+        inputTokensTotal: 12,
+        outputTokensTotal: 34,
+        durationMs: 5,
+      };
+    });
 
     setAgentsRuntime(
       makeRuntime({
@@ -383,8 +383,7 @@ describe('AgentChatDO.onChatMessage', () => {
   });
 
   it('happy path: extracts text from structured `parts` arrays too', async () => {
-    let capturedPrompt: { parts: ReadonlyArray<{ type: string; text: string }> } | null =
-      null;
+    let capturedPrompt: { parts: ReadonlyArray<{ type: string; text: string }> } | null = null;
     const runTurn = vi.fn(async (_ctx: SessionContext, prompt: unknown) => {
       capturedPrompt = prompt as typeof capturedPrompt;
       return {

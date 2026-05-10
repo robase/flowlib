@@ -1,32 +1,39 @@
 /**
  * Persistence for `agent_sessions`.
  *
- * Tenant scoped. v1 follows the webhooks repository pattern.
+ * A session carries its own provider / model / MCP / tool config — no
+ * separate agent_definitions table. `create()` callers fill in the
+ * config they want; the endpoint layer applies defaults when the API
+ * caller omits fields.
  */
 
 import type { PluginDatabaseApi } from '@flowlib/core';
-import type { AgentSession, AgentSessionStatus, AgentVisibility } from '../../shared/types';
+import type {
+  AgentProviderId,
+  AgentSession,
+  AgentSessionStatus,
+  AgentVisibility,
+  ToolOutputBudget,
+} from '../../shared/types';
 import type { AgentsDB } from './db-types';
-import {
-  encodeJsonOrNull,
-  generateId,
-  nowFor,
-  parseJsonOrNull,
-  toIso,
-  toIsoOrNull,
-} from './util';
+import { encodeJsonOrNull, generateId, nowFor, parseJsonOrNull, toIso, toIsoOrNull } from './util';
 
 interface AgentSessionRow {
   id: string;
   org_id: string | null;
-  agent_id: string;
   provider_session_id: string;
   title: string;
+  provider_id: string;
+  provider_config: unknown;
   model: string | null;
   permission_mode: string | null;
+  system_prompt: string | null;
   workspace_id: string | null;
+  enabled_mcp_server_ids: unknown;
   enabled_tools: unknown;
-  extra_denied: unknown;
+  deny_list: unknown;
+  expose_flowlib_actions: number | boolean;
+  tool_output_budget: unknown;
   created_by: string;
   visibility: string;
   status: string;
@@ -39,17 +46,24 @@ interface AgentSessionRow {
   updated_at: string | Date;
 }
 
+const DEFAULT_TOOL_OUTPUT_BUDGET: ToolOutputBudget = { lines: 100, bytes: 4096 };
+
 export interface CreateSessionInput {
   id?: string;
   orgId: string | null;
-  agentId: string;
   providerSessionId: string;
   title?: string;
+  providerId: AgentProviderId;
+  providerConfig?: Record<string, unknown>;
   model?: string | null;
   permissionMode?: string | null;
+  systemPrompt?: string | null;
   workspaceId?: string | null;
+  enabledMcpServerIds?: string[];
   enabledTools?: string[] | null;
-  extraDenied?: string[] | null;
+  denyList?: string[] | null;
+  exposeFlowlibActions?: boolean;
+  toolOutputBudget?: ToolOutputBudget;
   createdBy: string;
   visibility?: AgentVisibility;
   status?: AgentSessionStatus;
@@ -57,11 +71,17 @@ export interface CreateSessionInput {
 
 export interface UpdateSessionInput {
   title?: string;
+  providerId?: AgentProviderId;
+  providerConfig?: Record<string, unknown>;
   model?: string | null;
   permissionMode?: string | null;
+  systemPrompt?: string | null;
   workspaceId?: string | null;
+  enabledMcpServerIds?: string[];
   enabledTools?: string[] | null;
-  extraDenied?: string[] | null;
+  denyList?: string[] | null;
+  exposeFlowlibActions?: boolean;
+  toolOutputBudget?: ToolOutputBudget;
   visibility?: AgentVisibility;
   status?: AgentSessionStatus;
   /** Bumped when a new message is appended. */
@@ -74,7 +94,6 @@ export interface UpdateSessionInput {
 
 export interface ListSessionsFilter {
   orgId?: string | null;
-  agentId?: string;
   createdBy?: string;
   status?: AgentSessionStatus;
   workspaceId?: string;
@@ -86,14 +105,20 @@ function mapRow(row: AgentSessionRow): AgentSession {
   return {
     id: row.id,
     orgId: row.org_id,
-    agentId: row.agent_id,
     providerSessionId: row.provider_session_id,
     title: row.title,
+    providerId: row.provider_id as AgentProviderId,
+    providerConfig: parseJsonOrNull<Record<string, unknown>>(row.provider_config) ?? {},
     model: row.model,
     permissionMode: row.permission_mode,
+    systemPrompt: row.system_prompt,
     workspaceId: row.workspace_id,
+    enabledMcpServerIds: parseJsonOrNull<string[]>(row.enabled_mcp_server_ids) ?? [],
     enabledTools: parseJsonOrNull<string[]>(row.enabled_tools),
-    extraDenied: parseJsonOrNull<string[]>(row.extra_denied),
+    denyList: parseJsonOrNull<string[]>(row.deny_list),
+    exposeFlowlibActions: Boolean(row.expose_flowlib_actions),
+    toolOutputBudget:
+      parseJsonOrNull<ToolOutputBudget>(row.tool_output_budget) ?? DEFAULT_TOOL_OUTPUT_BUDGET,
     createdBy: row.created_by,
     visibility: row.visibility as AgentVisibility,
     status: row.status as AgentSessionStatus,
@@ -117,9 +142,8 @@ export class SessionsRepository {
       .selectAll()
       .where('id', '=', id);
     if (orgId !== undefined) {
-      query = orgId === null
-        ? query.where('org_id', 'is', null)
-        : query.where('org_id', '=', orgId);
+      query =
+        orgId === null ? query.where('org_id', 'is', null) : query.where('org_id', '=', orgId);
     }
     const row = await query.limit(1).executeTakeFirst();
     return row ? mapRow(row as unknown as AgentSessionRow) : null;
@@ -128,12 +152,10 @@ export class SessionsRepository {
   async list(filter: ListSessionsFilter = {}): Promise<AgentSession[]> {
     let query = this.database.kysely<AgentsDB>().selectFrom('agent_sessions').selectAll();
     if (filter.orgId !== undefined) {
-      query = filter.orgId === null
-        ? query.where('org_id', 'is', null)
-        : query.where('org_id', '=', filter.orgId);
-    }
-    if (filter.agentId !== undefined) {
-      query = query.where('agent_id', '=', filter.agentId);
+      query =
+        filter.orgId === null
+          ? query.where('org_id', 'is', null)
+          : query.where('org_id', '=', filter.orgId);
     }
     if (filter.createdBy !== undefined) {
       query = query.where('created_by', '=', filter.createdBy);
@@ -165,14 +187,21 @@ export class SessionsRepository {
       .values({
         id,
         org_id: input.orgId,
-        agent_id: input.agentId,
         provider_session_id: input.providerSessionId,
         title: input.title ?? 'New chat',
+        provider_id: input.providerId,
+        provider_config: encodeJsonOrNull(input.providerConfig ?? {}) ?? '{}',
         model: input.model ?? null,
         permission_mode: input.permissionMode ?? null,
+        system_prompt: input.systemPrompt ?? null,
         workspace_id: input.workspaceId ?? null,
+        enabled_mcp_server_ids: encodeJsonOrNull(input.enabledMcpServerIds ?? []) ?? '[]',
         enabled_tools: encodeJsonOrNull(input.enabledTools ?? null),
-        extra_denied: encodeJsonOrNull(input.extraDenied ?? null),
+        deny_list: encodeJsonOrNull(input.denyList ?? null),
+        expose_flowlib_actions: input.exposeFlowlibActions ?? false,
+        tool_output_budget:
+          encodeJsonOrNull(input.toolOutputBudget ?? DEFAULT_TOOL_OUTPUT_BUDGET) ??
+          JSON.stringify(DEFAULT_TOOL_OUTPUT_BUDGET),
         created_by: input.createdBy,
         visibility: input.visibility ?? 'private',
         status: input.status ?? 'active',
@@ -199,29 +228,70 @@ export class SessionsRepository {
     orgId?: string | null,
   ): Promise<AgentSession | null> {
     const set: Record<string, unknown> = {};
-    if (patch.title !== undefined) {set.title = patch.title;}
-    if (patch.model !== undefined) {set.model = patch.model;}
-    if (patch.permissionMode !== undefined) {set.permission_mode = patch.permissionMode;}
-    if (patch.workspaceId !== undefined) {set.workspace_id = patch.workspaceId;}
+    if (patch.title !== undefined) {
+      set.title = patch.title;
+    }
+    if (patch.providerId !== undefined) {
+      set.provider_id = patch.providerId;
+    }
+    if (patch.providerConfig !== undefined) {
+      set.provider_config = encodeJsonOrNull(patch.providerConfig) ?? '{}';
+    }
+    if (patch.model !== undefined) {
+      set.model = patch.model;
+    }
+    if (patch.permissionMode !== undefined) {
+      set.permission_mode = patch.permissionMode;
+    }
+    if (patch.systemPrompt !== undefined) {
+      set.system_prompt = patch.systemPrompt;
+    }
+    if (patch.workspaceId !== undefined) {
+      set.workspace_id = patch.workspaceId;
+    }
+    if (patch.enabledMcpServerIds !== undefined) {
+      set.enabled_mcp_server_ids = encodeJsonOrNull(patch.enabledMcpServerIds) ?? '[]';
+    }
     if (patch.enabledTools !== undefined) {
       set.enabled_tools = encodeJsonOrNull(patch.enabledTools);
     }
-    if (patch.extraDenied !== undefined) {
-      set.extra_denied = encodeJsonOrNull(patch.extraDenied);
+    if (patch.denyList !== undefined) {
+      set.deny_list = encodeJsonOrNull(patch.denyList);
     }
-    if (patch.visibility !== undefined) {set.visibility = patch.visibility;}
-    if (patch.status !== undefined) {set.status = patch.status;}
+    if (patch.exposeFlowlibActions !== undefined) {
+      set.expose_flowlib_actions = patch.exposeFlowlibActions;
+    }
+    if (patch.toolOutputBudget !== undefined) {
+      set.tool_output_budget = encodeJsonOrNull(patch.toolOutputBudget);
+    }
+    if (patch.visibility !== undefined) {
+      set.visibility = patch.visibility;
+    }
+    if (patch.status !== undefined) {
+      set.status = patch.status;
+    }
     if (patch.lastMessageAt !== undefined) {
-      set.last_message_at = patch.lastMessageAt === null
-        ? null
-        : patch.lastMessageAt instanceof Date
-          ? (this.database.type === 'sqlite' ? patch.lastMessageAt.toISOString() : patch.lastMessageAt)
-          : patch.lastMessageAt;
+      set.last_message_at =
+        patch.lastMessageAt === null
+          ? null
+          : patch.lastMessageAt instanceof Date
+            ? this.database.type === 'sqlite'
+              ? patch.lastMessageAt.toISOString()
+              : patch.lastMessageAt
+            : patch.lastMessageAt;
     }
-    if (patch.messageCount !== undefined) {set.message_count = patch.messageCount;}
-    if (patch.inputTokensTotal !== undefined) {set.input_tokens_total = patch.inputTokensTotal;}
-    if (patch.outputTokensTotal !== undefined) {set.output_tokens_total = patch.outputTokensTotal;}
-    if (patch.costUsd !== undefined) {set.cost_usd = patch.costUsd;}
+    if (patch.messageCount !== undefined) {
+      set.message_count = patch.messageCount;
+    }
+    if (patch.inputTokensTotal !== undefined) {
+      set.input_tokens_total = patch.inputTokensTotal;
+    }
+    if (patch.outputTokensTotal !== undefined) {
+      set.output_tokens_total = patch.outputTokensTotal;
+    }
+    if (patch.costUsd !== undefined) {
+      set.cost_usd = patch.costUsd;
+    }
 
     if (Object.keys(set).length === 0) {
       return this.findById(id, orgId);
@@ -234,9 +304,8 @@ export class SessionsRepository {
       .set(set as never)
       .where('id', '=', id);
     if (orgId !== undefined) {
-      query = orgId === null
-        ? query.where('org_id', 'is', null)
-        : query.where('org_id', '=', orgId);
+      query =
+        orgId === null ? query.where('org_id', 'is', null) : query.where('org_id', '=', orgId);
     }
     await query.execute();
 
@@ -244,14 +313,10 @@ export class SessionsRepository {
   }
 
   async delete(id: string, orgId?: string | null): Promise<void> {
-    let query = this.database
-      .kysely<AgentsDB>()
-      .deleteFrom('agent_sessions')
-      .where('id', '=', id);
+    let query = this.database.kysely<AgentsDB>().deleteFrom('agent_sessions').where('id', '=', id);
     if (orgId !== undefined) {
-      query = orgId === null
-        ? query.where('org_id', 'is', null)
-        : query.where('org_id', '=', orgId);
+      query =
+        orgId === null ? query.where('org_id', 'is', null) : query.where('org_id', '=', orgId);
     }
     await query.execute();
   }

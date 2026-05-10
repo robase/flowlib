@@ -7,7 +7,7 @@
  *   1. Role-derived denies pulled from `agent_role_permissions` rows
  *      where `enabled=false` for the user's current role.
  *   2. Per-agent `denyList` overrides supplied by the caller (loaded
- *      from `agent_definitions.denyList`).
+ *      from `agent_sessions.denyList`).
  *   3. Per-session `extraDenied` overrides supplied by the caller
  *      (loaded from `agent_sessions.extraDenied`).
  *   4. Per-session `enabledTools` whitelist (loaded from
@@ -31,10 +31,7 @@
  * move with us.
  */
 
-import type {
-  PermissionsResolver,
-  ResolveDenyListInput,
-} from './types';
+import type { PermissionsResolver, ResolveDenyListInput } from './types';
 
 /**
  * Minimal repository surface the resolver needs. Stream F populates
@@ -86,12 +83,8 @@ export interface PermissionsResolverDeps {
  * results per `(userId, sessionId)`; the resolver's job is to be a
  * pure function of its inputs.
  */
-export function createResolver(
-  deps: PermissionsResolverDeps,
-): PermissionsResolver {
-  async function getEffectiveDenyList(
-    input: ResolveDenyListInput,
-  ): Promise<Set<string>> {
+export function createResolver(deps: PermissionsResolverDeps): PermissionsResolver {
+  async function getEffectiveDenyList(input: ResolveDenyListInput): Promise<Set<string>> {
     // Step 6 (early): superadmin bypass. Returning an empty set here
     // means **no tool is ever denied** for superadmins, even if the
     // caller passed an explicit `agentDenyList` or `sessionExtraDenied`.
@@ -150,13 +143,21 @@ export function createResolver(
       const allowed = new Set(whitelist);
       const knownTools = new Set<string>();
       if (input.agentEnabledTools) {
-        for (const tool of input.agentEnabledTools) {knownTools.add(tool);}
+        for (const tool of input.agentEnabledTools) {
+          knownTools.add(tool);
+        }
       }
-      for (const row of roleRows) {knownTools.add(row.toolName);}
-      for (const tool of deny) {knownTools.add(tool);}
+      for (const row of roleRows) {
+        knownTools.add(row.toolName);
+      }
+      for (const tool of deny) {
+        knownTools.add(tool);
+      }
       // The whitelist itself is part of the universe; tools in the
       // whitelist obviously shouldn't be denied.
-      for (const tool of whitelist) {knownTools.add(tool);}
+      for (const tool of whitelist) {
+        knownTools.add(tool);
+      }
 
       for (const tool of knownTools) {
         if (!allowed.has(tool)) {

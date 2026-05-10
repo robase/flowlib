@@ -12,21 +12,10 @@
  * Tenant-scoped on every read; cross-tenant access returns 404.
  */
 
-import type {
-  FlowlibPluginEndpoint,
-  PluginEndpointResponse,
-} from '@flowlib/core';
+import type { FlowlibPluginEndpoint, PluginEndpointResponse } from '@flowlib/core';
 import type { PluginContext } from '../plugin-context';
-import type {
-  AgentVisibility,
-  WorkspaceProviderId,
-} from '../../shared/types';
-import {
-  badRequest,
-  notFound,
-  safeHandler,
-  type EndpointDeps,
-} from './helpers';
+import type { AgentVisibility, WorkspaceProviderId } from '../../shared/types';
+import { badRequest, notFound, safeHandler, type EndpointDeps } from './helpers';
 
 interface CreateWorkspaceBody {
   name?: string;
@@ -43,25 +32,21 @@ interface CreateWorkspaceBody {
 
 interface UpdateWorkspaceBody extends Omit<CreateWorkspaceBody, 'id'> {}
 
-async function listWorkspaces(
-  deps: EndpointDeps,
-): Promise<PluginEndpointResponse> {
+async function listWorkspaces(deps: EndpointDeps): Promise<PluginEndpointResponse> {
   const rows = await deps.repos.workspaces.list({ orgId: deps.auth.orgId });
   return { body: { data: rows } };
 }
 
-async function getWorkspace(
-  deps: EndpointDeps,
-): Promise<PluginEndpointResponse> {
+async function getWorkspace(deps: EndpointDeps): Promise<PluginEndpointResponse> {
   const id = deps.endpointCtx.params.id;
   const row = await deps.repos.workspaces.findById(id, deps.auth.orgId);
-  if (!row) return notFound('Workspace not found');
+  if (!row) {
+    return notFound('Workspace not found');
+  }
   return { body: row };
 }
 
-async function createWorkspace(
-  deps: EndpointDeps,
-): Promise<PluginEndpointResponse> {
+async function createWorkspace(deps: EndpointDeps): Promise<PluginEndpointResponse> {
   const body = (deps.endpointCtx.body ?? {}) as CreateWorkspaceBody;
   if (!body.name || typeof body.name !== 'string') {
     return badRequest('name is required');
@@ -128,21 +113,19 @@ async function createWorkspace(
   return { status: 201, body: created };
 }
 
-async function updateWorkspace(
-  deps: EndpointDeps,
-): Promise<PluginEndpointResponse> {
+async function updateWorkspace(deps: EndpointDeps): Promise<PluginEndpointResponse> {
   const id = deps.endpointCtx.params.id;
   const existing = await deps.repos.workspaces.findById(id, deps.auth.orgId);
-  if (!existing) return notFound('Workspace not found');
+  if (!existing) {
+    return notFound('Workspace not found');
+  }
 
   const body = (deps.endpointCtx.body ?? {}) as UpdateWorkspaceBody;
   const updated = await deps.repos.workspaces.update(
     id,
     {
       name: body.name,
-      workspaceProviderId: body.workspaceProviderId as
-        | WorkspaceProviderId
-        | undefined,
+      workspaceProviderId: body.workspaceProviderId as WorkspaceProviderId | undefined,
       rootPath: body.rootPath,
       gitRemote: body.gitRemote,
       gitBranch: body.gitBranch,
@@ -152,16 +135,18 @@ async function updateWorkspace(
     },
     deps.auth.orgId,
   );
-  if (!updated) return notFound('Workspace not found');
+  if (!updated) {
+    return notFound('Workspace not found');
+  }
   return { body: updated };
 }
 
-async function deleteWorkspace(
-  deps: EndpointDeps,
-): Promise<PluginEndpointResponse> {
+async function deleteWorkspace(deps: EndpointDeps): Promise<PluginEndpointResponse> {
   const id = deps.endpointCtx.params.id;
   const existing = await deps.repos.workspaces.findById(id, deps.auth.orgId);
-  if (!existing) return notFound('Workspace not found');
+  if (!existing) {
+    return notFound('Workspace not found');
+  }
 
   const provider = deps.pluginCtx.options.workspaceProvider;
   if (provider && provider.id === existing.workspaceProviderId) {
@@ -179,9 +164,7 @@ async function deleteWorkspace(
   return { body: { success: true } };
 }
 
-export function createWorkspacesEndpoints(
-  ctx: PluginContext,
-): FlowlibPluginEndpoint[] {
+export function createWorkspacesEndpoints(ctx: PluginContext): FlowlibPluginEndpoint[] {
   return [
     {
       method: 'GET',

@@ -80,11 +80,7 @@ import type {
 
 import type { AgentEvent } from '../../shared/events';
 import type { AgentsAuthContext } from '../../shared/auth-context';
-import type {
-  AgentService,
-  PersistenceCallbacks,
-  SessionContext,
-} from '../service/types';
+import type { AgentService, PersistenceCallbacks, SessionContext } from '../service/types';
 import type { PromptInput } from '../providers/types';
 
 import { getAgentsRuntime } from './runtime-singleton';
@@ -277,7 +273,9 @@ export class AgentChatDO extends (AIChatAgent as unknown as new (
    * session.").
    */
   private _ensureResolved(): ResolvedConnectionState {
-    if (this._resolved) {return this._resolved;}
+    if (this._resolved) {
+      return this._resolved;
+    }
     const self = this as unknown as { name?: string };
     const doName = typeof self.name === 'string' ? self.name : '';
     const { orgId, sessionId } = parseAgentName(doName);
@@ -326,9 +324,7 @@ export class AgentChatDO extends (AIChatAgent as unknown as new (
     // Stream F's SessionsRepository returns a row including the
     // provider id and providerSessionId. We narrow loosely here so the
     // DO doesn't depend on the repository's concrete row type.
-    const sessionRow = (await repositories.sessions.findById(
-      resolved.sessionId,
-    )) as
+    const sessionRow = (await repositories.sessions.findById(resolved.sessionId)) as
       | {
           providerId: string;
           providerSessionId: string;
@@ -365,17 +361,18 @@ export class AgentChatDO extends (AIChatAgent as unknown as new (
     }
 
     const hooks =
-      (runtime.hookPipeline as SessionContext['hooks'] | undefined) ??
-      noopHookPipeline();
+      (runtime.hookPipeline as SessionContext['hooks'] | undefined) ?? noopHookPipeline();
     const permissions =
-      (runtime.permissions as SessionContext['permissions'] | undefined) ??
-      allowAllPermissions();
+      (runtime.permissions as SessionContext['permissions'] | undefined) ?? allowAllPermissions();
     const callbacks = buildPersistenceCallbacks(runtime);
     const abortController = new AbortController();
     if (options?.abortSignal) {
       const sig = options.abortSignal;
-      if (sig.aborted) {abortController.abort();}
-      else {sig.addEventListener('abort', () => abortController.abort());}
+      if (sig.aborted) {
+        abortController.abort();
+      } else {
+        sig.addEventListener('abort', () => abortController.abort());
+      }
     }
 
     return {
@@ -437,9 +434,13 @@ export class AgentChatDO extends (AIChatAgent as unknown as new (
  * SDK's structured `parts` array and a flat `content` string.
  */
 function extractPromptText(message: unknown): string | null {
-  if (!message || typeof message !== 'object') {return null;}
+  if (!message || typeof message !== 'object') {
+    return null;
+  }
   const m = message as { content?: unknown; parts?: unknown };
-  if (typeof m.content === 'string' && m.content.length > 0) {return m.content;}
+  if (typeof m.content === 'string' && m.content.length > 0) {
+    return m.content;
+  }
   if (Array.isArray(m.parts)) {
     const text = m.parts
       .filter(
@@ -465,9 +466,7 @@ function extractPromptText(message: unknown): string | null {
  * Stream I will own the real persistence layer — this scaffold matches
  * the interface and is replaced when the wiring lands.
  */
-function buildPersistenceCallbacks(
-  runtime: { repositories?: unknown },
-): PersistenceCallbacks {
+function buildPersistenceCallbacks(runtime: { repositories?: unknown }): PersistenceCallbacks {
   const repos = runtime.repositories as
     | { messages?: { append?: (input: unknown) => Promise<void> } }
     | undefined;

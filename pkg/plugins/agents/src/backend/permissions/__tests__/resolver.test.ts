@@ -37,9 +37,7 @@ function makeAuth(overrides: Partial<AgentsAuthContext> = {}): AgentsAuthContext
 
 function makeRepo(rows: ReadonlyArray<RolePermissionRow>): RolePermissionsRepository {
   return {
-    listByRole: vi.fn(async (roleId: string) =>
-      rows.filter((r) => r.roleId === roleId),
-    ),
+    listByRole: vi.fn(async (roleId: string) => rows.filter((r) => r.roleId === roleId)),
   };
 }
 
@@ -157,9 +155,7 @@ describe('createResolver — getEffectiveDenyList', () => {
   });
 
   it('superadmin bypass returns empty set even with role + agent + session denies', async () => {
-    const repo = makeRepo([
-      { roleId: 'superadmin', toolName: 'Bash', enabled: false },
-    ]);
+    const repo = makeRepo([{ roleId: 'superadmin', toolName: 'Bash', enabled: false }]);
     const resolver = createResolver({ rolePermissions: repo });
 
     const deny = await resolver.getEffectiveDenyList(
@@ -176,7 +172,7 @@ describe('createResolver — getEffectiveDenyList', () => {
     expect(repo.listByRole).not.toHaveBeenCalled();
   });
 
-  it('queries the repository exactly once with the user\'s role', async () => {
+  it("queries the repository exactly once with the user's role", async () => {
     const repo = makeRepo([]);
     const resolver = createResolver({ rolePermissions: repo });
 
@@ -187,9 +183,7 @@ describe('createResolver — getEffectiveDenyList', () => {
   });
 
   it('handles custom (non-well-known) roles via the same path', async () => {
-    const repo = makeRepo([
-      { roleId: 'reviewer', toolName: 'Bash', enabled: false },
-    ]);
+    const repo = makeRepo([{ roleId: 'reviewer', toolName: 'Bash', enabled: false }]);
     const resolver = createResolver({ rolePermissions: repo });
 
     const deny = await resolver.getEffectiveDenyList(
@@ -226,9 +220,7 @@ describe('createResolver — isToolAllowed', () => {
   });
 
   it('returns true for superadmins regardless of denies', async () => {
-    const repo = makeRepo([
-      { roleId: 'superadmin', toolName: 'Bash', enabled: false },
-    ]);
+    const repo = makeRepo([{ roleId: 'superadmin', toolName: 'Bash', enabled: false }]);
     const resolver = createResolver({ rolePermissions: repo });
 
     const allowed = await resolver.isToolAllowed({
@@ -244,10 +236,9 @@ describe('createResolver — isToolAllowed', () => {
 
 function makePluginContext(repos?: { rolePermissions?: RolePermissionsRepository }): PluginContext {
   const logCalls: Array<{ level: string; msg: string; meta?: unknown }> = [];
-  const log = (level: string) =>
-    (msg: string, meta?: unknown) => {
-      logCalls.push({ level, msg, meta });
-    };
+  const log = (level: string) => (msg: string, meta?: unknown) => {
+    logCalls.push({ level, msg, meta });
+  };
   const ctx = {
     options: {
       staticOrgId: 'default-org',
@@ -255,6 +246,8 @@ function makePluginContext(repos?: { rolePermissions?: RolePermissionsRepository
       providers: [],
       exposeFlowlibActions: false,
       defaultDenyList: [],
+      defaultProviderId: 'opencode',
+      defaultModel: 'anthropic/claude-sonnet-4-5',
     },
     flowlib: {} as PluginContext['flowlib'],
     actionRegistry: {} as PluginContext['actionRegistry'],
@@ -294,7 +287,9 @@ describe('registerPermissions', () => {
     expect(ctx.registries.permissions).toBe(allowAllResolver);
 
     const logs = (ctx as unknown as { logCalls: Array<{ level: string; msg: string }> }).logCalls;
-    expect(logs.some((l) => l.level === 'warn' && /no rolePermissions repository/.test(l.msg))).toBe(true);
+    expect(
+      logs.some((l) => l.level === 'warn' && /no rolePermissions repository/.test(l.msg)),
+    ).toBe(true);
   });
 
   it('falls back to allowAllResolver when repos object exists but lacks .rolePermissions', async () => {

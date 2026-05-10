@@ -26,9 +26,7 @@ describe('mapSdkMessage', () => {
         uuid: 'uuid-1',
       };
       const events = mapSdkMessage(msg);
-      expect(events).toEqual([
-        { type: 'text-delta', messageId: 'msg_abc', text: 'Hello world' },
-      ]);
+      expect(events).toEqual([{ type: 'text-delta', messageId: 'msg_abc', text: 'Hello world' }]);
     });
 
     it('emits a tool-call for a tool_use content block', () => {
@@ -107,9 +105,7 @@ describe('mapSdkMessage', () => {
         uuid: 'uuid-4',
       };
       const events = mapSdkMessage(msg);
-      expect(events).toEqual([
-        { type: 'text-delta', messageId: 'msg_empty', text: 'real text' },
-      ]);
+      expect(events).toEqual([{ type: 'text-delta', messageId: 'msg_empty', text: 'real text' }]);
     });
 
     it('falls back to uuid when message.id is missing', () => {
@@ -140,9 +136,7 @@ describe('mapSdkMessage', () => {
         uuid: 'u',
       };
       const events = mapSdkMessage(msg);
-      expect(events).toEqual([
-        { type: 'text-delta', messageId: 'msg_unknown', text: 'visible' },
-      ]);
+      expect(events).toEqual([{ type: 'text-delta', messageId: 'msg_unknown', text: 'visible' }]);
     });
   });
 
@@ -280,13 +274,9 @@ describe('mapSdkMessage', () => {
     it('passes log calls to the optional logger for system messages', () => {
       const calls: Array<{ msg: string; meta?: unknown }> = [];
       const logger = {
-        debug: (m: string, meta?: Record<string, unknown>) =>
-          calls.push({ msg: m, meta }),
+        debug: (m: string, meta?: Record<string, unknown>) => calls.push({ msg: m, meta }),
       };
-      mapSdkMessage(
-        { type: 'system', subtype: 'init' } as SdkMessageLike,
-        logger,
-      );
+      mapSdkMessage({ type: 'system', subtype: 'init' } as SdkMessageLike, logger);
       expect(calls).toHaveLength(1);
       expect(calls[0].meta).toEqual({ subtype: 'init' });
     });

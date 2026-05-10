@@ -13,12 +13,16 @@
  */
 
 import * as React from 'react';
-import { AgentsApiClient } from './agents.api';
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore — peer dep, resolved by host bundler
+// eslint-disable-next-line import/no-unresolved
+import { useApiBaseURL } from '@flowlib/ui';
+import { McpServersApiClient } from './mcp-servers.api';
 import { SessionsApiClient } from './sessions.api';
 import { WorkspacesApiClient } from './workspaces.api';
 
 export interface AgentsApiClients {
-  agents: AgentsApiClient;
+  mcpServers: McpServersApiClient;
   sessions: SessionsApiClient;
   workspaces: WorkspacesApiClient;
 }
@@ -44,18 +48,24 @@ export function AgentsApiProvider({
   baseUrl,
   children,
 }: AgentsApiProviderProps): React.ReactElement {
-  const clients = React.useMemo<AgentsApiClients>(() => {
-    if (value) return value;
-    return {
-      agents: new AgentsApiClient({ baseUrl }),
-      sessions: new SessionsApiClient({ baseUrl }),
-      workspaces: new WorkspacesApiClient({ baseUrl }),
-    };
-  }, [value, baseUrl]);
+  // Fall back to the host's `<Flowlib config={{ apiPath }}>` value when
+  // the consumer doesn't pass `baseUrl` explicitly. Plugins are mounted
+  // *inside* `<ApiProvider>` so the hook is always available at runtime.
+  const hostBaseUrl = (useApiBaseURL as () => string)();
+  const resolvedBase = baseUrl ?? hostBaseUrl ?? '';
 
-  return (
-    <AgentsApiContext.Provider value={clients}>{children}</AgentsApiContext.Provider>
-  );
+  const clients = React.useMemo<AgentsApiClients>(() => {
+    if (value) {
+      return value;
+    }
+    return {
+      mcpServers: new McpServersApiClient({ baseUrl: resolvedBase }),
+      sessions: new SessionsApiClient({ baseUrl: resolvedBase }),
+      workspaces: new WorkspacesApiClient({ baseUrl: resolvedBase }),
+    };
+  }, [value, resolvedBase]);
+
+  return <AgentsApiContext.Provider value={clients}>{children}</AgentsApiContext.Provider>;
 }
 
 /** Throws if used outside an `AgentsApiProvider`. */

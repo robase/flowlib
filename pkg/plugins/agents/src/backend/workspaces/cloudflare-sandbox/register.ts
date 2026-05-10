@@ -32,9 +32,7 @@ import type { PluginContext } from '../../plugin-context';
 export function registerWorkspaces(ctx: PluginContext): void {
   const provider = ctx.options.workspaceProvider;
   if (!provider) {
-    ctx.logger.debug(
-      '[agents] registerWorkspaces: no workspaceProvider configured — skipping',
-    );
+    ctx.logger.debug('[agents] registerWorkspaces: no workspaceProvider configured — skipping');
     return;
   }
 

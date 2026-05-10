@@ -76,11 +76,7 @@ export function tenantScopedId(
  * Pure — no DO binding access, no I/O. Same validation rules as
  * `tenantScopedId`.
  */
-export function tenantScopedName(
-  kind: TenantScopedDoKind,
-  orgId: string,
-  suffix: string,
-): string {
+export function tenantScopedName(kind: TenantScopedDoKind, orgId: string, suffix: string): string {
   if (!orgId || orgId.trim().length === 0) {
     throw new Error('[agents] tenantScopedName: orgId required');
   }

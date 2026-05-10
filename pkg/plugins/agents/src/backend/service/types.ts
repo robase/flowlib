@@ -95,7 +95,10 @@ export interface PersistenceCallbacks {
     usage?: { inputTokens: number; outputTokens: number };
   }): Promise<void>;
   /** The whole turn ended. */
-  onTurnEnd(input: { reason: 'stopped' | 'max-turns' | 'error' | 'completed'; error?: string }): Promise<void>;
+  onTurnEnd(input: {
+    reason: 'stopped' | 'max-turns' | 'error' | 'completed';
+    error?: string;
+  }): Promise<void>;
 }
 
 /**

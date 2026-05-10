@@ -13,31 +13,17 @@
 
 import type { DialectBoolean, TimestampColumn } from '@flowlib/db/kysely';
 
-// ─── agent_definitions ─────────────────────────────────────────────────
+// ─── agent_mcp_servers ─────────────────────────────────────────────────
 
-export interface AgentDefinitionsTable {
+export interface AgentMcpServersTable {
   id: string;
   org_id: string | null;
   name: string;
   description: string | null;
-  provider_id: string;
+  transport: string;
   /** JSON-encoded `Record<string, unknown>`. */
-  provider_config: string | unknown;
-  workspace_id: string | null;
-  persona_id: string | null;
-  persona_text: string | null;
-  default_model: string | null;
-  /** JSON-encoded `Record<string, unknown>`. */
-  mcp_servers: string | unknown;
-  /** JSON-encoded `string[]`. */
-  enabled_tools: string | string[] | null;
-  /** JSON-encoded `string[]`. */
-  deny_list: string | string[] | null;
-  expose_flowlib_actions: DialectBoolean;
-  /** JSON-encoded `{ lines: number; bytes: number }`. */
-  tool_output_budget: string | unknown;
+  config: string | unknown;
   created_by: string;
-  visibility: string;
   created_at: TimestampColumn;
   updated_at: TimestampColumn;
 }
@@ -66,16 +52,29 @@ export interface AgentWorkspacesTable {
 export interface AgentSessionsTable {
   id: string;
   org_id: string | null;
-  agent_id: string;
   provider_session_id: string;
   title: string;
+  // ── Provider / model ──
+  provider_id: string;
+  /** JSON-encoded `Record<string, unknown>`. */
+  provider_config: string | unknown;
   model: string | null;
   permission_mode: string | null;
+  // ── System prompt ──
+  system_prompt: string | null;
+  // ── Workspace ──
   workspace_id: string | null;
+  // ── MCP / tools ──
+  /** JSON-encoded `string[]` — ids of org-scoped MCP servers opted in. */
+  enabled_mcp_server_ids: string | string[];
   /** JSON-encoded `string[]`. */
   enabled_tools: string | string[] | null;
   /** JSON-encoded `string[]`. */
-  extra_denied: string | string[] | null;
+  deny_list: string | string[] | null;
+  expose_flowlib_actions: DialectBoolean;
+  /** JSON-encoded `{ lines: number; bytes: number }`. */
+  tool_output_budget: string | unknown;
+  // ── Ownership / lifecycle ──
   created_by: string;
   visibility: string;
   status: string;
@@ -146,7 +145,7 @@ export interface AgentRolePermissionsTable {
 // ─── Aggregate DB interface ────────────────────────────────────────────
 
 export interface AgentsDB {
-  agent_definitions: AgentDefinitionsTable;
+  agent_mcp_servers: AgentMcpServersTable;
   agent_workspaces: AgentWorkspacesTable;
   agent_sessions: AgentSessionsTable;
   agent_messages: AgentMessagesTable;

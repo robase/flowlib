@@ -55,7 +55,9 @@ export type { StreamTextOnFinishCallback, ToolSet, OnChatMessageOptions, UIMessa
  * footprint small and makes the test stub feasible.
  */
 export type AIChatAgentCtor<Env = unknown> = new (
-  ...args: ConstructorParameters<typeof AIChatAgentReal<Env extends Cloudflare.Env ? Env : Cloudflare.Env>>
+  ...args: ConstructorParameters<
+    typeof AIChatAgentReal<Env extends Cloudflare.Env ? Env : Cloudflare.Env>
+  >
 ) => AIChatAgentReal<Env extends Cloudflare.Env ? Env : Cloudflare.Env>;
 
 /**

@@ -20,7 +20,7 @@ export interface ResolveDenyListInput {
   /** Per-session overrides loaded from `agent_sessions`. */
   sessionEnabledTools?: ReadonlyArray<string> | null;
   sessionExtraDenied?: ReadonlyArray<string> | null;
-  /** Per-agent overrides loaded from `agent_definitions`. */
+  /** Per-agent overrides loaded from the session config. */
   agentEnabledTools?: ReadonlyArray<string> | null;
   agentDenyList?: ReadonlyArray<string> | null;
 }
@@ -38,9 +38,7 @@ export interface PermissionsResolver {
    */
   getEffectiveDenyList(input: ResolveDenyListInput): Promise<Set<string>>;
   /** Convenience: true if the user can use the tool right now. */
-  isToolAllowed(
-    input: ResolveDenyListInput & { toolName: string },
-  ): Promise<boolean>;
+  isToolAllowed(input: ResolveDenyListInput & { toolName: string }): Promise<boolean>;
 }
 
 /**

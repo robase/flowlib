@@ -1,8 +1,6 @@
-import { defineFlow } from "@flowlib/sdk";
+import { defineFlow } from '@flowlib/sdk';
 
 export const myFlow = defineFlow({
-  nodes: {
-  },
-  edges: [
-  ],
+  nodes: {},
+  edges: [],
 });

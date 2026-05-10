@@ -8,7 +8,15 @@
 import type { PluginDatabaseApi } from '@flowlib/core';
 import type { AgentMessage, AgentMessagePart, AgentMessageUsage } from '../../shared/types';
 import type { AgentsDB } from './db-types';
-import { encodeJson, encodeJsonOrNull, generateId, nowFor, parseJson, parseJsonOrNull, toIso } from './util';
+import {
+  encodeJson,
+  encodeJsonOrNull,
+  generateId,
+  nowFor,
+  parseJson,
+  parseJsonOrNull,
+  toIso,
+} from './util';
 
 interface AgentMessageRow {
   id: string;
@@ -72,9 +80,8 @@ export class MessagesRepository {
       .selectAll()
       .where('id', '=', id);
     if (orgId !== undefined) {
-      query = orgId === null
-        ? query.where('org_id', 'is', null)
-        : query.where('org_id', '=', orgId);
+      query =
+        orgId === null ? query.where('org_id', 'is', null) : query.where('org_id', '=', orgId);
     }
     const row = await query.limit(1).executeTakeFirst();
     return row ? mapRow(row as unknown as AgentMessageRow) : null;
@@ -83,9 +90,10 @@ export class MessagesRepository {
   async list(filter: ListMessagesFilter = {}): Promise<AgentMessage[]> {
     let query = this.database.kysely<AgentsDB>().selectFrom('agent_messages').selectAll();
     if (filter.orgId !== undefined) {
-      query = filter.orgId === null
-        ? query.where('org_id', 'is', null)
-        : query.where('org_id', '=', filter.orgId);
+      query =
+        filter.orgId === null
+          ? query.where('org_id', 'is', null)
+          : query.where('org_id', '=', filter.orgId);
     }
     if (filter.sessionId !== undefined) {
       query = query.where('session_id', '=', filter.sessionId);
@@ -94,8 +102,12 @@ export class MessagesRepository {
       query = query.where('sequence', '>', filter.afterSequence);
     }
     query = query.orderBy('sequence', 'asc');
-    if (filter.limit !== undefined) {query = query.limit(filter.limit);}
-    if (filter.offset !== undefined) {query = query.offset(filter.offset);}
+    if (filter.limit !== undefined) {
+      query = query.limit(filter.limit);
+    }
+    if (filter.offset !== undefined) {
+      query = query.offset(filter.offset);
+    }
     const rows = await query.execute();
     return rows.map((row) => mapRow(row as unknown as AgentMessageRow));
   }

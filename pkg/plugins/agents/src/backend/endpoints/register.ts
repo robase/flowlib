@@ -24,7 +24,7 @@
 
 import type { FlowlibPluginEndpoint } from '@flowlib/core';
 import type { PluginContext } from '../plugin-context';
-import { createAgentsEndpoints } from './agents.endpoint';
+import { createMcpServersEndpoints } from './mcp-servers.endpoint';
 import { createWorkspacesEndpoints } from './workspaces.endpoint';
 import { createSessionsEndpoints } from './sessions.endpoint';
 import { createProjectsEndpoints } from './projects.endpoint';
@@ -34,7 +34,7 @@ import { createFilesEndpoints } from './files.endpoint';
  * Build all REST endpoints for the agents plugin.
  *
  * @returns The full set of `FlowlibPluginEndpoint`s the plugin
- *   contributes. Order is: agents → workspaces → sessions →
+ *   contributes. Order is: mcp-servers → workspaces → sessions →
  *   projects → files. `:id`-bearing routes go after their static
  *   siblings so frameworks that match in declaration order resolve
  *   `/workspaces/:id/files` correctly without conflicting with
@@ -42,7 +42,7 @@ import { createFilesEndpoints } from './files.endpoint';
  */
 export function buildEndpoints(ctx: PluginContext): FlowlibPluginEndpoint[] {
   return [
-    ...createAgentsEndpoints(ctx),
+    ...createMcpServersEndpoints(ctx),
     ...createWorkspacesEndpoints(ctx),
     ...createSessionsEndpoints(ctx),
     ...createProjectsEndpoints(ctx),

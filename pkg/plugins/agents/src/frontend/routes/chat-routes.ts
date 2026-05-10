@@ -46,7 +46,7 @@ export interface ChatRouteContribution {
 
 export const agentsChatRoutes: ChatRouteContribution[] = [
   {
-    path: '/agents/:agentId/sessions/:sessionId',
+    path: '/agents/sessions/:sessionId',
     component: ChatPage,
   },
 ];

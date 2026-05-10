@@ -1,8 +1,8 @@
 /**
  * React Query hooks for chat sessions.
  *
- * Stream M owns the chat surface; this scaffold supplies the
- * AgentDetailPage's session list.
+ * Sessions are the unit of interaction — there is no separate agent
+ * definition. `useSessions()` returns every session for the active org.
  */
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -12,16 +12,18 @@ import { useAgentsApiClients } from '../api/context';
 
 export const sessionsKeys = {
   all: ['agents', 'sessions'] as const,
-  forAgent: (agentId: string) => [...sessionsKeys.all, 'agent', agentId] as const,
+  list: () => [...sessionsKeys.all, 'list'] as const,
   detail: (id: string) => [...sessionsKeys.all, 'detail', id] as const,
 };
 
-export function useSessions(agentId: string | null | undefined) {
+export function useSessions() {
   const { sessions } = useAgentsApiClients();
   return useQuery<AgentSession[]>({
-    queryKey: sessionsKeys.forAgent(agentId ?? ''),
-    queryFn: () => sessions.listSessionsForAgent(agentId as string),
-    enabled: Boolean(agentId),
+    queryKey: sessionsKeys.list(),
+    queryFn: async () => {
+      const r = await sessions.listSessions();
+      return r.data;
+    },
   });
 }
 
@@ -37,10 +39,10 @@ export function useSession(sessionId: string | null | undefined) {
 export function useCreateSession() {
   const { sessions } = useAgentsApiClients();
   const qc = useQueryClient();
-  return useMutation<AgentSession, Error, CreateSessionInput>({
-    mutationFn: (input) => sessions.createSession(input),
-    onSuccess: (data) => {
-      qc.invalidateQueries({ queryKey: sessionsKeys.forAgent(data.agentId) });
+  return useMutation<AgentSession, Error, CreateSessionInput | void>({
+    mutationFn: (input) => sessions.createSession(input ?? {}),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: sessionsKeys.list() });
     },
   });
 }
@@ -51,7 +53,7 @@ export function useUpdateSession() {
   return useMutation<AgentSession, Error, { id: string; input: UpdateSessionInput }>({
     mutationFn: ({ id, input }) => sessions.updateSession(id, input),
     onSuccess: (data) => {
-      qc.invalidateQueries({ queryKey: sessionsKeys.forAgent(data.agentId) });
+      qc.invalidateQueries({ queryKey: sessionsKeys.list() });
       qc.setQueryData(sessionsKeys.detail(data.id), data);
     },
   });
@@ -60,10 +62,10 @@ export function useUpdateSession() {
 export function useDeleteSession() {
   const { sessions } = useAgentsApiClients();
   const qc = useQueryClient();
-  return useMutation<void, Error, { id: string; agentId: string }>({
+  return useMutation<void, Error, { id: string }>({
     mutationFn: ({ id }) => sessions.deleteSession(id),
-    onSuccess: (_void, { agentId }) => {
-      qc.invalidateQueries({ queryKey: sessionsKeys.forAgent(agentId) });
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: sessionsKeys.list() });
     },
   });
 }

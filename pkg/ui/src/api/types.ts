@@ -207,3 +207,42 @@ export interface UpdateTriggerInput {
   cronExpression?: string;
   cronTimezone?: string;
 }
+
+// =====================================
+// SETTINGS
+// =====================================
+
+export interface SettingsRecord {
+  key: string;
+  namespace: string;
+  /** Decrypted value, or `null` for sanitized secret reads. */
+  value: unknown;
+  encrypted: boolean;
+  updatedAt: string;
+  updatedBy: string | null;
+}
+
+export interface SettingsFieldDescriptor {
+  key: string;
+  label: string;
+  description?: string;
+  type: 'string' | 'number' | 'boolean' | 'select' | 'textarea' | 'json' | 'secret';
+  options?: Array<{ value: string; label: string }>;
+  defaultValue?: unknown;
+  placeholder?: string;
+  readOnly?: boolean;
+  sensitive?: boolean;
+  helpUrl?: string;
+}
+
+export interface SettingsDescriptorGroup {
+  namespace: string;
+  label: string;
+  description?: string;
+  fields: SettingsFieldDescriptor[];
+}
+
+export interface SetSettingInput {
+  value: unknown;
+  encrypted?: boolean;
+}

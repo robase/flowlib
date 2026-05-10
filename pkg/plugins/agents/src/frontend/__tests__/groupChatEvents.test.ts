@@ -52,9 +52,7 @@ describe('groupChatEvents — text deltas', () => {
   });
 
   it('forces all assistant-text streaming=false when isStreaming option is false', () => {
-    const events: AgentEvent[] = [
-      { type: 'text-delta', messageId: 'm1', text: 'hi' },
-    ];
+    const events: AgentEvent[] = [{ type: 'text-delta', messageId: 'm1', text: 'hi' }];
     const blocks = groupChatEvents(events, { isStreaming: false });
     expect(blocks[0]).toMatchObject({ streaming: false });
   });
@@ -99,9 +97,7 @@ describe('groupChatEvents — tool calls', () => {
     ];
     const blocks = groupChatEvents(events);
     expect(blocks[0]).toMatchObject({ kind: 'tool', id: 'call-1' });
-    expect(
-      (blocks[0] as { result?: unknown }).result,
-    ).toBeUndefined();
+    expect((blocks[0] as { result?: unknown }).result).toBeUndefined();
   });
 
   it('handles orphan tool-result with synthetic call', () => {

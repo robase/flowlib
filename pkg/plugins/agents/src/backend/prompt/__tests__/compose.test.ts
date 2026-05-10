@@ -23,7 +23,9 @@ function fakeWorkspace(
     },
     async readFile(p) {
       const c = fs.get(p);
-      if (c === undefined) {throw new Error(`ENOENT: ${p}`);}
+      if (c === undefined) {
+        throw new Error(`ENOENT: ${p}`);
+      }
       return c;
     },
     async writeFile() {},
@@ -35,7 +37,7 @@ function fakeWorkspace(
 
 function baseInput(over: Partial<ComposeInput> = {}): ComposeInput {
   return {
-    persona: { systemPrompt: 'You are a helpful coder.' },
+    systemPrompt: 'You are a helpful coder.',
     skillSummaries: [],
     denyList: [],
     availableTools: [],
@@ -46,7 +48,7 @@ function baseInput(over: Partial<ComposeInput> = {}): ComposeInput {
 }
 
 describe('composeSystemPrompt', () => {
-  it('renders persona + operating directives at minimum', async () => {
+  it('renders system prompt + operating directives at minimum', async () => {
     const out = await composeSystemPrompt(baseInput());
     expect(out.startsWith('You are a helpful coder.')).toBe(true);
     expect(out).toContain('## Operating directives');
@@ -140,9 +142,7 @@ describe('composeSystemPrompt', () => {
   });
 
   it('renders deny list as a soft mention', async () => {
-    const out = await composeSystemPrompt(
-      baseInput({ denyList: ['Bash', 'WebFetch'] }),
-    );
+    const out = await composeSystemPrompt(baseInput({ denyList: ['Bash', 'WebFetch'] }));
     expect(out).toContain('## Tool restrictions');
     expect(out).toContain('You are not permitted to use: Bash, WebFetch.');
     expect(out).toContain('hard-blocked');
@@ -201,13 +201,8 @@ describe('composeSystemPrompt', () => {
   });
 
   it('renders workspace top-level listing capped at 5 entries', async () => {
-    const handle = fakeWorkspace(
-      {},
-      ['a', 'b', 'c', 'd', 'e', 'f', 'g'],
-    );
-    const out = await composeSystemPrompt(
-      baseInput({ workspace: { handle, rootPath: '/ws' } }),
-    );
+    const handle = fakeWorkspace({}, ['a', 'b', 'c', 'd', 'e', 'f', 'g']);
+    const out = await composeSystemPrompt(baseInput({ workspace: { handle, rootPath: '/ws' } }));
     expect(out).toContain('## Workspace');
     expect(out).toContain('Top-level entries:');
     expect(out).toContain('- a');
@@ -233,9 +228,7 @@ describe('composeSystemPrompt', () => {
       },
     };
     // Should not throw — the section just renders without the listing.
-    const out = await composeSystemPrompt(
-      baseInput({ workspace: { handle, rootPath: '/ws' } }),
-    );
+    const out = await composeSystemPrompt(baseInput({ workspace: { handle, rootPath: '/ws' } }));
     expect(out).toContain('## Workspace');
     expect(out).toContain('cwd: /ws');
     expect(out).not.toContain('Top-level entries:');
@@ -259,17 +252,13 @@ describe('composeSystemPrompt', () => {
   });
 
   it('separates sections with blank lines', async () => {
-    const out = await composeSystemPrompt(
-      baseInput({ denyList: ['Bash'] }),
-    );
+    const out = await composeSystemPrompt(baseInput({ denyList: ['Bash'] }));
     // Persona then blank line then deny list header.
     expect(out).toMatch(/You are a helpful coder\.\n\n## Tool restrictions/);
   });
 
-  it('omits the persona section if persona text is empty/whitespace', async () => {
-    const out = await composeSystemPrompt(
-      baseInput({ persona: { systemPrompt: '   ' } }),
-    );
+  it('omits the system prompt section if the text is empty/whitespace', async () => {
+    const out = await composeSystemPrompt(baseInput({ systemPrompt: '   ' }));
     // Operating directives still rendered — but no leading whitespace
     // section.
     expect(out.startsWith('## Operating directives')).toBe(true);

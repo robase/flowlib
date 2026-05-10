@@ -119,8 +119,8 @@ suite('flowlib.newFlow — scaffold + open', () => {
 
   test('cancelling the name prompt creates no file', async () => {
     let pickShown = false;
-    (vscode.window as { showInputBox: typeof vscode.window.showInputBox }).showInputBox = (async () =>
-      undefined) as typeof vscode.window.showInputBox;
+    (vscode.window as { showInputBox: typeof vscode.window.showInputBox }).showInputBox =
+      (async () => undefined) as typeof vscode.window.showInputBox;
     (vscode.window as unknown as { showQuickPick: unknown }).showQuickPick = async () => {
       pickShown = true;
       return undefined;
@@ -128,7 +128,11 @@ suite('flowlib.newFlow — scaffold + open', () => {
 
     await vscode.commands.executeCommand('flowlib.newFlow');
 
-    assert.strictEqual(pickShown, false, 'template picker should not appear when name is cancelled');
+    assert.strictEqual(
+      pickShown,
+      false,
+      'template picker should not appear when name is cancelled',
+    );
   });
 
   test('happy path writes a .flow.ts and opens the visual editor', async () => {
@@ -140,8 +144,8 @@ suite('flowlib.newFlow — scaffold + open', () => {
     const expectedUri = vscode.Uri.joinPath(folder.uri, 'flows', `${flowName}.flow.ts`);
     createdUri = expectedUri;
 
-    (vscode.window as { showInputBox: typeof vscode.window.showInputBox }).showInputBox = (async () =>
-      flowName) as typeof vscode.window.showInputBox;
+    (vscode.window as { showInputBox: typeof vscode.window.showInputBox }).showInputBox =
+      (async () => flowName) as typeof vscode.window.showInputBox;
     // newFlow passes an array of `{ label, description, key }` items.
     // The signature of `showQuickPick` is heavily overloaded, so go
     // through `unknown` to install a stub that picks the 'blank' template.

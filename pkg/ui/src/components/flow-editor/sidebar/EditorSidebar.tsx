@@ -3,10 +3,7 @@ import { ArrowLeft } from 'lucide-react';
 import { Button } from '../../ui/button';
 import { SidebarSection } from './SidebarSection';
 import { useUIStore } from '~/stores/uiStore';
-import type {
-  SidebarSection as SidebarSectionDef,
-  SidebarSectionContext,
-} from './types';
+import type { SidebarSection as SidebarSectionDef, SidebarSectionContext } from './types';
 
 export interface EditorSidebarProps {
   flowId: string;
@@ -22,10 +19,7 @@ export function EditorSidebar({ flowId, basePath, sections, onCollapse }: Editor
   const expandedSections = useUIStore((s) => s.editorSidebarExpandedSections);
   const toggleSection = useUIStore((s) => s.toggleEditorSidebarSection);
 
-  const context = useMemo<SidebarSectionContext>(
-    () => ({ flowId, basePath }),
-    [flowId, basePath],
-  );
+  const context = useMemo<SidebarSectionContext>(() => ({ flowId, basePath }), [flowId, basePath]);
 
   return (
     <div className="flex flex-col min-h-0 overflow-hidden border-r w-96 border-border bg-fl-background text-card-foreground">

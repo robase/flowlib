@@ -7,13 +7,7 @@
 import type { PluginDatabaseApi } from '@flowlib/core';
 import type { AgentVisibility, AgentWorkspace, WorkspaceProviderId } from '../../shared/types';
 import type { AgentsDB } from './db-types';
-import {
-  encodeJsonOrNull,
-  generateId,
-  nowFor,
-  parseJsonOrNull,
-  toIso,
-} from './util';
+import { encodeJsonOrNull, generateId, nowFor, parseJsonOrNull, toIso } from './util';
 
 interface AgentWorkspaceRow {
   id: string;
@@ -94,9 +88,8 @@ export class WorkspacesRepository {
       .selectAll()
       .where('id', '=', id);
     if (orgId !== undefined) {
-      query = orgId === null
-        ? query.where('org_id', 'is', null)
-        : query.where('org_id', '=', orgId);
+      query =
+        orgId === null ? query.where('org_id', 'is', null) : query.where('org_id', '=', orgId);
     }
     const row = await query.limit(1).executeTakeFirst();
     return row ? mapRow(row as unknown as AgentWorkspaceRow) : null;
@@ -105,9 +98,10 @@ export class WorkspacesRepository {
   async list(filter: ListWorkspacesFilter = {}): Promise<AgentWorkspace[]> {
     let query = this.database.kysely<AgentsDB>().selectFrom('agent_workspaces').selectAll();
     if (filter.orgId !== undefined) {
-      query = filter.orgId === null
-        ? query.where('org_id', 'is', null)
-        : query.where('org_id', '=', filter.orgId);
+      query =
+        filter.orgId === null
+          ? query.where('org_id', 'is', null)
+          : query.where('org_id', '=', filter.orgId);
     }
     if (filter.workspaceProviderId !== undefined) {
       query = query.where('workspace_provider_id', '=', filter.workspaceProviderId);
@@ -122,8 +116,12 @@ export class WorkspacesRepository {
       query = query.where('visibility', '=', filter.visibility);
     }
     query = query.orderBy('created_at', 'desc');
-    if (filter.limit !== undefined) {query = query.limit(filter.limit);}
-    if (filter.offset !== undefined) {query = query.offset(filter.offset);}
+    if (filter.limit !== undefined) {
+      query = query.limit(filter.limit);
+    }
+    if (filter.offset !== undefined) {
+      query = query.offset(filter.offset);
+    }
     const rows = await query.execute();
     return rows.map((row) => mapRow(row as unknown as AgentWorkspaceRow));
   }
@@ -165,18 +163,30 @@ export class WorkspacesRepository {
     orgId?: string | null,
   ): Promise<AgentWorkspace | null> {
     const set: Record<string, unknown> = {};
-    if (patch.name !== undefined) {set.name = patch.name;}
+    if (patch.name !== undefined) {
+      set.name = patch.name;
+    }
     if (patch.workspaceProviderId !== undefined) {
       set.workspace_provider_id = patch.workspaceProviderId;
     }
-    if (patch.rootPath !== undefined) {set.root_path = patch.rootPath;}
-    if (patch.gitRemote !== undefined) {set.git_remote = patch.gitRemote;}
-    if (patch.gitBranch !== undefined) {set.git_branch = patch.gitBranch;}
+    if (patch.rootPath !== undefined) {
+      set.root_path = patch.rootPath;
+    }
+    if (patch.gitRemote !== undefined) {
+      set.git_remote = patch.gitRemote;
+    }
+    if (patch.gitBranch !== undefined) {
+      set.git_branch = patch.gitBranch;
+    }
     if (patch.sandboxConfig !== undefined) {
       set.sandbox_config = encodeJsonOrNull(patch.sandboxConfig);
     }
-    if (patch.projectId !== undefined) {set.project_id = patch.projectId;}
-    if (patch.visibility !== undefined) {set.visibility = patch.visibility;}
+    if (patch.projectId !== undefined) {
+      set.project_id = patch.projectId;
+    }
+    if (patch.visibility !== undefined) {
+      set.visibility = patch.visibility;
+    }
 
     if (Object.keys(set).length === 0) {
       return this.findById(id, orgId);
@@ -189,9 +199,8 @@ export class WorkspacesRepository {
       .set(set as never)
       .where('id', '=', id);
     if (orgId !== undefined) {
-      query = orgId === null
-        ? query.where('org_id', 'is', null)
-        : query.where('org_id', '=', orgId);
+      query =
+        orgId === null ? query.where('org_id', 'is', null) : query.where('org_id', '=', orgId);
     }
     await query.execute();
 
@@ -204,9 +213,8 @@ export class WorkspacesRepository {
       .deleteFrom('agent_workspaces')
       .where('id', '=', id);
     if (orgId !== undefined) {
-      query = orgId === null
-        ? query.where('org_id', 'is', null)
-        : query.where('org_id', '=', orgId);
+      query =
+        orgId === null ? query.where('org_id', 'is', null) : query.where('org_id', '=', orgId);
     }
     await query.execute();
   }

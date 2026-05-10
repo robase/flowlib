@@ -8,11 +8,7 @@
  * with a plain in-memory fake stub.
  */
 import { describe, it, expect, vi } from 'vitest';
-import {
-  buildSandboxName,
-  cloudflareSandbox,
-  type CloudflareSandboxOptions,
-} from '../provider';
+import { buildSandboxName, cloudflareSandbox, type CloudflareSandboxOptions } from '../provider';
 import type { SandboxStub } from '../handle';
 import type { AgentsAuthContext } from '../../../../shared/auth-context';
 
@@ -55,9 +51,7 @@ function makeProvider(options: Partial<CloudflareSandboxOptions> = {}) {
 
 describe('buildSandboxName', () => {
   it('embeds orgId and workspaceId', () => {
-    expect(buildSandboxName({ orgId: 'org-1' }, 'ws-9')).toBe(
-      'org:org-1/ws:ws-9',
-    );
+    expect(buildSandboxName({ orgId: 'org-1' }, 'ws-9')).toBe('oorg-1-ws-9');
   });
 
   it('throws when orgId is empty', () => {
@@ -65,9 +59,7 @@ describe('buildSandboxName', () => {
   });
 
   it('throws when workspaceId is empty', () => {
-    expect(() => buildSandboxName({ orgId: 'org-1' }, '')).toThrow(
-      /workspaceId/,
-    );
+    expect(() => buildSandboxName({ orgId: 'org-1' }, '')).toThrow(/workspaceId/);
   });
 });
 
@@ -84,9 +76,9 @@ describe('cloudflareSandbox factory', () => {
   });
 
   it('throws if neither namespaceBinding nor sandboxLookup is set', () => {
-    expect(() =>
-      cloudflareSandbox({ namespaceBinding: '' as unknown as string }),
-    ).toThrow(/namespaceBinding/);
+    expect(() => cloudflareSandbox({ namespaceBinding: '' as unknown as string })).toThrow(
+      /namespaceBinding/,
+    );
   });
 });
 
@@ -98,7 +90,7 @@ describe('create', () => {
       auth: makeAuth({ orgId: 'org-7' }),
       name: 'my workspace',
     });
-    expect(lookup).toHaveBeenCalledWith('org:org-7/ws:ws-7');
+    expect(lookup).toHaveBeenCalledWith('oorg-7-ws-7');
   });
 
   it('returns a WorkspaceHandle whose id matches the workspaceId', async () => {
@@ -110,9 +102,7 @@ describe('create', () => {
     });
     expect(handle.id).toBe('ws-7');
     expect(handle.rootPath).toBe('/workspace');
-    expect((handle.metadata as { sandboxName: string }).sandboxName).toBe(
-      'org:org-1/ws:ws-7',
-    );
+    expect((handle.metadata as { sandboxName: string }).sandboxName).toBe('oorg-1-ws-7');
   });
 
   it('rejects empty orgId', async () => {
@@ -170,14 +160,12 @@ describe('resolve', () => {
     const { provider, lookup } = makeProvider();
     const handle = await provider.resolve('ws-3', makeAuth({ orgId: 'org-2' }));
     expect(handle.id).toBe('ws-3');
-    expect(lookup).toHaveBeenCalledWith('org:org-2/ws:ws-3');
+    expect(lookup).toHaveBeenCalledWith('oorg-2-ws-3');
   });
 
   it('rejects empty orgId', async () => {
     const { provider } = makeProvider();
-    await expect(
-      provider.resolve('ws-3', makeAuth({ orgId: '' })),
-    ).rejects.toThrow(/orgId/);
+    await expect(provider.resolve('ws-3', makeAuth({ orgId: '' }))).rejects.toThrow(/orgId/);
   });
 });
 
@@ -185,15 +173,13 @@ describe('destroy', () => {
   it('calls sandbox.destroy() with the right identity', async () => {
     const { provider, stub, lookup } = makeProvider();
     await provider.destroy('ws-3', makeAuth({ orgId: 'org-2' }));
-    expect(lookup).toHaveBeenCalledWith('org:org-2/ws:ws-3');
+    expect(lookup).toHaveBeenCalledWith('oorg-2-ws-3');
     expect(stub.destroy).toHaveBeenCalled();
   });
 
   it('rejects empty orgId', async () => {
     const { provider } = makeProvider();
-    await expect(
-      provider.destroy('ws-3', makeAuth({ orgId: '' })),
-    ).rejects.toThrow(/orgId/);
+    await expect(provider.destroy('ws-3', makeAuth({ orgId: '' }))).rejects.toThrow(/orgId/);
   });
 });
 
@@ -229,7 +215,7 @@ describe('env wiring', () => {
       auth: makeAuth({ orgId: 'org-99' }),
       name: 'ws',
     });
-    expect(seenIds).toEqual(['org:org-99/ws:ws-9']);
+    expect(seenIds).toEqual(['oorg-99-ws-9']);
   });
 
   it('setEnv overrides envAccessor for the next call', async () => {

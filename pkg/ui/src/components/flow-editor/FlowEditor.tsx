@@ -19,11 +19,7 @@ import { useFlowReactFlowData } from '../../api/flows.api';
 import { useNodeExecutions } from '../../api/executions.api';
 import { useFlowRunStream } from '../../api/use-flow-run-stream';
 import type { NodeExecutionStatus, ReactFlowNode } from '@flowlib/core/types';
-import {
-  ResizableHandle,
-  ResizablePanel,
-  ResizablePanelGroup,
-} from '../ui/resizable';
+import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '../ui/resizable';
 import { LogsPanel } from '../flow-viewer/logs-panel';
 import {
   useExecutionLogData,

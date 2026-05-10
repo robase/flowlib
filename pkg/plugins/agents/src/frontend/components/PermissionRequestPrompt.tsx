@@ -22,9 +22,7 @@ export const PermissionRequestPrompt: React.FC<PermissionRequestPromptProps> = (
   onRespond,
   resolved = null,
 }) => {
-  const [pendingDecision, setPendingDecision] = React.useState<
-    'allow' | 'deny' | null
-  >(resolved);
+  const [pendingDecision, setPendingDecision] = React.useState<'allow' | 'deny' | null>(resolved);
 
   React.useEffect(() => {
     setPendingDecision(resolved);

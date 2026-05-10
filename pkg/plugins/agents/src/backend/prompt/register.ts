@@ -7,7 +7,7 @@
  *
  * The composer is stateless — we register the function reference
  * directly rather than constructing a singleton. Future versions may
- * inject configuration (per-tenant max sizes, custom persona
+ * inject configuration (per-tenant max sizes, system-prompt
  * overrides) by replacing this with a factory.
  */
 

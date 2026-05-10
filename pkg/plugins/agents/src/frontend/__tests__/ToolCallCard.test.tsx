@@ -58,9 +58,7 @@ describe('ToolCallCard', () => {
       output: 'boom',
       isError: true,
     };
-    const html = renderToString(
-      <ToolCallCard call={baseCall} result={result} defaultOpen />,
-    );
+    const html = renderToString(<ToolCallCard call={baseCall} result={result} defaultOpen />);
     expect(html).toContain('error');
     expect(html).toContain('border-fl-destructive');
   });

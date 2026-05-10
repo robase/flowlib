@@ -262,9 +262,7 @@ export const ChatStream: React.FC<ChatStreamProps> = ({
         </li>
       ))}
       {streaming && blocks.length === 0 && pendingUser.length === 0 ? (
-        <li className="text-xs text-fl-muted-foreground italic px-2">
-          Thinking…
-        </li>
+        <li className="text-xs text-fl-muted-foreground italic px-2">Thinking…</li>
       ) : null}
     </ol>
   );

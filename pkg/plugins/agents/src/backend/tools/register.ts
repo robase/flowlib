@@ -80,9 +80,7 @@ export type FlowlibActionsMcpFactory = (
  * calls it per session. Workspace handles are passed at `store()`
  * time, so the factory doesn't need them up-front.
  */
-export type ToolOutputStoreFactory = (
-  inputs?: CreateToolOutputStoreOptions,
-) => ToolOutputStore;
+export type ToolOutputStoreFactory = (inputs?: CreateToolOutputStoreOptions) => ToolOutputStore;
 
 /**
  * Register both factories onto the plugin's runtime registries.
@@ -112,9 +110,7 @@ export function registerTools(ctx: PluginContext): {
       resolveDenyListInput: inputs.resolveDenyListInput,
       // Cast — the plugin's logger surface is structurally compatible
       // with action-kit's `Logger`.
-      logger: logger as unknown as Parameters<
-        typeof createFlowlibActionsMcpServer
-      >[0]['logger'],
+      logger: logger as unknown as Parameters<typeof createFlowlibActionsMcpServer>[0]['logger'],
     });
   };
 
@@ -166,7 +162,9 @@ function resolveCredentialsLister(ctx: PluginContext): CredentialsLister | undef
         }
         resolved = true;
       }
-      if (!cached) {return [];}
+      if (!cached) {
+        return [];
+      }
       return cached.list(filters);
     },
   };

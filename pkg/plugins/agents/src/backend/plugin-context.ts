@@ -61,6 +61,17 @@ export interface ResolvedAgentsOptions extends AgentsPluginPublicOptions {
   exposeFlowlibActions: boolean;
   /** Tool ids hard-denied for every agent in this deployment (e.g. `['Bash']`). */
   defaultDenyList: ReadonlyArray<string>;
+  /**
+   * Provider id used when `POST /sessions` omits `providerId`. Must
+   * match one of the registered providers' ids. Defaults to
+   * `'claude-code'`.
+   */
+  defaultProviderId: string;
+  /**
+   * Model id used when `POST /sessions` omits `model`. Defaults to
+   * `'claude-sonnet-4-5'`.
+   */
+  defaultModel: string;
 }
 
 /**

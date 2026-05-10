@@ -11,22 +11,16 @@
  * (which embeds `auth.orgId` in any sandbox naming scheme).
  */
 
-import type {
-  FlowlibPluginEndpoint,
-  PluginEndpointResponse,
-} from '@flowlib/core';
+import type { FlowlibPluginEndpoint, PluginEndpointResponse } from '@flowlib/core';
 import type { PluginContext } from '../plugin-context';
-import {
-  badRequest,
-  notFound,
-  safeHandler,
-  type EndpointDeps,
-} from './helpers';
+import { badRequest, notFound, safeHandler, type EndpointDeps } from './helpers';
 
 async function listFiles(deps: EndpointDeps): Promise<PluginEndpointResponse> {
   const id = deps.endpointCtx.params.id;
   const ws = await deps.repos.workspaces.findById(id, deps.auth.orgId);
-  if (!ws) return notFound('Workspace not found');
+  if (!ws) {
+    return notFound('Workspace not found');
+  }
 
   const provider = deps.pluginCtx.options.workspaceProvider;
   if (!provider || provider.id !== ws.workspaceProviderId) {
@@ -54,7 +48,9 @@ async function listFiles(deps: EndpointDeps): Promise<PluginEndpointResponse> {
 async function readFile(deps: EndpointDeps): Promise<PluginEndpointResponse> {
   const id = deps.endpointCtx.params.id;
   const ws = await deps.repos.workspaces.findById(id, deps.auth.orgId);
-  if (!ws) return notFound('Workspace not found');
+  if (!ws) {
+    return notFound('Workspace not found');
+  }
 
   const path = deps.endpointCtx.query.path;
   if (!path || typeof path !== 'string') {
@@ -83,9 +79,7 @@ async function readFile(deps: EndpointDeps): Promise<PluginEndpointResponse> {
   }
 }
 
-export function createFilesEndpoints(
-  ctx: PluginContext,
-): FlowlibPluginEndpoint[] {
+export function createFilesEndpoints(ctx: PluginContext): FlowlibPluginEndpoint[] {
   return [
     {
       method: 'GET',

@@ -19,10 +19,7 @@ import type {
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
 
-import {
-  createFlowlibActionsMcpServer,
-  flattenActionId,
-} from '../flowlib-actions-mcp';
+import { createFlowlibActionsMcpServer, flattenActionId } from '../flowlib-actions-mcp';
 import { createToolOutputStore } from '../tool-output-store';
 import { allowAllResolver, type PermissionsResolver } from '../../permissions/types';
 import type { WorkspaceHandle } from '../../workspaces/types';
@@ -45,10 +42,7 @@ const TRIGGER_PROVIDER: ProviderDef = {
   nodeCategory: 'Triggers',
 };
 
-function defineTestAction(
-  id: string,
-  overrides: Partial<ActionDefinition> = {},
-): ActionDefinition {
+function defineTestAction(id: string, overrides: Partial<ActionDefinition> = {}): ActionDefinition {
   const exec = overrides.execute ?? (async () => ({ success: true, output: `ran ${id}` }));
   return {
     id,
@@ -90,10 +84,7 @@ function makeWorkspace(): WorkspaceHandle & {
 }
 
 async function connectClient(server: import('@modelcontextprotocol/sdk/server/index.js').Server) {
-  const client = new Client(
-    { name: 'test-client', version: '0.0.1' },
-    { capabilities: {} },
-  );
+  const client = new Client({ name: 'test-client', version: '0.0.1' }, { capabilities: {} });
   const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
   await Promise.all([server.connect(serverTransport), client.connect(clientTransport)]);
   return client;
@@ -267,7 +258,10 @@ describe('createFlowlibActionsMcpServer — basic shape', () => {
     const tool = tools.find((t) => t.name === 'gmail_send_message');
     expect(tool).toBeDefined();
     expect(tool?.inputSchema?.type).toBe('object');
-    const props = tool?.inputSchema?.properties as Record<string, { type: string; description?: string }>;
+    const props = tool?.inputSchema?.properties as Record<
+      string,
+      { type: string; description?: string }
+    >;
     expect(props.to.type).toBe('string');
     expect(props.to.description).toBe('Recipient email');
     expect(tool?.inputSchema?.required).toEqual(['to', 'subject']);
@@ -292,19 +286,24 @@ describe('createFlowlibActionsMcpServer — hot reload', () => {
     expect(tools.map((t) => t.name)).toEqual(['gmail_send_message']);
 
     // Register a new action mid-life.
-    registry.register(defineTestAction('slack.post_message', { provider: { ...TEST_PROVIDER, id: 'slack', name: 'Slack' } }));
+    registry.register(
+      defineTestAction('slack.post_message', {
+        provider: { ...TEST_PROVIDER, id: 'slack', name: 'Slack' },
+      }),
+    );
 
     tools = await handle.listTools();
-    expect(tools.map((t) => t.name).sort()).toEqual([
-      'gmail_send_message',
-      'slack_post_message',
-    ]);
+    expect(tools.map((t) => t.name).sort()).toEqual(['gmail_send_message', 'slack_post_message']);
   });
 
   it('rebuilds the tool list when an action is unregistered', async () => {
     const registry = new ActionRegistry();
     registry.register(defineTestAction('gmail.send_message'));
-    registry.register(defineTestAction('slack.post_message', { provider: { ...TEST_PROVIDER, id: 'slack', name: 'Slack' } }));
+    registry.register(
+      defineTestAction('slack.post_message', {
+        provider: { ...TEST_PROVIDER, id: 'slack', name: 'Slack' },
+      }),
+    );
     const workspace = makeWorkspace();
 
     const handle = createFlowlibActionsMcpServer({

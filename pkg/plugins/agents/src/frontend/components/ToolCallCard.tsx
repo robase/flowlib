@@ -38,11 +38,7 @@ export const ToolCallCard: React.FC<ToolCallCardProps> = ({
     }
   };
 
-  const statusLabel = isPending
-    ? 'running…'
-    : isError
-      ? 'error'
-      : 'done';
+  const statusLabel = isPending ? 'running…' : isError ? 'error' : 'done';
 
   return (
     <div
@@ -62,23 +58,15 @@ export const ToolCallCard: React.FC<ToolCallCardProps> = ({
         onKeyDown={onKeyDown}
       >
         <span className="flex items-center gap-2 min-w-0">
-          <span
-            aria-hidden="true"
-            className="inline-block w-3 text-fl-muted-foreground"
-          >
+          <span aria-hidden="true" className="inline-block w-3 text-fl-muted-foreground">
             {open ? '▾' : '▸'}
           </span>
           <span className="font-mono text-xs truncate">{call.name}</span>
         </span>
-        <span className="text-xs text-fl-muted-foreground ml-2 shrink-0">
-          {statusLabel}
-        </span>
+        <span className="text-xs text-fl-muted-foreground ml-2 shrink-0">{statusLabel}</span>
       </button>
       {open ? (
-        <div
-          id={`tool-${call.id}-body`}
-          className="px-3 py-2 border-t border-fl-border space-y-2"
-        >
+        <div id={`tool-${call.id}-body`} className="px-3 py-2 border-t border-fl-border space-y-2">
           <ToolPayloadBlock label="input" value={call.input} />
           {result ? (
             <ToolPayloadBlock
@@ -87,9 +75,7 @@ export const ToolCallCard: React.FC<ToolCallCardProps> = ({
               error={isError}
             />
           ) : (
-            <p className="text-xs text-fl-muted-foreground italic">
-              Awaiting tool result…
-            </p>
+            <p className="text-xs text-fl-muted-foreground italic">Awaiting tool result…</p>
           )}
         </div>
       ) : null}
@@ -105,14 +91,10 @@ const ToolPayloadBlock: React.FC<{
   error?: boolean;
 }> = ({ label, value, error }) => (
   <div>
-    <div className="text-[10px] uppercase tracking-wider text-fl-muted-foreground">
-      {label}
-    </div>
+    <div className="text-[10px] uppercase tracking-wider text-fl-muted-foreground">{label}</div>
     <pre
       className={`text-xs whitespace-pre-wrap break-words font-mono p-2 rounded ${
-        error
-          ? 'bg-fl-destructive/10 text-fl-destructive'
-          : 'bg-fl-muted text-fl-muted-foreground'
+        error ? 'bg-fl-destructive/10 text-fl-destructive' : 'bg-fl-muted text-fl-muted-foreground'
       }`}
     >
       {formatPayload(value)}

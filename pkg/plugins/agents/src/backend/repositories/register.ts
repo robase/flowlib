@@ -18,8 +18,8 @@
 
 import type { PluginDatabaseApi } from '@flowlib/core';
 import type { PluginContext } from '../plugin-context';
-import { AgentsRepository } from './agents.repository';
 import { AuditRepository } from './audit.repository';
+import { McpServersRepository } from './mcp-servers.repository';
 import { MessagesRepository } from './messages.repository';
 import { ProjectsRepository } from './projects.repository';
 import { RolePermissionsRepository } from './role-permissions.repository';
@@ -28,7 +28,7 @@ import { WorkspacesRepository } from './workspaces.repository';
 
 /** The bag of repositories handed to subsystems / endpoints. */
 export interface Repositories {
-  agents: AgentsRepository;
+  mcpServers: McpServersRepository;
   workspaces: WorkspacesRepository;
   sessions: SessionsRepository;
   messages: MessagesRepository;
@@ -40,7 +40,7 @@ export interface Repositories {
 /** Construct a fresh repositories bag bound to a database handle. */
 export function buildRepositories(database: PluginDatabaseApi): Repositories {
   return {
-    agents: new AgentsRepository(database),
+    mcpServers: new McpServersRepository(database),
     workspaces: new WorkspacesRepository(database),
     sessions: new SessionsRepository(database),
     messages: new MessagesRepository(database),

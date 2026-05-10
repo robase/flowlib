@@ -8,10 +8,7 @@ import {
   makeFakePluginCtx,
   makeIdentity,
 } from './test-helpers';
-import type {
-  WorkspaceHandle,
-  WorkspaceProvider,
-} from '../../workspaces/types';
+import type { WorkspaceHandle, WorkspaceProvider } from '../../workspaces/types';
 
 interface ProviderCalls {
   create: number;
@@ -40,7 +37,9 @@ function fakeProvider(): {
     name: 'Cloudflare Sandbox',
     create: async (input) => {
       calls.create++;
-      if (failNext === 'create') throw new Error('boom');
+      if (failNext === 'create') {
+        throw new Error('boom');
+      }
       return { ...handle, id: input.workspaceId };
     },
     resolve: async (id) => {
@@ -64,11 +63,7 @@ describe('workspaces endpoints', () => {
   it('POST /workspaces creates and persists a workspace', async () => {
     const { provider, calls } = fakeProvider();
     const { ctx, db } = makeFakePluginCtx({ workspaceProvider: provider });
-    const post = findEndpoint(
-      createWorkspacesEndpoints(ctx),
-      'POST',
-      '/workspaces',
-    );
+    const post = findEndpoint(createWorkspacesEndpoints(ctx), 'POST', '/workspaces');
 
     const res = await post.handler(
       makeEndpointCtx({
@@ -89,11 +84,7 @@ describe('workspaces endpoints', () => {
     const { provider, setFailNext } = fakeProvider();
     setFailNext('create');
     const { ctx, db } = makeFakePluginCtx({ workspaceProvider: provider });
-    const post = findEndpoint(
-      createWorkspacesEndpoints(ctx),
-      'POST',
-      '/workspaces',
-    );
+    const post = findEndpoint(createWorkspacesEndpoints(ctx), 'POST', '/workspaces');
 
     const res = await post.handler(
       makeEndpointCtx({
@@ -108,11 +99,7 @@ describe('workspaces endpoints', () => {
 
   it('POST /workspaces 400s when no provider is configured', async () => {
     const { ctx, db } = makeFakePluginCtx();
-    const post = findEndpoint(
-      createWorkspacesEndpoints(ctx),
-      'POST',
-      '/workspaces',
-    );
+    const post = findEndpoint(createWorkspacesEndpoints(ctx), 'POST', '/workspaces');
     const res = await post.handler(
       makeEndpointCtx({
         db,
@@ -145,9 +132,7 @@ describe('workspaces endpoints', () => {
       }),
     );
 
-    const res = await list.handler(
-      makeEndpointCtx({ db, identity: makeIdentity('u', 'acme') }),
-    );
+    const res = await list.handler(makeEndpointCtx({ db, identity: makeIdentity('u', 'acme') }));
     const data = jsonBody(res).data as Array<{ name: string; orgId: string }>;
     expect(data).toHaveLength(1);
     expect(data[0]!.name).toBe('A');
@@ -219,16 +204,8 @@ describe('workspaces endpoints', () => {
   it('GET /workspaces/:id/files lists files via the workspace handle', async () => {
     const { provider, calls } = fakeProvider();
     const { ctx, db } = makeFakePluginCtx({ workspaceProvider: provider });
-    const post = findEndpoint(
-      createWorkspacesEndpoints(ctx),
-      'POST',
-      '/workspaces',
-    );
-    const list = findEndpoint(
-      createFilesEndpoints(ctx),
-      'GET',
-      '/workspaces/:id/files',
-    );
+    const post = findEndpoint(createWorkspacesEndpoints(ctx), 'POST', '/workspaces');
+    const list = findEndpoint(createFilesEndpoints(ctx), 'GET', '/workspaces/:id/files');
 
     const created = await post.handler(
       makeEndpointCtx({
@@ -255,16 +232,8 @@ describe('workspaces endpoints', () => {
   it('GET /workspaces/:id/files/read returns file contents', async () => {
     const { provider } = fakeProvider();
     const { ctx, db } = makeFakePluginCtx({ workspaceProvider: provider });
-    const post = findEndpoint(
-      createWorkspacesEndpoints(ctx),
-      'POST',
-      '/workspaces',
-    );
-    const read = findEndpoint(
-      createFilesEndpoints(ctx),
-      'GET',
-      '/workspaces/:id/files/read',
-    );
+    const post = findEndpoint(createWorkspacesEndpoints(ctx), 'POST', '/workspaces');
+    const read = findEndpoint(createFilesEndpoints(ctx), 'GET', '/workspaces/:id/files/read');
 
     const created = await post.handler(
       makeEndpointCtx({
@@ -291,16 +260,8 @@ describe('workspaces endpoints', () => {
   it('GET /workspaces/:id/files 404s for cross-tenant access', async () => {
     const { provider } = fakeProvider();
     const { ctx, db } = makeFakePluginCtx({ workspaceProvider: provider });
-    const post = findEndpoint(
-      createWorkspacesEndpoints(ctx),
-      'POST',
-      '/workspaces',
-    );
-    const list = findEndpoint(
-      createFilesEndpoints(ctx),
-      'GET',
-      '/workspaces/:id/files',
-    );
+    const post = findEndpoint(createWorkspacesEndpoints(ctx), 'POST', '/workspaces');
+    const list = findEndpoint(createFilesEndpoints(ctx), 'GET', '/workspaces/:id/files');
 
     const created = await post.handler(
       makeEndpointCtx({

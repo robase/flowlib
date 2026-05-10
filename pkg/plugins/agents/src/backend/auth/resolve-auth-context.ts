@@ -33,10 +33,16 @@ export interface ResolveAuthContextOptions {
  */
 function extractMetadataOrgId(identity: FlowlibIdentity): string | null {
   const meta = identity.metadata;
-  if (!meta || typeof meta !== 'object') {return null;}
+  if (!meta || typeof meta !== 'object') {
+    return null;
+  }
   const raw = (meta as { orgId?: unknown }).orgId;
-  if (typeof raw === 'string' && raw.length > 0) {return raw;}
-  if (typeof raw === 'number' && Number.isFinite(raw)) {return String(raw);}
+  if (typeof raw === 'string' && raw.length > 0) {
+    return raw;
+  }
+  if (typeof raw === 'number' && Number.isFinite(raw)) {
+    return String(raw);
+  }
   return null;
 }
 
@@ -57,9 +63,7 @@ export function resolveAuthContext(
 
   if (!identity) {
     if (options.orgScope === 'required') {
-      throw new Error(
-        '[agents] orgScope: "required" but no identity present on the request',
-      );
+      throw new Error('[agents] orgScope: "required" but no identity present on the request');
     }
     return {
       userId: 'anonymous',

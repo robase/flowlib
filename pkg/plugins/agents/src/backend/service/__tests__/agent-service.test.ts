@@ -44,12 +44,18 @@ function trivialProvider(events: AgentEvent[]): AgentProvider {
       return { providerSessionId: 'p' };
     },
     async *prompt(): AsyncGenerator<AgentEvent> {
-      for (const e of events) {yield e;}
+      for (const e of events) {
+        yield e;
+      }
     },
   };
 }
 
-function buildSessionCtx(provider: AgentProvider): { ctx: SessionContext; emitted: AgentEvent[]; abort: AbortController } {
+function buildSessionCtx(provider: AgentProvider): {
+  ctx: SessionContext;
+  emitted: AgentEvent[];
+  abort: AbortController;
+} {
   const emitted: AgentEvent[] = [];
   const abort = new AbortController();
   const noop = async () => {};

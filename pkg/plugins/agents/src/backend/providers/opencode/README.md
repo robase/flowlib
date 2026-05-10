@@ -67,18 +67,18 @@ A per-session `cfg.mode` (validated via `validateConfig`) and `extras.mode` over
 
 Per-event translation rules — exhaustive table:
 
-| opencode event                            | `AgentEvent`                                        | Notes                                                               |
-| ----------------------------------------- | --------------------------------------------------- | ------------------------------------------------------------------- |
-| `message.part.updated` (`text`, delta)    | `text-delta`                                        | Falls back to `part.text` when no `delta` supplied.                 |
-| `message.part.updated` (`tool`, running)  | `tool-call`                                         | Emitted exactly once per `callID` (deduplicated via mapper state).  |
-| `message.part.updated` (`tool`, completed) | `tool-result` + maybe `file-edit`                  | `file-edit` synthesised for `write`/`edit`/`multiedit`/`patch`/`create` tools when `file_path` / `path` / `filepath` present in input. |
-| `message.part.updated` (`tool`, error)    | `tool-result` (with `isError: true`)                |                                                                     |
-| `permission.updated`                      | `permission-request`                                | Surfaced even though `permissionPrompts: false`; consumers may ignore. |
-| `file.edited`                             | `file-edit`                                         | Uses the most recently observed `messageId` (or empty string).     |
-| `message.updated` (assistant, completed)  | `message-complete` (with `usage`)                   | Includes input/output token counts when present.                   |
-| `session.idle`                            | `message-complete` (terminator)                     | Suppressed if `message.updated` already emitted one for the same id. |
-| `session.error`                           | `session-end { reason: 'error', error }`            | Falls back to `error.name` then a generic message.                 |
-| Anything else (`session.created`, `vcs.*`, `tui.*`, `lsp.*`, `message.removed`, …) | dropped                                             | Returns `[]` — no consumer-facing event.                            |
+| opencode event                                                                     | `AgentEvent`                             | Notes                                                                                                                                  |
+| ---------------------------------------------------------------------------------- | ---------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| `message.part.updated` (`text`, delta)                                             | `text-delta`                             | Falls back to `part.text` when no `delta` supplied.                                                                                    |
+| `message.part.updated` (`tool`, running)                                           | `tool-call`                              | Emitted exactly once per `callID` (deduplicated via mapper state).                                                                     |
+| `message.part.updated` (`tool`, completed)                                         | `tool-result` + maybe `file-edit`        | `file-edit` synthesised for `write`/`edit`/`multiedit`/`patch`/`create` tools when `file_path` / `path` / `filepath` present in input. |
+| `message.part.updated` (`tool`, error)                                             | `tool-result` (with `isError: true`)     |                                                                                                                                        |
+| `permission.updated`                                                               | `permission-request`                     | Surfaced even though `permissionPrompts: false`; consumers may ignore.                                                                 |
+| `file.edited`                                                                      | `file-edit`                              | Uses the most recently observed `messageId` (or empty string).                                                                         |
+| `message.updated` (assistant, completed)                                           | `message-complete` (with `usage`)        | Includes input/output token counts when present.                                                                                       |
+| `session.idle`                                                                     | `message-complete` (terminator)          | Suppressed if `message.updated` already emitted one for the same id.                                                                   |
+| `session.error`                                                                    | `session-end { reason: 'error', error }` | Falls back to `error.name` then a generic message.                                                                                     |
+| Anything else (`session.created`, `vcs.*`, `tui.*`, `lsp.*`, `message.removed`, …) | dropped                                  | Returns `[]` — no consumer-facing event.                                                                                               |
 
 ## Lazy SDK loading
 

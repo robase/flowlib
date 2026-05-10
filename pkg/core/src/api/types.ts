@@ -409,6 +409,97 @@ export interface PluginsAPI {
 }
 
 // =====================================
+// SETTINGS
+// =====================================
+
+/**
+ * One field rendered by the generic settings UI. The shape is intentionally
+ * narrow — descriptors are JSON-serialized and shipped to the browser, so
+ * Zod schemas / functions / encryption adapters can't live here. Plugin
+ * authors keep validation logic on their backend; the UI only needs enough
+ * metadata to render a form.
+ */
+export interface SettingsFieldDescriptor {
+  /**
+   * The full setting key (must start with the descriptor's namespace),
+   * e.g. `vc.defaultBranch`. The UI uses this verbatim when calling
+   * `flowlib.settings.set({ key, value })`.
+   */
+  key: string;
+  label: string;
+  description?: string;
+  type: 'string' | 'number' | 'boolean' | 'select' | 'textarea' | 'json' | 'secret';
+  /** Choices for `type: 'select'`. */
+  options?: Array<{ value: string; label: string }>;
+  /** Schema default surfaced when no DB row exists. */
+  defaultValue?: unknown;
+  /** Used by the UI when there's no DB row and no default — e.g. "from config.ts". */
+  placeholder?: string;
+  /** When true, the field is shown read-only (display the live value, no edit). */
+  readOnly?: boolean;
+  /**
+   * When true, the value is encrypted at rest and the UI masks it.
+   * Implies `type: 'secret'` semantics regardless of `type`.
+   */
+  sensitive?: boolean;
+  /** Optional inline help link (anchored next to the label). */
+  helpUrl?: string;
+}
+
+export interface SettingsDescriptorGroup {
+  /** Key namespace owned by this descriptor group (e.g. `vc`). */
+  namespace: string;
+  /** Display name in the settings sidebar. */
+  label: string;
+  description?: string;
+  fields: SettingsFieldDescriptor[];
+}
+
+export interface SettingsRecordPublic {
+  key: string;
+  namespace: string;
+  /** Decrypted value, or `null` for sanitized secret reads. */
+  value: unknown;
+  encrypted: boolean;
+  updatedAt: string;
+  updatedBy: string | null;
+}
+
+export interface SetSettingPublicInput {
+  key: string;
+  value: unknown;
+  encrypted?: boolean;
+  updatedBy?: string | null;
+}
+
+export type SettingsChangePublicEvent = {
+  type: 'set' | 'delete';
+  key: string;
+  namespace: string;
+  value?: unknown;
+};
+
+export interface SettingsAPI {
+  /** Read a single setting (decrypted). Returns `undefined` if not present. */
+  get<T = unknown>(key: string): Promise<T | undefined>;
+  /** Read with a fallback when the key is unset. */
+  getOrDefault<T>(key: string, defaultValue: T): Promise<T>;
+  /** List records, optionally scoped to a namespace. Encrypted values are masked unless `includeSecrets`. */
+  list(options?: { namespace?: string; includeSecrets?: boolean }): Promise<SettingsRecordPublic[]>;
+  /** Read a single record with the secret value masked (safe for UI display). */
+  getSanitized(key: string): Promise<SettingsRecordPublic | null>;
+  set(input: SetSettingPublicInput): Promise<SettingsRecordPublic>;
+  delete(key: string, identity?: string | null): Promise<boolean>;
+  /** Subscribe to changes; `prefix` matches namespaces (or full keys). */
+  onChange(
+    prefix: string,
+    handler: (event: SettingsChangePublicEvent) => void | Promise<void>,
+  ): () => void;
+  /** Aggregated descriptor list contributed by registered plugins. */
+  getDescriptors(): SettingsDescriptorGroup[];
+}
+
+// =====================================
 // MAINTENANCE (PR 5/14)
 // =====================================
 
@@ -454,6 +545,7 @@ export interface FlowlibInstance {
   readonly testing: TestingAPI;
   readonly auth: AuthAPI;
   readonly plugins: PluginsAPI;
+  readonly settings: SettingsAPI;
   /**
    * External-scheduler entry points for periodic lifecycle work
    * (PR 5/14). See {@link MaintenanceAPI}.

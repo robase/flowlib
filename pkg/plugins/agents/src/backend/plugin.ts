@@ -66,10 +66,7 @@ function registerTools(ctx: PluginContext): void {
   registerToolsImpl(ctx);
 }
 
-function registerEndpoints(
-  ctx: PluginContext,
-  endpoints: FlowlibPluginEndpoint[],
-): void {
+function registerEndpoints(ctx: PluginContext, endpoints: FlowlibPluginEndpoint[]): void {
   registerEndpointsImpl(ctx, endpoints);
 }
 
@@ -129,6 +126,13 @@ function resolveOptions(opts: AgentsPluginOptions = {}): ResolvedAgentsOptions {
     workspaceProvider: opts.workspaceProvider,
     exposeFlowlibActions: opts.exposeFlowlibActions ?? false,
     defaultDenyList: opts.defaultDenyList ?? [],
+    // opencode is the chat-first default — it talks to an opencode server
+    // running inside the workspace sandbox and doesn't require an API key
+    // at session-create time, so a fresh org can start chatting without
+    // configuring a credential. claude-code is opt-in via
+    // `agents({ defaultProviderId: 'claude-code' })`.
+    defaultProviderId: opts.defaultProviderId ?? 'opencode',
+    defaultModel: opts.defaultModel ?? 'anthropic/claude-sonnet-4-5',
   };
 }
 
@@ -154,11 +158,10 @@ function buildPluginContext(
 
 // ─── Pre-flight checks ────────────────────────────────────────────────
 
-function preflightCheck(
-  options: ResolvedAgentsOptions,
-  flowlib: FlowlibPluginContext,
-): void {
-  if (options.orgScope !== 'required') {return;}
+function preflightCheck(options: ResolvedAgentsOptions, flowlib: FlowlibPluginContext): void {
+  if (options.orgScope !== 'required') {
+    return;
+  }
 
   const hasAuthPlugin = flowlib.hasPlugin('user-auth') || flowlib.hasPlugin('auth');
   const hasStaticOrg = options.staticOrgId !== DEFAULT_ORG_ID;

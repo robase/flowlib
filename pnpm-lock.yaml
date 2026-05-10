@@ -1133,6 +1133,9 @@ importers:
       '@flowlib/db':
         specifier: workspace:*
         version: link:../../db
+      '@flowlib/ui':
+        specifier: workspace:^
+        version: link:../../ui
     devDependencies:
       '@anthropic-ai/claude-agent-sdk':
         specifier: ^0.2.138

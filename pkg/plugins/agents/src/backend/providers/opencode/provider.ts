@@ -51,11 +51,7 @@ import type {
   AgentModel,
 } from '../types';
 import type { AgentEvent } from '../../../shared/events';
-import {
-  createMapperState,
-  mapOpencodeEvent,
-  type OpencodeEvent,
-} from './events';
+import { createMapperState, mapOpencodeEvent, type OpencodeEvent } from './events';
 import {
   buildToolsMap,
   clearClientCache,
@@ -129,7 +125,9 @@ interface OpenCodeConfig {
 }
 
 function validateOpenCodeConfig(config: unknown): AgentProviderConfig {
-  if (config === undefined || config === null) {return {};}
+  if (config === undefined || config === null) {
+    return {};
+  }
   if (typeof config !== 'object') {
     throw new Error('[agents/opencode] provider config must be an object');
   }
@@ -138,7 +136,9 @@ function validateOpenCodeConfig(config: unknown): AgentProviderConfig {
   const result: OpenCodeConfig = {};
   if (c.defaultModel !== undefined) {
     if (typeof c.defaultModel !== 'string') {
-      throw new Error('[agents/opencode] defaultModel must be a string (e.g. "anthropic/claude-sonnet-4-7")');
+      throw new Error(
+        '[agents/opencode] defaultModel must be a string (e.g. "anthropic/claude-sonnet-4-7")',
+      );
     }
     result.defaultModel = c.defaultModel;
   }
@@ -229,6 +229,30 @@ export function openCodeProvider(options: OpenCodeProviderOptions = {}): AgentPr
         cfg.mode ??
         factoryMode;
 
+      // External mode needs `workspace.metadata.opencodeBaseUrl` set
+      // before `getClientForMode` runs. The cloudflareSandbox handle
+      // exposes a lazy `startOpencode()` that boots `opencode serve`
+      // inside the sandbox and caches the resulting URL on
+      // `metadata.opencodeBaseUrl`. Call it first so the resolver can
+      // pick the URL up — unless an explicit baseUrl was supplied (then
+      // the caller is pinning their own opencode instance).
+      if (mode === 'external' && input.workspace?.metadata) {
+        const meta = input.workspace.metadata as {
+          opencodeBaseUrl?: string | null;
+          startOpencode?: () => Promise<string>;
+        };
+        const explicitBaseUrl =
+          (typeof input.extras?.baseUrl === 'string' && input.extras.baseUrl) ||
+          (typeof cfg.baseUrl === 'string' && cfg.baseUrl) ||
+          factoryBaseUrl;
+        if (!meta.opencodeBaseUrl && !explicitBaseUrl && typeof meta.startOpencode === 'function') {
+          const url = await meta.startOpencode();
+          if (url && url !== 'opencode-not-configured') {
+            meta.opencodeBaseUrl = url;
+          }
+        }
+      }
+
       const { client, baseUrl } = await getClientForMode({
         mode,
         workspace: input.workspace,
@@ -239,10 +263,37 @@ export function openCodeProvider(options: OpenCodeProviderOptions = {}): AgentPr
       const titleExtra = input.extras?.title;
       const title = typeof titleExtra === 'string' ? titleExtra : `flowlib-${Date.now()}`;
 
-      const resp = await client.session.create({
-        body: { title },
-        ...(directory ? { query: { directory } } : {}),
-      });
+      // `exposePort` returns as soon as the port is published, but
+      // `opencode serve` inside the sandbox may take a few seconds to
+      // start accepting requests. Retry the session.create with linear
+      // backoff so we don't 500 just because of a boot race.
+      const maxAttempts = 8;
+      const backoffMs = 500;
+      let resp: unknown;
+      let lastErr: unknown;
+      for (let attempt = 0; attempt < maxAttempts; attempt++) {
+        try {
+          resp = await client.session.create({
+            body: { title },
+            ...(directory ? { query: { directory } } : {}),
+          });
+          lastErr = undefined;
+          break;
+        } catch (err) {
+          lastErr = err;
+          if (attempt < maxAttempts - 1) {
+            await new Promise((r) => setTimeout(r, backoffMs));
+          }
+        }
+      }
+      if (lastErr) {
+        const message = lastErr instanceof Error ? lastErr.message : String(lastErr);
+        throw new Error(
+          `[agents/opencode] session.create failed against ${baseUrl ?? '<unknown>'} after ${maxAttempts} attempts: ${message}. ` +
+            'Check that the opencode server is reachable from this Worker — the cloudflareSandbox preview URL may not resolve in local dev unless you have wildcard DNS / CF tunnel set up; ' +
+            'in that case configure `agents({ providers: [openCodeProvider({ baseUrl: "http://…" })] })` to point at a directly-reachable opencode instance, or set `OPENCODE_BASE_URL`.',
+        );
+      }
       const id = unwrapSessionId(resp);
 
       sessionsById.set(id, {
@@ -281,7 +332,9 @@ export function openCodeProvider(options: OpenCodeProviderOptions = {}): AgentPr
       // Translate the user's input into opencode `parts`. We support text
       // and base64 inline images via the FilePartInput escape hatch.
       const parts = input.parts.map((p) => {
-        if (p.type === 'text') {return { type: 'text', text: p.text };}
+        if (p.type === 'text') {
+          return { type: 'text', text: p.text };
+        }
         // image — opencode's FilePartInput wants a URL; we inline as
         // a data URL since the kernel may have already pre-uploaded.
         return {
@@ -346,10 +399,14 @@ export function openCodeProvider(options: OpenCodeProviderOptions = {}): AgentPr
 
       try {
         for await (const raw of stream.stream as AsyncIterable<unknown>) {
-          if (input.abortSignal.aborted) {break;}
+          if (input.abortSignal.aborted) {
+            break;
+          }
 
           const evt = raw as OpencodeEvent;
-          if (!isForThisSession(evt, input.providerSessionId)) {continue;}
+          if (!isForThisSession(evt, input.providerSessionId)) {
+            continue;
+          }
 
           // Best-effort tool-deny enforcement: if a `tool-call` is
           // about to fire for a denied tool, abort the session BEFORE
@@ -357,11 +414,7 @@ export function openCodeProvider(options: OpenCodeProviderOptions = {}): AgentPr
           // this stops unnecessary token spend.
           const mapped = mapOpencodeEvent(evt, mapperState);
           for (const out of mapped) {
-            if (
-              out.type === 'tool-call' &&
-              denyList.length > 0 &&
-              denyList.includes(out.name)
-            ) {
+            if (out.type === 'tool-call' && denyList.length > 0 && denyList.includes(out.name)) {
               onAbort();
               yield {
                 type: 'tool-result',
@@ -384,7 +437,9 @@ export function openCodeProvider(options: OpenCodeProviderOptions = {}): AgentPr
               break;
             }
           }
-          if (terminated) {break;}
+          if (terminated) {
+            break;
+          }
         }
       } finally {
         input.abortSignal.removeEventListener('abort', onAbort);
@@ -397,7 +452,9 @@ export function openCodeProvider(options: OpenCodeProviderOptions = {}): AgentPr
 
     async listMessages(input: ListMessagesInput): Promise<AgentProviderMessage[]> {
       const session = sessionsById.get(input.providerSessionId);
-      if (!session) {return [];}
+      if (!session) {
+        return [];
+      }
       const client = await resolveSessionClient(session);
       const resp = (await client.session.messages({
         path: { id: input.providerSessionId },
@@ -415,7 +472,9 @@ export function openCodeProvider(options: OpenCodeProviderOptions = {}): AgentPr
           };
           parts?: Array<{ type: string; text?: string }>;
         };
-        if (!m.info) {continue;}
+        if (!m.info) {
+          continue;
+        }
         const parts = (m.parts ?? []).map((p) =>
           p.type === 'text' && typeof p.text === 'string'
             ? { type: 'text' as const, text: p.text }
@@ -448,7 +507,9 @@ export function openCodeProvider(options: OpenCodeProviderOptions = {}): AgentPr
 
     async closeSession(providerSessionId: string): Promise<void> {
       const session = sessionsById.get(providerSessionId);
-      if (!session) {return;}
+      if (!session) {
+        return;
+      }
       sessionsById.delete(providerSessionId);
       try {
         const client = await resolveSessionClient(session);
@@ -484,9 +545,7 @@ async function resolveSessionClient(session: {
     return handle.client;
   }
   if (!session.baseUrl) {
-    throw new Error(
-      '[agents/opencode] external session has no baseUrl — was createSession run?',
-    );
+    throw new Error('[agents/opencode] external session has no baseUrl — was createSession run?');
   }
   return getClient(session.baseUrl, session.directory);
 }
@@ -495,15 +554,23 @@ async function resolveSessionClient(session: {
 
 function isForThisSession(evt: OpencodeEvent, sessionId: string): boolean {
   const props = (evt as { properties?: unknown }).properties;
-  if (!props || typeof props !== 'object') {return true;}
+  if (!props || typeof props !== 'object') {
+    return true;
+  }
   const p = props as {
     sessionID?: string;
     info?: { sessionID?: string };
     part?: { sessionID?: string };
   };
-  if (typeof p.sessionID === 'string') {return p.sessionID === sessionId;}
-  if (p.info && typeof p.info.sessionID === 'string') {return p.info.sessionID === sessionId;}
-  if (p.part && typeof p.part.sessionID === 'string') {return p.part.sessionID === sessionId;}
+  if (typeof p.sessionID === 'string') {
+    return p.sessionID === sessionId;
+  }
+  if (p.info && typeof p.info.sessionID === 'string') {
+    return p.info.sessionID === sessionId;
+  }
+  if (p.part && typeof p.part.sessionID === 'string') {
+    return p.part.sessionID === sessionId;
+  }
   // Global events (e.g. `file.edited`) have no sessionID — let them
   // through so workspace-level signals reach the consumer.
   return true;

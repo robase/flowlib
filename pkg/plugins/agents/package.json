@@ -3,13 +3,13 @@
   "version": "0.0.1",
   "description": "Code-editing AI agents plugin for Flowlib — Claude Code, opencode, raw-LLM providers; Cloudflare Sandbox workspaces; durable-object-backed sessions",
   "keywords": [
-    "flowlib",
-    "plugin",
     "agents",
     "ai",
     "claude-code",
+    "cloudflare",
+    "flowlib",
     "opencode",
-    "cloudflare"
+    "plugin"
   ],
   "license": "MIT",
   "author": "robase <team@flowlib.dev>",
@@ -99,6 +99,7 @@
     "@cloudflare/ai-chat": "*",
     "@cloudflare/sandbox": "*",
     "@cloudflare/workers-types": "^4.0.0",
+    "@flowlib/ui": "workspace:^",
     "@modelcontextprotocol/sdk": "*",
     "@opencode-ai/sdk": "*",
     "@tanstack/react-query": ">=5.0.0",
@@ -119,6 +120,9 @@
       "optional": true
     },
     "@cloudflare/workers-types": {
+      "optional": true
+    },
+    "@flowlib/ui": {
       "optional": true
     },
     "@modelcontextprotocol/sdk": {

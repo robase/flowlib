@@ -29,6 +29,7 @@ import { nodeDataEndpoints } from './node-data';
 import { nodesEndpoints } from './nodes';
 import { oauth2Endpoints } from './oauth2';
 import { runEventsEndpoints } from './run-events';
+import { settingsEndpoints } from './settings';
 import { triggersEndpoints } from './triggers';
 
 export const allFirstPartyEndpoints: readonly FlowlibHttpEndpoint<unknown>[] = [
@@ -52,6 +53,9 @@ export const allFirstPartyEndpoints: readonly FlowlibHttpEndpoint<unknown>[] = [
   ...nodesEndpoints,
   ...agentEndpoints,
   ...dashboardEndpoints,
+  // Settings — `/settings/descriptors` and `/settings/:key` are scoped
+  // under their own prefix so ordering against other slices is irrelevant.
+  ...settingsEndpoints,
   // Generic flow CRUD last — `/flows/:id` would otherwise shadow
   // `/flows/:id/run`, `/flows/:flowId/triggers`, etc.
   ...flowsEndpoints,

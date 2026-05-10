@@ -39,7 +39,9 @@ vi.mock('../runtime', async () => {
         async *run(turn: { text: string; signal: AbortSignal; model?: string }) {
           state.runCalls.push({ text: turn.text, model: turn.model });
           for (const msg of state.runReturns) {
-            if (turn.signal.aborted) {return;}
+            if (turn.signal.aborted) {
+              return;
+            }
             yield msg;
           }
         },
@@ -85,7 +87,9 @@ function makeApiKeyResolver(key: string = 'sk-test'): ApiKeyResolver {
 
 async function collect<T>(iter: AsyncIterable<T>): Promise<T[]> {
   const out: T[] = [];
-  for await (const v of iter) {out.push(v);}
+  for await (const v of iter) {
+    out.push(v);
+  }
   return out;
 }
 
@@ -175,9 +179,7 @@ describe('validateConfig', () => {
   });
 
   it('rejects array of non-strings', () => {
-    expect(() =>
-      provider.validateConfig({ disallowedTools: ['Bash', 5] }),
-    ).toThrow();
+    expect(() => provider.validateConfig({ disallowedTools: ['Bash', 5] })).toThrow();
   });
 });
 
@@ -294,9 +296,7 @@ describe('prompt', () => {
 
   it('forwards model override on PromptInput.model', async () => {
     const { provider, sessionId, session } = await setup();
-    session.runReturns = [
-      { type: 'result', subtype: 'success', uuid: 'r' },
-    ];
+    session.runReturns = [{ type: 'result', subtype: 'success', uuid: 'r' }];
 
     const ac = new AbortController();
     await collect(

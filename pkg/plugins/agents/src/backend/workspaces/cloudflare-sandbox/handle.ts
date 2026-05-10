@@ -20,11 +20,7 @@
  * supply a real implementation through `metadata.opencodeStarter`.
  */
 
-import type {
-  WorkspaceExecOptions,
-  WorkspaceExecResult,
-  WorkspaceHandle,
-} from '../types';
+import type { WorkspaceExecOptions, WorkspaceExecResult, WorkspaceHandle } from '../types';
 
 /**
  * Subset of the `@cloudflare/sandbox` `Sandbox` stub surface this handle
@@ -40,15 +36,8 @@ export interface SandboxStub {
       signal?: AbortSignal;
     },
   ): Promise<{ stdout: string; stderr: string; exitCode: number }>;
-  readFile(
-    path: string,
-    options?: { encoding?: string },
-  ): Promise<{ content: string }>;
-  writeFile(
-    path: string,
-    content: string,
-    options?: { encoding?: string },
-  ): Promise<unknown>;
+  readFile(path: string, options?: { encoding?: string }): Promise<{ content: string }>;
+  writeFile(path: string, content: string, options?: { encoding?: string }): Promise<unknown>;
   listFiles(
     path: string,
     options?: { recursive?: boolean; includeHidden?: boolean },
@@ -176,10 +165,9 @@ export class CloudflareSandboxHandle implements WorkspaceHandle {
         // works when an `exposeHostname` was supplied so we know how to
         // construct the preview URL.
         if (hostname) {
-          await this.sandbox.startProcess(
-            'opencode serve --port 4096 --host 0.0.0.0',
-            { cwd: SANDBOX_WORKSPACE_ROOT },
-          );
+          await this.sandbox.startProcess('opencode serve --port 4096 --host 0.0.0.0', {
+            cwd: SANDBOX_WORKSPACE_ROOT,
+          });
           const exposed = await this.sandbox.exposePort(4096, {
             name: 'opencode',
             hostname,
@@ -193,13 +181,8 @@ export class CloudflareSandboxHandle implements WorkspaceHandle {
     };
   }
 
-  async exec(
-    command: string,
-    options?: WorkspaceExecOptions,
-  ): Promise<WorkspaceExecResult> {
-    const cwd = options?.cwd
-      ? this.absolute(options.cwd)
-      : SANDBOX_WORKSPACE_ROOT;
+  async exec(command: string, options?: WorkspaceExecOptions): Promise<WorkspaceExecResult> {
+    const cwd = options?.cwd ? this.absolute(options.cwd) : SANDBOX_WORKSPACE_ROOT;
     const result = await this.sandbox.exec(command, {
       cwd,
       env: options?.env,
@@ -233,9 +216,7 @@ export class CloudflareSandboxHandle implements WorkspaceHandle {
    */
   async listFiles(glob: string): Promise<string[]> {
     const prefix = globToPrefix(glob);
-    const target = prefix
-      ? this.absolute(prefix)
-      : SANDBOX_WORKSPACE_ROOT;
+    const target = prefix ? this.absolute(prefix) : SANDBOX_WORKSPACE_ROOT;
     const result = await this.sandbox.listFiles(target, {
       recursive: true,
       includeHidden: false,
@@ -247,9 +228,7 @@ export class CloudflareSandboxHandle implements WorkspaceHandle {
     // Fallback substring match on the literal glob fragments.
     const fragments = glob.split('*').filter((s) => s.length > 0);
     return filtered
-      .filter((f) =>
-        fragments.every((frag) => f.absolutePath.includes(frag)),
-      )
+      .filter((f) => fragments.every((frag) => f.absolutePath.includes(frag)))
       .map((f) => f.absolutePath);
   }
 
@@ -260,9 +239,7 @@ export class CloudflareSandboxHandle implements WorkspaceHandle {
    */
   private absolute(path: string): string {
     if (path.includes('\0')) {
-      throw new Error(
-        `Refusing to resolve path with null byte: ${JSON.stringify(path)}`,
-      );
+      throw new Error(`Refusing to resolve path with null byte: ${JSON.stringify(path)}`);
     }
     // Normalise leading ./ and trailing /.
     const p = path.replace(/^\.\//, '').replace(/\/+$/, '');
@@ -273,9 +250,7 @@ export class CloudflareSandboxHandle implements WorkspaceHandle {
       // Caller passed an absolute path — must remain inside /workspace.
       const segments = p.split('/').filter(Boolean);
       if (segments.includes('..')) {
-        throw new Error(
-          `Path traversal rejected: ${JSON.stringify(path)}`,
-        );
+        throw new Error(`Path traversal rejected: ${JSON.stringify(path)}`);
       }
       if (!p.startsWith(`${SANDBOX_WORKSPACE_ROOT}/`) && p !== SANDBOX_WORKSPACE_ROOT) {
         throw new Error(
@@ -286,9 +261,7 @@ export class CloudflareSandboxHandle implements WorkspaceHandle {
     }
     const segments = p.split('/').filter(Boolean);
     if (segments.includes('..')) {
-      throw new Error(
-        `Path traversal rejected: ${JSON.stringify(path)}`,
-      );
+      throw new Error(`Path traversal rejected: ${JSON.stringify(path)}`);
     }
     return `${SANDBOX_WORKSPACE_ROOT}/${segments.join('/')}`;
   }

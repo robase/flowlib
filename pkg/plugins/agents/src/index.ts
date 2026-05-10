@@ -20,10 +20,7 @@ export type { AgentsPluginOptions } from './backend/plugin';
 
 export { agentSchema } from './backend/schema/tables';
 
-export {
-  resolveAuthContext,
-  DEFAULT_ORG_ID,
-} from './backend/auth/resolve-auth-context';
+export { resolveAuthContext, DEFAULT_ORG_ID } from './backend/auth/resolve-auth-context';
 export type { ResolveAuthContextOptions } from './backend/auth/resolve-auth-context';
 
 // Type-only surface — Phase 1 streams import these to build their
@@ -55,13 +52,13 @@ export type {
   PersistenceCallbacks,
   RunResult,
 } from './backend/service/types';
-export { AgentService as AgentServiceImpl, createAgentService } from './backend/service/agent-service';
+export {
+  AgentService as AgentServiceImpl,
+  createAgentService,
+} from './backend/service/agent-service';
 export { runTurn } from './backend/service/run-turn';
 
-export {
-  ProviderRegistry,
-  createProviderRegistry,
-} from './backend/providers/registry';
+export { ProviderRegistry, createProviderRegistry } from './backend/providers/registry';
 export { registerProviders } from './backend/providers/register';
 
 // Provider factories — consumers import these to wire `agents({ providers: [...] })`.
@@ -74,41 +71,18 @@ export type { OpenCodeProviderOptions } from './backend/providers/opencode/provi
 export { cloudflareSandbox } from './backend/workspaces/cloudflare-sandbox/provider';
 export type { CloudflareSandboxOptions } from './backend/workspaces/cloudflare-sandbox/provider';
 
-export {
-  AgentsRepository,
-} from './backend/repositories/agents.repository';
-export {
-  WorkspacesRepository,
-} from './backend/repositories/workspaces.repository';
-export {
-  SessionsRepository,
-} from './backend/repositories/sessions.repository';
-export {
-  MessagesRepository,
-} from './backend/repositories/messages.repository';
-export {
-  ProjectsRepository,
-} from './backend/repositories/projects.repository';
-export {
-  AuditRepository,
-} from './backend/repositories/audit.repository';
-export {
-  RolePermissionsRepository,
-} from './backend/repositories/role-permissions.repository';
+export { McpServersRepository } from './backend/repositories/mcp-servers.repository';
+export { WorkspacesRepository } from './backend/repositories/workspaces.repository';
+export { SessionsRepository } from './backend/repositories/sessions.repository';
+export { MessagesRepository } from './backend/repositories/messages.repository';
+export { ProjectsRepository } from './backend/repositories/projects.repository';
+export { AuditRepository } from './backend/repositories/audit.repository';
+export { RolePermissionsRepository } from './backend/repositories/role-permissions.repository';
 export type { Repositories, RepositoriesFactory } from './backend/repositories/register';
-export {
-  buildRepositories,
-  registerRepositories,
-} from './backend/repositories/register';
+export { buildRepositories, registerRepositories } from './backend/repositories/register';
 
-export {
-  createPermissionsResolver,
-  registerPermissions,
-} from './backend/permissions/register';
-export {
-  createAuditWriter,
-  registerAudit,
-} from './backend/audit/register';
+export { createPermissionsResolver, registerPermissions } from './backend/permissions/register';
+export { createAuditWriter, registerAudit } from './backend/audit/register';
 export type { AuditWriter, AuditEventInput } from './backend/audit/writer';
 
 export { composeSystemPrompt } from './backend/prompt/compose';
@@ -128,10 +102,7 @@ export type {
 } from './backend/hooks/types';
 export { noopHookPipeline } from './backend/hooks/types';
 
-export type {
-  PermissionsResolver,
-  ResolveDenyListInput,
-} from './backend/permissions/types';
+export type { PermissionsResolver, ResolveDenyListInput } from './backend/permissions/types';
 export { allowAllResolver } from './backend/permissions/types';
 
 export type {
@@ -163,7 +134,7 @@ export { isAgentEvent } from './shared/events';
 export type { AgentsAuthContext } from './shared/auth-context';
 
 export type {
-  AgentDefinition,
+  AgentMcpServer,
   AgentWorkspace,
   AgentSession,
   AgentMessage,
@@ -172,6 +143,7 @@ export type {
   AgentVisibility,
   AgentSessionStatus,
   AgentProviderId,
+  McpTransport,
   ToolOutputBudget,
   OrgScope,
   AgentsPluginPublicOptions,

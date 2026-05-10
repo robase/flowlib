@@ -214,10 +214,9 @@ describe('createWriter — write()', () => {
 
 function makePluginContext(repos?: { audit?: AuditRepository }): PluginContext {
   const logCalls: Array<{ level: string; msg: string; meta?: unknown }> = [];
-  const log = (level: string) =>
-    (msg: string, meta?: unknown) => {
-      logCalls.push({ level, msg, meta });
-    };
+  const log = (level: string) => (msg: string, meta?: unknown) => {
+    logCalls.push({ level, msg, meta });
+  };
   const ctx = {
     options: {
       staticOrgId: 'default-org',
@@ -225,6 +224,8 @@ function makePluginContext(repos?: { audit?: AuditRepository }): PluginContext {
       providers: [],
       exposeFlowlibActions: false,
       defaultDenyList: [],
+      defaultProviderId: 'opencode',
+      defaultModel: 'anthropic/claude-sonnet-4-5',
     },
     flowlib: {} as PluginContext['flowlib'],
     actionRegistry: {} as PluginContext['actionRegistry'],
