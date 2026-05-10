@@ -72,7 +72,7 @@ export function getAgentsRuntime(): AgentsRuntimeRegistries {
       '[agents] runtime not registered — the consumer Worker must call ' +
         '`createFlowlib({ plugins: [agents(...)] })` before any Durable ' +
         'Object request lands. Stream H docs cover the wrangler.jsonc ' +
-        'wiring; see plans/agents/cloudflare-tenancy.md.',
+        'wiring.',
     );
   }
   return runtime;

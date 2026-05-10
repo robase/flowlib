@@ -298,7 +298,7 @@ async function listMessages(deps: EndpointDeps): Promise<PluginEndpointResponse>
       pagination: {
         before: beforeRaw ?? null,
         limit,
-        nextBefore: slice.length > 0 ? slice[0]!.sequence : null,
+        nextBefore: slice[0]?.sequence ?? null,
       },
     },
   };

@@ -83,17 +83,6 @@ export interface UseChatStreamReturn {
   resolvedHumanInputs: Record<string, true>;
 }
 
-/** Inbound envelope from the DO (matches `chat-agent-do.ts`). */
-interface AgentEventEnvelope {
-  type: 'flowlib.agent-event';
-  event: AgentEvent;
-}
-
-interface AgentErrorEnvelope {
-  type: 'flowlib.agent-error';
-  error: { message: string; code?: string };
-}
-
 /** Outbound envelope shapes for control messages. */
 export type OutboundControlEnvelope =
   | { type: 'flowlib.interrupt' }

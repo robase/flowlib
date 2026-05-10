@@ -247,7 +247,7 @@ export async function createClaudeSession(input: CreateClaudeSessionInput): Prom
       if (turn.model) {
         try {
           await query.setModel(turn.model);
-        } catch (err) {
+        } catch {
           // Non-fatal — the SDK rejects setModel outside streaming
           // input mode; we fall back to the session default.
         }
@@ -280,7 +280,7 @@ export async function createClaudeSession(input: CreateClaudeSessionInput): Prom
     async interrupt() {
       try {
         await query.interrupt();
-      } catch (err) {
+      } catch {
         // SDK throws if not in streaming input mode — swallow.
       }
     },
@@ -288,7 +288,7 @@ export async function createClaudeSession(input: CreateClaudeSessionInput): Prom
     async setPermissionMode(mode) {
       try {
         await query.setPermissionMode(mode);
-      } catch (err) {
+      } catch {
         // Same swallow rationale as interrupt().
       }
     },
@@ -346,7 +346,10 @@ function createUserMessageQueue(): UserMessageQueue {
 
   function deliverDone(): void {
     while (waiters.length > 0) {
-      waiters.shift()!({ value: undefined, done: true });
+      const w = waiters.shift();
+      if (w) {
+        w({ value: undefined, done: true });
+      }
     }
   }
 

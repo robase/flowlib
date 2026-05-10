@@ -39,7 +39,9 @@ export function diffLines(before: string, after: string): DiffLine[] {
   // Compute LCS table for line-level diff. O(n*m) — fine for v1.
   const n = beforeLines.length;
   const m = afterLines.length;
-  const dp: number[][] = Array.from({ length: n + 1 }, () => new Array(m + 1).fill(0));
+  const dp: number[][] = Array.from({ length: n + 1 }, () =>
+    Array.from({ length: m + 1 }, () => 0),
+  );
   for (let i = n - 1; i >= 0; i--) {
     for (let j = m - 1; j >= 0; j--) {
       if (beforeLines[i] === afterLines[j]) {

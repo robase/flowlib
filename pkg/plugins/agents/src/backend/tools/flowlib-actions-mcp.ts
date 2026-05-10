@@ -191,11 +191,12 @@ export interface FlowlibActionsMcpHandle {
 
 // ─── Factory ────────────────────────────────────────────────────────────
 
+const noopLog = (): void => undefined;
 const DEFAULT_LOGGER: Logger = {
-  debug() {},
-  info() {},
-  warn() {},
-  error() {},
+  debug: noopLog,
+  info: noopLog,
+  warn: noopLog,
+  error: noopLog,
 };
 
 /**

@@ -2,8 +2,8 @@
  * Local type shim for the `AIChatAgent` base class.
  *
  * `agents@^0.12.3` re-exports `AIChatAgent` from the optional peer
- * dep `@cloudflare/ai-chat`. Consumer Workers (e.g. flowlib-hosted)
- * install `@cloudflare/ai-chat` directly when they deploy. This plugin
+ * dep `@cloudflare/ai-chat`. Consumer Workers install
+ * `@cloudflare/ai-chat` directly when they deploy. This plugin
  * does **not** install it as a hard dep so single-tenant Node hosts
  * never pull workerd-only packages.
  *

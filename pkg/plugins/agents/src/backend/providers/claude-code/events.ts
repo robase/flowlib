@@ -248,7 +248,7 @@ function mapResultMessage(msg: ResultMessage): AgentEvent[] {
   const ev: MessageCompleteEvent = {
     type: 'message-complete',
     messageId,
-    ...(usage && (usage.input_tokens != null || usage.output_tokens != null)
+    ...(usage && (usage.input_tokens !== undefined || usage.output_tokens !== undefined)
       ? {
           usage: {
             inputTokens: usage.input_tokens ?? 0,

@@ -126,7 +126,6 @@ export const ChatPage: React.FC<ChatPageProps> = ({ basePath, adapters }) => {
         streaming={status === 'streaming'}
         disabled={status === 'connecting' || status === 'error'}
         model={session?.model ?? null}
-        onModelChange={() => {}}
         providerId={session?.providerId}
       />
     </div>

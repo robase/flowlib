@@ -17,8 +17,6 @@
  *
  * Callers always go through this helper rather than computing names
  * inline so the prefix scheme can evolve in one place.
- *
- * See `plans/agents/cloudflare-tenancy.md` for the deployment shape.
  */
 
 import type { AgentsAuthContext } from '../../shared/auth-context';

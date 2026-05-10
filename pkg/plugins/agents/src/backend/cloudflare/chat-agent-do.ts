@@ -472,7 +472,7 @@ function buildPersistenceCallbacks(runtime: { repositories?: unknown }): Persist
     | undefined;
   const append = repos?.messages?.append;
 
-  const noop = async (): Promise<void> => {};
+  const noop = (): Promise<void> => Promise.resolve();
   if (!append) {
     return {
       onMessageStart: noop,
@@ -513,7 +513,8 @@ function allowAllPermissions(): SessionContext['permissions'] {
 }
 
 /** Wrap the DO's logger surface in the kernel's `SessionLogger` shape. */
-function createSessionLogger(do_: AgentChatDO): SessionContext['logger'] {
+/* eslint-disable no-console */
+function createSessionLogger(_do: AgentChatDO): SessionContext['logger'] {
   const tag = '[AgentChatDO]';
   return {
     debug(message, meta) {
@@ -530,3 +531,4 @@ function createSessionLogger(do_: AgentChatDO): SessionContext['logger'] {
     },
   };
 }
+/* eslint-enable no-console */

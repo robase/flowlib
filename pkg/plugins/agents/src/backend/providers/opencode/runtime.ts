@@ -321,7 +321,7 @@ export function unwrapSessionId(resp: unknown): string {
       const errMsg =
         typeof r.error === 'string'
           ? r.error
-          : (r.error as { message?: string }).message ?? JSON.stringify(r.error);
+          : ((r.error as { message?: string }).message ?? JSON.stringify(r.error));
       const status = r.response?.status;
       throw new Error(
         `[agents/opencode] session.create failed${status ? ` (HTTP ${status})` : ''}: ${errMsg}`,

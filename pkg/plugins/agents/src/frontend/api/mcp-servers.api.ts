@@ -45,7 +45,7 @@ export class McpServersApiClient {
       headers: {
         'Content-Type': 'application/json',
         ...this.headers,
-        ...((init.headers as Record<string, string> | undefined) ?? {}),
+        ...(init.headers as Record<string, string> | undefined),
       },
     });
     if (!response.ok) {

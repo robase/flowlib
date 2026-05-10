@@ -6,7 +6,7 @@
  *
  * The Cloudflare Agents SDK (`agents@>=0.12`) re-exports `AIChatAgent`
  * from the **optional peer dep** `@cloudflare/ai-chat`. Consumer
- * Workers (`flowlib-hosted`, the deferred `examples/cloudflare-*`) install
+ * Workers (e.g. the deferred `examples/cloudflare-*`) install
  * `@cloudflare/ai-chat` directly when they deploy. This plugin
  * deliberately does NOT pull `@cloudflare/ai-chat` into its hard
  * dependencies so single-tenant Node hosts never bundle workerd-only
