@@ -25,6 +25,13 @@ export interface NewChatDialogProps {
   isStarting: boolean;
   onCancel: () => void;
   onStart: (input: { credentialId: string | null }) => void;
+  /**
+   * Optional one-line context shown above the credential list — e.g.
+   * "Adding to workspace: My Project" or "Starting a new workspace".
+   * Purely informational; the caller binds the workspaceId at the API
+   * call site.
+   */
+  targetLabel?: string;
 }
 
 export function NewChatDialog({
@@ -35,6 +42,7 @@ export function NewChatDialog({
   isStarting,
   onCancel,
   onStart,
+  targetLabel,
 }: NewChatDialogProps): React.ReactElement | null {
   const [selectedId, setSelectedId] = React.useState<string | null>(null);
 
@@ -83,6 +91,11 @@ export function NewChatDialog({
             Pick the LLM credential this chat should use. You can change it later from the chat
             settings.
           </p>
+          {targetLabel ? (
+            <p className="text-xs text-fl-muted-foreground mt-2" data-testid="new-chat-target">
+              {targetLabel}
+            </p>
+          ) : null}
         </div>
 
         <div className="px-5 py-4 max-h-[420px] overflow-y-auto">

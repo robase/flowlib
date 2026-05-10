@@ -39,6 +39,7 @@ export default defineConfig({
       '@tanstack/react-query',
       'zustand',
       'lucide-react',
+      '@assistant-ui/react',
     ],
   },
   outExtensions({ format }) {

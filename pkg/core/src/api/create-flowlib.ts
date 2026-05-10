@@ -36,6 +36,7 @@ import { createAuthAPI } from './auth';
 import { createPluginsAPI } from './plugins';
 import { createMaintenanceAPI } from './maintenance';
 import { createSettingsAPI } from './settings';
+import { buildCoreSettingsDescriptors } from './core-settings-descriptor';
 
 /**
  * Seed default credentials (non-blocking helper).
@@ -276,7 +277,8 @@ export async function createFlowlib(config: FlowlibConfig): Promise<FlowlibInsta
     const auth = createAuthAPI(authService, pluginManager, sf);
     const plugins = createPluginsAPI(pluginManager, sf);
     const maintenance = createMaintenanceAPI(sf);
-    const settings = createSettingsAPI(sf, pluginManager, logger);
+    const coreDescriptors = buildCoreSettingsDescriptors(parsedConfig);
+    const settings = createSettingsAPI(sf, pluginManager, logger, coreDescriptors);
 
     // Assemble the instance
     const instance: FlowlibInstance = {
@@ -443,6 +445,102 @@ export async function createFlowlib(config: FlowlibConfig): Promise<FlowlibInsta
 
     // Make instance available to plugins via the lazy getFlowlib() accessor
     _flowlibInstance = instance;
+
+    // Run plugin settings appliers — plugins that contributed a `settings`
+    // descriptor stash a callback in `ctx.store` during init (since
+    // `getFlowlib()` isn't valid yet at that point). This is where they
+    // get to overlay DB-persisted settings and subscribe to onChange.
+    try {
+      await pluginManager.runSettingsAppliers(instance);
+    } catch (error) {
+      logger.warn('Plugin settings appliers failed', error);
+    }
+
+    // ── Hot-reload core settings ────────────────────────────────────────
+    //
+    // Subscribe to settings changes for the core-owned editable fields
+    // (logging level + per-scope overrides, triggers.cronEnabled). Plugin
+    // descriptors handle their own hot-reload in their `init()`.
+    //
+    // Persisted values from a prior run are also applied here so a fresh
+    // process boots up with whatever the operator last set in the UI.
+    try {
+      const persistedDefaultLevel = await settings.get<string>('core.logging.level');
+      if (
+        persistedDefaultLevel === 'debug' ||
+        persistedDefaultLevel === 'info' ||
+        persistedDefaultLevel === 'warn' ||
+        persistedDefaultLevel === 'error' ||
+        persistedDefaultLevel === 'silent'
+      ) {
+        loggerManager.setDefaultLevel(persistedDefaultLevel);
+      }
+      const persistedScopes = await settings.list({ namespace: 'core.logging' });
+      for (const row of persistedScopes) {
+        const m = /^core\.logging\.scopes\.(.+)$/.exec(row.key);
+        if (!m || typeof row.value !== 'string') {
+          continue;
+        }
+        const lvl = row.value;
+        if (
+          lvl === 'debug' ||
+          lvl === 'info' ||
+          lvl === 'warn' ||
+          lvl === 'error' ||
+          lvl === 'silent'
+        ) {
+          loggerManager.setLogLevel(m[1], lvl);
+        }
+      }
+    } catch (error) {
+      logger.warn('Failed to overlay persisted core.logging settings', error);
+    }
+
+    settings.onChange('core.logging', (event) => {
+      if (event.type !== 'set' || typeof event.value !== 'string') {
+        return;
+      }
+      const lvl = event.value;
+      const isLevel =
+        lvl === 'debug' ||
+        lvl === 'info' ||
+        lvl === 'warn' ||
+        lvl === 'error' ||
+        lvl === 'silent';
+      if (event.key === 'core.logging.level' && isLevel) {
+        loggerManager.setDefaultLevel(lvl);
+        return;
+      }
+      const m = /^core\.logging\.scopes\.(.+)$/.exec(event.key);
+      if (m && isLevel) {
+        loggerManager.setLogLevel(m[1], lvl);
+      }
+    });
+
+    // triggers.cronEnabled — toggle the scheduler on the live instance.
+    try {
+      const persistedCron = await settings.get<boolean>('core.triggers.cronEnabled');
+      if (persistedCron === false) {
+        instance.stopCronScheduler();
+      }
+    } catch (error) {
+      logger.warn('Failed to overlay persisted core.triggers.cronEnabled', error);
+    }
+
+    settings.onChange('core.triggers', async (event) => {
+      if (event.type !== 'set' || event.key !== 'core.triggers.cronEnabled') {
+        return;
+      }
+      if (event.value === true) {
+        try {
+          await instance.startCronScheduler();
+        } catch (error) {
+          logger.error('Failed to start cron scheduler from settings change', error);
+        }
+      } else if (event.value === false) {
+        instance.stopCronScheduler();
+      }
+    });
 
     logger.info(`Flowlib Core fully initialized in ${Date.now() - initStart}ms`);
 

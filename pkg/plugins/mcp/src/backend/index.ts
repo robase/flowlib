@@ -6,7 +6,12 @@
  */
 
 import { randomUUID } from 'node:crypto';
-import type { FlowlibPlugin, FlowlibPluginDefinition, FlowlibPluginContext } from '@flowlib/core';
+import type {
+  FlowlibInstance,
+  FlowlibPlugin,
+  FlowlibPluginDefinition,
+  FlowlibPluginContext,
+} from '@flowlib/core';
 import { WebStandardStreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js';
 import type { McpPluginOptions } from '../shared/types';
 import { DirectClient } from './client/direct-client';
@@ -57,6 +62,51 @@ function _mcpBackendPlugin(options: McpPluginOptions = {}): FlowlibPlugin {
     id: 'mcp',
     name: 'Model Context Protocol',
 
+    settings: {
+      namespace: 'mcp',
+      label: 'Model Context Protocol',
+      description:
+        'MCP plugin settings. Editable values hot-reload. `audit.persist` is bound at startup because it gates a database table writer — change in flowlib.config.ts and restart.',
+      fields: [
+        {
+          key: 'mcp.sessionTtlMs',
+          label: 'Session TTL (ms)',
+          description:
+            'How long an idle MCP session is kept alive. Lower TTL frees resources faster; higher TTL keeps long-running clients connected.',
+          type: 'number',
+          defaultValue: options.sessionTtlMs ?? 30 * 60 * 1000,
+        },
+        {
+          key: 'mcp.audit.enabled',
+          label: 'Audit logging enabled',
+          description: 'When off, MCP tool invocations are not logged.',
+          type: 'boolean',
+          defaultValue: options.audit?.enabled ?? true,
+        },
+        {
+          key: 'mcp.audit.logLevel',
+          label: 'Audit log level',
+          description: 'Severity used for audit log entries.',
+          type: 'select',
+          options: [
+            { value: 'debug', label: 'Debug' },
+            { value: 'info', label: 'Info' },
+            { value: 'warn', label: 'Warn' },
+          ],
+          defaultValue: options.audit?.logLevel ?? 'info',
+        },
+        {
+          key: 'mcp.audit.persist',
+          label: 'Persist audit logs to DB',
+          description:
+            'Configured in flowlib.config.ts. Toggling this requires restart because it gates the database writer.',
+          type: 'boolean',
+          readOnly: true,
+          defaultValue: options.audit?.persist ?? false,
+        },
+      ],
+    },
+
     init(ctx: FlowlibPluginContext) {
       auditLogger = new AuditLogger(ctx.logger, options.audit);
 
@@ -64,6 +114,57 @@ function _mcpBackendPlugin(options: McpPluginOptions = {}): FlowlibPlugin {
       ctx.store.set('auditLogger', auditLogger);
 
       sessionManager.startCleanup();
+
+      // Stash a post-init applier — overlays persisted settings on top of
+      // the constructor defaults and subscribes to onChange.
+      ctx.store.set('__settingsApplier', async (flowlib: FlowlibInstance) => {
+        const persistedTtl = await flowlib.settings.get<number>('mcp.sessionTtlMs');
+        if (typeof persistedTtl === 'number' && persistedTtl > 0) {
+          sessionManager.setTtlMs(persistedTtl);
+        }
+
+        const persistedEnabled = await flowlib.settings.get<boolean>('mcp.audit.enabled');
+        if (typeof persistedEnabled === 'boolean' && auditLogger) {
+          auditLogger.setEnabled(persistedEnabled);
+        }
+        const persistedLogLevel = await flowlib.settings.get<'debug' | 'info' | 'warn'>(
+          'mcp.audit.logLevel',
+        );
+        if (
+          (persistedLogLevel === 'debug' ||
+            persistedLogLevel === 'info' ||
+            persistedLogLevel === 'warn') &&
+          auditLogger
+        ) {
+          auditLogger.setLogLevel(persistedLogLevel);
+        }
+
+        flowlib.settings.onChange('mcp', (event) => {
+          if (event.type !== 'set') {
+            return;
+          }
+          switch (event.key) {
+            case 'mcp.sessionTtlMs':
+              if (typeof event.value === 'number') {
+                sessionManager.setTtlMs(event.value);
+              }
+              break;
+            case 'mcp.audit.enabled':
+              if (typeof event.value === 'boolean' && auditLogger) {
+                auditLogger.setEnabled(event.value);
+              }
+              break;
+            case 'mcp.audit.logLevel':
+              if (
+                (event.value === 'debug' || event.value === 'info' || event.value === 'warn') &&
+                auditLogger
+              ) {
+                auditLogger.setLogLevel(event.value);
+              }
+              break;
+          }
+        });
+      });
 
       ctx.logger.info(
         `MCP plugin initialized (session TTL: ${sessionTtlMs / 1000}s, audit: ${

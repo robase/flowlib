@@ -13,6 +13,7 @@
  */
 
 import type {
+  FlowlibInstance,
   FlowlibPlugin,
   FlowlibPluginDefinition,
   FlowlibPluginContext,
@@ -227,8 +228,112 @@ export function agents(options: AgentsPluginOptions = {}): FlowlibPluginDefiniti
     setupInstructions:
       'Run `npx flowlib-cli generate` to create the agent_* tables, then `npx flowlib-cli migrate`.',
 
+    settings: {
+      namespace: 'agents',
+      label: 'Agents',
+      description:
+        'Defaults for new chat sessions. Provider/workspace registries and tenancy settings are bound at startup — change those in flowlib.config.ts.',
+      fields: [
+        {
+          key: 'agents.defaultProviderId',
+          label: 'Default provider',
+          description:
+            'Provider id used when POST /sessions omits `providerId`. Must match a registered provider id.',
+          type: 'string',
+          defaultValue: resolved.defaultProviderId,
+        },
+        {
+          key: 'agents.defaultModel',
+          label: 'Default model',
+          description:
+            'Model id used when POST /sessions omits `model` (e.g. `anthropic/claude-sonnet-4-5`).',
+          type: 'string',
+          defaultValue: resolved.defaultModel,
+        },
+        {
+          key: 'agents.staticOrgId',
+          label: 'Static org id',
+          description:
+            'Configured in flowlib.config.ts. Tenancy id used when no auth plugin populates `identity.orgId`.',
+          type: 'string',
+          readOnly: true,
+          defaultValue: resolved.staticOrgId,
+        },
+        {
+          key: 'agents.orgScope',
+          label: 'Org scope',
+          description:
+            'Configured in flowlib.config.ts. `required` enforces multi-tenancy; `optional` falls back to staticOrgId.',
+          type: 'string',
+          readOnly: true,
+          defaultValue: resolved.orgScope,
+        },
+        {
+          key: 'agents.exposeFlowlibActions',
+          label: 'Expose Flowlib actions to agents',
+          description:
+            'Configured in flowlib.config.ts. Whether new agents default to `exposeFlowlibActions: true`.',
+          type: 'boolean',
+          readOnly: true,
+          defaultValue: resolved.exposeFlowlibActions,
+        },
+        {
+          key: 'agents.defaultDenyList',
+          label: 'Default tool deny list',
+          description:
+            'Configured in flowlib.config.ts. Tool ids hard-denied for every agent in this deployment.',
+          type: 'json',
+          readOnly: true,
+          defaultValue: resolved.defaultDenyList,
+        },
+        {
+          key: 'agents.providers',
+          label: 'Registered providers',
+          description: 'Configured in flowlib.config.ts. Display-only list of provider ids.',
+          type: 'json',
+          readOnly: true,
+          defaultValue: resolved.providers.map((p) => p.id),
+        },
+        {
+          key: 'agents.workspaceProviders',
+          label: 'Registered workspace providers',
+          description:
+            'Configured in flowlib.config.ts. Display-only list of workspace provider ids.',
+          type: 'json',
+          readOnly: true,
+          defaultValue: resolved.workspaceProviders.map((w) => w.id),
+        },
+      ],
+    },
+
     async init(flowlib) {
       preflightCheck(resolved, flowlib);
+
+      // Stash a post-init applier — overlays persisted settings on top of
+      // the constructor defaults and subscribes to onChange. Endpoints read
+      // from `pluginCtx.options` which references the same `resolved`
+      // object, so mutating it in place is sufficient.
+      flowlib.store.set('__settingsApplier', async (fl: FlowlibInstance) => {
+        const persistedProvider = await fl.settings.get<string>('agents.defaultProviderId');
+        if (typeof persistedProvider === 'string' && persistedProvider.length > 0) {
+          resolved.defaultProviderId = persistedProvider;
+        }
+        const persistedModel = await fl.settings.get<string>('agents.defaultModel');
+        if (typeof persistedModel === 'string' && persistedModel.length > 0) {
+          resolved.defaultModel = persistedModel;
+        }
+
+        fl.settings.onChange('agents', (event) => {
+          if (event.type !== 'set' || typeof event.value !== 'string') {
+            return;
+          }
+          if (event.key === 'agents.defaultProviderId' && event.value.length > 0) {
+            resolved.defaultProviderId = event.value;
+          } else if (event.key === 'agents.defaultModel' && event.value.length > 0) {
+            resolved.defaultModel = event.value;
+          }
+        });
+      });
 
       const ctx = buildPluginContext(flowlib, resolved);
 

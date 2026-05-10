@@ -145,7 +145,20 @@ export function parseInboundFrame(data: unknown): ParsedInboundFrame {
  * the optional second parameter to `useChatStream`.
  */
 export interface ChatStreamAdapters {
-  useAgent: (options: { agent: string; name: string }) => ChatSocketLike;
+  useAgent: (options: {
+    agent: string;
+    name: string;
+    /**
+     * Forwarded to the underlying `usePartySocket`. When `false`, the
+     * SDK skips opening the WebSocket entirely and returns a stub
+     * socket (still safe to register listeners on). We use this to
+     * defer the connection until the session row resolves and a
+     * tenant-scoped `doAgentName` is available — without it, the SDK
+     * eagerly connects to `/agents/<kebab-class>/default` which is a
+     * non-existent room.
+     */
+    enabled?: boolean;
+  }) => ChatSocketLike;
   useAgentChat: (options: {
     agent: ChatSocketLike & { agent: string; name: string };
   }) => ChatHelpers;
@@ -242,9 +255,13 @@ function buildChatRequestEnvelope(requestId: string, text: string): string {
 function loadDefaultAdapters(): ChatStreamAdapters {
   return {
     useAgent: (options) =>
-      (agentsUseAgent as unknown as (opts: { agent: string; name: string }) => ChatSocketLike)(
-        options,
-      ),
+      (
+        agentsUseAgent as unknown as (opts: {
+          agent: string;
+          name: string;
+          enabled?: boolean;
+        }) => ChatSocketLike
+      )(options),
     useAgentChat: ({ agent }) => {
       // Track the most recent in-flight request id so `stop()` can send
       // a `cf_agent_chat_request_cancel` for it. Using a module-level
@@ -336,14 +353,19 @@ export function useChatStream(
     };
   }, [sessionId, a, options.apiBaseUrl]);
 
-  // Step 2 — connect to the DO. We MUST NOT call `useAgent` until we
-  // have a `doAgentName`; conditionally-calling a hook breaks the rules
-  // of hooks. The trick: we always call `useAgent` but pass `''` when
-  // not ready, and the underlying PartySocket either no-ops or 404s —
-  // either way our local code guards on `session?.doAgentName` before
-  // sending. In production this is fine; tests stub the adapter.
+  // Step 2 — connect to the DO. We MUST NOT call `useAgent` conditionally
+  // (rules of hooks), but we CAN tell it not to open a socket until the
+  // session row resolves: passing `enabled: false` keeps PartySocket idle
+  // while still letting us register listeners on the returned stub. Without
+  // this, the SDK eagerly connects to `/agents/<kebab-class>/default` (its
+  // fallback for empty `name`), which 404s — and on the production worker
+  // floods the logs with failed upgrades.
   const doName = session?.doAgentName ?? '';
-  const socket = a.useAgent({ agent: 'AgentChatDO', name: doName });
+  const socket = a.useAgent({
+    agent: 'AgentChatDO',
+    name: doName || 'pending',
+    enabled: Boolean(doName),
+  });
   const chat = a.useAgentChat({
     agent: Object.assign(socket, { agent: 'AgentChatDO', name: doName }),
   });

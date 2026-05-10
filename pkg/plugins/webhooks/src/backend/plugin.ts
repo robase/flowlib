@@ -9,6 +9,7 @@
 
 import {
   createPluginDatabaseApi,
+  type FlowlibInstance,
   type FlowlibPlugin,
   type FlowlibPluginDefinition,
   type FlowlibPluginEndpoint,
@@ -699,6 +700,47 @@ function _webhooksBackendPlugin(options?: Omit<WebhooksPluginOptions, 'frontend'
     name: 'Webhooks',
     schema: WEBHOOK_TRIGGERS_SCHEMA,
 
+    settings: {
+      namespace: 'webhooks',
+      label: 'Webhooks',
+      description:
+        'Inbound webhook trigger settings. Editable values hot-reload — rate limiter and dedup service apply changes on the next request.',
+      fields: [
+        {
+          key: 'webhooks.webhookBaseUrl',
+          label: 'Webhook base URL',
+          description:
+            'Public-facing base URL where webhook routes are mounted (e.g. "https://api.example.com/flowlib"). Used to display the full webhook URL in the editor.',
+          type: 'string',
+          defaultValue: options?.webhookBaseUrl ?? '',
+          placeholder: 'https://api.example.com/flowlib',
+        },
+        {
+          key: 'webhooks.rateLimitMaxRequests',
+          label: 'Rate limit: max requests per window',
+          description:
+            'Maximum inbound webhook requests permitted per `windowMs`. Lower values mean stricter rate limiting.',
+          type: 'number',
+          defaultValue: options?.rateLimitMaxRequests ?? 60,
+        },
+        {
+          key: 'webhooks.rateLimitWindowMs',
+          label: 'Rate limit: window size (ms)',
+          description: 'Sliding window duration in milliseconds for the rate limiter.',
+          type: 'number',
+          defaultValue: options?.rateLimitWindowMs ?? 60_000,
+        },
+        {
+          key: 'webhooks.dedupTtlMs',
+          label: 'Dedup TTL (ms)',
+          description:
+            'How long delivery IDs are remembered for deduplication. Longer = more memory, fewer duplicate executions.',
+          type: 'number',
+          defaultValue: options?.dedupTtlMs ?? 24 * 60 * 60 * 1000,
+        },
+      ],
+    },
+
     async init(ctx) {
       const logger = ctx.logger;
 
@@ -715,6 +757,60 @@ function _webhooksBackendPlugin(options?: Omit<WebhooksPluginOptions, 'frontend'
         adapters: buildAdapterMap(options?.providers ?? []),
         logger,
       };
+
+      // Stash a post-init applier — overlays persisted settings on top of
+      // the constructor defaults and subscribes to onChange. Runs after the
+      // FlowlibInstance is ready (`getFlowlib()` is invalid during init).
+      ctx.store.set('__settingsApplier', async (flowlib: FlowlibInstance) => {
+        if (!state) {
+          return;
+        }
+        const persistedBaseUrl = await flowlib.settings.get<string>('webhooks.webhookBaseUrl');
+        if (typeof persistedBaseUrl === 'string' && persistedBaseUrl.length > 0) {
+          state.webhookBaseUrl = persistedBaseUrl;
+        }
+        const persistedMaxReq = await flowlib.settings.get<number>(
+          'webhooks.rateLimitMaxRequests',
+        );
+        if (typeof persistedMaxReq === 'number' && persistedMaxReq > 0) {
+          state.rateLimiter.setMaxRequests(persistedMaxReq);
+        }
+        const persistedWindow = await flowlib.settings.get<number>('webhooks.rateLimitWindowMs');
+        if (typeof persistedWindow === 'number' && persistedWindow > 0) {
+          state.rateLimiter.setWindowMs(persistedWindow);
+        }
+        const persistedDedupTtl = await flowlib.settings.get<number>('webhooks.dedupTtlMs');
+        if (typeof persistedDedupTtl === 'number' && persistedDedupTtl > 0) {
+          state.dedupService.setTtlMs(persistedDedupTtl);
+        }
+
+        flowlib.settings.onChange('webhooks', (event) => {
+          if (event.type !== 'set' || !state) {
+            return;
+          }
+          switch (event.key) {
+            case 'webhooks.webhookBaseUrl':
+              state.webhookBaseUrl =
+                typeof event.value === 'string' && event.value.length > 0 ? event.value : undefined;
+              break;
+            case 'webhooks.rateLimitMaxRequests':
+              if (typeof event.value === 'number') {
+                state.rateLimiter.setMaxRequests(event.value);
+              }
+              break;
+            case 'webhooks.rateLimitWindowMs':
+              if (typeof event.value === 'number') {
+                state.rateLimiter.setWindowMs(event.value);
+              }
+              break;
+            case 'webhooks.dedupTtlMs':
+              if (typeof event.value === 'number') {
+                state.dedupService.setTtlMs(event.value);
+              }
+              break;
+          }
+        });
+      });
 
       // Power the trigger.webhook node's "Webhook" dropdown. Resolved lazily
       // at loader-call time so the host's `getFlowlib()` is fully ready.

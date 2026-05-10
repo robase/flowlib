@@ -18,8 +18,18 @@ export interface SessionEntry {
 export class SessionManager {
   private sessions = new Map<string, SessionEntry>();
   private cleanupTimer: ReturnType<typeof setInterval> | null = null;
+  private ttlMs: number;
 
-  constructor(private readonly ttlMs: number = 30 * 60 * 1000) {}
+  constructor(ttlMs: number = 30 * 60 * 1000) {
+    this.ttlMs = ttlMs;
+  }
+
+  /** Update the session TTL. Future cleanup ticks use the new value. */
+  setTtlMs(value: number): void {
+    if (Number.isFinite(value) && value > 0) {
+      this.ttlMs = Math.floor(value);
+    }
+  }
 
   /** Start periodic cleanup of expired sessions */
   startCleanup(intervalMs: number = 60_000): void {

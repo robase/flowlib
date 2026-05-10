@@ -1,4 +1,10 @@
-import type { FlowlibPlugin, FlowlibIdentity, FlowlibRole, FlowlibPermission } from '@flowlib/core';
+import type {
+  FlowlibInstance,
+  FlowlibPlugin,
+  FlowlibIdentity,
+  FlowlibRole,
+  FlowlibPermission,
+} from '@flowlib/core';
 import type { FlowlibPluginSchema } from '@flowlib/db';
 import type {
   AuthenticationPluginOptions,
@@ -972,9 +978,15 @@ export function authentication(options: AuthenticationPluginOptions): FlowlibPlu
     prefix = DEFAULT_PREFIX,
     mapUser: customMapUser,
     mapRole = defaultMapRole,
-    publicPaths = [],
     globalAdmins = [],
   } = options;
+
+  // Mutable so it can be hot-reloaded from the settings UI. The onRequest
+  // hook reads `effective.publicPaths` on every request, so a settings update
+  // takes effect immediately.
+  const effective: { publicPaths: string[] } = {
+    publicPaths: [...(options.publicPaths ?? [])],
+  };
 
   // Mutable — assigned in `init` when no external instance was provided.
   let auth: BetterAuthInstance | null = options.auth ?? null;
@@ -1182,6 +1194,83 @@ export function authentication(options: AuthenticationPluginOptions): FlowlibPlu
     setupInstructions:
       'Run `npx flowlib-cli generate` to add the better-auth tables to your schema, ' +
       'then `npx drizzle-kit push` (or `npx flowlib-cli migrate`) to apply.',
+
+    settings: {
+      namespace: 'user-auth',
+      label: 'User Auth',
+      description:
+        'Authentication settings. Only `publicPaths` is hot-reloadable. Better-Auth instance config (baseURL, trustedOrigins, route prefix, magic-link/2FA/api-key plugins) is bound at startup — change those in flowlib.config.ts.',
+      fields: [
+        {
+          key: 'user-auth.publicPaths',
+          label: 'Public paths',
+          description:
+            "JSON array of path prefixes that bypass session resolution (e.g. [\"/health\", \"/public\"]). Hot-reloads — the next request consults the new list.",
+          type: 'json',
+          defaultValue: options.publicPaths ?? [],
+        },
+        {
+          key: 'user-auth.prefix',
+          label: 'Auth route prefix',
+          description:
+            "Configured in flowlib.config.ts. Better-Auth routes mount under this prefix; changing it requires re-registering routes (restart).",
+          type: 'string',
+          readOnly: true,
+          defaultValue: prefix,
+        },
+        {
+          key: 'user-auth.baseURL',
+          label: 'Base URL',
+          description:
+            'Configured in flowlib.config.ts (or BETTER_AUTH_URL). Baked into the Better-Auth instance for cookies/CSRF — restart required to change.',
+          type: 'string',
+          readOnly: true,
+          defaultValue: options.baseURL ?? '',
+        },
+        {
+          key: 'user-auth.trustedOrigins',
+          label: 'Trusted origins',
+          description:
+            'Configured in flowlib.config.ts. Used by Better-Auth for CSRF — baked into the instance at startup.',
+          type: 'json',
+          readOnly: true,
+          defaultValue: Array.isArray(options.trustedOrigins) ? options.trustedOrigins : [],
+        },
+        {
+          key: 'user-auth.globalAdmins',
+          label: 'Seeded global admins',
+          description:
+            'Configured in flowlib.config.ts. Display-only count of admin accounts seeded at startup.',
+          type: 'number',
+          readOnly: true,
+          defaultValue: globalAdmins.length,
+        },
+        {
+          key: 'user-auth.apiKeyEnabled',
+          label: 'API key plugin enabled',
+          description: 'Configured in flowlib.config.ts (`apiKey: true | { ... }`).',
+          type: 'boolean',
+          readOnly: true,
+          defaultValue: !!options.apiKey,
+        },
+        {
+          key: 'user-auth.twoFactorEnabled',
+          label: 'Two-factor plugin enabled',
+          description: 'Configured in flowlib.config.ts (`twoFactor: { ... }`).',
+          type: 'boolean',
+          readOnly: true,
+          defaultValue: !!options.twoFactor,
+        },
+        {
+          key: 'user-auth.magicLinkEnabled',
+          label: 'Magic-link plugin enabled',
+          description: 'Configured in flowlib.config.ts (`magicLink: true | { ... }`).',
+          type: 'boolean',
+          readOnly: true,
+          defaultValue: !!options.magicLink,
+        },
+      ],
+    },
 
     endpoints: [
       // ── Auth Info (specific routes must come BEFORE the catch-all proxy) ───
@@ -1908,7 +1997,7 @@ export function authentication(options: AuthenticationPluginOptions): FlowlibPlu
         }
 
         // Skip for public paths
-        if (publicPaths.some((p) => context.path.startsWith(p))) {
+        if (effective.publicPaths.some((p) => context.path.startsWith(p))) {
           return;
         }
 
@@ -1985,6 +2074,24 @@ export function authentication(options: AuthenticationPluginOptions): FlowlibPlu
       pluginContext.logger.info(
         `Better Auth plugin initialized (prefix: ${prefix}, basePath: ${betterAuthBasePath})`,
       );
+
+      // Stash a post-init applier — overlays persisted publicPaths on top
+      // of the constructor option and subscribes to onChange. Runs after
+      // the FlowlibInstance is ready (`getFlowlib()` is invalid in init).
+      pluginContext.store.set('__settingsApplier', async (fl: FlowlibInstance) => {
+        const persistedPaths = await fl.settings.get<unknown>('user-auth.publicPaths');
+        if (Array.isArray(persistedPaths) && persistedPaths.every((p) => typeof p === 'string')) {
+          effective.publicPaths = persistedPaths as string[];
+        }
+        fl.settings.onChange('user-auth', (event) => {
+          if (event.type !== 'set' || event.key !== 'user-auth.publicPaths') {
+            return;
+          }
+          if (Array.isArray(event.value) && event.value.every((p) => typeof p === 'string')) {
+            effective.publicPaths = event.value as string[];
+          }
+        });
+      });
 
       if (globalAdmins.length === 0) {
         pluginContext.logger.debug(

@@ -22,6 +22,14 @@ export class AuditLogger {
     this.logLevel = options?.logLevel ?? 'info';
   }
 
+  setEnabled(value: boolean): void {
+    this.enabled = value;
+  }
+
+  setLogLevel(value: 'debug' | 'info' | 'warn'): void {
+    this.logLevel = value;
+  }
+
   log(entry: AuditEntry): void {
     if (!this.enabled) {
       return;

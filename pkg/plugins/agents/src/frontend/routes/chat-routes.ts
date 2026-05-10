@@ -36,7 +36,7 @@
  * `agentsFrontendPlugin.routes` and republishing.
  */
 import type { ComponentType, ReactNode } from 'react';
-import { ChatPage } from './ChatPage';
+import { AgentsLayout } from './AgentsLayout';
 
 export interface ChatRouteContribution {
   path: string;
@@ -44,10 +44,16 @@ export interface ChatRouteContribution {
   flowScoped?: boolean;
 }
 
+/**
+ * The chat surface lives inside `AgentsLayout` (sidebar + main pane).
+ * The same component handles `/agents` and `/agents/sessions/:sessionId`
+ * — the route param drives whether the main pane shows an empty
+ * placeholder or a `<ChatThread session={...} />`.
+ */
 export const agentsChatRoutes: ChatRouteContribution[] = [
   {
     path: '/agents/sessions/:sessionId',
-    component: ChatPage,
+    component: AgentsLayout,
   },
 ];
 

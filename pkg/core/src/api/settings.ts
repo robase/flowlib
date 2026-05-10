@@ -15,6 +15,12 @@ export function createSettingsAPI(
   sf: ServiceFactory,
   pluginManager: PluginManager,
   _logger: Logger,
+  /**
+   * Built-in descriptor groups contributed by `@flowlib/core` itself
+   * (logging, execution, triggers, theme, db/encryption display fields).
+   * Prepended to the plugin-contributed list so the UI shows core first.
+   */
+  coreDescriptors: SettingsDescriptorGroup[] = [],
 ): SettingsAPI {
   return {
     get(key) {
@@ -46,12 +52,12 @@ export function createSettingsAPI(
     },
 
     /**
-     * Aggregated descriptor list sourced from registered plugins. Drives
-     * the generic `/settings` UI page so plugins don't need their own page.
+     * Aggregated descriptor list sourced from core + registered plugins.
+     * Drives the generic `/settings` UI page.
      */
     getDescriptors(): SettingsDescriptorGroup[] {
       const plugins = pluginManager.getPlugins();
-      const descriptors: SettingsDescriptorGroup[] = [];
+      const descriptors: SettingsDescriptorGroup[] = [...coreDescriptors];
       for (const plugin of plugins) {
         const settings = (plugin as unknown as { settings?: unknown }).settings;
         if (!settings) {

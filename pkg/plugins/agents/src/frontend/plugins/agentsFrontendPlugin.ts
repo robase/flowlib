@@ -19,7 +19,7 @@
 import { MessageSquare } from 'lucide-react';
 import type { ComponentType, ReactNode } from 'react';
 import { AgentsApiProvider } from '../api/context';
-import { AgentsPage } from '../routes/AgentsPage';
+import { AgentsLayout } from '../routes/AgentsLayout';
 import { McpServersPage } from '../routes/McpServersPage';
 
 /**
@@ -72,7 +72,7 @@ export const agentsFrontendPlugin: FlowlibFrontendPluginShape = {
   providers: [AgentsApiProvider],
 
   routes: [
-    { path: '/agents', component: AgentsPage },
+    { path: '/agents', component: AgentsLayout },
     { path: '/agents/mcp-servers', component: McpServersPage },
   ],
 };

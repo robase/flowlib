@@ -41,7 +41,7 @@ export function DynamicSelectField({
   value,
   onChange,
   formValues,
-  portalContainer: _portalContainer,
+  portalContainer,
 }: DynamicSelectFieldProps) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
@@ -174,7 +174,11 @@ export function DynamicSelectField({
             <ChevronsUpDown className="ml-auto h-3 w-3 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-(--radix-popover-trigger-width) p-0" align="start">
+        <PopoverContent
+          className="w-(--radix-popover-trigger-width) p-0"
+          align="start"
+          container={portalContainer}
+        >
           <Command shouldFilter={false}>
             <CommandInput
               placeholder="Search…"
