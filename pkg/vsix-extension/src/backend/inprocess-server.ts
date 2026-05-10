@@ -125,7 +125,7 @@ async function init(
   const { mcp } = await import('@flowlib/mcp');
 
   const router = await createFlowlibRouter({
-    database: { type: 'sqlite', connectionString: `file:${dbPath}`, driver: 'libsql' },
+    database: { type: 'sqlite', connectionString: `file:${dbPath}`, driver: 'better-sqlite3' },
     encryptionKey,
     // MCP plugin contributes a `/mcp` endpoint exposing flows / runs /
     // validation / executions as MCP tools. Combined with the embedded
@@ -167,7 +167,7 @@ async function runSchemaBootstrap(
   logger: ReturnType<typeof getExtensionLogger>,
 ): Promise<void> {
   const { mergeSchemas, generateSqliteRawSql } = await import('@flowlib/db');
-  const { createClient } = await import('@libsql/client');
+  const Database = (await import('better-sqlite3')).default;
   const { webhooks } = await import('@flowlib/webhooks');
   const { mcp } = await import('@flowlib/mcp');
 
@@ -192,12 +192,12 @@ async function runSchemaBootstrap(
     )
     .filter((s) => s.length > 0);
 
-  const client = createClient({ url: `file:${dbPath}` });
+  const client = new Database(dbPath);
   try {
     let executed = 0;
     for (const sql of statements) {
       try {
-        await client.execute(sql);
+        client.exec(sql);
         executed++;
       } catch (err) {
         const msg = (err as Error).message ?? '';
@@ -208,7 +208,7 @@ async function runSchemaBootstrap(
     }
     logger.debug('embedded server: DDL bootstrap complete', { statements: statements.length });
   } finally {
-    await client.close();
+    client.close();
   }
 }
 

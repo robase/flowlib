@@ -51,8 +51,8 @@
     "@flowlib/sdk": "workspace:*",
     "@flowlib/ui": "workspace:*",
     "@flowlib/webhooks": "workspace:*",
-    "@libsql/client": "^0.17.2",
     "@tanstack/react-query": "^5.62.0",
+    "better-sqlite3": "^12.0.0",
     "cors": "^2.8.5",
     "express": "^5.1.0",
     "jiti": "^2.4.0",
@@ -62,6 +62,7 @@
   },
   "devDependencies": {
     "@flowlib/actions": "workspace:*",
+    "@types/better-sqlite3": "^7.6.13",
     "@types/cors": "^2.8.17",
     "@types/express": "^5.0.0",
     "@types/mocha": "^10.0.10",

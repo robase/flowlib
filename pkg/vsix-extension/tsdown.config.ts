@@ -29,7 +29,11 @@ export default defineConfig({
   // a post-build step and copies that file into `dist/` so the lookup
   // resolves.
   noExternal: () => true,
-  external: ['vscode'],
+  // `vscode` is the host external. `better-sqlite3` is a native module (ships
+  // a `.node` binary loaded via `bindings`); it can't be bundled, so it stays
+  // external and the relevant `node_modules` dirs are un-ignored in
+  // `.vscodeignore` so the binary ships with the .vsix.
+  external: ['vscode', 'better-sqlite3'],
   outExtensions() {
     return { js: '.js' };
   },

@@ -22,6 +22,7 @@ import type {
   PromptInput,
   AgentModel,
 } from '../types';
+import { randomBytes } from 'node:crypto';
 import type { AgentEvent } from '../../../shared/events';
 import {
   createClaudeSession,
@@ -175,7 +176,7 @@ export function claudeCodeProvider(options: ClaudeCodeProviderOptions): ClaudeCo
       typeof globalThis !== 'undefined'
         ? (globalThis as { crypto?: { randomUUID?: () => string } }).crypto
         : undefined;
-    return c?.randomUUID?.() ?? `cc-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+    return c?.randomUUID?.() ?? `cc-${Date.now()}-${randomBytes(8).toString('hex')}`;
   }
 
   return {
