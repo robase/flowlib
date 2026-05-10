@@ -7,3 +7,4 @@ export { WebhookSignatureService, WEBHOOK_PROVIDER_SIGNATURES } from './webhook-
 export type { WebhookProviderSignatureConfig } from './webhook-signature.service';
 export { WebhookRateLimiter } from './webhook-rate-limiter';
 export { WebhookDedupService } from './webhook-dedup.service';
+export { webhookTriggerAction } from './webhook-trigger.action';

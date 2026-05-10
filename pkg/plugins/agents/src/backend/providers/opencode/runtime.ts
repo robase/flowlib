@@ -294,18 +294,50 @@ export async function getClientForMode(input: {
  * The opencode `session.create` response shape changes slightly between
  * `data.id` (HTTP-wrapped) and `id` (already-unwrapped) depending on which
  * client mode is used. Normalise to a string id.
+ *
+ * heyapi's default `responseStyle: 'fields'` returns
+ * `{ data, error, request, response }` even on non-2xx — so we have to
+ * check `error` and the HTTP `response.status` before bailing on a
+ * missing id, otherwise the bare "no session id" message swallows the
+ * real cause (auth failure, opencode boot lag, etc.).
  */
 export function unwrapSessionId(resp: unknown): string {
   if (resp && typeof resp === 'object') {
-    const r = resp as { id?: unknown; data?: { id?: unknown } };
+    const r = resp as {
+      id?: unknown;
+      data?: { id?: unknown };
+      error?: unknown;
+      response?: { status?: number; statusText?: string };
+    };
+    // Direct shape (embedded mode unwraps; or HTTP success with responseStyle: 'data').
     if (typeof r.id === 'string') {
       return r.id;
     }
     if (r.data && typeof r.data === 'object' && typeof r.data.id === 'string') {
       return r.data.id;
     }
+    // Error shape — surface the actual reason.
+    if (r.error !== undefined && r.error !== null) {
+      const errMsg =
+        typeof r.error === 'string'
+          ? r.error
+          : (r.error as { message?: string }).message ?? JSON.stringify(r.error);
+      const status = r.response?.status;
+      throw new Error(
+        `[agents/opencode] session.create failed${status ? ` (HTTP ${status})` : ''}: ${errMsg}`,
+      );
+    }
+    // Non-2xx with no parsed error body.
+    const status = r.response?.status;
+    if (typeof status === 'number' && status >= 400) {
+      throw new Error(
+        `[agents/opencode] session.create failed (HTTP ${status} ${r.response?.statusText ?? ''})`,
+      );
+    }
   }
-  throw new Error('[agents/opencode] session.create returned no session id');
+  throw new Error(
+    `[agents/opencode] session.create returned no session id; response=${JSON.stringify(resp)}`,
+  );
 }
 
 /**
