@@ -7,7 +7,8 @@
  * deep-link path (e.g. `/flowlib/flow/<id>` or
  * `/flowlib/flow/<id>/runs?runId=...`). We mount Flowlib inside our own
  * MemoryRouter so we can control the initial entry; subsequent
- * navigation happens internally via the standard ModeSwitcher / sidebar.
+ * navigation happens internally via the sidebar's Runs section (clicking
+ * a run navigates to /runs?runId=…) and the in-page Exit-run-view button.
  */
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
@@ -104,7 +105,8 @@ export function FlowEditorApp(): JSX.Element {
         case 'flowRunChanged':
           // The host subscribed to the in-process bus and is telling us
           // a run lifecycle event landed for `flowId`. Invalidate the
-          // runs-list and per-run query caches so FlowRunsView re-fetches.
+          // runs-list and per-run query caches so the inspect viewport
+          // (and the sidebar Runs section) re-fetches.
           // Query keys per `pkg/ui/src/api/query-keys.ts`:
           //   executions(flowId) → ['executions', flowId]    (also covers flowRun(id))
           //   nodeExecutions(runId) → ['node-executions', runId]

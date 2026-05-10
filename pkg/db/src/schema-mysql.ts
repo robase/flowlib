@@ -238,6 +238,21 @@ export const flowTriggers = mysqlTable('flowlib_flow_triggers', {
 });
 
 // =============================================================================
+// Settings — generic namespaced key/value store shared by core and plugins
+// =============================================================================
+
+export const settings = mysqlTable('flowlib_settings', {
+  key: varchar('key', { length: 191 }).primaryKey(),
+  namespace: varchar('namespace', { length: 64 }).notNull(),
+  value: json('value').$type<unknown>(),
+  encrypted: boolean('encrypted').notNull().default(false),
+  updatedAt: timestamp('updated_at')
+    .notNull()
+    .default(sql`CURRENT_TIMESTAMP`),
+  updatedBy: varchar('updated_by', { length: 255 }),
+});
+
+// =============================================================================
 // Chat Messages — persisted chat history scoped to flows
 // =============================================================================
 

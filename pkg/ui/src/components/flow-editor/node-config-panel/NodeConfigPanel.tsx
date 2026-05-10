@@ -255,6 +255,11 @@ export function NodeConfigPanel({
           container={portalContainer}
           showCloseButton={false}
           className={cn(
+            // Override the shared Dialog's top-[10vh] anchor — this dialog is
+            // a near-fullscreen 90vh canvas, so it stays vertically centered
+            // (5vh top + 90vh height + 5vh bottom) instead of jumping below
+            // the viewport.
+            'top-[5vh]',
             'h-[90vh] max-h-[90vh] overflow-hidden flex flex-col p-0 bg-card border-border',
             'sm:max-w-[95vw] w-[95vw]',
           )}

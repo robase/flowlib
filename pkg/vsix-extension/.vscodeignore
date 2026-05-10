@@ -22,4 +22,3 @@ vite.config.ts
 *.vsix
 package.json.vsce-backup
 .changeset/**
-CHANGELOG.md

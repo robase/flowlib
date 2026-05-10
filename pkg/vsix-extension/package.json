@@ -1,5 +1,5 @@
 {
-  "name": "@flowlib/vscode",
+  "name": "@flowlib/vsix",
   "displayName": "Flowlib",
   "version": "0.0.7",
   "private": true,
@@ -29,7 +29,7 @@
   "main": "./dist/extension.js",
   "scripts": {
     "build": "pnpm catalogue:build && pnpm build:extension && pnpm build:webview",
-    "build:extension": "tsdown && node scripts/copy-jiti-babel.mjs",
+    "build:extension": "tsdown && node scripts/copy-jiti-babel.mjs && node scripts/stage-native-deps.mjs",
     "build:webview": "vite build",
     "build:watch": "node scripts/copy-jiti-babel.mjs && tsdown --watch",
     "catalogue:build": "tsx scripts/build-action-catalogue.ts",
@@ -51,10 +51,12 @@
     "@flowlib/sdk": "workspace:*",
     "@flowlib/ui": "workspace:*",
     "@flowlib/webhooks": "workspace:*",
-    "@libsql/client": "^0.17.2",
     "@tanstack/react-query": "^5.62.0",
+    "better-sqlite3": "^12.0.0",
+    "bindings": "^1.5.0",
     "cors": "^2.8.5",
     "express": "^5.1.0",
+    "file-uri-to-path": "^1.0.0",
     "jiti": "^2.4.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
@@ -62,6 +64,7 @@
   },
   "devDependencies": {
     "@flowlib/actions": "workspace:*",
+    "@types/better-sqlite3": "^7.6.13",
     "@types/cors": "^2.8.17",
     "@types/express": "^5.0.0",
     "@types/mocha": "^10.0.10",

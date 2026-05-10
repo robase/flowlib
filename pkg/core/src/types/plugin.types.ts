@@ -658,6 +658,27 @@ export interface FlowlibPlugin {
   setupInstructions?: string;
 
   /**
+   * Optional declarative settings contributed by this plugin.
+   *
+   * When present, the generic `/settings` page in `@flowlib/ui` renders a
+   * form for these fields automatically — no per-plugin settings UI
+   * required. Keys must start with the descriptor's namespace
+   * (typically the plugin id) so values land in `flowlib_settings`
+   * under that namespace.
+   *
+   * Plugins may pass either:
+   * - an array of fields (the namespace defaults to the plugin's `id`), or
+   * - a `{ namespace, label, fields }` object for richer metadata.
+   *
+   * Validation lives on the backend — declare a Zod schema and call it
+   * inside an endpoint handler if you need stricter checks than the
+   * descriptor's `type` provides.
+   */
+  settings?:
+    | import('../api/types').SettingsFieldDescriptor[]
+    | import('../api/types').SettingsDescriptorGroup;
+
+  /**
    * Error codes returned by this plugin.
    * Merged into the global error code registry.
    */

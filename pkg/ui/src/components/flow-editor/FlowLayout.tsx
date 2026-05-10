@@ -7,7 +7,6 @@ import { useDelayedUnmount } from '../../hooks/use-delayed-unmount';
 interface FlowLayoutProps {
   sidebar: React.ReactNode;
   viewport: React.ReactNode;
-  modeSwitcher: React.ReactNode;
   layoutSelector?: React.ReactNode;
   viewportRef?: React.RefObject<HTMLDivElement | null>;
   /** Panel that appears on the right side (e.g. tool config, node config) */
@@ -40,7 +39,6 @@ interface FlowLayoutProps {
 export function FlowLayout({
   sidebar,
   viewport,
-  modeSwitcher,
   layoutSelector,
   viewportRef,
   rightPanel,
@@ -74,9 +72,6 @@ export function FlowLayout({
         className="relative flex flex-col flex-1 min-h-0 overflow-hidden"
         ref={viewportRef as React.RefObject<HTMLDivElement>}
       >
-        {/* Mode switcher - top center */}
-        <div className="absolute left-1/2 -translate-x-1/2 top-4 z-10">{modeSwitcher}</div>
-
         {/* Floating top-right toolbar (chat + view code) */}
         {hasFloatingToolbar && (
           <TooltipProvider>

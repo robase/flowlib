@@ -35,6 +35,7 @@ import { createTestingAPI } from './testing';
 import { createAuthAPI } from './auth';
 import { createPluginsAPI } from './plugins';
 import { createMaintenanceAPI } from './maintenance';
+import { createSettingsAPI } from './settings';
 
 /**
  * Seed default credentials (non-blocking helper).
@@ -275,6 +276,7 @@ export async function createFlowlib(config: FlowlibConfig): Promise<FlowlibInsta
     const auth = createAuthAPI(authService, pluginManager, sf);
     const plugins = createPluginsAPI(pluginManager, sf);
     const maintenance = createMaintenanceAPI(sf);
+    const settings = createSettingsAPI(sf, pluginManager, logger);
 
     // Assemble the instance
     const instance: FlowlibInstance = {
@@ -289,6 +291,7 @@ export async function createFlowlib(config: FlowlibConfig): Promise<FlowlibInsta
       testing,
       auth,
       plugins,
+      settings,
       maintenance,
 
       // Root-level logging

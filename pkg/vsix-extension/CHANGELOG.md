@@ -85,4 +85,4 @@
   - @flowlib/sdk@0.0.2
   - @flowlib/ui@0.0.2
 
-All notable changes to `@flowlib/vscode` will be documented in this file.
+All notable changes to `@flowlib/vsix` will be documented in this file.

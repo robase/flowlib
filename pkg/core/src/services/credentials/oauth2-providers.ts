@@ -280,7 +280,11 @@ export const OAUTH2_PROVIDERS: Record<string, OAuth2ProviderDefinition> = {
     icon: 'CheckSquare',
     authorizationUrl: 'https://linear.app/oauth/authorize',
     tokenUrl: 'https://api.linear.app/oauth/token',
-    defaultScopes: ['read', 'write', 'issues:create', 'comments:create'],
+    // `admin` is required by Linear for managing webhooks (`webhookCreate`,
+    // `webhookUpdate`, `webhookDelete`). The webhook-management UI in
+    // `@flowlib/webhooks` won't work without it. Other Linear actions only
+    // need `read`/`write` — `admin` is a strict superset.
+    defaultScopes: ['read', 'write', 'admin', 'issues:create', 'comments:create'],
     scopeSeparator: ',',
     supportsRefresh: true,
     docsUrl: 'https://linear.app/developers/oauth-2-0-authentication',

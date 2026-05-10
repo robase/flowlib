@@ -33,6 +33,13 @@ export type { ApiProviderProps } from './contexts/ApiContext';
 // OAuth2 callback handler - exported for advanced/custom routing setups
 export { OAuth2CallbackHandler } from './components/credentials/OAuth2ConnectButton';
 
+// Credential primitives — re-exported so plugins can render the same combobox /
+// edit modal we use in the flow editor. The webhooks plugin uses these to let
+// users pick + edit the credential that will register webhooks upstream.
+export { CredentialCombobox } from './components/flow-editor/node-config-panel/CredentialCombobox';
+export { EditCredentialModal } from './components/credentials/EditCredentialModal';
+export { CreateCredentialModal } from './components/credentials/CreateCredentialModal';
+
 // Frontend path helpers — used by plugins that need to build links into
 // the host's routes. `useFrontendPath()` returns the (already-normalized)
 // basePath; `buildFrontendRoute(basePath, '/foo')` is the safe way to

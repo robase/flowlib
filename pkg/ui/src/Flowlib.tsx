@@ -19,8 +19,8 @@ import { resolvePlugins } from './types/plugin.types';
 import { Home } from './routes/home';
 import { AllFlowRuns } from './routes/all-flow-runs';
 import { Flow } from './routes/flow';
-import { FlowRuns } from './routes/flow-runs';
 import { Credentials } from './routes/credentials';
+import { Settings } from './routes/settings';
 import { FlowRouteLayout } from './routes/flow-route-layout';
 import type { ApiClient } from './api/client';
 import { OAuth2CallbackHandler } from './components/credentials/OAuth2ConnectButton';
@@ -236,12 +236,17 @@ const FlowlibRoutes = React.memo(
           >
             <Route index element={<Home basePath={basePath} />} />
             <Route path="credentials" element={<Credentials basePath={basePath} />} />
+            <Route path="settings" element={<Settings basePath={basePath} />} />
             <Route path="flow-runs" element={<AllFlowRuns basePath={basePath} />} />
             <Route path="flow/:flowId" element={<FlowRouteLayout basePath={basePath} />}>
               <Route index element={<Flow basePath={basePath} />} />
               <Route path="version/:version" element={<Flow basePath={basePath} />} />
-              <Route path="runs" element={<FlowRuns basePath={basePath} />} />
-              <Route path="runs/version/:version" element={<FlowRuns basePath={basePath} />} />
+              {/* Inspect mode is just the editor on the /runs path — the
+                  FlowEditor component branches on pathname to render the
+                  read-only canvas + expanded logs. Same component, same
+                  sidebar, no Edit/Runs tab. */}
+              <Route path="runs" element={<Flow basePath={basePath} />} />
+              <Route path="runs/version/:version" element={<Flow basePath={basePath} />} />
               {flowScopedPluginRoutes.map((route) => (
                 <Route
                   key={route.path}

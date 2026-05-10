@@ -14,9 +14,10 @@ import * as assert from 'node:assert';
 import * as vscode from 'vscode';
 
 async function activate(): Promise<void> {
+  // Dev manifest = `@flowlib/vsix` (scoped); packaged VSIX = `flowlib-vsix`.
   const ext =
-    vscode.extensions.getExtension('flowlib.@flowlib/vscode') ??
-    vscode.extensions.getExtension('flowlib.vscode');
+    vscode.extensions.getExtension('flowlib.@flowlib/vsix') ??
+    vscode.extensions.getExtension('flowlib.flowlib-vsix');
   if (!ext) {
     throw new Error('extension not found');
   }

@@ -167,6 +167,16 @@ export interface CoreChatMessagesTable {
   created_at: string;
 }
 
+export interface CoreSettingsTable {
+  key: string;
+  namespace: string;
+  /** JSON value (potentially the encrypted envelope when `encrypted = true`). */
+  value: string | JSONValue | null;
+  encrypted: DialectBoolean;
+  updated_at: string;
+  updated_by: string | null;
+}
+
 /**
  * Composite Kysely DB type covering every core table. Plugins import this
  * and intersect with their own owned-tables interface.
@@ -180,4 +190,5 @@ export interface CoreDB {
   flowlib_credentials: CoreCredentialsTable;
   flowlib_flow_triggers: CoreFlowTriggersTable;
   flowlib_chat_messages: CoreChatMessagesTable;
+  flowlib_settings: CoreSettingsTable;
 }

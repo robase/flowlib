@@ -8,6 +8,8 @@ import type { AgentToolCallbacks } from '~/contexts/AgentToolCallbacksContext';
 // Stable empty array to avoid re-render cascades when no tool panel node is selected
 const EMPTY_TOOLS: AddedToolInstance[] = [];
 
+export type ToolPanelApi = ReturnType<typeof useToolPanel>;
+
 export function useToolPanel() {
   // Tool panel state from Zustand store
   const toolSelectorPanelOpen = useFlowEditorStore((s) => s.toolSelectorOpen);

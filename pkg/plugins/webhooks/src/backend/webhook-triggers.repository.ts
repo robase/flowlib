@@ -32,6 +32,11 @@ interface WebhookTriggerRow {
   allowed_ips: string | null;
   flow_id: string | null;
   node_id: string | null;
+  remote_webhook_id: string | null;
+  remote_credential_id: string | null;
+  remote_provider: string | null;
+  remote_scope: unknown;
+  remote_events: unknown;
   last_triggered_at: string | Date | null;
   last_payload: unknown;
   trigger_count: number;
@@ -97,6 +102,11 @@ function mapRow(row: WebhookTriggerRow): WebhookTrigger {
     allowedIps: row.allowed_ips ?? undefined,
     flowId: row.flow_id ?? undefined,
     nodeId: row.node_id ?? undefined,
+    remoteWebhookId: row.remote_webhook_id ?? undefined,
+    remoteCredentialId: row.remote_credential_id ?? undefined,
+    remoteProvider: row.remote_provider ?? undefined,
+    remoteScope: parseJsonPayload(row.remote_scope) as Record<string, unknown> | undefined,
+    remoteEvents: parseJsonPayload(row.remote_events) as string[] | undefined,
     lastTriggeredAt: toIsoOrUndefined(row.last_triggered_at),
     lastPayload: parseJsonPayload(row.last_payload),
     triggerCount: row.trigger_count,
@@ -159,6 +169,11 @@ export class WebhookTriggersRepository {
         allowed_ips: input.allowedIps ?? null,
         flow_id: input.flowId ?? null,
         node_id: input.nodeId ?? null,
+        remote_webhook_id: null,
+        remote_credential_id: null,
+        remote_provider: null,
+        remote_scope: null,
+        remote_events: null,
         last_triggered_at: null,
         last_payload: null,
         trigger_count: 0,
@@ -208,6 +223,21 @@ export class WebhookTriggersRepository {
     }
     if (input.nodeId !== undefined) {
       set.node_id = input.nodeId ?? null;
+    }
+    if (input.remoteWebhookId !== undefined) {
+      set.remote_webhook_id = input.remoteWebhookId ?? null;
+    }
+    if (input.remoteCredentialId !== undefined) {
+      set.remote_credential_id = input.remoteCredentialId ?? null;
+    }
+    if (input.remoteProvider !== undefined) {
+      set.remote_provider = input.remoteProvider ?? null;
+    }
+    if (input.remoteScope !== undefined) {
+      set.remote_scope = input.remoteScope === null ? null : JSON.stringify(input.remoteScope);
+    }
+    if (input.remoteEvents !== undefined) {
+      set.remote_events = input.remoteEvents === null ? null : JSON.stringify(input.remoteEvents);
     }
 
     if (Object.keys(set).length === 0) {

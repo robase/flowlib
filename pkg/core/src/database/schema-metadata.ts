@@ -78,4 +78,10 @@ export const FLOWLIB_SCHEMA_META: SchemaMetadata = {
     tool_meta: { type: 'json' },
     created_at: { type: 'date' },
   },
+
+  flowlib_settings: {
+    value: { type: 'json' },
+    encrypted: { type: 'boolean' },
+    updated_at: { type: 'date' },
+  },
 };

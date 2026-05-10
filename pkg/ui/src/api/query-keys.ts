@@ -31,6 +31,9 @@ export const queryKeys = {
   triggers: (flowId: string) => ['flows', flowId, 'triggers'] as const,
   trigger: (triggerId: string) => ['triggers', triggerId] as const,
   dashboardStats: ['dashboard', 'stats'] as const,
+  settings: (namespace?: string) => ['settings', namespace ?? 'all'] as const,
+  setting: (key: string) => ['settings', 'item', key] as const,
+  settingsDescriptors: ['settings', 'descriptors'] as const,
 };
 
 // Enhanced error handling

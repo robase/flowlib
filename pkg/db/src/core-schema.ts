@@ -262,6 +262,31 @@ export const CORE_SCHEMA: FlowlibPluginSchema = {
     },
   },
 
+  // ----- Settings (key/value, namespaced) -----
+  //
+  // Generic store for runtime-editable configuration shared by core and
+  // plugins. Keys are namespaced (`<namespace>.<field>`); values are
+  // arbitrary JSON. `encrypted: true` means `value` is an `EncryptedData`
+  // envelope produced by `EncryptionService.encrypt()`; readers must
+  // decrypt before parsing the JSON.
+  //
+  // Resolution at consumer side: plugin `init()` reads its DB-backed
+  // overrides through `flowlib.settings.get(key)`, then falls back to the
+  // constructor option, then to the schema default. So `flowlib.config.ts`
+  // remains authoritative when the operator wants config-as-code.
+  settings: {
+    tableName: 'flowlib_settings',
+    order: 5,
+    fields: {
+      key: { type: 'string', primaryKey: true, maxLength: 191 },
+      namespace: { type: 'string', required: true, index: true, maxLength: 64 },
+      value: { type: 'json', required: false, typeAnnotation: 'unknown' },
+      encrypted: { type: 'boolean', required: true, defaultValue: false },
+      updatedAt: { type: 'date', required: true, defaultValue: 'now()' },
+      updatedBy: { type: 'string', required: false },
+    },
+  },
+
   // ----- Chat messages table -----
   chatMessages: {
     tableName: 'flowlib_chat_messages',

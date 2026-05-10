@@ -151,6 +151,17 @@ export const twoFactor = sqliteTable('flowlib_two_factor', {
   verified: integer('verified', { mode: 'boolean' }).default(false),
 });
 
+export const settings = sqliteTable('flowlib_settings', {
+  key: text('key').primaryKey().notNull(),
+  namespace: text('namespace').notNull(),
+  value: text('value', { mode: 'json' }).$type<unknown>(),
+  encrypted: integer('encrypted', { mode: 'boolean' }).notNull().default(false),
+  updatedAt: text('updated_at')
+    .notNull()
+    .default(sql`CURRENT_TIMESTAMP`),
+  updatedBy: text('updated_by'),
+});
+
 export const credentials = sqliteTable('flowlib_credentials', {
   id: text('id')
     .primaryKey()
@@ -489,6 +500,13 @@ export const webhook_triggers = sqliteTable('flowlib_webhook_triggers', {
   allowedIps: text('allowed_ips'),
   flowId: text('flow_id').references(() => flows.id, { onDelete: 'no action' }),
   nodeId: text('node_id'),
+  remoteWebhookId: text('remote_webhook_id'),
+  remoteCredentialId: text('remote_credential_id').references(() => credentials.id, {
+    onDelete: 'set null',
+  }),
+  remoteProvider: text('remote_provider'),
+  remoteScope: text('remote_scope', { mode: 'json' }),
+  remoteEvents: text('remote_events', { mode: 'json' }),
   lastTriggeredAt: text('last_triggered_at'),
   lastPayload: text('last_payload', { mode: 'json' }),
   triggerCount: integer('trigger_count').notNull().default(0),
@@ -522,6 +540,10 @@ export const flowAccessRelations = relations(flowAccess, ({ one }) => ({
 
 export const twoFactorRelations = relations(twoFactor, ({ one }) => ({
   user: one(user, { fields: [twoFactor.userId], references: [user.id] }),
+}));
+
+export const credentialsRelations = relations(credentials, ({ many }) => ({
+  webhook_triggers: many(webhook_triggers),
 }));
 
 export const flowsRelations = relations(flows, ({ one, many }) => ({
@@ -605,6 +627,10 @@ export const rbac_teamsRelations = relations(rbac_teams, ({ one, many }) => ({
 
 export const webhook_triggersRelations = relations(webhook_triggers, ({ one }) => ({
   flow: one(flows, { fields: [webhook_triggers.flowId], references: [flows.id] }),
+  remoteCredential: one(credentials, {
+    fields: [webhook_triggers.remoteCredentialId],
+    references: [credentials.id],
+  }),
 }));
 
 export type User = typeof user.$inferSelect;
@@ -621,6 +647,8 @@ export type FlowAccess = typeof flowAccess.$inferSelect;
 export type NewFlowAccess = typeof flowAccess.$inferInsert;
 export type TwoFactor = typeof twoFactor.$inferSelect;
 export type NewTwoFactor = typeof twoFactor.$inferInsert;
+export type Settings = typeof settings.$inferSelect;
+export type NewSettings = typeof settings.$inferInsert;
 export type Credentials = typeof credentials.$inferSelect;
 export type NewCredentials = typeof credentials.$inferInsert;
 export type Flows = typeof flows.$inferSelect;

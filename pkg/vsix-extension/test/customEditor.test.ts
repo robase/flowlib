@@ -26,7 +26,9 @@ function fixtureFlow(): vscode.Uri {
 }
 
 async function activateExtension(): Promise<void> {
-  const candidateIds = ['flowlib.@flowlib/vscode', 'flowlib.vscode'];
+  // Dev manifest is `@flowlib/vsix` → `flowlib.@flowlib/vsix`; the
+  // packaged VSIX uses `flowlib-vsix` → `flowlib.flowlib-vsix`.
+  const candidateIds = ['flowlib.@flowlib/vsix', 'flowlib.flowlib-vsix'];
   for (const id of candidateIds) {
     const ext = vscode.extensions.getExtension(id);
     if (ext) {
@@ -38,7 +40,7 @@ async function activateExtension(): Promise<void> {
 }
 
 /**
- * Find the active tab whose URI matches `uri`. We can't rely on
+ * Find the first tab whose input URI matches `uri`. We can't rely on
  * `activeTextEditor` because the custom editor is the active *tab* but
  * not a text editor.
  */
@@ -52,6 +54,32 @@ function findTab(uri: vscode.Uri): vscode.Tab | undefined {
     }
   }
   return undefined;
+}
+
+/** Find every tab whose input URI matches `uri`, across all tab groups. */
+function findAllTabs(uri: vscode.Uri): vscode.Tab[] {
+  const out: vscode.Tab[] = [];
+  for (const group of vscode.window.tabGroups.all) {
+    for (const tab of group.tabs) {
+      const input = tab.input as { uri?: vscode.Uri; viewType?: string } | undefined;
+      if (input?.uri?.toString() === uri.toString()) {
+        out.push(tab);
+      }
+    }
+  }
+  return out;
+}
+
+/** Dump for diagnostic assertion messages. */
+function describeTabs(uri: vscode.Uri): string {
+  const tabs = findAllTabs(uri);
+  return tabs
+    .map((t, i) => {
+      const input = t.input as { viewType?: string } | undefined;
+      const viewType = input?.viewType ?? '(no viewType — text editor)';
+      return `[${i}] active=${t.isActive} viewType=${viewType}`;
+    })
+    .join('; ');
 }
 
 async function closeAllEditors(): Promise<void> {
@@ -88,20 +116,23 @@ suite('Custom editor + visual ↔ code toggle', () => {
 
     await vscode.commands.executeCommand('flowlib.editAsCode');
 
-    // Wait briefly for the editor swap to settle (VSCode disposes the
-    // custom editor + opens a text editor as separate microtasks).
+    // Wait for a *text-editor tab* (no `viewType` on the input) to exist
+    // for this URI. Polling on `activeTextEditor` alone isn't enough —
+    // VSCode may keep the original custom-editor tab alive in another
+    // group, and `findTab` would still return that one.
     await waitFor(
-      () => vscode.window.activeTextEditor?.document.uri.toString() === uri.toString(),
+      () =>
+        findAllTabs(uri).some((t) => {
+          const input = t.input as { viewType?: string } | undefined;
+          return input?.viewType !== FLOW_EDITOR_VIEW_TYPE;
+        }),
       2000,
     );
 
+    // The active text editor should now be focused on this URI.
     const ed = vscode.window.activeTextEditor;
-    assert.ok(ed, 'expected an active text editor after editAsCode');
+    assert.ok(ed, `expected an active text editor after editAsCode. tabs: ${describeTabs(uri)}`);
     assert.strictEqual(ed!.document.uri.toString(), uri.toString());
-    // Sanity: tab is now a text-input, not a custom editor input.
-    const tab = findTab(uri)!;
-    const input = tab.input as { viewType?: string };
-    assert.notStrictEqual(input.viewType, FLOW_EDITOR_VIEW_TYPE);
   });
 
   test('flowlib.editVisually swaps the open text editor for the custom editor', async () => {
@@ -111,16 +142,23 @@ suite('Custom editor + visual ↔ code toggle', () => {
 
     await vscode.commands.executeCommand('flowlib.editVisually');
 
-    await waitFor(() => {
-      const tab = findTab(uri);
-      const input = tab?.input as { viewType?: string } | undefined;
-      return input?.viewType === FLOW_EDITOR_VIEW_TYPE;
-    }, 2000);
-
-    const tab = findTab(uri);
-    assert.ok(tab);
-    const input = tab!.input as { viewType?: string };
-    assert.strictEqual(input.viewType, FLOW_EDITOR_VIEW_TYPE);
+    // Some tab somewhere should now be the custom editor for this URI.
+    // Don't assume `findTab` returns the right one — there may be a
+    // residual text-editor tab in another group.
+    try {
+      await waitFor(
+        () =>
+          findAllTabs(uri).some((t) => {
+            const input = t.input as { viewType?: string } | undefined;
+            return input?.viewType === FLOW_EDITOR_VIEW_TYPE;
+          }),
+        2000,
+      );
+    } catch (err) {
+      throw new Error(
+        `editVisually did not produce a custom-editor tab. tabs: ${describeTabs(uri)}`,
+      );
+    }
   });
 
   test('toggle commands no-op gracefully with no .flow.ts active', async () => {

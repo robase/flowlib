@@ -1,0 +1,153 @@
+{
+  "name": "@flowlib/agents",
+  "version": "0.0.1",
+  "description": "Code-editing AI agents plugin for Flowlib — Claude Code, opencode, raw-LLM providers; Cloudflare Sandbox workspaces; durable-object-backed sessions",
+  "keywords": [
+    "agents",
+    "ai",
+    "claude-code",
+    "cloudflare",
+    "flowlib",
+    "opencode",
+    "plugin"
+  ],
+  "license": "MIT",
+  "author": "robase <team@flowlib.dev>",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/robase/flowlib.git",
+    "directory": "pkg/plugins/agents"
+  },
+  "files": [
+    "dist/**/*"
+  ],
+  "type": "module",
+  "main": "dist/backend/index.cjs",
+  "module": "dist/backend/index.mjs",
+  "types": "dist/backend/index.d.mts",
+  "exports": {
+    ".": {
+      "browser": {
+        "types": "./dist/browser/index.d.mts",
+        "import": "./dist/browser/index.mjs"
+      },
+      "types": "./dist/backend/index.d.mts",
+      "import": "./dist/backend/index.mjs",
+      "require": "./dist/backend/index.cjs"
+    },
+    "./ui": {
+      "types": "./dist/frontend/index.d.mts",
+      "import": "./dist/frontend/index.mjs",
+      "require": "./dist/frontend/index.cjs"
+    },
+    "./types": {
+      "types": "./dist/shared/types.d.mts",
+      "import": "./dist/shared/types.mjs",
+      "require": "./dist/shared/types.cjs"
+    },
+    "./events": {
+      "types": "./dist/shared/events.d.mts",
+      "import": "./dist/shared/events.mjs",
+      "require": "./dist/shared/events.cjs"
+    },
+    "./schema": {
+      "types": "./dist/backend/schema-only.d.mts",
+      "import": "./dist/backend/schema-only.mjs",
+      "require": "./dist/backend/schema-only.cjs"
+    }
+  },
+  "scripts": {
+    "build": "tsdown && tsc --emitDeclarationOnly --outDir dist",
+    "build:w": "tsdown --watch",
+    "dev": "tsdown --watch",
+    "clean": "rm -rf dist",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest --watch",
+    "lint": "oxlint --fix"
+  },
+  "dependencies": {
+    "@flowlib/action-kit": "workspace:*",
+    "@flowlib/actions": "workspace:*",
+    "@flowlib/core": "workspace:*",
+    "@flowlib/db": "workspace:*"
+  },
+  "devDependencies": {
+    "@anthropic-ai/claude-agent-sdk": "^0.2.138",
+    "@cloudflare/ai-chat": "^0.6.1",
+    "@cloudflare/sandbox": "^0.10.0",
+    "@cloudflare/vitest-pool-workers": "^0.16.3",
+    "@cloudflare/workers-types": "^4.20251111.0",
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "@opencode-ai/sdk": "^1.14.41",
+    "@tanstack/react-query": "^5.0.0",
+    "@testing-library/react": "^16.0.0",
+    "@types/node": "^20.11.20",
+    "@types/react": "^18.3.0",
+    "@types/react-dom": "^18.3.0",
+    "agents": "^0.12.3",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router": "^7.0.0",
+    "tsdown": "^0.21.10",
+    "typescript": "^5.3.3",
+    "vitest": "^4.1.4",
+    "zustand": "^5.0.0"
+  },
+  "peerDependencies": {
+    "@anthropic-ai/claude-agent-sdk": "*",
+    "@cloudflare/ai-chat": "*",
+    "@cloudflare/sandbox": "*",
+    "@cloudflare/workers-types": "^4.0.0",
+    "@flowlib/ui": "workspace:^",
+    "@modelcontextprotocol/sdk": "*",
+    "@opencode-ai/sdk": "*",
+    "@tanstack/react-query": ">=5.0.0",
+    "agents": "*",
+    "react": ">=18.0.0",
+    "react-dom": ">=18.0.0",
+    "react-router": ">=7.0.0",
+    "zustand": ">=5.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@anthropic-ai/claude-agent-sdk": {
+      "optional": true
+    },
+    "@cloudflare/ai-chat": {
+      "optional": true
+    },
+    "@cloudflare/sandbox": {
+      "optional": true
+    },
+    "@cloudflare/workers-types": {
+      "optional": true
+    },
+    "@flowlib/ui": {
+      "optional": true
+    },
+    "@modelcontextprotocol/sdk": {
+      "optional": true
+    },
+    "@opencode-ai/sdk": {
+      "optional": true
+    },
+    "@tanstack/react-query": {
+      "optional": true
+    },
+    "agents": {
+      "optional": true
+    },
+    "react": {
+      "optional": true
+    },
+    "react-dom": {
+      "optional": true
+    },
+    "react-router": {
+      "optional": true
+    },
+    "zustand": {
+      "optional": true
+    }
+  }
+}

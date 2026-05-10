@@ -28,6 +28,20 @@ import type {
 // REGISTRY
 // ═══════════════════════════════════════════════════════════════════════════
 
+/**
+ * Listener fired when an action is registered (eager or lazy).
+ *
+ * For lazy registrations the full {@link ActionDefinition} isn't yet
+ * available — listeners that need it should also subscribe to
+ * {@link ActionRegistry.onRegister} (which fires on the eager path,
+ * including the implicit eager registration that follows
+ * `loadAction()`).
+ */
+export type ActionRegisterListener = (action: ActionDefinition) => void;
+
+/** Listener fired when an action is unregistered by id. */
+export type ActionUnregisterListener = (actionId: string) => void;
+
 export class ActionRegistry {
   private actions = new Map<string, ActionDefinition>();
   private providerActions = new Map<string, Set<string>>();
@@ -43,7 +57,70 @@ export class ActionRegistry {
   /** In-flight `load()` calls so concurrent callers share a single promise. */
   private lazyLoading = new Map<string, Promise<ActionDefinition>>();
 
+  /** EventEmitter-style listeners for register/unregister events. */
+  private registerListeners = new Set<ActionRegisterListener>();
+  private unregisterListeners = new Set<ActionUnregisterListener>();
+
   constructor(private readonly logger?: Logger) {}
+
+  // ─── Event subscriptions ───────────────────────────────────────────────
+
+  /**
+   * Subscribe to registration events. The listener fires synchronously
+   * after each successful eager `register()` (including the eager
+   * promotion that follows a lazy `loadAction()`).
+   *
+   * @returns An unsubscribe function. Calling it is idempotent.
+   */
+  onRegister(listener: ActionRegisterListener): () => void {
+    this.registerListeners.add(listener);
+    return () => {
+      this.registerListeners.delete(listener);
+    };
+  }
+
+  /**
+   * Subscribe to unregistration events. The listener fires synchronously
+   * after a successful `unregister()` call.
+   *
+   * @returns An unsubscribe function. Calling it is idempotent.
+   */
+  onUnregister(listener: ActionUnregisterListener): () => void {
+    this.unregisterListeners.add(listener);
+    return () => {
+      this.unregisterListeners.delete(listener);
+    };
+  }
+
+  /** Emit register event — listener errors are caught and logged. */
+  private emitRegister(action: ActionDefinition): void {
+    for (const listener of this.registerListeners) {
+      try {
+        listener(action);
+      } catch (err) {
+        this.logger?.warn(
+          `ActionRegistry register listener threw for "${action.id}": ${
+            err instanceof Error ? err.message : String(err)
+          }`,
+        );
+      }
+    }
+  }
+
+  /** Emit unregister event — listener errors are caught and logged. */
+  private emitUnregister(actionId: string): void {
+    for (const listener of this.unregisterListeners) {
+      try {
+        listener(actionId);
+      } catch (err) {
+        this.logger?.warn(
+          `ActionRegistry unregister listener threw for "${actionId}": ${
+            err instanceof Error ? err.message : String(err)
+          }`,
+        );
+      }
+    }
+  }
 
   // ─── Registration ──────────────────────────────────────────────────────
 
@@ -69,6 +146,33 @@ export class ActionRegistry {
     }
 
     this.logger?.debug(`Registered action: ${action.id}`);
+    this.emitRegister(action);
+  }
+
+  /**
+   * Unregister an action by id. No-op when the id is unknown.
+   *
+   * Returns true when an action was removed, false when nothing matched.
+   * Fires `onUnregister` listeners on success.
+   */
+  unregister(actionId: string): boolean {
+    const removed = this.actions.delete(actionId);
+    const removedLazy = this.lazyActions.delete(actionId);
+
+    if (!removed && !removedLazy) {
+      return false;
+    }
+
+    // Drop the action from its provider bucket. Provider rows are kept
+    // even when emptied — they're idempotent and other code may still
+    // hold references to the `ProviderDef`.
+    for (const ids of this.providerActions.values()) {
+      ids.delete(actionId);
+    }
+
+    this.logger?.debug(`Unregistered action: ${actionId}`);
+    this.emitUnregister(actionId);
+    return true;
   }
 
   /** Register many actions at once. */

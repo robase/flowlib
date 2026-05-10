@@ -29,7 +29,13 @@ export default defineConfig({
   // a post-build step and copies that file into `dist/` so the lookup
   // resolves.
   noExternal: () => true,
-  external: ['vscode'],
+  // `vscode` is the host external. `better-sqlite3` ships a `.node` binary
+  // loaded via `bindings`, which uses stack-walking to find the binary
+  // adjacent to its own package.json — both behaviours break when bundled.
+  // `scripts/stage-native-deps.mjs` copies the three packages verbatim into
+  // `dist/node_modules/` after the bundle, so a runtime `require("better-
+  // sqlite3")` from `dist/extension.js` resolves there.
+  external: ['vscode', 'better-sqlite3', 'bindings', 'file-uri-to-path'],
   outExtensions() {
     return { js: '.js' };
   },

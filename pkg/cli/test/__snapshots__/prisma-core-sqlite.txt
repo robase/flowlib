@@ -8,6 +8,18 @@ datasource db {
   url      = "file:./dev.db"
 }
 
+model Settings {
+  key       String   @id
+  namespace String
+  value     String?
+  encrypted Boolean  @default(false)
+  updatedAt DateTime @updatedAt @map("updated_at")
+  updatedBy String?  @map("updated_by")
+
+  @@index([namespace])
+  @@map("flowlib_settings")
+}
+
 model Credentials {
   id          String    @id @default(uuid())
   name        String

@@ -162,12 +162,15 @@ export function useFlowEditor({ flowId, version, basePath = '' }: UseFlowEditorO
         description: 'Flow is now running',
       });
 
-      // Navigate to the specific flow run
+      // Land in edit-live: stay on the editor route with ?runId= so node
+      // status decorations stream onto the editable canvas and the logs panel
+      // mounts collapsed. Whoever triggered the run (editor or runs view)
+      // is pulled into edit-live for the new run — that matches the "I just
+      // ran this, let me keep iterating" intent.
       if (result?.flowRunId) {
-        navigate(`${basePath}/flow/${flowId}/runs?runId=${result.flowRunId}`);
+        navigate(`${basePath}/flow/${flowId}?runId=${result.flowRunId}`);
       } else {
-        // Fallback to runs view without specific run
-        navigate(`${basePath}/flow/${flowId}/runs`);
+        navigate(`${basePath}/flow/${flowId}`);
       }
     } catch (error: unknown) {
       console.error('Execute error:', error);

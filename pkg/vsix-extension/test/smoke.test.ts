@@ -10,15 +10,13 @@ import * as vscode from 'vscode';
  */
 suite('Flowlib extension — smoke', () => {
   test('activate + flowlib.hello', async () => {
-    // Activate the extension by ID. `package.json` registers `flowlib.hello`,
-    // so the command must be present once activation completes.
-    // VSCode derives the extension ID from `<publisher>.<name without scope>`
-    // — the package name is `@flowlib/vscode` so the ID is `flowlib.vscode`.
-    // Searching by candidate IDs makes the test resilient to publisher / name
-    // tweaks during local iteration.
-    // VSCode keeps the package's npm scope in the extension ID, so the ID is
-    // literally `<publisher>.<package.name>` — e.g. `flowlib.@flowlib/vscode`.
-    const candidateIds = ['flowlib.@flowlib/vscode', 'flowlib.vscode'];
+    // Activate the extension. The ID is `<publisher>.<package.name>` — the
+    // dev manifest uses the scoped name `@flowlib/vsix`, so the dev ID is
+    // `flowlib.@flowlib/vsix`. The packaged VSIX uses the unscoped
+    // `flowlib-vsix` (rewritten by scripts/package.mjs), giving
+    // `flowlib.flowlib-vsix`. Probe both so this test passes whether you
+    // launch from source or from an installed VSIX.
+    const candidateIds = ['flowlib.@flowlib/vsix', 'flowlib.flowlib-vsix'];
     let ext: vscode.Extension<unknown> | undefined;
     for (const id of candidateIds) {
       ext = vscode.extensions.getExtension(id);
