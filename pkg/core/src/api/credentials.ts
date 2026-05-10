@@ -41,6 +41,11 @@ export function createCredentialsAPI(sf: ServiceFactory, logger: Logger): Creden
       return svc.delete(id);
     },
 
+    getDecryptedWithRefresh(id) {
+      logger.debug('getDecryptedWithRefresh called', { id });
+      return svc.getDecryptedWithRefresh(id);
+    },
+
     test(id) {
       logger.debug('testCredential called', { id });
       return svc.test(id);

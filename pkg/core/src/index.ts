@@ -67,6 +67,9 @@ export type {
   ProviderCategory,
   CredentialRequirement,
   ParamField,
+  LoadOptionsContext,
+  LoadOptionsConfig,
+  LoadOptionsResult,
 } from '@flowlib/action-kit';
 
 // Re-export shared plugin database API factory

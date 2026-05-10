@@ -67,14 +67,11 @@ try {
   manifest.name = PUBLISHED_NAME;
   writeFileSync(manifestPath, JSON.stringify(manifest, null, 2) + '\n');
 
-  // `--no-dependencies` would skip shipping node_modules. We need
-  // `better-sqlite3` and its `bindings` helper present at runtime since they
-  // can't be bundled (native `.node` binary). `.vscodeignore` un-ignores
-  // exactly those package dirs and excludes everything else.
-  const result = spawnSync('pnpm', ['exec', 'vsce', 'package', '--out', VSIX_OUT], {
-    cwd: pkgRoot,
-    stdio: 'inherit',
-  });
+  const result = spawnSync(
+    'pnpm',
+    ['exec', 'vsce', 'package', '--no-dependencies', '--out', VSIX_OUT],
+    { cwd: pkgRoot, stdio: 'inherit' },
+  );
 
   if (result.status !== 0) {
     process.exitCode = result.status ?? 1;

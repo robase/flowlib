@@ -1774,12 +1774,18 @@ importers:
       better-sqlite3:
         specifier: ^12.0.0
         version: 12.8.0
+      bindings:
+        specifier: ^1.5.0
+        version: 1.5.0
       cors:
         specifier: ^2.8.5
         version: 2.8.6
       express:
         specifier: ^5.1.0
         version: 5.2.1
+      file-uri-to-path:
+        specifier: ^1.0.0
+        version: 1.0.0
       jiti:
         specifier: ^2.4.0
         version: 2.6.1

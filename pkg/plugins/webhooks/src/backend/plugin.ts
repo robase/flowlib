@@ -7,22 +7,35 @@
  * this plugin adds the management layer.
  */
 
-import type {
-  FlowlibPlugin,
-  FlowlibPluginDefinition,
-  FlowlibPluginEndpoint,
-  PluginEndpointContext,
+import {
+  createPluginDatabaseApi,
+  type FlowlibPlugin,
+  type FlowlibPluginDefinition,
+  type FlowlibPluginEndpoint,
+  type LoadOptionsResult,
+  type PluginEndpointContext,
 } from '@flowlib/core';
 import type { FlowlibPluginSchema } from '@flowlib/db';
 import { WebhookSignatureService } from './webhook-signature.service';
 import { WebhookRateLimiter } from './webhook-rate-limiter';
 import { WebhookDedupService } from './webhook-dedup.service';
-import { webhookTriggerAction } from './webhook-trigger.action';
+import { setWebhookTriggersListLoader, webhookTriggerAction } from './webhook-trigger.action';
 import {
   WebhookTriggersRepository,
   type CreateWebhookTriggerRecord,
 } from './webhook-triggers.repository';
-import type { CreateWebhookTriggerInput, UpdateWebhookTriggerInput } from '../shared/types';
+import {
+  WebhookRegistrationError,
+  WebhookRegistrationService,
+} from './webhook-registration.service';
+import { buildAdapterMap } from './providers';
+import type { WebhookProviderAdapter } from './providers/types';
+import type {
+  CreateWebhookTriggerInput,
+  RegisterTriggerInput,
+  UpdateRegistrationInput,
+  UpdateWebhookTriggerInput,
+} from '../shared/types';
 
 // ─── Plugin Options ─────────────────────────────────────────────────
 
@@ -35,6 +48,12 @@ export interface WebhooksPluginOptions {
   rateLimitWindowMs?: number;
   /** Dedup TTL in ms. @default 86400000 (24h) */
   dedupTtlMs?: number;
+
+  /**
+   * Custom webhook provider adapters. Merged with the built-in set
+   * (`linear`, …); later entries with the same `id` override earlier ones.
+   */
+  providers?: WebhookProviderAdapter[];
 
   /**
    * Frontend plugin (sidebar, routes) for the webhooks UI.
@@ -66,6 +85,17 @@ const WEBHOOK_TRIGGERS_SCHEMA: FlowlibPluginSchema = {
         references: { table: 'flowlib_flows', field: 'id' },
       },
       nodeId: { type: 'string', required: false },
+      // Remote provider webhook tracking — populated when a trigger is
+      // registered with the upstream provider via WebhookRegistrationService.
+      remoteWebhookId: { type: 'string', required: false },
+      remoteCredentialId: {
+        type: 'string',
+        required: false,
+        references: { table: 'flowlib_credentials', field: 'id', onDelete: 'set null' },
+      },
+      remoteProvider: { type: 'string', required: false },
+      remoteScope: { type: 'json', required: false },
+      remoteEvents: { type: 'json', required: false },
       lastTriggeredAt: { type: 'date', required: false },
       lastPayload: { type: 'json', required: false },
       triggerCount: { type: 'number', required: true, defaultValue: 0 },
@@ -77,17 +107,53 @@ const WEBHOOK_TRIGGERS_SCHEMA: FlowlibPluginSchema = {
 
 // ─── In-Memory Store (used before DB is available) ──────────────────
 
+type PluginLogger = import('@flowlib/core').FlowlibPluginContext['logger'];
+
 interface PluginState {
   signatureService: WebhookSignatureService;
   rateLimiter: WebhookRateLimiter;
   dedupService: WebhookDedupService;
   webhookBaseUrl?: string;
-  /** Reference to the Flowlib core instance stored during init */
-  coreInstance?: unknown;
+  /** Adapter map built once per plugin instance from built-in + user-provided providers. */
+  adapters: Map<string, WebhookProviderAdapter>;
+  /** Logger captured at init time (PluginEndpointContext doesn't carry one). */
+  logger: PluginLogger;
 }
 
 function getRepository(ctx: PluginEndpointContext): WebhookTriggersRepository {
   return new WebhookTriggersRepository(ctx.database);
+}
+
+function getRegistration(
+  ctx: PluginEndpointContext,
+  state: PluginState,
+): WebhookRegistrationService {
+  return new WebhookRegistrationService({
+    adapters: state.adapters,
+    flowlib: ctx.getFlowlib(),
+    repo: getRepository(ctx),
+    webhookBaseUrl: state.webhookBaseUrl,
+    logger: state.logger,
+  });
+}
+
+function mapRegistrationError(
+  err: unknown,
+): { status: number; body: { error: string; code?: string; details?: unknown } } | null {
+  if (err instanceof WebhookRegistrationError) {
+    const status =
+      err.code === 'TRIGGER_NOT_FOUND' || err.code === 'ADAPTER_NOT_FOUND'
+        ? 404
+        : err.code === 'ALREADY_REGISTERED' || err.code === 'NOT_REGISTERED'
+          ? 409
+          : err.code === 'CREDENTIAL_PROVIDER_MISMATCH'
+            ? 400
+            : err.code === 'MISSING_SCOPES'
+              ? 403
+              : 500;
+    return { status, body: { error: err.message, code: err.code, details: err.details } };
+  }
+  return null;
 }
 
 function buildWebhookUrl(
@@ -97,6 +163,26 @@ function buildWebhookUrl(
   return webhookBaseUrl
     ? `${webhookBaseUrl.replace(/\/$/, '')}/plugins/webhooks/receive/${webhookPath}`
     : undefined;
+}
+
+/**
+ * Parse the `scope` query parameter for endpoints that need it.
+ *
+ * Accepted shapes:
+ *   - JSON-encoded object:  ?scope={"teamId":"abc"}
+ *   - Repeated key=value:   ?scope=teamId:abc&scope=…  (skipped — single string only)
+ *   - Omitted:              {}
+ */
+function parseScopeQuery(value: string | undefined): Record<string, unknown> {
+  if (!value) {
+    return {};
+  }
+  try {
+    const parsed = JSON.parse(value);
+    return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {};
+  } catch {
+    return {};
+  }
 }
 
 // ─── Helper: Generate random paths/secrets ──────────────────────────
@@ -215,17 +301,22 @@ function _webhooksBackendPlugin(options?: Omit<WebhooksPluginOptions, 'frontend'
         },
       },
 
-      // Delete webhook trigger
+      // Delete webhook trigger — cascades to remote provider if registered
       {
         method: 'DELETE',
         path: '/webhooks/triggers/:id',
         async handler(ctx: PluginEndpointContext) {
-          const trigger = await getRepository(ctx).findById(ctx.params.id);
+          const repo = getRepository(ctx);
+          const trigger = await repo.findById(ctx.params.id);
           if (!trigger) {
             return { status: 404, body: { error: 'Webhook trigger not found' } };
           }
 
-          await getRepository(ctx).delete(ctx.params.id);
+          if (state && trigger.remoteWebhookId) {
+            await getRegistration(ctx, state).cascadeOnDelete(trigger);
+          }
+
+          await repo.delete(ctx.params.id);
 
           return { body: { success: true } };
         },
@@ -401,6 +492,203 @@ function _webhooksBackendPlugin(options?: Omit<WebhooksPluginOptions, 'frontend'
           };
         },
       },
+
+      // ── Provider registration ────────────────────────────────────
+
+      // List registered provider adapters
+      {
+        method: 'GET',
+        path: '/webhooks/providers',
+        async handler(ctx: PluginEndpointContext) {
+          if (!state) {
+            return { status: 503, body: { error: 'Plugin not initialized' } };
+          }
+          return { body: { data: getRegistration(ctx, state).listProviders() } };
+        },
+      },
+
+      // Get a single provider adapter's metadata
+      {
+        method: 'GET',
+        path: '/webhooks/providers/:providerId',
+        async handler(ctx: PluginEndpointContext) {
+          if (!state) {
+            return { status: 503, body: { error: 'Plugin not initialized' } };
+          }
+          try {
+            return { body: getRegistration(ctx, state).getProvider(ctx.params.providerId) };
+          } catch (err) {
+            return mapRegistrationError(err) ?? { status: 500, body: { error: String(err) } };
+          }
+        },
+      },
+
+      // List event types available from a provider (static enum or dynamic loader)
+      {
+        method: 'GET',
+        path: '/webhooks/providers/:providerId/events',
+        async handler(ctx: PluginEndpointContext) {
+          if (!state) {
+            return { status: 503, body: { error: 'Plugin not initialized' } };
+          }
+          const credentialId = ctx.query.credentialId;
+          const scope = parseScopeQuery(ctx.query.scope);
+          if (!credentialId) {
+            return { status: 400, body: { error: 'credentialId query param is required' } };
+          }
+          try {
+            const events = await getRegistration(ctx, state).listEvents(
+              ctx.params.providerId,
+              credentialId,
+              scope,
+            );
+            return { body: { data: events } };
+          } catch (err) {
+            return mapRegistrationError(err) ?? { status: 500, body: { error: String(err) } };
+          }
+        },
+      },
+
+      // Async-picker loader for a provider's scope field (e.g., Linear teams)
+      {
+        method: 'GET',
+        path: '/webhooks/providers/:providerId/scope-options/:field',
+        async handler(ctx: PluginEndpointContext) {
+          if (!state) {
+            return { status: 503, body: { error: 'Plugin not initialized' } };
+          }
+          const credentialId = ctx.query.credentialId;
+          const scope = parseScopeQuery(ctx.query.scope);
+          if (!credentialId) {
+            return { status: 400, body: { error: 'credentialId query param is required' } };
+          }
+          try {
+            const options = await getRegistration(ctx, state).loadScopeOptions(
+              ctx.params.providerId,
+              ctx.params.field,
+              credentialId,
+              scope,
+            );
+            return { body: { data: options } };
+          } catch (err) {
+            return mapRegistrationError(err) ?? { status: 500, body: { error: String(err) } };
+          }
+        },
+      },
+
+      // List remote webhooks the credential currently has at the provider
+      {
+        method: 'GET',
+        path: '/webhooks/providers/:providerId/remote',
+        async handler(ctx: PluginEndpointContext) {
+          if (!state) {
+            return { status: 503, body: { error: 'Plugin not initialized' } };
+          }
+          const credentialId = ctx.query.credentialId;
+          const scope = parseScopeQuery(ctx.query.scope);
+          if (!credentialId) {
+            return { status: 400, body: { error: 'credentialId query param is required' } };
+          }
+          try {
+            const remote = await getRegistration(ctx, state).listRemote(
+              ctx.params.providerId,
+              credentialId,
+              scope,
+            );
+            return { body: { data: remote } };
+          } catch (err) {
+            return mapRegistrationError(err) ?? { status: 500, body: { error: String(err) } };
+          }
+        },
+      },
+
+      // Register a trigger with the upstream provider
+      {
+        method: 'POST',
+        path: '/webhooks/triggers/:id/register',
+        async handler(ctx: PluginEndpointContext) {
+          if (!state) {
+            return { status: 503, body: { error: 'Plugin not initialized' } };
+          }
+          const input = ctx.body as unknown as RegisterTriggerInput | undefined;
+          if (!input || !input.providerId || !input.credentialId || !Array.isArray(input.events)) {
+            return {
+              status: 400,
+              body: {
+                error:
+                  'Body must include providerId (string), credentialId (string), events (string[]), and scope (object)',
+              },
+            };
+          }
+          try {
+            const result = await getRegistration(ctx, state).register(ctx.params.id, {
+              providerId: input.providerId,
+              credentialId: input.credentialId,
+              scope: input.scope ?? {},
+              events: input.events,
+              description: input.description,
+            });
+            return { status: 201, body: result };
+          } catch (err) {
+            return mapRegistrationError(err) ?? { status: 500, body: { error: String(err) } };
+          }
+        },
+      },
+
+      // Update a registered trigger's events / enabled state at the provider
+      {
+        method: 'PATCH',
+        path: '/webhooks/triggers/:id/register',
+        async handler(ctx: PluginEndpointContext) {
+          if (!state) {
+            return { status: 503, body: { error: 'Plugin not initialized' } };
+          }
+          const input = ctx.body as unknown as UpdateRegistrationInput | undefined;
+          try {
+            const result = await getRegistration(ctx, state).updateRegistration(
+              ctx.params.id,
+              input ?? {},
+            );
+            return { body: result };
+          } catch (err) {
+            return mapRegistrationError(err) ?? { status: 500, body: { error: String(err) } };
+          }
+        },
+      },
+
+      // Unregister: delete the remote webhook but keep the local trigger
+      {
+        method: 'DELETE',
+        path: '/webhooks/triggers/:id/register',
+        async handler(ctx: PluginEndpointContext) {
+          if (!state) {
+            return { status: 503, body: { error: 'Plugin not initialized' } };
+          }
+          try {
+            const trigger = await getRegistration(ctx, state).unregister(ctx.params.id);
+            return { body: { trigger } };
+          } catch (err) {
+            return mapRegistrationError(err) ?? { status: 500, body: { error: String(err) } };
+          }
+        },
+      },
+
+      // Pull the remote webhook state and reconcile with the local row
+      {
+        method: 'POST',
+        path: '/webhooks/triggers/:id/sync',
+        async handler(ctx: PluginEndpointContext) {
+          if (!state) {
+            return { status: 503, body: { error: 'Plugin not initialized' } };
+          }
+          try {
+            const result = await getRegistration(ctx, state).sync(ctx.params.id);
+            return { body: result };
+          } catch (err) {
+            return mapRegistrationError(err) ?? { status: 500, body: { error: String(err) } };
+          }
+        },
+      },
     ];
   }
 
@@ -424,7 +712,38 @@ function _webhooksBackendPlugin(options?: Omit<WebhooksPluginOptions, 'frontend'
           ttlMs: options?.dedupTtlMs ?? 24 * 60 * 60 * 1000,
         }),
         webhookBaseUrl: options?.webhookBaseUrl,
+        adapters: buildAdapterMap(options?.providers ?? []),
+        logger,
       };
+
+      // Power the trigger.webhook node's "Webhook" dropdown. Resolved lazily
+      // at loader-call time so the host's `getFlowlib()` is fully ready.
+      setWebhookTriggersListLoader(async (): Promise<LoadOptionsResult> => {
+        try {
+          const flowlib = ctx.getFlowlib();
+          const conn = flowlib.plugins.getDatabaseConnection();
+          const dbApi = createPluginDatabaseApi(conn);
+          const repo = new WebhookTriggersRepository(dbApi);
+          const triggers = await repo.list();
+          if (triggers.length === 0) {
+            return {
+              options: [],
+              placeholder: 'No webhooks configured. Create one on the Webhooks page.',
+            };
+          }
+          return {
+            options: triggers.map((t) => ({ label: t.name, value: t.id })),
+            placeholder: 'Select a webhook',
+          };
+        } catch (error) {
+          logger.error('Failed to load webhook triggers for trigger.webhook node', error);
+          return {
+            options: [],
+            placeholder: 'Failed to load webhooks',
+            disabled: true,
+          };
+        }
+      });
 
       logger.info('Webhooks plugin initialized');
     },

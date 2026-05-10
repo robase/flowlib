@@ -208,6 +208,13 @@ export interface CredentialsAPI {
   getSanitized(id: string): Promise<Credential>;
   update(id: string, input: UpdateCredentialInput): Promise<Credential>;
   delete(id: string): Promise<void>;
+  /**
+   * Return a decrypted credential, refreshing the OAuth2 access token if
+   * it has expired and a refresh token is available. Use this from plugin
+   * endpoints / external integrations that need to call third-party APIs
+   * on behalf of the credential.
+   */
+  getDecryptedWithRefresh(id: string): Promise<Credential>;
   test(id: string): Promise<{ success: boolean; error?: string }>;
   updateLastUsed(id: string): Promise<void>;
   getExpiring(daysUntilExpiry?: number): Promise<Credential[]>;

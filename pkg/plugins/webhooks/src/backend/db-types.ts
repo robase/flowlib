@@ -27,6 +27,14 @@ export interface WebhookTriggersTable {
   allowed_ips: string | null;
   flow_id: string | null;
   node_id: string | null;
+  remote_webhook_id: string | null;
+  remote_credential_id: string | null;
+  remote_provider: string | null;
+  /** JSON-encoded scope object (e.g., `{ teamId: '...' }`). Same dialect
+   *  caveats as `last_payload`. */
+  remote_scope: string | unknown | null;
+  /** JSON-encoded array of event names. */
+  remote_events: string | unknown | null;
   last_triggered_at: TimestampColumn | null;
   /** JSON-encoded payload. Driver returns `string` (SQLite/MySQL) or already-parsed
    *  value (Postgres jsonb) — repository normalises via `JSON.parse` defensively. */
