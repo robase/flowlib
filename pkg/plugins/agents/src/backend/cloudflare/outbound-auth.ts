@@ -69,11 +69,7 @@ export type OutboundVendor =
  */
 export interface OutboundCredentialKVStore {
   get(key: string): Promise<string | null>;
-  put(
-    key: string,
-    value: string,
-    options?: { expirationTtl?: number },
-  ): Promise<void>;
+  put(key: string, value: string, options?: { expirationTtl?: number }): Promise<void>;
   delete(key: string): Promise<void>;
 }
 
@@ -168,16 +164,50 @@ async function lookupApiKey(
   vendor: OutboundVendor,
   kvBinding: string,
 ): Promise<{ apiKey: string; sessionId: string } | { error: string; status: number }> {
+  const url = new URL(request.url);
   const sessionId = request.headers.get(FLOWLIB_SESSION_HEADER);
+  // eslint-disable-next-line no-console
+  console.log('[agents/outbound] intercepted', {
+    vendor,
+    host: url.host,
+    path: url.pathname,
+    method: request.method,
+    hasSessionHeader: Boolean(sessionId),
+  });
   if (!sessionId) {
+    // eslint-disable-next-line no-console
+    console.warn(
+      '[agents/outbound] rejecting — request did not carry the session-id header. ' +
+        'The opencode provider should boot with `Config.provider.<vendor>.options.headers` ' +
+        'set; check that `outboundAuth` is configured on the workspace and that the ' +
+        'opencode provider took the outbound branch.',
+      { vendor, host: url.host },
+    );
     return { error: `Missing ${FLOWLIB_SESSION_HEADER} header`, status: 401 };
   }
   const store = env[kvBinding] as OutboundCredentialKVStore | undefined;
   if (!store || typeof store.get !== 'function') {
+    // eslint-disable-next-line no-console
+    console.error(
+      `[agents/outbound] KV binding "${kvBinding}" not present on env — ` +
+        'check wrangler.toml has `[[kv_namespaces]] binding = "' +
+        kvBinding +
+        '"`.',
+    );
     return { error: `KV binding "${kvBinding}" not configured`, status: 500 };
   }
   const apiKey = await store.get(credentialKvKey(sessionId, vendor));
   if (!apiKey) {
+    // eslint-disable-next-line no-console
+    console.warn('[agents/outbound] no credential bound for session+vendor', {
+      vendor,
+      sessionId,
+      key: credentialKvKey(sessionId, vendor),
+      hint:
+        'The agents plugin `POST /sessions` should have written this key. Check ' +
+        'that the credential row has a vendor `inferOpencodeProvider` recognises ' +
+        '(name="anthropic" / "openrouter" / "openai" / "google" or metadata.provider).',
+    });
     return {
       error: `No ${vendor} credential bound to session ${sessionId}`,
       status: 401,
@@ -206,6 +236,10 @@ export function createAnthropicOutboundHandler(
       return new Response(r.error, { status: r.status });
     }
     const headers = new Headers(request.headers);
+    // Anthropic only accepts `x-api-key` auth — drop any stray
+    // `Authorization` header opencode may have set from the placeholder
+    // config, then inject the real key.
+    headers.delete('authorization');
     headers.set('x-api-key', r.apiKey);
     if (!headers.has('anthropic-version')) {
       headers.set('anthropic-version', '2023-06-01');
@@ -223,6 +257,8 @@ export function createOpenAIOutboundHandler(
       return new Response(r.error, { status: r.status });
     }
     const headers = new Headers(request.headers);
+    // Replace any placeholder Authorization wholesale.
+    headers.delete('authorization');
     headers.set('Authorization', `Bearer ${r.apiKey}`);
     return fetch(forwardWith(headers, request));
   };
@@ -237,6 +273,7 @@ export function createOpenRouterOutboundHandler(
       return new Response(r.error, { status: r.status });
     }
     const headers = new Headers(request.headers);
+    headers.delete('authorization');
     headers.set('Authorization', `Bearer ${r.apiKey}`);
     return fetch(forwardWith(headers, request));
   };
@@ -251,6 +288,7 @@ export function createGoogleOutboundHandler(
       return new Response(r.error, { status: r.status });
     }
     const headers = new Headers(request.headers);
+    headers.delete('authorization');
     headers.set('x-goog-api-key', r.apiKey);
     return fetch(forwardWith(headers, request));
   };
@@ -265,6 +303,7 @@ export function createCloudflareAiGatewayOutboundHandler(
       return new Response(r.error, { status: r.status });
     }
     const headers = new Headers(request.headers);
+    headers.delete('authorization');
     headers.set('Authorization', `Bearer ${r.apiKey}`);
     return fetch(forwardWith(headers, request));
   };

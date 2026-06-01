@@ -502,11 +502,7 @@ export async function createFlowlib(config: FlowlibConfig): Promise<FlowlibInsta
       }
       const lvl = event.value;
       const isLevel =
-        lvl === 'debug' ||
-        lvl === 'info' ||
-        lvl === 'warn' ||
-        lvl === 'error' ||
-        lvl === 'silent';
+        lvl === 'debug' || lvl === 'info' || lvl === 'warn' || lvl === 'error' || lvl === 'silent';
       if (event.key === 'core.logging.level' && isLevel) {
         loggerManager.setDefaultLevel(lvl);
         return;

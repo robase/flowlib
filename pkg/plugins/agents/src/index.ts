@@ -67,6 +67,38 @@ export type { ClaudeCodeProviderOptions } from './backend/providers/claude-code/
 export { openCodeProvider } from './backend/providers/opencode/provider';
 export type { OpenCodeProviderOptions } from './backend/providers/opencode/provider';
 export { buildOpencodeLlmProviderLoader } from './backend/providers/opencode/llm-provider-loader';
+
+// AI SDK provider — the new path. Agent loop runs in the DO via
+// Vercel's `ai` package's `streamText`. See
+// `pkg/plugins/agents/docs/migration-plan-ai-sdk.md`. Phase 1 ships
+// the provider scaffold + stub tools; Phases 2/3 wire sandbox-backed
+// filesystem tools and flowlib actions as the real tool catalogue.
+export { aiSdkProvider } from './backend/providers/ai-sdk';
+export type {
+  AiSdkCredential,
+  AiSdkProviderOptions,
+  AiSdkVendor,
+  CredentialResolver as AiSdkCredentialResolver,
+  ParsedModelSpec as AiSdkModelSpec,
+} from './backend/providers/ai-sdk';
+export {
+  parseModelSpec as parseAiSdkModelSpec,
+  resolveModel as resolveAiSdkModel,
+  buildSandboxTools as buildAiSdkSandboxTools,
+  buildFlowlibActionTools as buildAiSdkFlowlibActionTools,
+} from './backend/providers/ai-sdk';
+export type {
+  AiSdkToolDescriptor,
+  AiSdkToolSet,
+  BuildFlowlibActionToolsOptions as BuildAiSdkFlowlibActionToolsOptions,
+  DefaultCredentialForAction as AiSdkDefaultCredentialForAction,
+  GetCredentialFn as AiSdkGetCredentialFn,
+} from './backend/providers/ai-sdk';
+export {
+  normaliseModelForCredential,
+  type NormaliseModelInput,
+  type NormaliseModelResult,
+} from './backend/providers/model-normalise';
 export type {
   BuildOpencodeLlmProviderLoaderOptions,
   FlowlibCredentialsSlice,
@@ -75,7 +107,10 @@ export { inferOpencodeProvider } from './backend/endpoints/credentials.endpoint'
 export type { AgentCredentialOption } from './backend/endpoints/credentials.endpoint';
 
 // Workspace provider factories.
-export { cloudflareSandbox } from './backend/workspaces/cloudflare-sandbox/provider';
+export {
+  cloudflareSandbox,
+  buildSandboxName,
+} from './backend/workspaces/cloudflare-sandbox/provider';
 export type { CloudflareSandboxOptions } from './backend/workspaces/cloudflare-sandbox/provider';
 export { cloudflareSandboxClaude } from './backend/workspaces/cloudflare-sandbox-claude/provider';
 export type {
@@ -134,6 +169,16 @@ export type {
 // the consumer Worker can forward the DO class:
 //   export { AgentChatDO } from '@flowlib/agents';
 export { AgentChatDO } from './backend/cloudflare/chat-agent-do';
+
+// Per-isolate runtime bootstrap. The Worker fetch isolate and each DO
+// isolate are separate; the host calls `setAgentsRuntimeBootstrapper`
+// at the **top of the Worker entry module** so that DO isolates pick
+// up the registration on module load and can lazily initialise
+// Flowlib (and thereby the agents plugin) on first DO request.
+export {
+  setAgentsRuntimeBootstrapper,
+  type AgentsRuntimeBootstrap,
+} from './backend/cloudflare/runtime-singleton';
 
 // Phase 2 outbound-Workers auth — pure helpers that don't depend on
 // the @cloudflare/sandbox SDK. Consumer Worker imports them and

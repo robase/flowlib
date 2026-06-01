@@ -305,6 +305,33 @@ export function FlowWorkbenchView({
     isDraggingNodeRef.current = true;
   }, []);
 
+  const handleDragOver = useCallback((event: React.DragEvent) => {
+    // Only treat as a drop target if a palette node-type is being dragged.
+    // React Flow's own node drags don't set dataTransfer types, so this is safe.
+    if (event.dataTransfer.types.includes('application/flowlib-node-type')) {
+      event.preventDefault();
+      event.dataTransfer.dropEffect = 'copy';
+    }
+  }, []);
+
+  const handleDrop = useCallback(
+    (event: React.DragEvent) => {
+      const type =
+        event.dataTransfer.getData('application/flowlib-node-type') ||
+        event.dataTransfer.getData('text/plain');
+      if (!type) {
+        return;
+      }
+      event.preventDefault();
+      const position = reactFlowInstance.screenToFlowPosition({
+        x: event.clientX,
+        y: event.clientY,
+      });
+      createNewNode(type, { position });
+    },
+    [reactFlowInstance, createNewNode],
+  );
+
   const handleNodeDragStop = useCallback(() => {
     if (dragEndTimeoutRef.current) {
       clearTimeout(dragEndTimeoutRef.current);
@@ -374,6 +401,8 @@ export function FlowWorkbenchView({
             onSelectionChange={handleSelectionChange}
             onNodeDragStart={handleNodeDragStart}
             onNodeDragStop={handleNodeDragStop}
+            onDragOver={handleDragOver}
+            onDrop={handleDrop}
             nodeTypes={nodeTypes}
             edgeTypes={EDGE_TYPES}
             defaultEdgeOptions={defaultEdgeOptions}

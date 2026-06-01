@@ -20,6 +20,20 @@ export interface SettingsRow {
 
 const TABLE = 'flowlib_settings';
 
+/**
+ * "Table doesn't exist" is a routine state in pre-migration / fresh-database
+ * setups — the rest of Flowlib boots fine without persisted overrides. Reads
+ * silently return empty so the per-request log isn't spammed; writes still
+ * surface the error because the user genuinely tried to save something.
+ *
+ * Matched across drivers: D1 ("no such table"), Postgres ("does not exist"
+ * / "relation … does not exist"), MySQL ("doesn't exist").
+ */
+function isMissingTableError(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : String(error);
+  return /no such table|relation .* does not exist|doesn['’]t exist/i.test(message);
+}
+
 export class SettingsModel {
   constructor(
     private readonly adapter: FlowlibAdapter,
@@ -34,6 +48,10 @@ export class SettingsModel {
       });
       return row ? this.normalize(row) : null;
     } catch (error) {
+      if (isMissingTableError(error)) {
+        // Pre-migration / fresh DB — silently treat as "no override".
+        return null;
+      }
       this.logger.error('Failed to read setting', { key, error });
       throw error;
     }
@@ -48,6 +66,9 @@ export class SettingsModel {
       });
       return rows.map((r) => this.normalize(r));
     } catch (error) {
+      if (isMissingTableError(error)) {
+        return [];
+      }
       this.logger.error('Failed to list settings', { namespace, error });
       throw error;
     }

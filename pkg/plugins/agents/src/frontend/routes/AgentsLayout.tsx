@@ -6,29 +6,42 @@
  * pane is either an empty placeholder or `<ChatThread session={...} />`
  * driven by the URL's `sessionId` param.
  *
+ * Runtime composition (since the ThreadList migration):
+ *
+ *   AgentsLayout
+ *     ├─ useRemoteThreadListRuntime — owns the thread list + per-thread runtimes
+ *     │   ├─ adapter (REST against /sessions)
+ *     │   ├─ runtimeHook = useAgentRuntime (called once per active thread)
+ *     │   └─ threadId    = URL sessionId  (drives switching)
+ *     ├─ <AssistantRuntimeProvider runtime={runtime}>
+ *     │   ├─ <SessionsSidebar/>   — uses ThreadListItemPrimitive per row
+ *     │   └─ <ChatThread/>        — reads session resources from ActiveSessionContext
+ *     └─ <NewChatDialog/>
+ *
  * Workspace cardinality (see `docs/sessions-and-sandboxes.md`):
  *
- *   - "+ New workspace" (top-right of sidebar) creates a session with
- *     `workspaceId` omitted; backend auto-provisions a fresh workspace
- *     row + sandbox.
- *   - "+ New chat" (per-workspace section) creates a session with
- *     `workspaceId: <existing>`; backend reuses the workspace's
- *     sandbox.
+ *   - "+ New workspace" creates a session with `workspaceId` omitted;
+ *     backend auto-provisions a fresh workspace + sandbox.
+ *   - "+ New chat" creates a session with `workspaceId: <existing>`;
+ *     backend reuses the workspace's sandbox.
  *
- * Both gestures share `NewChatDialog` for credential selection. The
- * dialog's `onStart` only carries `credentialId`; the workspace
- * binding is captured by the layout in a ref that the `onStart`
- * handler reads.
+ * On `createSession.mutateAsync` success the URL is updated; the
+ * `threadId` prop on `useRemoteThreadListRuntime` reacts to that and
+ * switches the active thread.
  */
 import * as React from 'react';
 import { useNavigate, useParams } from 'react-router';
+import { AssistantRuntimeProvider, useRemoteThreadListRuntime } from '@assistant-ui/react';
 import { Bot } from 'lucide-react';
 import { ChatThread } from '../components/ChatThread';
 import { NewChatDialog } from '../components/NewChatDialog';
 import { SessionsSidebar } from '../components/SessionsSidebar';
+import { useAgentRuntime } from '../hooks/useAgentRuntime';
+import { useAgentsThreadListAdapter } from '../hooks/useAgentsThreadListAdapter';
 import { useLlmCredentials } from '../hooks/useCredentials';
 import { useCreateSession, useSession, useSessions } from '../hooks/useSessions';
 import { useWorkspaces } from '../hooks/useWorkspaces';
+import type { AgentProviderId } from '../../shared/types';
 
 export interface AgentsLayoutProps {
   basePath: string;
@@ -48,6 +61,13 @@ export function AgentsLayout({ basePath }: AgentsLayoutProps): React.ReactElemen
   const credentials = useLlmCredentials();
   const activeSession = useSession(sessionId);
   const createSession = useCreateSession();
+
+  const adapter = useAgentsThreadListAdapter();
+  const runtime = useRemoteThreadListRuntime({
+    adapter,
+    runtimeHook: useAgentRuntime,
+    threadId: sessionId ?? undefined,
+  });
 
   const [target, setTarget] = React.useState<DialogTarget | null>(null);
 
@@ -75,15 +95,24 @@ export function AgentsLayout({ basePath }: AgentsLayoutProps): React.ReactElemen
   }, [createSession.isPending]);
 
   const handleStart = React.useCallback(
-    async ({ credentialId }: { credentialId: string | null }) => {
+    async ({
+      credentialId,
+      providerId,
+      model,
+    }: {
+      credentialId: string | null;
+      providerId?: AgentProviderId;
+      model?: string;
+    }) => {
       if (!target) {
         return;
       }
-      const workspaceId =
-        target.kind === 'existing-workspace' ? target.workspaceId : undefined;
+      const workspaceId = target.kind === 'existing-workspace' ? target.workspaceId : undefined;
       const session = await createSession.mutateAsync({
         credentialId,
         workspaceId,
+        providerId,
+        model,
       });
       setTarget(null);
       navigate(`${stripTrailingSlash(basePath)}/agents/sessions/${encodeURIComponent(session.id)}`);
@@ -99,51 +128,53 @@ export function AgentsLayout({ basePath }: AgentsLayoutProps): React.ReactElemen
         : undefined;
 
   return (
-    <div
-      className="flex flex-row w-full h-full min-h-0 bg-fl-background text-fl-foreground"
-      data-testid="agents-layout"
-    >
-      <SessionsSidebar
-        basePath={basePath}
-        sessions={sessions.data ?? []}
-        workspaces={workspaces.data ?? []}
-        isLoading={sessions.isLoading || workspaces.isLoading}
-        activeSessionId={sessionId}
-        onNewWorkspace={openNewWorkspace}
-        onNewChat={openNewChat}
-      />
+    <AssistantRuntimeProvider runtime={runtime}>
+      <div
+        className="flex flex-row w-full h-full min-h-0 bg-fl-background text-fl-foreground"
+        data-testid="agents-layout"
+      >
+        <SessionsSidebar
+          basePath={basePath}
+          sessions={sessions.data ?? []}
+          workspaces={workspaces.data ?? []}
+          isLoading={sessions.isLoading || workspaces.isLoading}
+          activeSessionId={sessionId}
+          onNewWorkspace={openNewWorkspace}
+          onNewChat={openNewChat}
+        />
 
-      <main className="flex-1 min-w-0 flex flex-col" data-testid="agents-main">
-        {sessionId ? (
-          activeSession.data ? (
-            <ChatThread session={activeSession.data} />
-          ) : activeSession.isLoading ? (
-            <CenteredMessage>Loading chat…</CenteredMessage>
-          ) : activeSession.error ? (
-            <CenteredMessage>
-              <span className="text-fl-destructive">
-                {(activeSession.error as Error).message}
-              </span>
-            </CenteredMessage>
+        <main className="flex-1 min-w-0 flex flex-col" data-testid="agents-main">
+          {sessionId ? (
+            activeSession.data ? (
+              <ChatThread session={activeSession.data} />
+            ) : activeSession.isLoading ? (
+              <CenteredMessage>Loading chat…</CenteredMessage>
+            ) : activeSession.error ? (
+              <CenteredMessage>
+                <span className="text-fl-destructive">
+                  {(activeSession.error as Error).message}
+                </span>
+              </CenteredMessage>
+            ) : (
+              <CenteredMessage>Chat not found.</CenteredMessage>
+            )
           ) : (
-            <CenteredMessage>Chat not found.</CenteredMessage>
-          )
-        ) : (
-          <NoChatSelected onNewWorkspace={openNewWorkspace} />
-        )}
-      </main>
+            <NoChatSelected onNewWorkspace={openNewWorkspace} />
+          )}
+        </main>
 
-      <NewChatDialog
-        open={target !== null}
-        credentials={credentials.data ?? []}
-        isLoading={credentials.isLoading}
-        error={(credentials.error as Error | null) ?? null}
-        isStarting={createSession.isPending}
-        onCancel={closeDialog}
-        onStart={handleStart}
-        targetLabel={targetLabel}
-      />
-    </div>
+        <NewChatDialog
+          open={target !== null}
+          credentials={credentials.data ?? []}
+          isLoading={credentials.isLoading}
+          error={(credentials.error as Error | null) ?? null}
+          isStarting={createSession.isPending}
+          onCancel={closeDialog}
+          onStart={handleStart}
+          targetLabel={targetLabel}
+        />
+      </div>
+    </AssistantRuntimeProvider>
   );
 }
 

@@ -48,7 +48,7 @@ const baseAuth: AgentsAuthContext = {
 
 describe('tenantScopedName', () => {
   it('produces the org-prefixed canonical name', () => {
-    expect(tenantScopedName('chat', 'org-a', 'sess-1')).toBe('org:org-a/kind:chat/sess-1');
+    expect(tenantScopedName('chat', 'org-a', 'sess-1')).toBe('org__org-a__chat__sess-1');
   });
 
   it('rejects empty orgId', () => {
@@ -62,8 +62,8 @@ describe('tenantScopedName', () => {
   });
 
   it('treats the kind as opaque so future DO kinds work', () => {
-    expect(tenantScopedName('workspace', 'org-a', 'ws-1')).toBe('org:org-a/kind:workspace/ws-1');
-    expect(tenantScopedName('sandbox', 'org-a', 'sb-1')).toBe('org:org-a/kind:sandbox/sb-1');
+    expect(tenantScopedName('workspace', 'org-a', 'ws-1')).toBe('org__org-a__workspace__ws-1');
+    expect(tenantScopedName('sandbox', 'org-a', 'sb-1')).toBe('org__org-a__sandbox__sb-1');
   });
 });
 
@@ -86,7 +86,7 @@ describe('tenantScopedId', () => {
   it('hands the org-prefixed name to idFromName', () => {
     const { env, calls } = makeEnv();
     tenantScopedId(env, 'chat', baseAuth, 'sess-1');
-    expect(calls).toEqual(['org:org-a/kind:chat/sess-1']);
+    expect(calls).toEqual(['org__org-a__chat__sess-1']);
   });
 
   it('produces different ids for the same suffix in different orgs', () => {

@@ -27,9 +27,7 @@ export function AgentStreamProvider({
   controls: AgentStreamControls;
   children: React.ReactNode;
 }): React.ReactElement {
-  return (
-    <AgentStreamContext.Provider value={controls}>{children}</AgentStreamContext.Provider>
-  );
+  return <AgentStreamContext.Provider value={controls}>{children}</AgentStreamContext.Provider>;
 }
 
 export function useAgentStream(): AgentStreamControls {

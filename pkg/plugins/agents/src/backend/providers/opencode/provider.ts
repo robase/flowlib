@@ -293,10 +293,20 @@ export function openCodeProvider(options: OpenCodeProviderOptions = {}): AgentPr
   async function ensureUpstream(
     placeholderId: string,
   ): Promise<{ session: SessionState; upstreamId: string; client: OpencodeClientLike }> {
+    const t0 = Date.now();
     const session = sessionsById.get(placeholderId);
     if (!session) {
       throw new Error(`[agents/opencode] unknown session id ${placeholderId}`);
     }
+    // eslint-disable-next-line no-console
+    console.log('[agents/opencode] ensureUpstream enter', {
+      placeholderId,
+      mode: session.mode,
+      hasUpstreamId: Boolean(session.upstreamSessionId),
+      hasInFlight: Boolean(session.upstreamSessionPromise),
+      directory: session.directory,
+      title: session.title,
+    });
     if (!session.upstreamSessionPromise && !session.upstreamSessionId) {
       session.upstreamSessionPromise = (async () => {
         // OpenCode `Config.provider` to pass to the workspace's
@@ -311,22 +321,52 @@ export function openCodeProvider(options: OpenCodeProviderOptions = {}): AgentPr
         //   3. External / embedded mode → no provider config needed
         //      from this layer.
         let providerCfg: Record<string, unknown> | undefined;
-        const outboundMode =
-          session.mode === 'sandbox' && hasOutboundAuth(session.workspace);
+        const outboundMode = session.mode === 'sandbox' && hasOutboundAuth(session.workspace);
+        // eslint-disable-next-line no-console
+        console.log('[agents/opencode] provider config branch', {
+          placeholderId,
+          mode: session.mode,
+          outboundMode,
+          hasLoadProviderConfig: Boolean(loadProviderConfig),
+          hasAuth: Boolean(session.auth),
+        });
         if (outboundMode) {
           providerCfg = buildOutboundProviderConfig(placeholderId);
+          // eslint-disable-next-line no-console
+          console.log('[agents/opencode] built outbound provider config', {
+            placeholderId,
+            vendors: Object.keys(providerCfg),
+          });
         } else if (session.mode === 'sandbox' && loadProviderConfig && session.auth) {
           try {
+            // eslint-disable-next-line no-console
+            console.log('[agents/opencode] calling loadProviderConfig…', { placeholderId });
             const loaded = await loadProviderConfig({
               auth: session.auth,
               credentialId: session.credentialId,
             });
             providerCfg = loaded ?? undefined;
+            // eslint-disable-next-line no-console
+            console.log('[agents/opencode] loadProviderConfig returned', {
+              placeholderId,
+              vendors: providerCfg ? Object.keys(providerCfg) : null,
+            });
           } catch (err) {
             const message = err instanceof Error ? err.message : String(err);
+            // eslint-disable-next-line no-console
+            console.error('[agents/opencode] loadProviderConfig threw', {
+              placeholderId,
+              message,
+            });
             throw new Error(`[agents/opencode] loadProviderConfig failed: ${message}`);
           }
         }
+        // eslint-disable-next-line no-console
+        console.log('[agents/opencode] calling getClientForMode…', {
+          placeholderId,
+          mode: session.mode,
+          elapsedMs: Date.now() - t0,
+        });
         const { client, baseUrl } = await getClientForMode({
           mode: session.mode,
           workspace: session.workspace,
@@ -334,14 +374,40 @@ export function openCodeProvider(options: OpenCodeProviderOptions = {}): AgentPr
           factoryBaseUrl,
           opencodeOverride: providerCfg ? { config: { provider: providerCfg } } : undefined,
         });
+        // eslint-disable-next-line no-console
+        console.log('[agents/opencode] getClientForMode resolved', {
+          placeholderId,
+          baseUrl,
+          elapsedMs: Date.now() - t0,
+        });
         let resp: unknown;
         try {
+          // eslint-disable-next-line no-console
+          console.log('[agents/opencode] calling client.session.create…', {
+            placeholderId,
+            title: session.title,
+            directory: session.directory,
+            elapsedMs: Date.now() - t0,
+          });
           resp = await client.session.create({
-            body: { title: session.title },
-            ...(session.directory ? { query: { directory: session.directory } } : {}),
+            title: session.title,
+            ...(session.directory ? { directory: session.directory } : {}),
+          });
+          // eslint-disable-next-line no-console
+          console.log('[agents/opencode] client.session.create resolved', {
+            placeholderId,
+            elapsedMs: Date.now() - t0,
           });
         } catch (err) {
           const message = err instanceof Error ? err.message : String(err);
+          // eslint-disable-next-line no-console
+          console.error('[agents/opencode] client.session.create threw', {
+            placeholderId,
+            mode: session.mode,
+            target: baseUrl ?? '<unknown>',
+            elapsedMs: Date.now() - t0,
+            message,
+          });
           throw new Error(
             `[agents/opencode] session.create failed (mode=${session.mode}, target=${baseUrl ?? '<unknown>'}): ${message}`,
           );
@@ -349,6 +415,13 @@ export function openCodeProvider(options: OpenCodeProviderOptions = {}): AgentPr
         const upstreamId = unwrapSessionId(resp);
         session.upstreamSessionId = upstreamId;
         session.baseUrl = baseUrl;
+        // eslint-disable-next-line no-console
+        console.log('[agents/opencode] upstream booted', {
+          placeholderId,
+          upstreamId,
+          baseUrl,
+          totalElapsedMs: Date.now() - t0,
+        });
         return upstreamId;
       })().catch((err) => {
         // Allow retry on the next call if boot fails.
@@ -358,6 +431,12 @@ export function openCodeProvider(options: OpenCodeProviderOptions = {}): AgentPr
     }
     const upstreamId = session.upstreamSessionId ?? (await session.upstreamSessionPromise!);
     const client = await resolveSessionClient(session);
+    // eslint-disable-next-line no-console
+    console.log('[agents/opencode] ensureUpstream done', {
+      placeholderId,
+      upstreamId,
+      totalElapsedMs: Date.now() - t0,
+    });
     return { session, upstreamId, client };
   }
 
@@ -410,7 +489,18 @@ export function openCodeProvider(options: OpenCodeProviderOptions = {}): AgentPr
       // what the DB row's `provider_session_id` stores; the chat WS DO
       // calls `prompt()` which does the boot + upstream `session.create`
       // once, then caches the upstream id for subsequent turns.
-      const placeholderId = newPlaceholderSessionId();
+      //
+      // Idempotency: when `input.providerSessionId` is supplied the
+      // caller is asking for **rehydration** — typically because we're
+      // inside a fresh Durable Object isolate that didn't run the
+      // original `createSession`, so `sessionsById` in this isolate is
+      // empty even though a row exists in D1. If the entry already
+      // exists in this isolate, no-op. Otherwise populate `sessionsById`
+      // with that exact id rather than minting a new one.
+      const placeholderId = input.providerSessionId ?? newPlaceholderSessionId();
+      if (input.providerSessionId && sessionsById.has(input.providerSessionId)) {
+        return { providerSessionId: input.providerSessionId };
+      }
       sessionsById.set(placeholderId, {
         mode,
         directory,
@@ -428,7 +518,19 @@ export function openCodeProvider(options: OpenCodeProviderOptions = {}): AgentPr
     },
 
     async *prompt(input: PromptInput): AsyncIterable<AgentEvent> {
+      const promptStart = Date.now();
+      // eslint-disable-next-line no-console
+      console.log('[agents/opencode] prompt enter', {
+        providerSessionId: input.providerSessionId,
+        model: input.model,
+        partsCount: input.parts.length,
+        knownSession: sessionsById.has(input.providerSessionId),
+      });
       if (!sessionsById.has(input.providerSessionId)) {
+        // eslint-disable-next-line no-console
+        console.error('[agents/opencode] prompt → unknown session id, yielding error', {
+          providerSessionId: input.providerSessionId,
+        });
         yield {
           type: 'session-end',
           reason: 'error',
@@ -441,6 +543,12 @@ export function openCodeProvider(options: OpenCodeProviderOptions = {}): AgentPr
       try {
         upstreamHandle = await ensureUpstream(input.providerSessionId);
       } catch (err) {
+        // eslint-disable-next-line no-console
+        console.error('[agents/opencode] ensureUpstream threw — yielding error', {
+          providerSessionId: input.providerSessionId,
+          elapsedMs: Date.now() - promptStart,
+          message: err instanceof Error ? err.message : String(err),
+        });
         yield {
           type: 'session-end',
           reason: 'error',
@@ -450,14 +558,14 @@ export function openCodeProvider(options: OpenCodeProviderOptions = {}): AgentPr
       }
       const { session, upstreamId, client } = upstreamHandle;
       const { directory, defaultModel, systemPrompt } = session;
-
-      // Open the SSE event stream first so we don't miss the assistant's
-      // first part. Filter by sessionID inside the loop.
-      const streamPromise = client.event.subscribe(
-        directory ? { query: { directory } } : undefined,
-      );
-
-      const stream = await streamPromise;
+      // eslint-disable-next-line no-console
+      console.log('[agents/opencode] resolved upstream', {
+        providerSessionId: input.providerSessionId,
+        upstreamId,
+        directory,
+        defaultModel,
+        elapsedMs: Date.now() - promptStart,
+      });
 
       // Translate the user's input into opencode `parts`. We support text
       // and base64 inline images via the FilePartInput escape hatch.
@@ -475,6 +583,14 @@ export function openCodeProvider(options: OpenCodeProviderOptions = {}): AgentPr
       });
 
       const modelOverride = splitModelId(input.model ?? defaultModel);
+      // eslint-disable-next-line no-console
+      console.log('[agents/opencode] model resolved for opencode.session.prompt', {
+        providerSessionId: input.providerSessionId,
+        upstreamId,
+        inputModel: input.model,
+        defaultModel,
+        modelOverride,
+      });
 
       const denyList = [...factoryDefaultDenied, ...(input.extraDenied ?? [])];
       const tools = buildToolsMap({
@@ -488,14 +604,14 @@ export function openCodeProvider(options: OpenCodeProviderOptions = {}): AgentPr
         return;
       }
 
-      // Wire abortSignal → opencode session.abort. The SSE iterator
-      // bails out below as soon as `aborted` flips, so this is purely
-      // for the server-side state.
+      // Wire abortSignal → opencode session.abort. Best-effort; the
+      // session-abort RPC may itself be canceled by the same DO request
+      // lifetime that prompted the cancel.
       const onAbort = () => {
         void client.session
           .abort({
-            path: { id: upstreamId },
-            ...(directory ? { query: { directory } } : {}),
+            sessionID: upstreamId,
+            ...(directory ? { directory } : {}),
           })
           .catch(() => {
             /* swallow — abort is best-effort */
@@ -503,81 +619,368 @@ export function openCodeProvider(options: OpenCodeProviderOptions = {}): AgentPr
       };
       input.abortSignal.addEventListener('abort', onAbort, { once: true });
 
-      // Fire the prompt. We do NOT await its resolution before draining
-      // the event stream — opencode publishes deltas through the event
-      // channel, and the prompt promise only resolves at the end of the
-      // turn (after the message-complete event has already gone out).
-      const promptPromise = client.session.prompt({
-        path: { id: upstreamId },
-        body: {
+      // **Why promptAsync + polling, not prompt or SSE**:
+      //
+      // Cloudflare Sandbox's `containerFetch` has a request-lifetime
+      // budget (~10-15s) that's incompatible with the two natural
+      // streaming options:
+      //   - `event.subscribe` opens a long-lived SSE GET; the response
+      //     body gets canceled before any events flow through.
+      //   - `prompt` returns the assistant message in its HTTP response
+      //     body, but the LLM call inside opencode can take 5-60s; the
+      //     POST is canceled before opencode finishes, cascading to a
+      //     cancel on opencode's outbound OpenRouter call too.
+      //
+      // `promptAsync` posts to `/session/{sessionID}/prompt_async`,
+      // which acks immediately. opencode runs the turn in the
+      // background. We then poll `session.messages` every
+      // POLL_INTERVAL_MS — each poll is a quick request that fits in
+      // `containerFetch`'s budget. Each polled snapshot includes the
+      // full accumulated text for each `TextPart` and the latest
+      // `ToolPart.state`, so we synthesise streaming deltas by diffing
+      // against the previous snapshot.
+      //
+      // Termination: `AssistantMessage.time.completed` flips when the
+      // turn finishes. We also cap total polling at MAX_POLL_DURATION_MS
+      // so a stuck container can't leave us spinning forever.
+      const POLL_INTERVAL_MS = 1500;
+      const MAX_POLL_DURATION_MS = 5 * 60 * 1000;
+      const POLL_BACKOFF_AFTER_S = 30;
+
+      // eslint-disable-next-line no-console
+      console.log('[agents/opencode] firing client.session.promptAsync…', {
+        providerSessionId: input.providerSessionId,
+        upstreamId,
+        modelOverride,
+        partsCount: parts.length,
+        toolsCount: tools ? Object.keys(tools).length : 0,
+        elapsedMs: Date.now() - promptStart,
+      });
+      try {
+        await client.session.promptAsync({
+          sessionID: upstreamId,
           parts,
           ...(modelOverride ? { model: modelOverride } : {}),
           ...(systemPrompt ? { system: systemPrompt } : {}),
           ...(tools ? { tools } : {}),
-        },
-        ...(directory ? { query: { directory } } : {}),
+          ...(directory ? { directory } : {}),
+        });
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        // eslint-disable-next-line no-console
+        console.error('[agents/opencode] promptAsync threw', {
+          providerSessionId: input.providerSessionId,
+          upstreamId,
+          elapsedMs: Date.now() - promptStart,
+          message,
+        });
+        input.abortSignal.removeEventListener('abort', onAbort);
+        yield { type: 'session-end', reason: 'error', error: message };
+        return;
+      }
+      // eslint-disable-next-line no-console
+      console.log('[agents/opencode] promptAsync acked', {
+        providerSessionId: input.providerSessionId,
+        upstreamId,
+        elapsedMs: Date.now() - promptStart,
       });
 
-      // Swallow rejections — they re-surface as `session.error` events
-      // through the SSE channel.
-      promptPromise.catch(() => {
-        /* surfaced via session.error */
-      });
-
-      const mapperState = createMapperState();
-      let terminated = false;
+      // Track which message-id we've claimed as "our" assistant message
+      // for this turn, plus per-part progress so we can synthesise
+      // deltas against the prior snapshot.
+      let currentMessageId: string | null = null;
+      const textPartLength = new Map<string, number>();
+      const yieldedToolCalls = new Set<string>();
+      const yieldedToolResults = new Set<string>();
+      let denied: string | null = null;
+      let pollCount = 0;
+      const pollLoopStart = Date.now();
 
       try {
-        for await (const raw of stream.stream as AsyncIterable<unknown>) {
+        while (Date.now() - pollLoopStart < MAX_POLL_DURATION_MS) {
           if (input.abortSignal.aborted) {
-            break;
+            // eslint-disable-next-line no-console
+            console.log('[agents/opencode] abort signal aborted — exiting poll loop', {
+              providerSessionId: input.providerSessionId,
+              upstreamId,
+              pollCount,
+              elapsedMs: Date.now() - promptStart,
+            });
+            yield { type: 'session-end', reason: 'stopped' };
+            return;
           }
 
-          const evt = raw as OpencodeEvent;
-          if (!isForThisSession(evt, upstreamId)) {
+          const elapsedSec = Math.floor((Date.now() - pollLoopStart) / 1000);
+          const interval =
+            elapsedSec < POLL_BACKOFF_AFTER_S ? POLL_INTERVAL_MS : POLL_INTERVAL_MS * 2;
+          await new Promise<void>((resolve) => setTimeout(resolve, interval));
+          pollCount += 1;
+
+          let messagesResp: unknown;
+          try {
+            messagesResp = await client.session.messages({
+              sessionID: upstreamId,
+              ...(directory ? { directory } : {}),
+            });
+          } catch (err) {
+            // eslint-disable-next-line no-console
+            console.warn('[agents/opencode] session.messages poll threw — retrying', {
+              providerSessionId: input.providerSessionId,
+              upstreamId,
+              pollCount,
+              message: err instanceof Error ? err.message : String(err),
+            });
             continue;
           }
 
-          // Best-effort tool-deny enforcement: if a `tool-call` is
-          // about to fire for a denied tool, abort the session BEFORE
-          // forwarding the event. The sandbox prevents persistent damage;
-          // this stops unnecessary token spend.
-          const mapped = mapOpencodeEvent(evt, mapperState);
-          for (const out of mapped) {
-            if (out.type === 'tool-call' && denyList.length > 0 && denyList.includes(out.name)) {
-              onAbort();
-              yield {
-                type: 'tool-result',
-                messageId: out.messageId,
-                id: out.id,
-                output: `Tool "${out.name}" is denied for this session`,
-                isError: true,
+          const raw = (messagesResp as { data?: unknown }).data ?? messagesResp;
+          const list = Array.isArray(raw) ? (raw as Array<unknown>) : [];
+
+          // Find the newest assistant message (highest `time.created`).
+          // For the first poll where currentMessageId is null we pick
+          // the one whose `time.created` is >= pollLoopStart — i.e.
+          // generated after we fired promptAsync. After that we stick
+          // to the same messageId for the whole turn unless opencode
+          // auto-continues with a new one (we'd pick that one up too).
+          let target: {
+            info: {
+              id: string;
+              role: string;
+              time?: { created?: number; completed?: number };
+              error?: { message?: string } | string | null;
+            };
+            parts: Array<unknown>;
+          } | null = null;
+          for (const entry of list) {
+            const e = entry as {
+              info?: {
+                id?: string;
+                role?: string;
+                time?: { created?: number; completed?: number };
+                error?: { message?: string } | string | null;
               };
-              yield {
-                type: 'session-end',
-                reason: 'stopped',
-                error: `denied tool "${out.name}"`,
-              };
-              terminated = true;
-              break;
+              parts?: Array<unknown>;
+            };
+            if (!e.info?.id || e.info.role !== 'assistant') {
+              continue;
             }
-            yield out;
-            if (out.type === 'session-end') {
-              terminated = true;
+            if (currentMessageId && e.info.id !== currentMessageId) {
+              continue;
+            }
+            const created = e.info.time?.created ?? 0;
+            // Filter out assistant messages from prior turns. opencode
+            // timestamps are ms-since-epoch; pollLoopStart is `Date.now()`.
+            if (!currentMessageId && created < pollLoopStart - 5000) {
+              continue;
+            }
+            target = {
+              info: {
+                id: e.info.id,
+                role: e.info.role,
+                time: e.info.time,
+                error: e.info.error ?? null,
+              },
+              parts: e.parts ?? [],
+            };
+          }
+
+          if (!target) {
+            if (pollCount === 1 || pollCount % 5 === 0) {
+              // eslint-disable-next-line no-console
+              console.log('[agents/opencode] poll: no assistant message yet', {
+                providerSessionId: input.providerSessionId,
+                upstreamId,
+                pollCount,
+                messageCount: list.length,
+              });
+            }
+            continue;
+          }
+
+          if (!currentMessageId) {
+            currentMessageId = target.info.id;
+            // eslint-disable-next-line no-console
+            console.log('[agents/opencode] poll: claimed assistant message', {
+              providerSessionId: input.providerSessionId,
+              upstreamId,
+              messageId: currentMessageId,
+              pollCount,
+              elapsedMs: Date.now() - promptStart,
+            });
+          }
+
+          // Diff each part against the previous snapshot and yield
+          // events for the delta.
+          for (const rawPart of target.parts) {
+            const part = rawPart as {
+              type?: string;
+              id?: string;
+              callID?: string;
+              tool?: string;
+              text?: string;
+              input?: unknown;
+              state?: { status?: string; output?: unknown; error?: string };
+            };
+            if (!part.type) {
+              continue;
+            }
+            switch (part.type) {
+              case 'text': {
+                if (typeof part.text !== 'string' || !part.id) {
+                  break;
+                }
+                const prev = textPartLength.get(part.id) ?? 0;
+                if (part.text.length > prev) {
+                  const newText = part.text.slice(prev);
+                  textPartLength.set(part.id, part.text.length);
+                  yield {
+                    type: 'text-delta',
+                    messageId: currentMessageId,
+                    text: newText,
+                  };
+                }
+                break;
+              }
+              case 'tool': {
+                const callId = part.callID ?? part.id;
+                if (!callId) {
+                  break;
+                }
+                const toolName = part.tool ?? '<unknown>';
+                if (denyList.length > 0 && denyList.includes(toolName)) {
+                  if (!yieldedToolResults.has(callId)) {
+                    onAbort();
+                    yield {
+                      type: 'tool-result',
+                      messageId: currentMessageId,
+                      id: callId,
+                      output: `Tool "${toolName}" is denied for this session`,
+                      isError: true,
+                    };
+                    yieldedToolResults.add(callId);
+                    denied = toolName;
+                  }
+                  break;
+                }
+                if (!yieldedToolCalls.has(callId)) {
+                  yield {
+                    type: 'tool-call',
+                    messageId: currentMessageId,
+                    id: callId,
+                    name: toolName,
+                    input: part.input,
+                  };
+                  yieldedToolCalls.add(callId);
+                }
+                const status = part.state?.status;
+                if (
+                  !yieldedToolResults.has(callId) &&
+                  (status === 'completed' || status === 'error')
+                ) {
+                  yield {
+                    type: 'tool-result',
+                    messageId: currentMessageId,
+                    id: callId,
+                    output: part.state?.output ?? part.state?.error ?? null,
+                    isError: status === 'error',
+                  };
+                  yieldedToolResults.add(callId);
+                }
+                break;
+              }
+              default: {
+                // Reasoning / step-start / step-finish / snapshot etc.
+                // are intentionally ignored — they're internal opencode
+                // bookkeeping that the chat UI doesn't render. Log the
+                // first occurrence of each unknown type for future
+                // mapping work.
+                if (pollCount === 1) {
+                  // eslint-disable-next-line no-console
+                  console.log('[agents/opencode] poll: unmapped part type', {
+                    providerSessionId: input.providerSessionId,
+                    upstreamId,
+                    partType: part.type,
+                  });
+                }
+                break;
+              }
+            }
+            if (denied) {
               break;
             }
           }
-          if (terminated) {
-            break;
+
+          // Terminal check: AssistantMessage.time.completed flips when
+          // the turn is fully done (including all tool calls + any
+          // auto-continuation). info.error is set on provider failures.
+          const completed = Boolean(target.info.time?.completed);
+          const errorEnvelope = target.info.error;
+          const hasError =
+            errorEnvelope !== null && errorEnvelope !== undefined && errorEnvelope !== '';
+          if (denied || completed || hasError) {
+            yield { type: 'message-complete', messageId: currentMessageId };
+            let reason: 'stopped' | 'error' | 'completed';
+            let errorText: string | undefined;
+            if (denied) {
+              reason = 'stopped';
+              errorText = `denied tool "${denied}"`;
+            } else if (hasError) {
+              reason = 'error';
+              errorText =
+                typeof errorEnvelope === 'string'
+                  ? errorEnvelope
+                  : ((errorEnvelope as { message?: string }).message ??
+                    JSON.stringify(errorEnvelope));
+            } else {
+              reason = 'completed';
+            }
+            yield {
+              type: 'session-end',
+              reason,
+              ...(errorText ? { error: errorText } : {}),
+            };
+            // eslint-disable-next-line no-console
+            console.log('[agents/opencode] poll: turn finished', {
+              providerSessionId: input.providerSessionId,
+              upstreamId,
+              messageId: currentMessageId,
+              pollCount,
+              reason,
+              elapsedMs: Date.now() - promptStart,
+            });
+            return;
           }
         }
       } finally {
         input.abortSignal.removeEventListener('abort', onAbort);
       }
 
-      if (input.abortSignal.aborted && !terminated) {
-        yield { type: 'session-end', reason: 'stopped' };
+      // Hit the polling cap without seeing completion. The container
+      // is probably stuck or the LLM hung. Abort upstream so opencode
+      // releases resources, then surface the timeout.
+      // eslint-disable-next-line no-console
+      console.warn('[agents/opencode] poll: hit MAX_POLL_DURATION_MS without completion', {
+        providerSessionId: input.providerSessionId,
+        upstreamId,
+        pollCount,
+        elapsedMs: Date.now() - promptStart,
+      });
+      onAbort();
+      if (currentMessageId) {
+        yield { type: 'message-complete', messageId: currentMessageId };
       }
+      yield {
+        type: 'session-end',
+        reason: 'error',
+        error: `Turn exceeded ${Math.floor(MAX_POLL_DURATION_MS / 1000)}s without completion`,
+      };
+
+      // Stale references to the now-unused SSE iteration helpers.
+      // Kept imported so tests that introspect the module namespace
+      // don't break, but acknowledged here to silence unused warnings.
+      void createMapperState;
+      void mapOpencodeEvent;
+      void isForThisSession;
     },
 
     async listMessages(input: ListMessagesInput): Promise<AgentProviderMessage[]> {
@@ -593,8 +996,8 @@ export function openCodeProvider(options: OpenCodeProviderOptions = {}): AgentPr
       }
       const client = await resolveSessionClient(session);
       const resp = (await client.session.messages({
-        path: { id: session.upstreamSessionId },
-        ...(session.directory ? { query: { directory: session.directory } } : {}),
+        sessionID: session.upstreamSessionId,
+        ...(session.directory ? { directory: session.directory } : {}),
       })) as unknown as { data?: Array<unknown> } | Array<unknown>;
 
       const arr = Array.isArray(resp) ? resp : (resp?.data ?? []);
@@ -654,8 +1057,8 @@ export function openCodeProvider(options: OpenCodeProviderOptions = {}): AgentPr
       try {
         const client = await resolveSessionClient(session);
         await client.session.delete({
-          path: { id: session.upstreamSessionId },
-          ...(session.directory ? { query: { directory: session.directory } } : {}),
+          sessionID: session.upstreamSessionId,
+          ...(session.directory ? { directory: session.directory } : {}),
         });
       } catch {
         // Best-effort cleanup; sandbox teardown will reclaim everything.
@@ -720,7 +1123,7 @@ function hasOutboundAuth(workspace: WorkspaceHandle | undefined): boolean {
   const meta = workspace?.metadata as { outboundAuth?: unknown } | undefined;
   return Boolean(
     meta?.outboundAuth &&
-      typeof (meta.outboundAuth as { bindCredential?: unknown }).bindCredential === 'function',
+    typeof (meta.outboundAuth as { bindCredential?: unknown }).bindCredential === 'function',
   );
 }
 
@@ -750,12 +1153,34 @@ const OUTBOUND_PLACEHOLDER_KEY = 'flowlib-outbound-placeholder';
  * looks up the real key in KV by session id and replaces the
  * vendor-specific auth header before forwarding upstream.
  */
+/**
+ * Per-vendor canonical base URLs that match the host map the consumer
+ * Worker installs on `Sandbox.outboundByHost`. We pin these on every
+ * vendor's `options.baseURL` so opencode's HTTP requests definitely
+ * route through a host the outbound handler recognises — without the
+ * pin, opencode picks its own default (which may not match e.g.
+ * `api.anthropic.com` exactly).
+ *
+ * Pattern lifted from
+ * https://github.com/cloudflare/sandbox-sdk/tree/main/examples/opencode
+ * which explicitly sets `baseURL: 'https://api.anthropic.com/v1'` on
+ * the placeholder anthropic provider config.
+ */
+const OUTBOUND_VENDOR_BASE_URLS: Record<OutboundVendor, string> = {
+  anthropic: 'https://api.anthropic.com/v1',
+  openai: 'https://api.openai.com/v1',
+  openrouter: 'https://openrouter.ai/api/v1',
+  google: 'https://generativelanguage.googleapis.com/v1beta',
+  'cloudflare-ai-gateway': 'https://gateway.ai.cloudflare.com/v1',
+};
+
 function buildOutboundProviderConfig(sessionId: string): Record<string, unknown> {
   const provider: Record<string, unknown> = {};
   for (const vendor of OUTBOUND_VENDORS) {
     provider[vendor] = {
       options: {
         apiKey: OUTBOUND_PLACEHOLDER_KEY,
+        baseURL: OUTBOUND_VENDOR_BASE_URLS[vendor],
         headers: { [FLOWLIB_SESSION_HEADER]: sessionId },
       },
     };

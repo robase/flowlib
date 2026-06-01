@@ -149,7 +149,18 @@ function resolveOptions(opts: AgentsPluginOptions = {}): ResolvedAgentsOptions {
     // configuring a credential. claude-code is opt-in via
     // `agents({ defaultProviderId: 'claude-code' })`.
     defaultProviderId: opts.defaultProviderId ?? 'opencode',
-    defaultModel: opts.defaultModel ?? 'anthropic/claude-sonnet-4-5',
+    // Default model. The opencode provider routes through whatever
+    // upstream the credential resolves to (OpenRouter, Anthropic native,
+    // CF AI Gateway, …). Each upstream publishes Anthropic model ids
+    // differently — Anthropic native uses hyphens (`claude-sonnet-4-5`),
+    // OpenRouter and CF AI Gateway use dots (`claude-sonnet-4.5`). Most
+    // hosted deployments use OpenRouter, so the dotted form is the safer
+    // default. The session-create flow's `normaliseModelForCredential`
+    // converts hyphens to dots automatically when the credential vendor
+    // is a router, but a non-prefixed default that flows through to a
+    // `defaultModel` fallback path (e.g. inside opencode's `prompt`)
+    // wouldn't get that treatment — so we ship the dotted form here.
+    defaultModel: opts.defaultModel ?? 'anthropic/claude-sonnet-4.5',
   };
 }
 

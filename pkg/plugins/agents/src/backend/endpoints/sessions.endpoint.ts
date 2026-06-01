@@ -30,6 +30,7 @@ import type {
 } from '../../shared/types';
 import { tenantScopedName } from '../cloudflare/tenant-scoped-id';
 import type { OutboundVendor } from '../cloudflare/outbound-auth';
+import { normaliseModelForCredential } from '../providers/model-normalise';
 import { inferOpencodeProvider } from './credentials.endpoint';
 import { badRequest, notFound, notImplemented, safeHandler, type EndpointDeps } from './helpers';
 
@@ -226,9 +227,55 @@ async function createSession(deps: EndpointDeps): Promise<PluginEndpointResponse
   // outbound handler reads the same KV key and injects the real
   // header at egress so the API key never enters the container.
   if (credentialId) {
-    const bindError = await maybeBindOutboundCredential(deps, workspace, providerSessionId, credentialId);
+    const bindError = await maybeBindOutboundCredential(
+      deps,
+      workspace,
+      providerSessionId,
+      credentialId,
+    );
     if (bindError) {
       return bindError;
+    }
+  }
+
+  // Coerce the model id when the picked credential is a multi-tier
+  // router (openrouter, cloudflare-ai-gateway). Users routinely create
+  // a session with model "anthropic/claude-..." and an openrouter
+  // credential — without the rewrite opencode would try to call
+  // api.anthropic.com directly, the outbound handler would not find
+  // an `anthropic` binding for the session (only an `openrouter` one),
+  // and the call would fail 401. The normaliser turns
+  // "anthropic/claude-..." into "openrouter/anthropic/claude-..." so
+  // opencode dispatches via openrouter's provider config.
+  const requestedModel = body.model ?? opts.defaultModel ?? null;
+  let resolvedModel: string | null = requestedModel ?? null;
+  if (requestedModel && credentialId) {
+    try {
+      const credForVendor = await flowlibCreds(deps).getDecryptedWithRefresh(credentialId);
+      const credentialVendor = inferOpencodeProvider({
+        name: credForVendor.name,
+        authType: credForVendor.authType,
+        config: (credForVendor.config as Record<string, unknown>) ?? null,
+        metadata: credForVendor.metadata ?? null,
+      });
+      const result = normaliseModelForCredential({
+        model: requestedModel,
+        credentialVendor,
+      });
+      resolvedModel = result.model;
+      if (result.rewritten) {
+        // eslint-disable-next-line no-console
+        console.warn('[agents/sessions] rewrote session.model to match credential vendor', {
+          requestedModel,
+          resolvedModel,
+          credentialVendor,
+          credentialId,
+          reason: result.reason,
+        });
+      }
+    } catch {
+      // Leave the model untouched on lookup failure — the assert
+      // above will already have rejected unusable credentials.
     }
   }
 
@@ -239,7 +286,7 @@ async function createSession(deps: EndpointDeps): Promise<PluginEndpointResponse
     providerId,
     providerConfig: body.providerConfig ?? {},
     credentialId,
-    model: body.model ?? opts.defaultModel,
+    model: resolvedModel,
     permissionMode: body.permissionMode ?? null,
     systemPrompt: body.systemPrompt ?? null,
     workspaceId,
@@ -288,11 +335,7 @@ async function assertCredentialUsable(
  * the endpoint module just for a type guard.
  */
 interface OutboundAuthSurface {
-  bindCredential: (
-    sessionId: string,
-    vendor: OutboundVendor,
-    apiKey: string,
-  ) => Promise<void>;
+  bindCredential: (sessionId: string, vendor: OutboundVendor, apiKey: string) => Promise<void>;
   unbindCredential: (sessionId: string, vendor: OutboundVendor) => Promise<void>;
 }
 
@@ -322,7 +365,23 @@ async function maybeBindOutboundCredential(
   credentialId: string,
 ): Promise<PluginEndpointResponse | null> {
   const outboundAuth = getOutboundAuth(workspace);
+  // eslint-disable-next-line no-console
+  console.log('[agents/sessions] maybeBindOutboundCredential enter', {
+    providerSessionId,
+    credentialId,
+    hasWorkspace: Boolean(workspace),
+    workspaceMetadataKeys: workspace?.metadata ? Object.keys(workspace.metadata as object) : [],
+    hasOutboundAuth: Boolean(outboundAuth),
+  });
   if (!outboundAuth) {
+    // eslint-disable-next-line no-console
+    console.warn(
+      '[agents/sessions] no outboundAuth on workspace — KV will not be populated, opencode outbound calls will 401',
+      {
+        providerSessionId,
+        credentialId,
+      },
+    );
     return null;
   }
   let cred: Awaited<ReturnType<ReturnType<typeof flowlibCreds>['getDecryptedWithRefresh']>>;
@@ -355,7 +414,21 @@ async function maybeBindOutboundCredential(
   }
   try {
     await outboundAuth.bindCredential(providerSessionId, vendor, apiKey);
+    // eslint-disable-next-line no-console
+    console.log('[agents/sessions] outbound credential bound to KV', {
+      providerSessionId,
+      credentialId,
+      vendor,
+      kvKey: `agents/cred/session/${providerSessionId}/${vendor}`,
+    });
   } catch (err) {
+    // eslint-disable-next-line no-console
+    console.error('[agents/sessions] outboundAuth.bindCredential threw', {
+      providerSessionId,
+      credentialId,
+      vendor,
+      message: err instanceof Error ? err.message : String(err),
+    });
     return badRequest('Failed to write credential binding to KV', {
       message: err instanceof Error ? err.message : String(err),
     });
@@ -481,9 +554,7 @@ async function maybeRebindOutboundOnPatch(
   // supported vendor for this session. KV deletes for keys that don't
   // exist are no-ops.
   await Promise.all(
-    (
-      ['anthropic', 'openai', 'openrouter', 'google', 'cloudflare-ai-gateway'] as const
-    ).map((v) =>
+    (['anthropic', 'openai', 'openrouter', 'google', 'cloudflare-ai-gateway'] as const).map((v) =>
       outboundAuth.unbindCredential(providerSessionId, v).catch(() => {
         /* swallow */
       }),
@@ -564,9 +635,7 @@ async function unbindOutboundCredentials(
     return;
   }
   await Promise.all(
-    (
-      ['anthropic', 'openai', 'openrouter', 'google', 'cloudflare-ai-gateway'] as const
-    ).map((v) =>
+    (['anthropic', 'openai', 'openrouter', 'google', 'cloudflare-ai-gateway'] as const).map((v) =>
       outboundAuth.unbindCredential(providerSessionId, v).catch((err) => {
         deps.pluginCtx.logger.warn('[agents] outbound unbind failed', {
           providerSessionId,

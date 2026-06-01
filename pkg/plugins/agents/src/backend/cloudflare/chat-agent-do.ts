@@ -83,7 +83,7 @@ import type { AgentsAuthContext } from '../../shared/auth-context';
 import type { AgentService, PersistenceCallbacks, SessionContext } from '../service/types';
 import type { PromptInput } from '../providers/types';
 
-import { getAgentsRuntime } from './runtime-singleton';
+import { ensureAgentsRuntime, getAgentsDatabaseApi } from './runtime-singleton';
 
 /**
  * The minimum Worker env shape `AgentChatDO` requires. Consumer
@@ -132,19 +132,28 @@ interface ResolvedConnectionState {
 }
 
 /**
- * Parse the `org:${orgId}/kind:chat/${sessionId}` name back into its
+ * Parse the `org__${orgId}__chat__${sessionId}` name back into its
  * parts. Throws on malformed input — the DO is unreachable except via
  * `tenantScopedId` so this should never fail in production.
+ *
+ * **Legacy format.** Earlier releases used `org:${orgId}/kind:chat/${sessionId}`,
+ * but slashes get eaten by `partyserver`'s URL router. The legacy
+ * regex is kept as a fallback so DO instances that survived an
+ * upgrade still resolve.
  */
 function parseAgentName(name: string): { orgId: string; sessionId: string } {
-  const match = /^org:([^/]+)\/kind:chat\/(.+)$/.exec(name);
-  if (!match) {
-    throw new Error(
-      `[agents] AgentChatDO: malformed DO name "${name}" — expected ` +
-        '"org:${orgId}/kind:chat/${sessionId}"',
-    );
+  const match = /^org__(.+?)__chat__(.+)$/.exec(name);
+  if (match) {
+    return { orgId: match[1], sessionId: match[2] };
   }
-  return { orgId: match[1], sessionId: match[2] };
+  const legacy = /^org:([^/]+)\/kind:chat\/(.+)$/.exec(name);
+  if (legacy) {
+    return { orgId: legacy[1], sessionId: legacy[2] };
+  }
+  throw new Error(
+    `[agents] AgentChatDO: malformed DO name "${name}" — expected ` +
+      '"org__${orgId}__chat__${sessionId}"',
+  );
 }
 
 /**
@@ -174,6 +183,126 @@ export class AgentChatDO extends (AIChatAgent as unknown as new (
    */
   private _resolved: ResolvedConnectionState | null = null;
 
+  // ── Diagnostic overrides ─────────────────────────────────────────
+  // These wrap the partyserver / AIChatAgent dispatch chain so we can
+  // see *which* layer a chat frame reaches before getting dropped. See
+  // `docs/cloudflare-agents-routing.md` for the full chain.
+  //
+  // Order of logs we expect on a healthy send:
+  //   [AgentChatDO] onConnect in        (first attach only)
+  //   [AgentChatDO] onMessage in        (every inbound frame)
+  //   [AgentChatDO] persistMessages in  (after envelope decode)
+  //   [AgentChatDO] persistMessages out
+  //   [AgentChatDO] onChatMessage in    (after concurrency+persist)
+  //   …[agents/opencode] firing client.session.prompt…
+  //
+  // A missing log identifies the layer where the frame dies.
+
+  async onConnect(connection: unknown, ctx: unknown): Promise<void> {
+    const doName = (this as unknown as { name?: string }).name ?? '<unnamed>';
+    const conn = connection as { id?: string; uri?: string } | undefined;
+    const rctx = ctx as { request?: { url?: string } } | undefined;
+    // eslint-disable-next-line no-console
+    console.log('[AgentChatDO] onConnect in', {
+      doName,
+      connectionId: conn?.id,
+      uri: conn?.uri,
+      requestUrl: rctx?.request?.url,
+    });
+    try {
+      // @ts-expect-error super is typed through the `unknown` cast on the
+      // extends clause above, so TS can't see its methods.
+      return await super.onConnect(connection, ctx);
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.error('[AgentChatDO] onConnect threw', {
+        doName,
+        message: err instanceof Error ? err.message : String(err),
+        stack: err instanceof Error ? err.stack?.split('\n').slice(0, 5).join('\n') : undefined,
+      });
+      throw err;
+    }
+  }
+
+  async onMessage(connection: unknown, message: unknown): Promise<void> {
+    const doName = (this as unknown as { name?: string }).name ?? '<unnamed>';
+    const conn = connection as { id?: string } | undefined;
+    let envelopeType: string | undefined;
+    if (typeof message === 'string') {
+      // Only peek at the envelope `type` — never log full body content.
+      const TYPE_REGEX = /"type"\s*:\s*"([^"]+)"/;
+      const m = TYPE_REGEX.exec(message.slice(0, 200));
+      envelopeType = m?.[1];
+    }
+    // eslint-disable-next-line no-console
+    console.log('[AgentChatDO] onMessage in', {
+      doName,
+      connectionId: conn?.id,
+      messageType: typeof message,
+      messageLen:
+        typeof message === 'string'
+          ? message.length
+          : message instanceof ArrayBuffer
+            ? message.byteLength
+            : -1,
+      envelopeType,
+    });
+    try {
+      // @ts-expect-error see onConnect above.
+      return await super.onMessage(connection, message);
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.error('[AgentChatDO] onMessage threw', {
+        doName,
+        connectionId: conn?.id,
+        envelopeType,
+        message: err instanceof Error ? err.message : String(err),
+        stack: err instanceof Error ? err.stack?.split('\n').slice(0, 5).join('\n') : undefined,
+      });
+      throw err;
+    }
+  }
+
+  async persistMessages(
+    messages: unknown,
+    excludeBroadcastIds?: unknown,
+    options?: unknown,
+  ): Promise<void> {
+    const doName = (this as unknown as { name?: string }).name ?? '<unnamed>';
+    const start = Date.now();
+    const messageCount = Array.isArray(messages) ? messages.length : -1;
+    // eslint-disable-next-line no-console
+    console.log('[AgentChatDO] persistMessages in', {
+      doName,
+      messageCount,
+    });
+    try {
+      // @ts-expect-error see onConnect above.
+      const result = await super.persistMessages(messages, excludeBroadcastIds, options);
+      // eslint-disable-next-line no-console
+      console.log('[AgentChatDO] persistMessages out', {
+        doName,
+        messageCount,
+        elapsedMs: Date.now() - start,
+      });
+      return result;
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.error('[AgentChatDO] persistMessages threw', {
+        doName,
+        messageCount,
+        elapsedMs: Date.now() - start,
+        message: err instanceof Error ? err.message : String(err),
+        // If the underlying cause is a D1 timeout it shows up via `.cause`.
+        causeMessage:
+          err instanceof Error && err.cause instanceof Error ? err.cause.message : undefined,
+      });
+      throw err;
+    }
+  }
+
+  // ─────────────────────────────────────────────────────────────────
+
   /**
    * Override of `AIChatAgent.onChatMessage`. Builds the
    * `SessionContext`, calls the runtime's `AgentService.runTurn`, and
@@ -190,18 +319,18 @@ export class AgentChatDO extends (AIChatAgent as unknown as new (
     options?: OnChatMessageOptions,
   ): Promise<Response | undefined> {
     const self = this as unknown as AgentChatDOSelf;
-    const runtime = getAgentsRuntime();
-    const agentService = runtime.agentService as AgentService | undefined;
-    if (!agentService) {
-      this._emitError({
-        message:
-          'AgentService not registered on the agents runtime — Stream A ' +
-          'must register before any chat connection lands.',
-        code: 'AGENT_SERVICE_MISSING',
-      });
-      return undefined;
-    }
+    const doName = (this as unknown as { name?: string }).name ?? '<unnamed>';
+    // eslint-disable-next-line no-console
+    console.log('[AgentChatDO] onChatMessage in', {
+      doName,
+      messageCount: self.messages?.length ?? 0,
+    });
 
+    // Parse the DO name first so we have an orgId to hand to the
+    // bootstrap. The Worker fetch isolate and each DO isolate are
+    // separate, so the host's `createFlowlib({ plugins: [agents(...)] })`
+    // call has *not* populated the runtime singleton in this isolate
+    // unless the host registered a bootstrapper at module load time.
     let resolved: ResolvedConnectionState;
     try {
       resolved = this._ensureResolved();
@@ -209,6 +338,41 @@ export class AgentChatDO extends (AIChatAgent as unknown as new (
       this._emitError({
         message: err instanceof Error ? err.message : String(err),
         code: 'AGENT_DO_NAME_INVALID',
+      });
+      return undefined;
+    }
+
+    let runtime;
+    try {
+      runtime = await ensureAgentsRuntime(
+        (this as unknown as { env: unknown }).env,
+        resolved.orgId,
+      );
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.error('[AgentChatDO] ensureAgentsRuntime failed', {
+        doName,
+        orgId: resolved.orgId,
+        message: err instanceof Error ? err.message : String(err),
+      });
+      this._emitError({
+        message: err instanceof Error ? err.message : String(err),
+        code: 'AGENT_RUNTIME_UNAVAILABLE',
+      });
+      return undefined;
+    }
+    const agentService = runtime.agentService as AgentService | undefined;
+    if (!agentService) {
+      // eslint-disable-next-line no-console
+      console.error('[AgentChatDO] agentService missing on runtime singleton', {
+        doName,
+        runtimeKeys: Object.keys(runtime ?? {}),
+      });
+      this._emitError({
+        message:
+          'AgentService not registered on the agents runtime — Stream A ' +
+          'must register before any chat connection lands.',
+        code: 'AGENT_SERVICE_MISSING',
       });
       return undefined;
     }
@@ -234,10 +398,90 @@ export class AgentChatDO extends (AIChatAgent as unknown as new (
       providerSessionId: sessionContext.providerSessionId,
       parts: [{ type: 'text', text: promptText }],
       abortSignal: sessionContext.abortSignal,
+      // Plumb the session row's stored model id through to the provider.
+      // Without this, the opencode provider falls back to its factory
+      // default (historically a hyphenated id that opencode/OpenRouter
+      // don't recognise → silent 200/empty → chat hang).
+      model: sessionContext.defaultModel,
     };
+    // eslint-disable-next-line no-console
+    console.log('[AgentChatDO] promptInput', {
+      providerSessionId: promptInput.providerSessionId,
+      model: promptInput.model,
+      partsCount: promptInput.parts.length,
+    });
+
+    // Counter so we can log "runTurn finished with N events emitted" —
+    // a `result.reason: 'stop'` with `events: 0` is the silent-failure
+    // signature. Also collect a summary of event types so the
+    // canonical "1 event emitted, reason='error'" pattern (which is
+    // the kernel's session-end-with-error path) carries enough info
+    // to debug from the log alone.
+    let emittedEvents = 0;
+    const eventTypes: string[] = [];
+    let lastSessionEnd: { type: 'session-end'; reason: string; error?: string } | undefined;
+    const originalEmit = sessionContext.emit;
+    sessionContext.emit = (event) => {
+      emittedEvents += 1;
+      const evtType = (event as { type?: string }).type ?? 'unknown';
+      eventTypes.push(evtType);
+      if (evtType === 'session-end') {
+        lastSessionEnd = event as typeof lastSessionEnd;
+      }
+      originalEmit(event);
+    };
+
+    // eslint-disable-next-line no-console
+    console.log('[AgentChatDO] runTurn start', {
+      sessionId: resolved.sessionId,
+      providerSessionId: sessionContext.providerSessionId,
+      promptLen: promptText.length,
+    });
+    const runTurnStart = Date.now();
 
     try {
       const result = await agentService.runTurn(sessionContext, promptInput);
+      // eslint-disable-next-line no-console
+      console.log('[AgentChatDO] runTurn done', {
+        sessionId: resolved.sessionId,
+        reason: result.reason,
+        events: emittedEvents,
+        eventTypes,
+        // `result.error` is the kernel's `endError` — populated when
+        // the provider stream threw, the iterator's first event was
+        // an error, a hook short-circuited, etc. Logging it here is
+        // the *only* way to surface the underlying message: the kernel
+        // packs it into the `session-end` event but we'd otherwise
+        // need to reach into our event accumulator to find it.
+        error: result.error ?? lastSessionEnd?.error ?? null,
+        inputTokens: result.inputTokensTotal,
+        outputTokens: result.outputTokensTotal,
+        durationMs: Date.now() - runTurnStart,
+      });
+      // A turn that completed "normally" but produced zero events is
+      // the canonical silent-failure case. Surface it explicitly so
+      // the WS client (and `wrangler tail`) gets a signal instead of
+      // the SDK's `[AIChatAgent] onChatMessage returned no response`
+      // warning being the only clue.
+      if (emittedEvents === 0) {
+        // eslint-disable-next-line no-console
+        console.warn(
+          '[AgentChatDO] runTurn produced zero AgentEvents — provider likely failed before streaming. ' +
+            'Check the workspace sandbox process logs and the opencode provider config (e.g. loadProviderConfig).',
+          {
+            sessionId: resolved.sessionId,
+            providerSessionId: sessionContext.providerSessionId,
+          },
+        );
+        this._emitError({
+          message:
+            'Agent turn completed without producing any output. The LLM provider ' +
+            'inside the workspace sandbox likely failed before streaming (missing or ' +
+            'unmapped API key). Check the credentials for this org and the workspace ' +
+            'sandbox process logs.',
+          code: 'RUN_TURN_NO_EVENTS',
+        });
+      }
       // Hand control back to the SDK so it can persist the
       // assistant message it has been streaming. The result we pass
       // through is best-effort — the SDK only inspects `usage`.
@@ -249,6 +493,13 @@ export class AgentChatDO extends (AIChatAgent as unknown as new (
         },
       });
     } catch (err) {
+      // eslint-disable-next-line no-console
+      console.error('[AgentChatDO] runTurn threw', {
+        sessionId: resolved.sessionId,
+        durationMs: Date.now() - runTurnStart,
+        message: err instanceof Error ? err.message : String(err),
+        stack: err instanceof Error ? err.stack : undefined,
+      });
       this._emitError({
         message: err instanceof Error ? err.message : String(err),
         code: 'RUN_TURN_FAILED',
@@ -309,11 +560,29 @@ export class AgentChatDO extends (AIChatAgent as unknown as new (
     resolved: ResolvedConnectionState,
     options?: OnChatMessageOptions,
   ): Promise<SessionContext | null> {
-    const runtime = getAgentsRuntime();
-    const repositories = runtime.repositories as
-      | { sessions: { findById(id: string): Promise<unknown> } }
-      | undefined;
-    if (!repositories) {
+    const runtime = await ensureAgentsRuntime(
+      (this as unknown as { env: unknown }).env,
+      resolved.orgId,
+    );
+    // `runtime.repositories` is normally the *factory* installed by
+    // `registerRepositories(ctx)`. Materialise the bag by calling the
+    // factory with a `PluginDatabaseApi` bound to this isolate's
+    // Flowlib instance. Tests that pre-build a repositories bag and
+    // stash it directly via `setAgentsRuntime` can still pass — we
+    // detect that shape by checking for `typeof === 'function'`.
+    type RepositoriesBag = {
+      sessions: { findById(id: string): Promise<unknown> };
+      workspaces?: { findById(id: string, orgId: string): Promise<unknown> };
+      messages?: { append?: (input: unknown) => Promise<void> };
+    };
+    const reposSlot = runtime.repositories as unknown;
+    let repositories: RepositoriesBag;
+    if (typeof reposSlot === 'function') {
+      const factory = reposSlot as (db: ReturnType<typeof getAgentsDatabaseApi>) => RepositoriesBag;
+      repositories = factory(getAgentsDatabaseApi());
+    } else if (reposSlot && typeof reposSlot === 'object') {
+      repositories = reposSlot as RepositoriesBag;
+    } else {
       this._emitError({
         message: 'Repositories not registered on the agents runtime.',
         code: 'REPOSITORIES_MISSING',
@@ -330,6 +599,8 @@ export class AgentChatDO extends (AIChatAgent as unknown as new (
           providerSessionId: string;
           orgId: string;
           workspaceId?: string;
+          credentialId?: string | null;
+          model?: string | null;
         }
       | undefined;
 
@@ -340,6 +611,15 @@ export class AgentChatDO extends (AIChatAgent as unknown as new (
       });
       return null;
     }
+    // eslint-disable-next-line no-console
+    console.log('[AgentChatDO] sessionRow', {
+      sessionId: resolved.sessionId,
+      providerId: sessionRow.providerId,
+      providerSessionId: sessionRow.providerSessionId,
+      workspaceId: sessionRow.workspaceId,
+      credentialId: sessionRow.credentialId,
+      model: sessionRow.model,
+    });
     if (sessionRow.orgId !== resolved.orgId) {
       // Defence-in-depth: the DO name already encodes orgId, but if a
       // session moved orgs (shouldn't happen) we never want to surface
@@ -360,11 +640,78 @@ export class AgentChatDO extends (AIChatAgent as unknown as new (
       return null;
     }
 
+    // ── Workspace rehydration ──
+    //
+    // The original `POST /sessions` call resolved the workspace handle
+    // in the fetch isolate; that resolution stayed there as part of
+    // the provider's per-session state. This DO is a separate isolate
+    // (DO instances do not share an isolate with the Worker fetch
+    // handler), so we have to re-resolve here so the provider can
+    // be rehydrated below.
+    let workspaceHandle: { metadata?: Record<string, unknown> } | undefined;
+    if (sessionRow.workspaceId && repositories.workspaces) {
+      try {
+        const wsRow = (await repositories.workspaces.findById(
+          sessionRow.workspaceId,
+          resolved.orgId,
+        )) as { workspaceProviderId?: string } | undefined;
+        if (wsRow?.workspaceProviderId) {
+          const wsProvider = runtime.workspaces?.get(wsRow.workspaceProviderId);
+          if (wsProvider) {
+            workspaceHandle = (await wsProvider.resolve(sessionRow.workspaceId, resolved.auth)) as {
+              metadata?: Record<string, unknown>;
+            };
+          } else {
+            // eslint-disable-next-line no-console
+            console.warn('[AgentChatDO] workspace provider not registered in this isolate', {
+              workspaceProviderId: wsRow.workspaceProviderId,
+            });
+          }
+        }
+      } catch (err) {
+        // eslint-disable-next-line no-console
+        console.warn('[AgentChatDO] workspace rehydrate failed', {
+          workspaceId: sessionRow.workspaceId,
+          message: err instanceof Error ? err.message : String(err),
+        });
+      }
+    }
+
+    // ── Provider rehydration ──
+    //
+    // Providers keep per-session state in module-scoped Maps that are
+    // populated during `createSession` (e.g. opencode's `sessionsById`).
+    // Those Maps are per-isolate; they're empty in a fresh DO isolate
+    // even when the row exists in D1. Calling `provider.createSession`
+    // again with the existing `providerSessionId` is the rehydration
+    // path — providers that recognise the field treat it as idempotent
+    // and only populate state when missing.
+    try {
+      await provider.createSession({
+        auth: resolved.auth,
+        config: {},
+        workspace: workspaceHandle as never,
+        credentialId: sessionRow.credentialId ?? undefined,
+        providerSessionId: sessionRow.providerSessionId,
+      } as never);
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.warn('[AgentChatDO] provider rehydrate failed', {
+        providerId: sessionRow.providerId,
+        providerSessionId: sessionRow.providerSessionId,
+        message: err instanceof Error ? err.message : String(err),
+      });
+      // Fall through — if the provider truly doesn't have the session
+      // state, `prompt()` will yield an "unknown session id" event and
+      // the kernel will surface it as `RUN_TURN_NO_EVENTS` / a session
+      // -end-with-error event the existing logging captures.
+    }
+
     const hooks =
       (runtime.hookPipeline as SessionContext['hooks'] | undefined) ?? noopHookPipeline();
     const permissions =
       (runtime.permissions as SessionContext['permissions'] | undefined) ?? allowAllPermissions();
-    const callbacks = buildPersistenceCallbacks(runtime);
+    const callbacks = buildPersistenceCallbacks(repositories);
     const abortController = new AbortController();
     if (options?.abortSignal) {
       const sig = options.abortSignal;
@@ -380,10 +727,7 @@ export class AgentChatDO extends (AIChatAgent as unknown as new (
       providerSessionId: sessionRow.providerSessionId,
       auth: resolved.auth,
       provider,
-      // Workspace lookup is provider-specific; v1 leaves it undefined
-      // when the provider doesn't require one. Stream E + Stream I will
-      // wire workspace loading through the runtime once they land.
-      workspace: undefined,
+      workspace: workspaceHandle as never,
       hooks,
       permissions,
       logger: createSessionLogger(this),
@@ -392,6 +736,15 @@ export class AgentChatDO extends (AIChatAgent as unknown as new (
         this._emitAgentEvent(event);
       },
       abortSignal: abortController.signal,
+      // Pull the per-session model off the D1 row so the provider's
+      // prompt() sees the **user's choice** (e.g.
+      // `openrouter/anthropic/claude-sonnet-4.5`). Without this, the
+      // provider falls back to its factory `defaultModel` which is
+      // hardcoded and was historically a hyphenated Anthropic-native id
+      // (`anthropic/claude-sonnet-4-5`) — opencode silently accepts a
+      // prompt with an unknown model and returns 200/empty, making the
+      // whole chat hang. See failure mode #11 in AGENTS-DEBUGGING.md.
+      defaultModel: sessionRow.model ?? undefined,
     };
   }
 
@@ -466,11 +819,10 @@ function extractPromptText(message: unknown): string | null {
  * Stream I will own the real persistence layer — this scaffold matches
  * the interface and is replaced when the wiring lands.
  */
-function buildPersistenceCallbacks(runtime: { repositories?: unknown }): PersistenceCallbacks {
-  const repos = runtime.repositories as
-    | { messages?: { append?: (input: unknown) => Promise<void> } }
-    | undefined;
-  const append = repos?.messages?.append;
+function buildPersistenceCallbacks(repositories: {
+  messages?: { append?: (input: unknown) => Promise<void> };
+}): PersistenceCallbacks {
+  const append = repositories?.messages?.append;
 
   const noop = (): Promise<void> => Promise.resolve();
   if (!append) {

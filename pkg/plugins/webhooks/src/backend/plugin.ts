@@ -769,9 +769,7 @@ function _webhooksBackendPlugin(options?: Omit<WebhooksPluginOptions, 'frontend'
         if (typeof persistedBaseUrl === 'string' && persistedBaseUrl.length > 0) {
           state.webhookBaseUrl = persistedBaseUrl;
         }
-        const persistedMaxReq = await flowlib.settings.get<number>(
-          'webhooks.rateLimitMaxRequests',
-        );
+        const persistedMaxReq = await flowlib.settings.get<number>('webhooks.rateLimitMaxRequests');
         if (typeof persistedMaxReq === 'number' && persistedMaxReq > 0) {
           state.rateLimiter.setMaxRequests(persistedMaxReq);
         }

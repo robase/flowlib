@@ -1,111 +1,121 @@
 /**
- * ChatThread — assistant-ui Thread primitive composition for one chat
- * session.
+ * ChatThread — header + thread viewport + composer for the active
+ * chat session.
  *
- * Mounts an `<AssistantRuntimeProvider>` keyed by `sessionId` so that
- * switching threads tears down + rebuilds the runtime (history reload,
- * fresh live event stream).
+ * The assistant-ui runtime is hoisted to `AgentsLayout` via
+ * `useRemoteThreadListRuntime`. Per-thread session resources
+ * (chat-stream WS + history query) are owned by the adapter's
+ * `unstable_Provider` (see `ActiveSessionContext`). This component is
+ * mounted only when a thread is active, and it just consumes that
+ * context — it doesn't create its own runtime.
  *
- * The runtime adapter (`useAgentRuntime`) projects every non-text
- * `AgentEvent` (tool-call, file-edit, permission-request,
- * human-input-request) onto a synthetic tool-call message part. This
- * file's `ToolCall` component switches on the part's `toolName` to
- * dispatch to the right custom renderer:
- *
- *   - `__flowlib_file_edit__`  → `FileDiffViewer`
- *   - `__flowlib_permission__` → `PermissionRequestPrompt`
- *   - `__flowlib_human_input__` → `HumanInputCard`
- *   - everything else          → `ToolCallCard`
- *
- * The interactive renderers (permission, HIL) read the response
- * handlers from `AgentStreamContext`.
+ * Tool-call dispatching: every non-text `AgentEvent` (file-edit,
+ * permission-request, human-input-request) is projected by the
+ * runtime adapter onto a synthetic tool-call message part with a
+ * `FLOWLIB_*` sentinel `toolName`. The `tools.by_name` map routes
+ * each sentinel to its dedicated renderer; everything else falls
+ * through to `ToolFallback` (collapsible `ToolCallCard`).
  */
 import * as React from 'react';
 import {
-  AssistantRuntimeProvider,
+  ActionBarPrimitive,
+  AuiIf,
+  BranchPickerPrimitive,
   ComposerPrimitive,
+  ErrorPrimitive,
   MessagePrimitive,
   ThreadPrimitive,
-  type TextMessagePartComponent,
   type ToolCallMessagePartComponent,
 } from '@assistant-ui/react';
-import { ArrowUp, Bot, Square, User } from 'lucide-react';
-import { useAgentRuntime } from '../hooks/useAgentRuntime';
+import '@assistant-ui/react-markdown/styles/dot.css';
+import {
+  ArrowDownIcon,
+  ArrowUpIcon,
+  Bot,
+  CheckIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  CopyIcon,
+  DownloadIcon,
+  LoaderIcon,
+  PencilIcon,
+  RefreshCwIcon,
+  SquareIcon,
+  User,
+} from 'lucide-react';
 import { FLOWLIB_TOOL_NAMES } from '../hooks/useAgentRuntime';
-import { AgentStreamProvider, useAgentStream } from './AgentStreamContext';
-import { ToolCallCard } from './ToolCallCard';
+import { useUpdateSession } from '../hooks/useSessions';
+import { useActiveSession } from './ActiveSessionContext';
+import { useAgentStream } from './AgentStreamContext';
+import { ModelSelector, type ModelSelection } from './ModelSelector';
 import { FileDiffViewer } from './FileDiffViewer';
 import { PermissionRequestPrompt } from './PermissionRequestPrompt';
 import { HumanInputCard } from './HumanInputCard';
+import { TooltipIconButton } from './ui/tooltip-icon-button';
+import { MarkdownText } from './ui/markdown-text';
+import { ToolFallback } from './ui/tool-fallback';
+import {
+  ComposerAddAttachment,
+  ComposerAttachments,
+  UserMessageAttachments,
+} from './ui/attachment';
+import { cn } from '../lib/cn';
 import type { AgentSession } from '../../shared/types';
 import type {
   FileEditEvent,
   HumanInputRequestEvent,
   PermissionRequestEvent,
-  ToolCallEvent,
-  ToolResultEvent,
 } from '../../shared/events';
+
+const THREAD_STYLE: React.CSSProperties = {
+  ['--thread-max-width' as string]: '44rem',
+};
 
 export interface ChatThreadProps {
   session: AgentSession;
 }
 
 export function ChatThread({ session }: ChatThreadProps): React.ReactElement {
-  // Key the inner runtime by session.id so a thread switch fully
-  // remounts. Also re-mounts on credential / model changes that the
-  // session API surfaces — those are static enough that a remount is
-  // acceptable and avoids stale cached message state.
-  return <ChatThreadInner key={session.id} session={session} />;
-}
-
-function ChatThreadInner({ session }: ChatThreadProps): React.ReactElement {
-  const { runtime, isLoadingHistory, stream } = useAgentRuntime(session.id);
+  const active = useActiveSession();
+  const status = active?.stream.status ?? 'connecting';
+  const error = active?.stream.error;
+  const isLoadingHistory = active?.messagesQuery.isLoading ?? true;
 
   return (
-    <AgentStreamProvider
-      controls={{
-        permissionResponse: stream.permissionResponse,
-        hilResponse: stream.hilResponse,
-        resolvedPermissions: stream.resolvedPermissions,
-        resolvedHumanInputs: stream.resolvedHumanInputs,
-      }}
-    >
-      <AssistantRuntimeProvider runtime={runtime}>
-        <div className="flex flex-col h-full min-h-0">
-          <ChatHeader session={session} status={stream.status} error={stream.error} />
-          <ThreadPrimitive.Root className="flex flex-col flex-1 min-h-0 bg-fl-background">
-            <ThreadPrimitive.Viewport
-              className="flex-1 overflow-y-auto"
-              data-testid="agents-thread-viewport"
-            >
-              {isLoadingHistory ? (
-                <div className="flex items-center justify-center py-12 text-sm text-fl-muted-foreground">
-                  Loading history…
-                </div>
-              ) : (
-                // Only show the "type a message…" hint once history has
-                // resolved — otherwise it flashes briefly underneath the
-                // loading row while the snapshot is in flight.
-                <ThreadPrimitive.Empty>
-                  <EmptyState session={session} />
-                </ThreadPrimitive.Empty>
-              )}
+    <div className="flex flex-col h-full min-h-0">
+      <ChatHeader session={session} status={status} error={error} />
+      <ThreadPrimitive.Root
+        className="flex flex-1 flex-col bg-fl-background text-sm min-h-0"
+        style={THREAD_STYLE}
+      >
+        <ThreadPrimitive.Viewport
+          turnAnchor="top"
+          className="relative flex flex-1 flex-col overflow-y-auto scroll-smooth px-4 pt-4"
+          data-testid="agents-thread-viewport"
+        >
+          {isLoadingHistory ? (
+            <LoadingHistory />
+          ) : (
+            <AuiIf condition={(s) => s.thread.isEmpty}>
+              <ThreadWelcome session={session} />
+            </AuiIf>
+          )}
 
-              <div className="mx-auto max-w-3xl w-full px-4 py-6 space-y-4">
-                <ThreadPrimitive.Messages
-                  components={{
-                    UserMessage,
-                    AssistantMessage,
-                  }}
-                />
-              </div>
-            </ThreadPrimitive.Viewport>
+          <ThreadPrimitive.Messages
+            components={{
+              UserMessage,
+              EditComposer,
+              AssistantMessage,
+            }}
+          />
 
-            <ChatComposer />
-          </ThreadPrimitive.Root>
-        </div>
-      </AssistantRuntimeProvider>
-    </AgentStreamProvider>
+          <ThreadPrimitive.ViewportFooter className="sticky bottom-0 mx-auto mt-auto flex w-full max-w-[var(--thread-max-width)] flex-col gap-3 overflow-visible rounded-t-3xl bg-fl-background pb-4">
+            <ThreadScrollToBottom />
+            <Composer />
+          </ThreadPrimitive.ViewportFooter>
+        </ThreadPrimitive.Viewport>
+      </ThreadPrimitive.Root>
+    </div>
   );
 }
 
@@ -120,15 +130,23 @@ function ChatHeader({
   status: 'connecting' | 'streaming' | 'idle' | 'error';
   error?: string;
 }): React.ReactElement {
+  const updateSession = useUpdateSession();
+
+  const handleModelChange = React.useCallback(
+    (next: ModelSelection) => {
+      updateSession.mutate({
+        id: session.id,
+        input: { providerId: next.providerId, model: next.model },
+      });
+    },
+    [session.id, updateSession],
+  );
+
   return (
-    <header className="flex items-center justify-between px-4 py-2.5 border-b border-fl-border bg-fl-background">
+    <header className="flex items-center justify-between px-4 py-2.5 border-b border-fl-border bg-fl-background gap-3">
       <div className="flex items-center gap-2 min-w-0">
         <Bot className="size-4 text-fl-primary shrink-0" />
         <span className="text-sm font-semibold truncate">{session.title}</span>
-        <span className="text-xs text-fl-muted-foreground truncate">
-          {session.providerId}
-          {session.model ? ` · ${session.model}` : ''}
-        </span>
       </div>
       <div className="flex items-center gap-2 shrink-0">
         {status === 'error' && error ? (
@@ -136,13 +154,16 @@ function ChatHeader({
             {error}
           </span>
         ) : (
-          <span
-            className="text-xs text-fl-muted-foreground"
-            data-testid="agents-connection-status"
-          >
+          <span className="text-xs text-fl-muted-foreground" data-testid="agents-connection-status">
             {humanStatus(status)}
           </span>
         )}
+        <ModelSelector
+          providerId={session.providerId}
+          model={session.model}
+          onChange={handleModelChange}
+          disabled={updateSession.isPending || status === 'streaming'}
+        />
       </div>
     </header>
   );
@@ -161,99 +182,333 @@ function humanStatus(status: 'connecting' | 'streaming' | 'idle' | 'error'): str
   }
 }
 
+// ─── Welcome / loading ──────────────────────────────────────────────────
+
+function LoadingHistory(): React.ReactElement {
+  return (
+    <div className="flex items-center justify-center py-12 text-sm text-fl-muted-foreground">
+      <LoaderIcon className="size-4 animate-spin mr-2" />
+      Loading history…
+    </div>
+  );
+}
+
+function ThreadWelcome({ session }: { session: AgentSession }): React.ReactElement {
+  return (
+    <div className="mx-auto my-auto flex w-full max-w-[var(--thread-max-width)] flex-grow flex-col">
+      <div className="flex w-full flex-grow flex-col items-center justify-center">
+        <div className="flex size-full flex-col justify-center px-2">
+          <div className="flex items-center gap-2">
+            <Bot className="size-5 text-fl-primary" />
+            <span className="text-2xl font-semibold text-fl-foreground">{session.title}</span>
+          </div>
+          <div className="text-2xl text-fl-muted-foreground/70 mt-1">What should we work on?</div>
+        </div>
+      </div>
+      <div className="grid w-full gap-2 pb-4 md:grid-cols-2">
+        <SuggestionCard
+          title="Summarize this workspace"
+          subtitle="List the top-level packages and what each does"
+          prompt="Give me a tour of this workspace. List the top-level packages and briefly describe what each does."
+        />
+        <SuggestionCard
+          title="Find a bug"
+          subtitle="Look for likely issues in recently changed files"
+          prompt="Look at the recently changed files. Are there any obvious bugs, missing error handling, or subtle issues?"
+        />
+        <SuggestionCard
+          title="Write a test"
+          subtitle="Pick an untested function and add a unit test"
+          prompt="Find an untested function in this workspace and write a focused unit test for it."
+        />
+        <SuggestionCard
+          title="Refactor for clarity"
+          subtitle="Suggest small improvements to readability"
+          prompt="Pick a file that looks complex and suggest a small refactor that improves readability without changing behavior."
+        />
+      </div>
+    </div>
+  );
+}
+
+function SuggestionCard({
+  title,
+  subtitle,
+  prompt,
+}: {
+  title: string;
+  subtitle: string;
+  prompt: string;
+}): React.ReactElement {
+  return (
+    <ThreadPrimitive.Suggestion prompt={prompt} method="replace" autoSend asChild>
+      <button
+        type="button"
+        className="flex h-auto w-full flex-col items-start justify-start gap-1 rounded-2xl border border-fl-border bg-fl-card px-5 py-4 text-left text-sm transition-colors hover:bg-fl-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fl-primary/50"
+      >
+        <span className="font-medium text-fl-foreground">{title}</span>
+        <span className="text-fl-muted-foreground">{subtitle}</span>
+      </button>
+    </ThreadPrimitive.Suggestion>
+  );
+}
+
+// ─── Composer ───────────────────────────────────────────────────────────
+
+function Composer(): React.ReactElement {
+  return (
+    <ComposerPrimitive.Root className="relative flex w-full flex-col" data-testid="agents-composer">
+      <ComposerPrimitive.AttachmentDropzone className="flex w-full flex-col rounded-2xl border border-fl-border bg-fl-card px-1 pt-2 outline-none transition-shadow has-[textarea:focus-visible]:border-fl-primary/60 has-[textarea:focus-visible]:ring-2 has-[textarea:focus-visible]:ring-fl-primary/20 data-[dragging=true]:border-fl-primary data-[dragging=true]:border-dashed data-[dragging=true]:bg-fl-primary/5">
+        <ComposerAttachments />
+        <ComposerPrimitive.Input
+          placeholder="Send a message…"
+          className="mb-1 max-h-40 min-h-14 w-full resize-none bg-transparent px-4 pt-2 pb-3 text-sm outline-none placeholder:text-fl-muted-foreground focus-visible:ring-0"
+          rows={1}
+          autoFocus
+          aria-label="Message input"
+          data-testid="agents-composer-input"
+        />
+        <ComposerAction />
+      </ComposerPrimitive.AttachmentDropzone>
+    </ComposerPrimitive.Root>
+  );
+}
+
+function ComposerAction(): React.ReactElement {
+  return (
+    <div className="relative mx-2 mb-2 flex items-center justify-between">
+      <ComposerAddAttachment />
+
+      <AuiIf condition={(s) => !s.thread.isRunning}>
+        <ComposerPrimitive.Send asChild>
+          <TooltipIconButton
+            tooltip="Send message"
+            variant="default"
+            size="icon"
+            className="size-8 rounded-full"
+            data-testid="agents-composer-send"
+          >
+            <ArrowUpIcon className="size-4" />
+          </TooltipIconButton>
+        </ComposerPrimitive.Send>
+      </AuiIf>
+
+      <AuiIf condition={(s) => s.thread.isRunning}>
+        <ComposerPrimitive.Cancel asChild>
+          <TooltipIconButton
+            tooltip="Stop generating"
+            variant="default"
+            size="icon"
+            className="size-8 rounded-full bg-fl-destructive text-fl-destructive-foreground"
+            data-testid="agents-composer-cancel"
+          >
+            <SquareIcon className="size-3 fill-current" />
+          </TooltipIconButton>
+        </ComposerPrimitive.Cancel>
+      </AuiIf>
+    </div>
+  );
+}
+
+function ThreadScrollToBottom(): React.ReactElement {
+  return (
+    <ThreadPrimitive.ScrollToBottom asChild>
+      <TooltipIconButton
+        tooltip="Scroll to bottom"
+        variant="outline"
+        className="absolute -top-12 z-10 self-center rounded-full p-4 disabled:invisible"
+      >
+        <ArrowDownIcon />
+      </TooltipIconButton>
+    </ThreadPrimitive.ScrollToBottom>
+  );
+}
+
 // ─── Messages ───────────────────────────────────────────────────────────
 
 function UserMessage(): React.ReactElement {
   return (
     <MessagePrimitive.Root
-      className="flex gap-3 justify-end"
+      className="mx-auto grid w-full max-w-[var(--thread-max-width)] auto-rows-auto grid-cols-[minmax(72px,1fr)_auto] content-start gap-y-2 px-2 py-3 fade-in slide-in-from-bottom-1 animate-in duration-150"
       data-role="user"
       data-testid="agents-message-user"
     >
-      <div className="max-w-[80%] rounded-lg bg-fl-primary text-fl-primary-foreground px-3 py-2 text-sm whitespace-pre-wrap break-words">
-        <MessagePrimitive.Content />
+      <UserMessageAttachments />
+
+      <div className="relative col-start-2 min-w-0 flex items-start gap-2">
+        <div className="rounded-2xl bg-fl-primary/10 text-fl-foreground px-4 py-2.5 break-words text-sm whitespace-pre-wrap">
+          <MessagePrimitive.Parts />
+        </div>
+        <Avatar role="user" />
+        <div className="absolute top-1/2 left-0 -translate-x-full -translate-y-1/2 pr-2">
+          <UserActionBar />
+        </div>
       </div>
-      <Avatar role="user" />
+
+      <BranchPicker className="col-span-full col-start-1 row-start-3 -mr-1 justify-end" />
     </MessagePrimitive.Root>
   );
 }
+
+function UserActionBar(): React.ReactElement {
+  return (
+    <ActionBarPrimitive.Root
+      hideWhenRunning
+      autohide="not-last"
+      className="flex flex-col items-end"
+    >
+      <ActionBarPrimitive.Edit asChild>
+        <TooltipIconButton tooltip="Edit">
+          <PencilIcon />
+        </TooltipIconButton>
+      </ActionBarPrimitive.Edit>
+    </ActionBarPrimitive.Root>
+  );
+}
+
+function EditComposer(): React.ReactElement {
+  return (
+    <MessagePrimitive.Root className="mx-auto flex w-full max-w-[var(--thread-max-width)] flex-col px-2 py-3">
+      <ComposerPrimitive.Root className="ml-auto flex w-full max-w-[85%] flex-col rounded-2xl bg-fl-muted/40 border border-fl-border">
+        <ComposerPrimitive.Input
+          className="min-h-14 w-full resize-none bg-transparent p-4 text-fl-foreground text-sm outline-none"
+          autoFocus
+        />
+        <div className="mx-3 mb-3 flex items-center gap-2 self-end">
+          <ComposerPrimitive.Cancel asChild>
+            <button
+              type="button"
+              className="rounded-md px-3 py-1.5 text-xs text-fl-muted-foreground hover:bg-fl-muted/60"
+            >
+              Cancel
+            </button>
+          </ComposerPrimitive.Cancel>
+          <ComposerPrimitive.Send asChild>
+            <button
+              type="button"
+              className="rounded-md bg-fl-primary px-3 py-1.5 text-xs font-medium text-fl-primary-foreground hover:opacity-90"
+            >
+              Update
+            </button>
+          </ComposerPrimitive.Send>
+        </div>
+      </ComposerPrimitive.Root>
+    </MessagePrimitive.Root>
+  );
+}
+
+const TOOL_COMPONENTS: Record<string, ToolCallMessagePartComponent> = {
+  [FLOWLIB_TOOL_NAMES.fileEdit]: ({ args }) => <FileDiffViewer event={args as FileEditEvent} />,
+  [FLOWLIB_TOOL_NAMES.permission]: ({ args }) => (
+    <PermissionPart event={args as PermissionRequestEvent} />
+  ),
+  [FLOWLIB_TOOL_NAMES.humanInput]: ({ args }) => (
+    <HumanInputPart event={args as HumanInputRequestEvent} />
+  ),
+};
 
 function AssistantMessage(): React.ReactElement {
   return (
     <MessagePrimitive.Root
-      className="flex gap-3"
+      className="relative mx-auto w-full max-w-[var(--thread-max-width)] py-3 fade-in slide-in-from-bottom-1 animate-in duration-150"
       data-role="assistant"
       data-testid="agents-message-assistant"
     >
-      <Avatar role="assistant" />
-      <div className="min-w-0 flex-1 max-w-[80%] space-y-2">
-        <MessagePrimitive.Content
-          components={{
-            Text: AssistantTextPart,
-            tools: { Override: AssistantToolCallPart },
-          }}
-        />
+      <div className="flex gap-3 px-2">
+        <Avatar role="assistant" />
+        <div className="min-w-0 flex-1 break-words leading-relaxed text-fl-foreground space-y-2">
+          <MessagePrimitive.Parts
+            components={{
+              Text: MarkdownText,
+              tools: { by_name: TOOL_COMPONENTS, Fallback: ToolFallback },
+            }}
+          />
+          <MessageError />
+          <AuiIf condition={(s) => s.thread.isRunning && s.message.content.length === 0}>
+            <div className="flex items-center gap-2 text-fl-muted-foreground">
+              <LoaderIcon className="size-4 animate-spin" />
+              <span className="text-sm">Thinking…</span>
+            </div>
+          </AuiIf>
+        </div>
+      </div>
+
+      <div className="mt-1 ml-12 flex min-h-6 items-center">
+        <BranchPicker />
+        <AssistantActionBar />
       </div>
     </MessagePrimitive.Root>
   );
 }
 
-const AssistantTextPart: TextMessagePartComponent = ({ text }) => {
-  if (!text) {
-    return null;
-  }
+function MessageError(): React.ReactElement {
   return (
-    <div className="rounded-lg bg-fl-card text-fl-card-foreground border border-fl-border px-3 py-2 text-sm whitespace-pre-wrap break-words">
-      {text}
-    </div>
+    <MessagePrimitive.Error>
+      <ErrorPrimitive.Root className="mt-2 rounded-md border border-fl-destructive bg-fl-destructive/10 p-3 text-sm text-fl-destructive">
+        <ErrorPrimitive.Message className="line-clamp-2" />
+      </ErrorPrimitive.Root>
+    </MessagePrimitive.Error>
   );
-};
+}
 
-/**
- * Tool-call part dispatcher. The runtime adapter projects every
- * non-text `AgentEvent` (file-edit, permission-request,
- * human-input-request) onto a synthetic tool-call part with a
- * sentinel `toolName`; this component switches on the sentinel and
- * mounts the right custom renderer.
- */
-const AssistantToolCallPart: ToolCallMessagePartComponent = ({
-  toolCallId,
-  toolName,
-  args,
-  result,
-  isError,
-}) => {
-  if (toolName === FLOWLIB_TOOL_NAMES.fileEdit) {
-    const event = args as FileEditEvent;
-    return <FileDiffViewer event={event} />;
-  }
-  if (toolName === FLOWLIB_TOOL_NAMES.permission) {
-    return <PermissionPart event={args as PermissionRequestEvent} />;
-  }
-  if (toolName === FLOWLIB_TOOL_NAMES.humanInput) {
-    return <HumanInputPart event={args as HumanInputRequestEvent} />;
-  }
-  // Real tool call. Reconstruct synthetic event objects so we can
-  // hand them to the existing `ToolCallCard` renderer unchanged.
-  const call: ToolCallEvent = {
-    type: 'tool-call',
-    messageId: '',
-    id: toolCallId,
-    name: toolName,
-    input: args,
-  };
-  const resultEvent: ToolResultEvent | undefined =
-    result !== undefined
-      ? {
-          type: 'tool-result',
-          messageId: '',
-          id: toolCallId,
-          output: result,
-          isError,
-        }
-      : undefined;
-  return <ToolCallCard call={call} result={resultEvent} />;
-};
+function AssistantActionBar(): React.ReactElement {
+  return (
+    <ActionBarPrimitive.Root
+      hideWhenRunning
+      autohide="not-last"
+      className="-ml-1 flex gap-1 text-fl-muted-foreground"
+    >
+      <ActionBarPrimitive.Copy asChild>
+        <TooltipIconButton tooltip="Copy" size="sm">
+          <AuiIf condition={(s) => s.message.isCopied}>
+            <CheckIcon />
+          </AuiIf>
+          <AuiIf condition={(s) => !s.message.isCopied}>
+            <CopyIcon />
+          </AuiIf>
+        </TooltipIconButton>
+      </ActionBarPrimitive.Copy>
+      <ActionBarPrimitive.ExportMarkdown asChild>
+        <TooltipIconButton tooltip="Export as Markdown" size="sm">
+          <DownloadIcon />
+        </TooltipIconButton>
+      </ActionBarPrimitive.ExportMarkdown>
+      <ActionBarPrimitive.Reload asChild>
+        <TooltipIconButton tooltip="Regenerate" size="sm">
+          <RefreshCwIcon />
+        </TooltipIconButton>
+      </ActionBarPrimitive.Reload>
+    </ActionBarPrimitive.Root>
+  );
+}
+
+function BranchPicker({ className }: { className?: string }): React.ReactElement {
+  return (
+    <BranchPickerPrimitive.Root
+      hideWhenSingleBranch
+      className={cn(
+        'mr-2 -ml-2 inline-flex items-center text-xs text-fl-muted-foreground',
+        className,
+      )}
+    >
+      <BranchPickerPrimitive.Previous asChild>
+        <TooltipIconButton tooltip="Previous" size="sm">
+          <ChevronLeftIcon />
+        </TooltipIconButton>
+      </BranchPickerPrimitive.Previous>
+      <span className="font-medium tabular-nums px-1">
+        <BranchPickerPrimitive.Number /> / <BranchPickerPrimitive.Count />
+      </span>
+      <BranchPickerPrimitive.Next asChild>
+        <TooltipIconButton tooltip="Next" size="sm">
+          <ChevronRightIcon />
+        </TooltipIconButton>
+      </BranchPickerPrimitive.Next>
+    </BranchPickerPrimitive.Root>
+  );
+}
+
+// ─── FLOWLIB tool-call parts ────────────────────────────────────────────
 
 function PermissionPart({ event }: { event: PermissionRequestEvent }): React.ReactElement {
   const stream = useAgentStream();
@@ -279,73 +534,19 @@ function HumanInputPart({ event }: { event: HumanInputRequestEvent }): React.Rea
   );
 }
 
+// ─── Misc ───────────────────────────────────────────────────────────────
+
 function Avatar({ role }: { role: 'user' | 'assistant' }): React.ReactElement {
   return (
     <div
-      className={`size-7 rounded-full flex items-center justify-center shrink-0 ${
+      className={cn(
+        'size-8 rounded-full flex items-center justify-center shrink-0',
         role === 'user'
           ? 'bg-fl-primary/10 text-fl-primary'
-          : 'bg-fl-muted/40 text-fl-muted-foreground'
-      }`}
+          : 'bg-fl-muted/40 text-fl-muted-foreground',
+      )}
     >
-      {role === 'user' ? <User className="size-3.5" /> : <Bot className="size-3.5" />}
+      {role === 'user' ? <User className="size-4" /> : <Bot className="size-4" />}
     </div>
-  );
-}
-
-function EmptyState({ session }: { session: AgentSession }): React.ReactElement {
-  return (
-    <div className="flex-1 flex items-center justify-center py-16">
-      <div className="text-center max-w-sm">
-        <Bot className="size-8 mx-auto text-fl-muted-foreground/60 mb-3" />
-        <h2 className="text-base font-semibold text-fl-foreground">{session.title}</h2>
-        <p className="text-sm text-fl-muted-foreground mt-1">
-          Type a message below to start the conversation.
-        </p>
-      </div>
-    </div>
-  );
-}
-
-// ─── Composer ───────────────────────────────────────────────────────────
-
-function ChatComposer(): React.ReactElement {
-  return (
-    <ComposerPrimitive.Root
-      className="border-t border-fl-border bg-fl-background p-3"
-      data-testid="agents-composer"
-    >
-      <div className="mx-auto max-w-3xl flex items-end gap-2 rounded-lg border border-fl-border bg-fl-card focus-within:border-fl-primary/60 px-3 py-2">
-        <ComposerPrimitive.Input
-          className="flex-1 resize-none bg-transparent text-sm outline-none placeholder:text-fl-muted-foreground min-h-[2rem] max-h-60"
-          placeholder="Send a message…"
-          rows={1}
-          autoFocus
-          data-testid="agents-composer-input"
-        />
-        <ComposerSendOrCancel />
-      </div>
-    </ComposerPrimitive.Root>
-  );
-}
-
-function ComposerSendOrCancel(): React.ReactElement {
-  return (
-    <>
-      <ComposerPrimitive.Send
-        className="size-8 inline-flex items-center justify-center rounded-md bg-fl-primary text-fl-primary-foreground hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed data-[show=false]:hidden"
-        data-testid="agents-composer-send"
-        aria-label="Send"
-      >
-        <ArrowUp className="size-4" />
-      </ComposerPrimitive.Send>
-      <ComposerPrimitive.Cancel
-        className="size-8 inline-flex items-center justify-center rounded-md bg-fl-destructive text-fl-destructive-foreground hover:opacity-90 data-[show=false]:hidden"
-        data-testid="agents-composer-cancel"
-        aria-label="Stop"
-      >
-        <Square className="size-3.5" />
-      </ComposerPrimitive.Cancel>
-    </>
   );
 }

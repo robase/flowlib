@@ -124,9 +124,10 @@ export interface VercelWorkflowsEffectiveConfig {
   defaultConfigImport: string;
 }
 
-export function buildBackendPlugin(
-  options: VercelWorkflowsBackendOptions = {},
-): { plugin: FlowlibPlugin; effective: VercelWorkflowsEffectiveConfig } {
+export function buildBackendPlugin(options: VercelWorkflowsBackendOptions = {}): {
+  plugin: FlowlibPlugin;
+  effective: VercelWorkflowsEffectiveConfig;
+} {
   const effective: VercelWorkflowsEffectiveConfig = {
     defaultFlowImport: options.defaultFlowImport ?? './flow',
     defaultConfigImport: options.defaultConfigImport ?? './flow.config',

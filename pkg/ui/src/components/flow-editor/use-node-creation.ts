@@ -16,7 +16,7 @@ export function useNodeCreation() {
   const reactFlowInstance = useReactFlow();
 
   const createNewNode = useCallback(
-    (type: string) => {
+    (type: string, options?: { position?: { x: number; y: number } }) => {
       const definition = getNodeDefinition(type);
 
       // Enforce maxInstances
@@ -52,14 +52,17 @@ export function useNodeCreation() {
       const displayName = generateUniqueDisplayName(baseDisplayName, currentNodes);
       const referenceId = generateUniqueReferenceId(displayName, currentNodes);
 
-      // Always try the viewport center first; findVisiblePlacementPosition
-      // bumps it bottom-left if the spot is already taken.
-      const viewportCenter = reactFlowInstance.screenToFlowPosition({
-        x: window.innerWidth / 2,
-        y: window.innerHeight / 2,
-      });
-      const startX = Math.round(viewportCenter.x - NODE_WIDTH / 2);
-      const startY = Math.round(viewportCenter.y - NODE_HEIGHT / 2);
+      // When a drop position is provided (drag-and-drop from palette), center
+      // the node on the cursor. Otherwise place at viewport center.
+      // findVisiblePlacementPosition bumps bottom-left if the spot is taken.
+      const anchor =
+        options?.position ??
+        reactFlowInstance.screenToFlowPosition({
+          x: window.innerWidth / 2,
+          y: window.innerHeight / 2,
+        });
+      const startX = Math.round(anchor.x - NODE_WIDTH / 2);
+      const startY = Math.round(anchor.y - NODE_HEIGHT / 2);
 
       const position = findVisiblePlacementPosition(startX, startY, currentNodes);
 

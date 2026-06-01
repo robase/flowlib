@@ -195,6 +195,18 @@ export function buildOpencodeLlmProviderLoader(
       }
     }
 
-    return Object.keys(provider).length > 0 ? provider : undefined;
+    const vendors = Object.keys(provider);
+    if (vendors.length === 0) {
+      options.logger?.warn?.(
+        "[agents/opencode] loadProviderConfig produced no provider entries — opencode will boot with no API keys and the first LLM call will fail. Check that the org has at least one active `type: 'llm'` credential and that `inferOpencodeProvider` recognises its vendor.",
+        { totalRows: rows.length },
+      );
+    } else {
+      options.logger?.warn?.('[agents/opencode] loadProviderConfig resolved vendors', {
+        vendors,
+        totalRows: rows.length,
+      });
+    }
+    return vendors.length > 0 ? provider : undefined;
   };
 }

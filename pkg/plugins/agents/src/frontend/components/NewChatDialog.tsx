@@ -16,6 +16,9 @@
 
 import * as React from 'react';
 import type { AgentCredentialOption } from '../api/credentials.api';
+import type { AgentProviderId } from '../../shared/types';
+import { ModelSelector, type ModelSelection } from './ModelSelector';
+import { PROVIDER_CATALOGUE } from '../lib/provider-models';
 
 export interface NewChatDialogProps {
   open: boolean;
@@ -24,7 +27,11 @@ export interface NewChatDialogProps {
   error: Error | null;
   isStarting: boolean;
   onCancel: () => void;
-  onStart: (input: { credentialId: string | null }) => void;
+  onStart: (input: {
+    credentialId: string | null;
+    providerId?: AgentProviderId;
+    model?: string;
+  }) => void;
   /**
    * Optional one-line context shown above the credential list — e.g.
    * "Adding to workspace: My Project" or "Starting a new workspace".
@@ -45,6 +52,10 @@ export function NewChatDialog({
   targetLabel,
 }: NewChatDialogProps): React.ReactElement | null {
   const [selectedId, setSelectedId] = React.useState<string | null>(null);
+  const [selectedModel, setSelectedModel] = React.useState<ModelSelection>(() => {
+    const fallback = PROVIDER_CATALOGUE[0]!;
+    return { providerId: fallback.id, model: fallback.models[0]!.id };
+  });
 
   // Auto-select the first active credential when the dialog opens so
   // the user can usually press Enter without picking from a list.
@@ -65,7 +76,11 @@ export function NewChatDialog({
   }
 
   const handleStart = () => {
-    onStart({ credentialId: selectedId });
+    onStart({
+      credentialId: selectedId,
+      providerId: selectedModel.providerId,
+      model: selectedModel.model,
+    });
   };
 
   const grouped = groupByProvider(credentials);
@@ -96,6 +111,19 @@ export function NewChatDialog({
               {targetLabel}
             </p>
           ) : null}
+        </div>
+
+        <div className="px-5 py-3 border-b border-fl-border">
+          <div className="text-xs font-medium uppercase tracking-wide text-fl-muted-foreground mb-1.5">
+            Model
+          </div>
+          <ModelSelector
+            providerId={selectedModel.providerId}
+            model={selectedModel.model}
+            onChange={setSelectedModel}
+            variant="block"
+            testIdPrefix="new-chat-model-selector"
+          />
         </div>
 
         <div className="px-5 py-4 max-h-[420px] overflow-y-auto">

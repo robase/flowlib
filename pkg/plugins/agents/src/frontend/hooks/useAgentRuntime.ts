@@ -1,19 +1,20 @@
 /**
- * useAgentRuntime — assistant-ui runtime adapter for one chat session.
+ * useAgentRuntime — assistant-ui runtime adapter for the **currently
+ * active** chat session.
  *
- * Wires the agents plugin's existing transport (`useChatStream` over
- * the AgentChatDO WebSocket) plus REST history (`useSessionMessages`)
- * into `useExternalStoreRuntime`. The result is dropped into
- * `<AssistantRuntimeProvider>` and consumed by assistant-ui's `Thread`
- * primitives.
+ * The agents plugin uses `useRemoteThreadListRuntime` at the layout
+ * level; assistant-ui invokes this hook inside its per-thread binder
+ * (one tree per active thread). The thread's session resources
+ * (chat-stream WebSocket + history query) are owned by the adapter's
+ * `unstable_Provider` — see `ActiveSessionContext`. This hook reads
+ * them from context and returns just the `AssistantRuntime`.
  *
  * Design notes:
  *
- * - History is loaded once at mount via `GET /sessions/:id/messages`.
- *   It's treated as an immutable snapshot; live updates do not mutate
- *   the cache. On thread switch the runtime is remounted (because the
- *   caller keys `<AssistantRuntimeProvider>` by sessionId), which
- *   discards the live events and reloads history.
+ * - History is loaded once per active thread via
+ *   `GET /sessions/:id/messages`. The query is cached by React Query;
+ *   the runtime treats it as an immutable snapshot. Live events
+ *   layered on top come from the WS stream.
  *
  * - Live events arrive as an append-only `AgentEvent[]` from
  *   `useChatStream`. The reducer in this file groups them into
@@ -24,16 +25,10 @@
  *   on the sentinel to mount the right custom component.
  *
  * - User messages are optimistic: on `onNew` we push to a local
- *   `liveItems` array and call `chatStream.send(text)`. They are
- *   never "claimed" or removed during the session — they remain in
- *   the live view alongside assistant messages until the runtime
- *   remounts.
- *
- * - Permission and HIL responses flow back through the same WS via
- *   `chatStream.permissionResponse` / `chatStream.hilResponse`. The
- *   runtime exposes `stream` so the custom-part renderers can pull
- *   these handlers and the resolved-state maps from a context wrapper
- *   (`AgentStreamContext`).
+ *   `liveItems` array and call `chatStream.send(text)`. Permission and
+ *   HIL responses flow back through the same WS via the `stream`
+ *   handle, surfaced to message-part renderers via
+ *   `AgentStreamContext`.
  */
 import * as React from 'react';
 import {
@@ -41,8 +36,7 @@ import {
   type AppendMessage,
   type ThreadMessage,
 } from '@assistant-ui/react';
-import { useChatStream } from './useChatStream';
-import { useSessionMessages } from './useSessions';
+import { useActiveSession } from '../components/ActiveSessionContext';
 import type { AgentEvent } from '../../shared/events';
 import type { AgentMessage, AgentMessagePart } from '../../shared/types';
 
@@ -333,7 +327,9 @@ function convertMessage(m: RuntimeMessage): ThreadMessage {
     return {
       id: m.id,
       role: 'user',
-      content: m.parts.filter((p): p is Extract<RuntimeMessagePart, { type: 'text' }> => p.type === 'text'),
+      content: m.parts.filter(
+        (p): p is Extract<RuntimeMessagePart, { type: 'text' }> => p.type === 'text',
+      ),
       attachments: [],
       createdAt: m.createdAt,
       metadata: { custom: {}, unstable_data: [] },
@@ -343,7 +339,9 @@ function convertMessage(m: RuntimeMessage): ThreadMessage {
     return {
       id: m.id,
       role: 'system',
-      content: m.parts.filter((p): p is Extract<RuntimeMessagePart, { type: 'text' }> => p.type === 'text'),
+      content: m.parts.filter(
+        (p): p is Extract<RuntimeMessagePart, { type: 'text' }> => p.type === 'text',
+      ),
       createdAt: m.createdAt,
       metadata: { custom: {} },
     } as unknown as ThreadMessage;
@@ -352,10 +350,7 @@ function convertMessage(m: RuntimeMessage): ThreadMessage {
     id: m.id,
     role: 'assistant',
     content: m.parts,
-    status:
-      m.status === 'running'
-        ? { type: 'running' }
-        : { type: 'complete', reason: 'stop' },
+    status: m.status === 'running' ? { type: 'running' } : { type: 'complete', reason: 'stop' },
     createdAt: m.createdAt,
     metadata: {
       custom: {},
@@ -391,20 +386,22 @@ function stableStringify(value: unknown): string {
   }
 }
 
-export interface UseAgentRuntimeOptions {
-  /** Override API base URL passed through to `useChatStream`. */
-  apiBaseUrl?: string;
-}
-
 /**
- * Build an assistant-ui `AssistantRuntime` for a single session. The
- * caller mounts `<AssistantRuntimeProvider runtime={runtime}>` keyed
- * by `sessionId` so a thread switch tears down and rebuilds the
- * runtime.
+ * Build the assistant-ui runtime for the active thread. Reads the
+ * per-thread session resources from `ActiveSessionContext`. Intended
+ * to be passed directly as the `runtimeHook` of
+ * `useRemoteThreadListRuntime`.
+ *
+ * The context may be null during the brief window between
+ * `switchToThread` being called and the thread's remoteId resolving
+ * (see `AgentsThreadProviderInner`). During that gap the runtime is
+ * a no-op: empty messages, isRunning=false, send/cancel are silent.
  */
-export function useAgentRuntime(sessionId: string, options: UseAgentRuntimeOptions = {}) {
-  const messagesQuery = useSessionMessages(sessionId);
-  const stream = useChatStream(sessionId, undefined, { apiBaseUrl: options.apiBaseUrl });
+export function useAgentRuntime() {
+  const active = useActiveSession();
+  const sessionId = active?.sessionId ?? '';
+  const stream = active?.stream;
+  const messagesQuery = active?.messagesQuery;
 
   const [liveItems, setLiveItems] = React.useState<LiveItem[]>([]);
 
@@ -413,11 +410,15 @@ export function useAgentRuntime(sessionId: string, options: UseAgentRuntimeOptio
   // events themselves; we only need a single placeholder per
   // messageId so the message takes its slot in `liveItems` order.
   const seenMessageIdsRef = React.useRef<Set<string>>(new Set());
+  const streamEvents = stream?.events;
   React.useEffect(() => {
+    if (!streamEvents) {
+      return;
+    }
     setLiveItems((prev) => {
       let mutated = false;
       const next = prev.slice();
-      for (const event of stream.events) {
+      for (const event of streamEvents) {
         // Tool-call / file-edit / message-complete / etc. all carry a
         // messageId we'd want to slot. Permission / HIL with no
         // currentMessageId fall back to a synthetic id (rare).
@@ -431,23 +432,28 @@ export function useAgentRuntime(sessionId: string, options: UseAgentRuntimeOptio
       }
       return mutated ? next : prev;
     });
-  }, [stream.events.length, stream.events]);
+  }, [streamEvents]);
 
-  // Reset live state on thread switch.
+  // Reset live state on thread switch. The component is keyed by
+  // internal threadId so this only fires when assistant-ui rebinds
+  // the runtime to a different session.
   React.useEffect(() => {
     seenMessageIdsRef.current = new Set();
     setLiveItems([]);
   }, [sessionId]);
 
   const messages = React.useMemo(
-    () => buildMessages(messagesQuery.data ?? [], stream.events, liveItems),
-    [messagesQuery.data, stream.events, liveItems],
+    () => buildMessages(messagesQuery?.data ?? [], streamEvents ?? [], liveItems),
+    [messagesQuery?.data, streamEvents, liveItems],
   );
 
-  const isRunning = stream.status === 'streaming';
+  const isRunning = stream?.status === 'streaming';
 
   const onNew = React.useCallback(
     async (message: AppendMessage) => {
+      if (!stream) {
+        return;
+      }
       const text = message.content
         .filter((p): p is { type: 'text'; text: string } => p.type === 'text')
         .map((p) => p.text)
@@ -463,22 +469,14 @@ export function useAgentRuntime(sessionId: string, options: UseAgentRuntimeOptio
   );
 
   const onCancel = React.useCallback(async () => {
-    stream.interrupt();
+    stream?.interrupt();
   }, [stream]);
 
-  const runtime = useExternalStoreRuntime({
+  return useExternalStoreRuntime({
     messages,
     isRunning,
     convertMessage,
     onNew,
     onCancel,
   });
-
-  return {
-    runtime,
-    /** Underlying chat-stream handle — exposed for permission/HIL UIs. */
-    stream,
-    /** True while the initial history fetch is in flight. */
-    isLoadingHistory: messagesQuery.isLoading,
-  };
 }

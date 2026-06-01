@@ -343,12 +343,10 @@ describe('openCodeProvider.createSession', () => {
         >;
       };
     };
-    const getOpencode = vi.fn(
-      async (_opts?: GetOpencodeOpts) => ({
-        client: sandboxClient,
-        server: { url: 'http://sandbox-managed' },
-      }),
-    );
+    const getOpencode = vi.fn(async (_opts?: GetOpencodeOpts) => ({
+      client: sandboxClient,
+      server: { url: 'http://sandbox-managed' },
+    }));
     const bindCredential = vi.fn(async () => {});
     const unbindCredential = vi.fn(async () => {});
     const out = await provider.createSession({
@@ -375,9 +373,7 @@ describe('openCodeProvider.createSession', () => {
     const opts = getOpencode.mock.calls[0]?.[0];
     const anthropicSlot = opts?.config?.provider?.anthropic;
     expect(anthropicSlot?.options?.apiKey).toBe('flowlib-outbound-placeholder');
-    expect(anthropicSlot?.options?.headers?.['x-flowlib-session-id']).toBe(
-      out.providerSessionId,
-    );
+    expect(anthropicSlot?.options?.headers?.['x-flowlib-session-id']).toBe(out.providerSessionId);
     // Sandbox transport — NOT the HTTP factory.
     expect(createOpencodeClient).not.toHaveBeenCalled();
   });

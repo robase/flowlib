@@ -325,10 +325,12 @@ export function cloudflareSandbox(options: CloudflareSandboxOptions): Cloudflare
    * `outboundAuth` namespace on metadata, and the opencode provider
    * falls back to in-container key injection.
    */
-  const resolveOutboundAuth = (): {
-    kv: OutboundCredentialKVStore;
-    ttlSeconds?: number;
-  } | undefined => {
+  const resolveOutboundAuth = ():
+    | {
+        kv: OutboundCredentialKVStore;
+        ttlSeconds?: number;
+      }
+    | undefined => {
     if (!options.outboundAuth) {
       return undefined;
     }

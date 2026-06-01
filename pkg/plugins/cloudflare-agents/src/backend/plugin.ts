@@ -5,11 +5,7 @@
 // projects. No database tables required — compilation is stateless.
 // ============================================================================
 
-import type {
-  FlowlibInstance,
-  FlowlibPlugin,
-  FlowlibPluginDefinition,
-} from '@flowlib/core/types';
+import type { FlowlibInstance, FlowlibPlugin, FlowlibPluginDefinition } from '@flowlib/core/types';
 import { compileFlow, scaffoldProject } from '../compiler/flow-compiler';
 import type { CompileFlowOptions, CompileTarget, ScaffoldOptions } from '../shared/types';
 

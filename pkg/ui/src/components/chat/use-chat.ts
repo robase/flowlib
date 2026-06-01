@@ -445,13 +445,20 @@ export function useChat(options: UseChatOptions = {}) {
   }, [isLoadingHistory, options.flowId, reattachIfPending]);
 
   /**
-   * User-initiated stop. Aborts the local SSE reader AND clears the
-   * persisted session so a refresh doesn't reattach to a session the user
-   * meant to end. Note: the server-side session continues until the agent
-   * loop checks `aborted`; it will emit a truncated final response shortly.
+   * User-initiated stop. Aborts the local SSE reader, fires a best-effort
+   * DELETE so the server flips the agent loop's `aborted` flag, and clears
+   * the persisted session so a refresh doesn't reattach to it.
    */
   const stopStreamingLocal = useCallback(() => {
     const flowId = options.flowId;
+    const sessionId = useChatStore.getState().getActiveSessionId(flowId);
+    if (sessionId) {
+      // Fire-and-forget — the local abort below is what the user actually
+      // sees; server-side cancellation is a billing/cost optimisation.
+      apiClientRef.current.abortChatSession(sessionId).catch((err) => {
+        console.warn('[chat] Server abort failed (local stop still applies):', err);
+      });
+    }
     useChatStore.getState().setActiveSessionId(flowId, null);
     useChatStore.getState().setPendingUserMessage(flowId, null);
     stopStreaming();

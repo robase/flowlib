@@ -1205,7 +1205,7 @@ export function authentication(options: AuthenticationPluginOptions): FlowlibPlu
           key: 'user-auth.publicPaths',
           label: 'Public paths',
           description:
-            "JSON array of path prefixes that bypass session resolution (e.g. [\"/health\", \"/public\"]). Hot-reloads — the next request consults the new list.",
+            'JSON array of path prefixes that bypass session resolution (e.g. ["/health", "/public"]). Hot-reloads — the next request consults the new list.',
           type: 'json',
           defaultValue: options.publicPaths ?? [],
         },
@@ -1213,7 +1213,7 @@ export function authentication(options: AuthenticationPluginOptions): FlowlibPlu
           key: 'user-auth.prefix',
           label: 'Auth route prefix',
           description:
-            "Configured in flowlib.config.ts. Better-Auth routes mount under this prefix; changing it requires re-registering routes (restart).",
+            'Configured in flowlib.config.ts. Better-Auth routes mount under this prefix; changing it requires re-registering routes (restart).',
           type: 'string',
           readOnly: true,
           defaultValue: prefix,

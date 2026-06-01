@@ -167,7 +167,7 @@ export function buildCoreSettingsDescriptors(config: FlowlibConfig): SettingsDes
       key: 'core.triggers.webhookBaseUrl',
       label: 'Webhook base URL',
       description:
-        "Configured in flowlib.config.ts. Public base URL the editor displays when showing webhook URLs (e.g. \"https://api.example.com/flowlib\").",
+        'Configured in flowlib.config.ts. Public base URL the editor displays when showing webhook URLs (e.g. "https://api.example.com/flowlib").',
       type: 'string',
       readOnly: true,
       defaultValue: triggers.webhookBaseUrl ?? '',
@@ -244,7 +244,8 @@ export function buildCoreSettingsDescriptors(config: FlowlibConfig): SettingsDes
     {
       key: 'core.skipDatabaseInit',
       label: 'Skip DB init',
-      description: 'Configured in flowlib.config.ts. Used by build-time scaffolding — usually false.',
+      description:
+        'Configured in flowlib.config.ts. Used by build-time scaffolding — usually false.',
       type: 'boolean',
       readOnly: true,
       defaultValue: config.skipDatabaseInit ?? false,
@@ -285,7 +286,8 @@ export function buildCoreSettingsDescriptors(config: FlowlibConfig): SettingsDes
     {
       namespace: 'core.interface',
       label: 'Core: Interface',
-      description: 'UI mount paths and theme. Read at frontend mount — change in flowlib.config.ts.',
+      description:
+        'UI mount paths and theme. Read at frontend mount — change in flowlib.config.ts.',
       fields: interfaceFields,
     },
     {

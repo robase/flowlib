@@ -41,7 +41,13 @@
  */
 import * as React from 'react';
 import type { AgentSession } from '../../shared/types';
-import { isAgentEvent, type AgentEvent } from '../../shared/events';
+import type { AgentEvent } from '../../shared/events';
+import { useAgentsApiClients } from '../api/context';
+import { parseInboundFrame, type ParsedInboundFrame } from './parse-inbound-frame';
+
+// Re-export so existing consumers of `useChatStream` keep working.
+export { parseInboundFrame } from './parse-inbound-frame';
+export type { ParsedInboundFrame } from './parse-inbound-frame';
 
 /**
  * Subset of the PartySocket-like surface returned by `useAgent` that we
@@ -100,44 +106,11 @@ export type OutboundControlEnvelope =
   | { type: 'flowlib.hil-response'; id: string; response: unknown };
 
 /**
- * Pure helper: parse an inbound WS frame into a canonical action.
- * Exposed for testing. Returns `null` for frames we don't understand
- * (e.g. SDK protocol traffic) so callers can ignore them.
+ * Pure parser for inbound WS frames. Lives in `./parse-inbound-frame.ts`
+ * so test consumers can import it without pulling the React context /
+ * `@flowlib/ui` chain. Re-exported at the top of this file for
+ * backward compatibility.
  */
-export type ParsedInboundFrame =
-  | { kind: 'agent-event'; event: AgentEvent }
-  | { kind: 'agent-error'; error: { message: string; code?: string } }
-  | { kind: 'unknown' };
-
-export function parseInboundFrame(data: unknown): ParsedInboundFrame {
-  if (typeof data !== 'string') {
-    return { kind: 'unknown' };
-  }
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(data);
-  } catch {
-    return { kind: 'unknown' };
-  }
-  if (!parsed || typeof parsed !== 'object') {
-    return { kind: 'unknown' };
-  }
-  const env = parsed as { type?: unknown; event?: unknown; error?: unknown };
-  if (env.type === 'flowlib.agent-event' && env.event && isAgentEvent(env.event)) {
-    return { kind: 'agent-event', event: env.event };
-  }
-  if (env.type === 'flowlib.agent-error' && env.error && typeof env.error === 'object') {
-    const err = env.error as { message?: unknown; code?: unknown };
-    return {
-      kind: 'agent-error',
-      error: {
-        message: typeof err.message === 'string' ? err.message : 'Unknown error',
-        code: typeof err.code === 'string' ? err.code : undefined,
-      },
-    };
-  }
-  return { kind: 'unknown' };
-}
 
 /**
  * Test-injection seam: the production hook calls these adapters which
@@ -273,12 +246,62 @@ function loadDefaultAdapters(): ChatStreamAdapters {
         sendMessage: ({ text }) => {
           const requestId = newId();
           lastRequestId = requestId;
-          try {
-            agent.send(buildChatRequestEnvelope(requestId, text));
-          } catch {
-            // Swallow — readyState may briefly be CONNECTING. The
-            // consumer can re-attempt by re-clicking send.
-          }
+          const envelope = buildChatRequestEnvelope(requestId, text);
+          // Pre-flight: when the user presses Send during the ~100ms
+          // window between `enabled: Boolean(doName)` flipping true and
+          // partysocket finishing the WS handshake, `readyState` is
+          // `CONNECTING` (0). partysocket's `send()` silently queues
+          // the data in that case AND if the socket gets re-created
+          // before the queue flushes (which happens when usePartySocket's
+          // memo key changes — room/enabled), the queue is abandoned
+          // and the message is lost forever.
+          //
+          // The Agents SDK exposes `agent.ready` — a promise that
+          // resolves once the WS is OPEN AND the server has sent a
+          // `cf_agent_identity` frame. Awaiting it before send is the
+          // canonical fix.
+          const sockLike = agent as ChatSocketLike & {
+            readyState?: number;
+            url?: string;
+            ready?: Promise<unknown>;
+          };
+          const dispatch = async () => {
+            const initialReadyState = sockLike.readyState;
+            // eslint-disable-next-line no-console
+            console.log('[useChatStream] sendMessage queued', {
+              agentName: (agent as { name?: string }).name,
+              readyState: initialReadyState,
+              hasReadyPromise: typeof sockLike.ready?.then === 'function',
+              envelopeLen: envelope.length,
+              url: sockLike.url,
+            });
+            if (sockLike.ready && typeof sockLike.ready.then === 'function') {
+              try {
+                await sockLike.ready;
+              } catch (err) {
+                // eslint-disable-next-line no-console
+                console.warn('[useChatStream] sendMessage → agent.ready rejected', err);
+                // Keep going; agent.send will throw or queue as
+                // appropriate. The user can retry.
+              }
+            }
+            // eslint-disable-next-line no-console
+            console.log('[useChatStream] sendMessage dispatching', {
+              readyState: sockLike.readyState,
+            });
+            try {
+              agent.send(envelope);
+              // eslint-disable-next-line no-console
+              console.log('[useChatStream] sendMessage → agent.send did not throw');
+            } catch (err) {
+              // eslint-disable-next-line no-console
+              console.warn('[useChatStream] sendMessage → agent.send threw', err);
+            }
+          };
+          // Fire-and-forget — the adapter's `sendMessage` signature is
+          // synchronous (matches useAgentChat). The dispatcher schedules
+          // the actual send on a microtask after `agent.ready` resolves.
+          void dispatch();
         },
         stop: () => {
           if (!lastRequestId) {
@@ -319,6 +342,23 @@ export function useChatStream(
   }
   const a = adaptersRef.current;
 
+  // Prefer the shared API client from `AgentsApiProvider` over a
+  // hand-rolled fetch. The provider already resolves `apiPath` from
+  // `<Flowlib config>`, so we don't have to thread `apiBaseUrl`
+  // through. Without this we used to hit `/plugins/agents/sessions/:id`
+  // (no `/api/` prefix) which the hosted Worker doesn't route — the
+  // SPA shell returned `index.html` with 200 OK, `response.json()`
+  // threw "JSON.parse: unexpected character at line 1 column 1", the
+  // session never loaded, and `send()` raised "Session not loaded
+  // yet" on the first user message.
+  //
+  // `useAgentsApiClients` throws if no provider is mounted. We always
+  // call it unconditionally (rules of hooks) and let tests exercise
+  // the hook outside a provider by either supplying their own provider
+  // wrapper or an `adapters.loadSession` override (the override path
+  // skips the apiClients-derived loader below).
+  const apiClients = useAgentsApiClients();
+
   const [session, setSession] = React.useState<AgentSession | undefined>();
   const [events, setEvents] = React.useState<AgentEvent[]>([]);
   const [status, setStatus] = React.useState<UseChatStreamReturn['status']>('connecting');
@@ -328,10 +368,28 @@ export function useChatStream(
   >({});
   const [resolvedHumanInputs, setResolvedHumanInputs] = React.useState<Record<string, true>>({});
 
-  // Step 1 — load the session.
+  // Step 1 — load the session. Prefer the shared API client; fall back
+  // to the legacy fetch-based loader when callers explicitly inject an
+  // `options.apiBaseUrl` override (used by some embed scenarios), and
+  // let tests override via `adapters.loadSession`.
+  //
+  // The hook is always called (rules of hooks) but an empty sessionId
+  // means we're between thread switches in the hoisted-runtime setup —
+  // skip the loader so we don't hit `/sessions/` and 404. The socket
+  // stays idle because `enabled` below depends on `doName`.
   React.useEffect(() => {
+    if (!sessionId) {
+      setStatus('idle');
+      setError(undefined);
+      setSession(undefined);
+      return;
+    }
     let cancelled = false;
-    const loader = a.loadSession ?? ((id) => defaultLoadSession(id, options.apiBaseUrl));
+    const loader =
+      a.loadSession ??
+      (options.apiBaseUrl
+        ? (id: string) => defaultLoadSession(id, options.apiBaseUrl ?? '')
+        : (id: string) => apiClients.sessions.getSession(id));
     setStatus('connecting');
     setError(undefined);
     loader(sessionId)
@@ -351,7 +409,7 @@ export function useChatStream(
     return () => {
       cancelled = true;
     };
-  }, [sessionId, a, options.apiBaseUrl]);
+  }, [sessionId, a, options.apiBaseUrl, apiClients]);
 
   // Step 2 — connect to the DO. We MUST NOT call `useAgent` conditionally
   // (rules of hooks), but we CAN tell it not to open a socket until the

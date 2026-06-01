@@ -4,9 +4,9 @@
  * Workspaces back agents — the AgentFormPage uses this to populate the
  * "workspace" step picker.
  *
- * **Assumed contract** (Stream I, not yet landed):
+ * Contract:
  *
- * - `GET    /plugins/agents/workspaces`        → `AgentWorkspace[]`
+ * - `GET    /plugins/agents/workspaces`        → `{ data: AgentWorkspace[] }`
  * - `GET    /plugins/agents/workspaces/:id`    → `AgentWorkspace`
  * - `POST   /plugins/agents/workspaces`        → `AgentWorkspace`
  * - `DELETE /plugins/agents/workspaces/:id`    → 204
@@ -66,8 +66,9 @@ export class WorkspacesApiClient {
     return (await response.json()) as T;
   }
 
-  listWorkspaces(): Promise<AgentWorkspace[]> {
-    return this.request<AgentWorkspace[]>('/workspaces');
+  async listWorkspaces(): Promise<AgentWorkspace[]> {
+    const body = await this.request<{ data: AgentWorkspace[] }>('/workspaces');
+    return body.data ?? [];
   }
 
   getWorkspace(id: string): Promise<AgentWorkspace> {

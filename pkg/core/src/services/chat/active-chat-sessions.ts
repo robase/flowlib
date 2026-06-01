@@ -38,6 +38,12 @@ export interface ActiveChatSession {
   readonly id: string;
   /** Optional flow scope — used by the frontend to route reattaches. */
   readonly flowId?: string;
+  /**
+   * Identity that created this session (when auth is wired). Reattach and
+   * abort require a matching id; sessions created without an identity remain
+   * unrestricted for backwards compatibility with anonymous-mode hosts.
+   */
+  readonly createdBy?: string;
   /** Wall-clock start, set at create. */
   readonly startedAt: number;
   /** Set once the producer finishes (successfully or with error). */
@@ -50,6 +56,20 @@ export interface ActiveChatSession {
   readonly subscribers: Set<(event: ChatStreamEvent | null) => void>;
   /** Timer that evicts the session from the registry. */
   evictTimer?: ReturnType<typeof setTimeout>;
+  /**
+   * Hook invoked when a caller asks the producer to stop. Wired by the
+   * ChatStreamService to `ChatStreamSession.abort()`. The agent loop checks
+   * its `aborted` flag between steps and exits cleanly.
+   */
+  abortHandler?: () => void;
+}
+
+/** Thrown by reattach/abort when the requesting identity doesn't own the session. */
+export class ChatSessionForbiddenError extends Error {
+  constructor(public readonly sessionId: string) {
+    super(`Chat session ${sessionId} is owned by another user`);
+    this.name = 'ChatSessionForbiddenError';
+  }
 }
 
 export type ChatSessionUnsubscribe = () => void;
@@ -61,13 +81,15 @@ export class ActiveChatSessions {
 
   /**
    * Register a new session. The caller is responsible for producing events
-   * via `push()` and calling `close()` when generation finishes.
+   * via `push()` and calling `close()` when generation finishes. Pass
+   * `createdBy` to gate reattach/abort to a single identity.
    */
-  create(options: { flowId?: string; id?: string } = {}): ActiveChatSession {
+  create(options: { flowId?: string; id?: string; createdBy?: string } = {}): ActiveChatSession {
     const id = options.id ?? crypto.randomUUID();
     const session: ActiveChatSession = {
       id,
       flowId: options.flowId,
+      createdBy: options.createdBy,
       startedAt: Date.now(),
       done: false,
       events: [],
@@ -89,9 +111,22 @@ export class ActiveChatSessions {
   }
 
   /**
+   * Register the abort handler for a session. Called by `ChatStreamService`
+   * after constructing the underlying `ChatStreamSession`, so a later
+   * `abortSession()` can flip its `aborted` flag.
+   */
+  attachAbortHandler(id: string, handler: () => void): void {
+    const session = this.sessions.get(id);
+    if (session) {
+      session.abortHandler = handler;
+    }
+  }
+
+  /**
    * Append an event and fan it out to every live subscriber.
    * Drops the oldest event if the buffer exceeds its cap so replay never
-   * blows up on runaway turns.
+   * blows up on runaway turns — a synthetic `truncated` marker takes its
+   * place so reattaching clients know they missed something.
    */
   push(id: string, event: ChatStreamEvent): void {
     const session = this.sessions.get(id);
@@ -102,6 +137,24 @@ export class ActiveChatSessions {
     session.events.push(event);
     if (session.events.length > MAX_BUFFERED_EVENTS) {
       session.events.shift();
+      // First overflow swap leaves the head as a real event; replace it with a
+      // single sentinel so the client renders "earlier events were dropped"
+      // instead of guessing at a gap. Subsequent overflows keep that sentinel
+      // pinned at index 0 by dropping events[1] instead of [0].
+      const head = session.events[0];
+      if (!head || head.type !== 'error' || head.message !== '__buffer_truncated__') {
+        session.events.unshift({
+          type: 'error',
+          message:
+            'Earlier events in this session were dropped because the buffer overflowed. ' +
+            'Live events are still arriving.',
+          recoverable: true,
+        });
+      } else if (session.events.length > MAX_BUFFERED_EVENTS) {
+        // sentinel is already at [0] but we just over-shifted real events,
+        // so drop the next real event (index 1) to keep the cap.
+        session.events.splice(1, 1);
+      }
     }
     for (const subscriber of session.subscribers) {
       try {
@@ -111,6 +164,33 @@ export class ActiveChatSessions {
         session.subscribers.delete(subscriber);
       }
     }
+  }
+
+  /**
+   * Ask the producer to stop. The agent loop checks its `aborted` flag
+   * between steps and exits cleanly; in-flight LLM calls finish unless the
+   * adapter wires its own signal. Returns true if a handler was invoked.
+   *
+   * Enforces ownership: if the session has a `createdBy` and `requesterId`
+   * doesn't match, throws `ChatSessionForbiddenError`.
+   */
+  abortSession(id: string, requesterId?: string): boolean {
+    const session = this.sessions.get(id);
+    if (!session) {
+      return false;
+    }
+    if (session.createdBy && session.createdBy !== requesterId) {
+      throw new ChatSessionForbiddenError(id);
+    }
+    if (session.done || !session.abortHandler) {
+      return false;
+    }
+    try {
+      session.abortHandler();
+    } catch (err) {
+      this.logger.warn('Chat session abort handler threw', { sessionId: id, error: err });
+    }
+    return true;
   }
 
   /**
@@ -153,11 +233,18 @@ export class ActiveChatSessions {
    * If `signal` fires, the iterator exits but the session itself continues
    * running so other subscribers (or a later reattach) can still consume it.
    */
-  async *subscribe(id: string, signal?: AbortSignal): AsyncGenerator<ChatStreamEvent> {
+  async *subscribe(
+    id: string,
+    signal?: AbortSignal,
+    requesterId?: string,
+  ): AsyncGenerator<ChatStreamEvent> {
     const session = this.sessions.get(id);
     if (!session) {
       yield { type: 'error', message: `Chat session ${id} not found`, recoverable: false };
       return;
+    }
+    if (session.createdBy && session.createdBy !== requesterId) {
+      throw new ChatSessionForbiddenError(id);
     }
 
     // Replay buffered events synchronously — a fresh reattach needs to catch

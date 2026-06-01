@@ -86,6 +86,22 @@ export interface CreateSessionInput {
   credentialId?: string;
   /** Provider-specific extras (Claude Code: permissionMode, MCP, hooks). */
   extras?: Record<string, unknown>;
+  /**
+   * Pre-existing provider session id. When set, the provider should
+   * use this string as the session's persistent id rather than
+   * generating a new one, and treat the call as **idempotent** —
+   * if internal state for this id is already populated, no-op; if
+   * not, populate it from the supplied inputs.
+   *
+   * The hosted Cloudflare wiring uses this to rehydrate the
+   * provider's per-isolate session map inside Durable Object isolates,
+   * which start empty even when the original `createSession` call ran
+   * in the parent Worker fetch isolate. Without rehydration the
+   * provider throws "unknown session id" on the first prompt because
+   * its in-memory cache (e.g. `sessionsById` for opencode) doesn't
+   * carry across isolates.
+   */
+  providerSessionId?: string;
 }
 
 /** Input for one `prompt()` turn. */

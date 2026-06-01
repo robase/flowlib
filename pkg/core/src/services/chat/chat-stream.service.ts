@@ -156,7 +156,10 @@ export class ChatStreamService {
     }
 
     // 5. Register a session and kick off the agent loop in the background.
-    const active = this.activeSessions.create({ flowId: context.flowId });
+    const active = this.activeSessions.create({
+      flowId: context.flowId,
+      createdBy: identity?.id,
+    });
     // Seed the buffer with the session-id frame so even a reattach that
     // lands after the first push still sees it.
     this.activeSessions.push(active.id, {
@@ -175,23 +178,43 @@ export class ChatStreamService {
       actionRegistry: this.actionRegistry,
     });
 
+    // Wire the abort path so a later DELETE /chat/stream/:id flips the agent
+    // loop's `aborted` flag.
+    this.activeSessions.attachAbortHandler(active.id, () => session.abort());
+
     // Run the generator to completion independent of any subscriber.
     void this.runSessionToCompletion(active.id, session, messages, context, flowContext);
 
     // Return a subscriber stream — cancelling it does not abort the producer.
-    return this.activeSessions.subscribe(active.id);
+    return this.activeSessions.subscribe(active.id, undefined, identity?.id);
   }
 
   /**
    * Reattach to an in-flight session by id. Replays the full event buffer
    * then tails live events until the session completes. Safe to call from
    * multiple clients simultaneously.
+   *
+   * Throws `ChatSessionForbiddenError` if `requesterId` doesn't match the
+   * session's `createdBy`.
    */
-  subscribeToSession(sessionId: string, signal?: AbortSignal): AsyncGenerator<ChatStreamEvent> {
+  subscribeToSession(
+    sessionId: string,
+    signal?: AbortSignal,
+    requesterId?: string,
+  ): AsyncGenerator<ChatStreamEvent> {
     if (!this.activeSessions.get(sessionId)) {
       return this.errorStream(`Chat session ${sessionId} not found or expired`);
     }
-    return this.activeSessions.subscribe(sessionId, signal);
+    return this.activeSessions.subscribe(sessionId, signal, requesterId);
+  }
+
+  /**
+   * Ask the producer to stop. Returns true if a session was found and its
+   * abort handler invoked. Ownership is enforced — throws
+   * `ChatSessionForbiddenError` if `requesterId` doesn't match `createdBy`.
+   */
+  abortSession(sessionId: string, requesterId?: string): boolean {
+    return this.activeSessions.abortSession(sessionId, requesterId);
   }
 
   /** True if there's an in-flight session with the given id. */

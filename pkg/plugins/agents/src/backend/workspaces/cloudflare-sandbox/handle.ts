@@ -202,11 +202,7 @@ export class CloudflareSandboxHandle implements WorkspaceHandle {
      * key injection path.
      */
     outboundAuth?: {
-      bindCredential: (
-        sessionId: string,
-        vendor: OutboundVendor,
-        apiKey: string,
-      ) => Promise<void>;
+      bindCredential: (sessionId: string, vendor: OutboundVendor, apiKey: string) => Promise<void>;
       unbindCredential: (sessionId: string, vendor: OutboundVendor) => Promise<void>;
     };
   };

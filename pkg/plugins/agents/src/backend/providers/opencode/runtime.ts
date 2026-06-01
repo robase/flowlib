@@ -30,33 +30,57 @@ import type { WorkspaceHandle } from '../../workspaces/types';
  * The slice of the opencode SDK we depend on. Defined structurally so we
  * don't have to keep up with the SDK's `gen/sdk.gen.d.ts` line-by-line.
  */
+/**
+ * The v2 opencode SDK (`@opencode-ai/sdk/v2/client`) uses a **flat**
+ * parameter shape: each method takes a single object whose keys are
+ * routed to URL path / query / body via the SDK's internal field map.
+ * Do NOT nest under `{ path: {…}, body: {…}, query: {…} }` — those keys
+ * are not in the field map and would be silently dropped, leaving URL
+ * placeholders like `{sessionID}` un-substituted and the server
+ * rejecting the request with a Zod validation error.
+ */
 export interface OpencodeClientLike {
   session: {
     create(options: {
-      body?: { title?: string; parentID?: string };
-      query?: { directory?: string };
+      title?: string;
+      parentID?: string;
+      directory?: string;
     }): Promise<{ data?: { id: string } } | { id: string }>;
     prompt(options: {
-      path: { id: string };
-      body: {
-        parts: Array<unknown>;
-        model?: { providerID: string; modelID: string };
-        system?: string;
-        tools?: Record<string, boolean>;
-      };
-      query?: { directory?: string };
+      sessionID: string;
+      parts: Array<unknown>;
+      model?: { providerID: string; modelID: string };
+      system?: string;
+      tools?: Record<string, boolean>;
+      directory?: string;
     }): Promise<unknown>;
-    abort(options: { path: { id: string }; query?: { directory?: string } }): Promise<unknown>;
-    delete(options: { path: { id: string }; query?: { directory?: string } }): Promise<unknown>;
-    messages(options: { path: { id: string }; query?: { directory?: string } }): Promise<unknown>;
+    /**
+     * Fire-and-forget version of `prompt`. Posts the user message to
+     * `/session/{sessionID}/prompt_async` and returns immediately with
+     * an ack, without waiting for the LLM. Used by the provider's
+     * polling loop to escape Cloudflare Sandbox's `containerFetch`
+     * request-lifetime budget — see provider.ts comment block for the
+     * full rationale.
+     */
+    promptAsync(options: {
+      sessionID: string;
+      parts: Array<unknown>;
+      model?: { providerID: string; modelID: string };
+      system?: string;
+      tools?: Record<string, boolean>;
+      directory?: string;
+    }): Promise<unknown>;
+    abort(options: { sessionID: string; directory?: string }): Promise<unknown>;
+    delete(options: { sessionID: string; directory?: string }): Promise<unknown>;
+    messages(options: { sessionID: string; directory?: string }): Promise<unknown>;
   };
   event: {
-    subscribe(options?: { query?: { directory?: string } }): Promise<{
+    subscribe(options?: { directory?: string }): Promise<{
       stream: AsyncGenerator<unknown, unknown, unknown>;
     }>;
   };
   provider: {
-    list(options?: { query?: { directory?: string } }): Promise<unknown>;
+    list(options?: { directory?: string }): Promise<unknown>;
   };
 }
 

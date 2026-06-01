@@ -297,8 +297,22 @@ export interface ChatAPI {
    * Reattach to an in-flight chat session by id. Replays the full event
    * buffer and then tails live events until the session completes. Useful
    * for surviving client disconnects (e.g. page refresh mid-generation).
+   *
+   * Throws `ChatSessionForbiddenError` if `requesterId` doesn't match the
+   * identity that originally created the session.
    */
-  subscribeToSession(sessionId: string, signal?: AbortSignal): AsyncGenerator<ChatStreamEvent>;
+  subscribeToSession(
+    sessionId: string,
+    signal?: AbortSignal,
+    requesterId?: string,
+  ): AsyncGenerator<ChatStreamEvent>;
+  /**
+   * Stop an in-flight session. The agent loop checks the abort flag between
+   * steps and exits cleanly. Returns true if a session was aborted, false if
+   * unknown / already done. Throws `ChatSessionForbiddenError` on identity
+   * mismatch.
+   */
+  abortSession(sessionId: string, requesterId?: string): boolean;
   /** True if the given session id is currently live in this process. */
   hasActiveSession(sessionId: string): boolean;
   isEnabled(): boolean;

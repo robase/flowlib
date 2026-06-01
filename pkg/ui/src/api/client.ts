@@ -826,6 +826,20 @@ class ApiClient {
   }
 
   /**
+   * Ask the server to stop an in-flight chat session. Returns `true` if the
+   * agent loop was signalled to abort, `false` if the session was unknown or
+   * already finished. Best-effort — the agent loop only checks the flag
+   * between steps, so an in-flight LLM call may still complete.
+   */
+  async abortChatSession(sessionId: string): Promise<boolean> {
+    const result = await this.request<{ aborted: boolean }>(
+      `/chat/stream/${encodeURIComponent(sessionId)}`,
+      { method: 'DELETE' },
+    );
+    return result.aborted;
+  }
+
+  /**
    * Reattach to an in-flight chat session. Replays buffered events and then
    * tails live events until generation completes. Returns 404 if the session
    * has been evicted (server restart, grace window expired).

@@ -20,8 +20,17 @@
  */
 import * as React from 'react';
 import { Link } from 'react-router';
-import { ChevronDown, ChevronRight, FolderPlus, MessageSquarePlus, Server } from 'lucide-react';
+import {
+  ChevronDown,
+  ChevronRight,
+  FolderPlus,
+  MessageSquarePlus,
+  MoreHorizontal,
+  Server,
+  Trash2,
+} from 'lucide-react';
 import type { AgentSession, AgentWorkspace } from '../../shared/types';
+import { useDeleteSession } from '../hooks/useSessions';
 
 export interface SessionsSidebarProps {
   basePath: string;
@@ -40,10 +49,7 @@ interface WorkspaceGroup {
   sessions: AgentSession[];
 }
 
-function groupSessions(
-  sessions: AgentSession[],
-  workspaces: AgentWorkspace[],
-): WorkspaceGroup[] {
+function groupSessions(sessions: AgentSession[], workspaces: AgentWorkspace[]): WorkspaceGroup[] {
   const wsById = new Map(workspaces.map((w) => [w.id, w] as const));
   const byId = new Map<string | '__none__', WorkspaceGroup>();
   // Seed the groups with all known workspaces in order so empty
@@ -238,26 +244,103 @@ function SessionRow({
   isActive: boolean;
 }): React.ReactElement {
   return (
-    <li>
+    <li
+      className={`group flex items-stretch gap-1 px-2 ${
+        isActive ? 'bg-fl-accent text-fl-accent-foreground' : 'hover:bg-fl-muted/40'
+      } rounded-r-md`}
+    >
       <Link
         to={`${stripTrailingSlash(basePath)}/agents/sessions/${encodeURIComponent(session.id)}`}
-        className={`group flex items-center justify-between gap-2 px-7 py-1.5 text-sm rounded-r-md ${
-          isActive
-            ? 'bg-fl-accent text-fl-accent-foreground border-l-2 border-fl-primary'
-            : 'border-l-2 border-transparent text-fl-foreground hover:bg-fl-muted/40'
+        className={`min-w-0 flex-1 py-1.5 pl-5 text-sm border-l-2 ${
+          isActive ? 'border-fl-primary' : 'border-transparent text-fl-foreground'
         }`}
         data-testid={`agents-session-row-${session.id}`}
       >
-        <div className="min-w-0 flex-1">
-          <div className="truncate">{session.title}</div>
-          <div className="text-xs text-fl-muted-foreground truncate">
-            {session.providerId}
-            {session.model ? ` · ${session.model}` : ''}
-            {session.messageCount > 0 ? ` · ${session.messageCount}` : ''}
-          </div>
+        <div className="truncate">{session.title}</div>
+        <div className="text-xs text-fl-muted-foreground truncate">
+          {session.providerId}
+          {session.model ? ` · ${session.model}` : ''}
+          {session.messageCount > 0 ? ` · ${session.messageCount}` : ''}
         </div>
       </Link>
+      <SessionRowActions sessionId={session.id} sessionTitle={session.title ?? ''} />
     </li>
+  );
+}
+
+function SessionRowActions({
+  sessionId,
+  sessionTitle,
+}: {
+  sessionId: string;
+  sessionTitle: string;
+}): React.ReactElement {
+  const [open, setOpen] = React.useState(false);
+  const rootRef = React.useRef<HTMLDivElement>(null);
+  const deleteSession = useDeleteSession();
+
+  React.useEffect(() => {
+    if (!open) {
+      return;
+    }
+    function onDocClick(e: MouseEvent) {
+      if (!rootRef.current?.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', onDocClick);
+    return () => document.removeEventListener('mousedown', onDocClick);
+  }, [open]);
+
+  const handleDelete = () => {
+    if (deleteSession.isPending) {
+      return;
+    }
+    const ok = window.confirm(
+      `Delete "${sessionTitle || 'this chat'}"? Messages are archived; the session row is removed from the list.`,
+    );
+    if (!ok) {
+      return;
+    }
+    deleteSession.mutate({ id: sessionId });
+    setOpen(false);
+  };
+
+  return (
+    <div ref={rootRef} className="relative flex items-center">
+      <button
+        type="button"
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          setOpen((s) => !s);
+        }}
+        className="opacity-0 group-hover:opacity-100 focus:opacity-100 size-6 inline-flex items-center justify-center rounded text-fl-muted-foreground hover:bg-fl-muted hover:text-fl-foreground"
+        title="More actions"
+        aria-label="More actions"
+        data-testid={`agents-session-actions-${sessionId}`}
+      >
+        <MoreHorizontal className="size-3.5" />
+      </button>
+      {open ? (
+        <div
+          className="absolute right-0 top-full z-30 mt-1 min-w-[140px] rounded-md border border-fl-border bg-fl-card text-fl-card-foreground shadow-lg py-1"
+          role="menu"
+        >
+          <button
+            type="button"
+            onClick={handleDelete}
+            disabled={deleteSession.isPending}
+            className="flex w-full items-center gap-2 px-3 py-1.5 text-xs text-fl-destructive hover:bg-fl-muted/40 disabled:opacity-50"
+            role="menuitem"
+            data-testid={`agents-session-delete-${sessionId}`}
+          >
+            <Trash2 className="size-3" />
+            {deleteSession.isPending ? 'Deleting…' : 'Delete chat'}
+          </button>
+        </div>
+      ) : null}
+    </div>
   );
 }
 

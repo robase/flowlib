@@ -300,14 +300,22 @@ const FieldInput: React.FC<{
   }
 
   if (field.type === 'select') {
+    // Radix <Select.Item /> forbids empty-string values, so translate "" to a
+    // sentinel for rendering only. Stored values stay as "".
+    const EMPTY_SENTINEL = '__empty__';
+    const toSentinel = (v: string) => (v === '' ? EMPTY_SENTINEL : v);
+    const fromSentinel = (v: string) => (v === EMPTY_SENTINEL ? '' : v);
     return (
-      <Select value={String(value ?? '')} onValueChange={(v) => onChange(v)}>
+      <Select
+        value={toSentinel(String(value ?? ''))}
+        onValueChange={(v) => onChange(fromSentinel(v))}
+      >
         <SelectTrigger>
           <SelectValue placeholder={placeholder} />
         </SelectTrigger>
         <SelectContent>
           {(field.options ?? []).map((opt) => (
-            <SelectItem key={opt.value} value={opt.value}>
+            <SelectItem key={opt.value} value={toSentinel(opt.value)}>
               {opt.label}
             </SelectItem>
           ))}

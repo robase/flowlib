@@ -154,9 +154,7 @@ export class SessionsApiClient {
       params.set('limit', String(options.limit));
     }
     const qs = params.toString();
-    return this.request(
-      `/sessions/${encodeURIComponent(sessionId)}/messages${qs ? `?${qs}` : ''}`,
-    );
+    return this.request(`/sessions/${encodeURIComponent(sessionId)}/messages${qs ? `?${qs}` : ''}`);
   }
 }
 

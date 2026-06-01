@@ -73,6 +73,16 @@ export function tenantScopedId(
  *
  * Pure — no DO binding access, no I/O. Same validation rules as
  * `tenantScopedId`.
+ *
+ * **URL safety.** The frontend's `useAgent` interpolates this name
+ * into a URL path segment (`/agents/<kebab-class>/<name>`) without
+ * encoding it. `partyserver`'s router then splits on `/`, takes
+ * `parts[2]` as the room, and ignores the rest — so any slash inside
+ * the name silently truncates the DO id and routes the WebSocket to
+ * the wrong DO instance. We use `__` as the separator: it is path-safe,
+ * doesn't appear in UUID v4 suffixes (which use `-`), doesn't appear
+ * in the Better Auth org id format (alphanumeric), and round-trips
+ * unchanged through every URL layer.
  */
 export function tenantScopedName(kind: TenantScopedDoKind, orgId: string, suffix: string): string {
   if (!orgId || orgId.trim().length === 0) {
@@ -81,5 +91,5 @@ export function tenantScopedName(kind: TenantScopedDoKind, orgId: string, suffix
   if (!suffix || suffix.trim().length === 0) {
     throw new Error('[agents] tenantScopedName: suffix required');
   }
-  return `org:${orgId}/kind:${kind}/${suffix}`;
+  return `org__${orgId}__${kind}__${suffix}`;
 }

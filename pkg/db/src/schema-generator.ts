@@ -88,8 +88,15 @@ export function generateSqliteSchema(schema: MergedSchema): string {
     `import { sqliteTable, text, integer, ${hasIndexes ? 'index, ' : ''}primaryKey, type AnySQLiteColumn } from 'drizzle-orm/sqlite-core';`,
   );
   lines.push(`import { relations, sql } from 'drizzle-orm';`);
+  // Emit as `import type` so the consumer's bundler (wrangler/esbuild) doesn't
+  // need to resolve `@flowlib/action-kit` at runtime — generated schema files
+  // commonly land in repos where this package isn't hoisted to the workspace
+  // root. The values themselves are inlined as string literals at the
+  // `.default(…)` call sites (see `sqliteDefault`).
   for (const [importPath, identifiers] of runtimeImports.entries()) {
-    lines.push(`import { ${Array.from(identifiers).sort().join(', ')} } from '${importPath}';`);
+    lines.push(
+      `import type { ${Array.from(identifiers).sort().join(', ')} } from '${importPath}';`,
+    );
   }
   lines.push(`import { randomUUID } from 'crypto';`);
   lines.push(``);
@@ -246,7 +253,7 @@ function sqliteColumn(
 
   // Default value
   if (field.defaultValue !== undefined) {
-    col += sqliteDefault(field.defaultValue, field.type, field.typeAnnotation);
+    col += sqliteDefault(field.defaultValue, field.type);
   }
 
   // Foreign key
@@ -267,7 +274,6 @@ function sqliteColumn(
 function sqliteDefault(
   value: string | number | boolean | 'uuid()' | 'now()',
   _type: PluginFieldType,
-  typeAnnotation?: string,
 ): string {
   if (value === 'uuid()') {
     return `.$defaultFn(() => randomUUID())`;
@@ -282,9 +288,11 @@ function sqliteDefault(
     return `.default(${value})`;
   }
   if (typeof value === 'string') {
-    if (typeAnnotation && SQLITE_RUNTIME_DEFAULT_IMPORTS[typeAnnotation]) {
-      return `.default(${typeAnnotation}.${value})`;
-    }
+    // For enum-backed columns we keep the type annotation via `import type`
+    // but emit the default as a bare string literal — drizzle's column is
+    // `text`, so `.default('PENDING')` is equivalent to
+    // `.default(FlowRunStatus.PENDING)` and avoids a runtime import the
+    // consumer's bundler would otherwise need to resolve.
     return `.default('${value}')`;
   }
   return '';
@@ -779,8 +787,13 @@ export function generateSqliteSchemaAppend(schema: MergedSchema): AppendSchemaRe
     `import { randomUUID } from 'crypto';`,
   ];
 
+  // Type-only — bundlers in append-mode consumer repos may not be able to
+  // resolve `@flowlib/action-kit` at runtime. Defaults are inlined as string
+  // literals (see `sqliteDefault`) so no value import is needed.
   for (const [importPath, identifiers] of runtimeImports.entries()) {
-    imports.push(`import { ${Array.from(identifiers).sort().join(', ')} } from '${importPath}';`);
+    imports.push(
+      `import type { ${Array.from(identifiers).sort().join(', ')} } from '${importPath}';`,
+    );
   }
 
   // Collect names already imported as runtime values to avoid duplicates in type import
@@ -1102,21 +1115,34 @@ const BUILTIN_TS_TYPES = new Set([
   'object',
 ]);
 
+/** Plain TS identifier — what `type X = …` requires on the LHS. */
+const IDENTIFIER_RE = /^[A-Za-z_$][A-Za-z0-9_$]*$/;
+
 function isBuiltinType(annotation: string): boolean {
   // Bare primitives
   if (BUILTIN_TS_TYPES.has(annotation)) {
     return true;
   }
-  // Primitive array types
-  if (annotation === 'string[]' || annotation === 'number[]' || annotation === 'boolean[]') {
+  // Any array form — `T[]` for any T (including `unknown[]`, `MyType[]`).
+  if (annotation.endsWith('[]')) {
     return true;
   }
-  // Record<> utility types
-  if (annotation.startsWith('Record<')) {
+  // Generic utility types — `Record<…>`, `Array<…>`, `Set<…>`, `Map<…>`, etc.
+  // These can't appear on the LHS of `type X = …`, so we skip aliasing them.
+  if (/^[A-Za-z_$][A-Za-z0-9_$]*</.test(annotation)) {
+    return true;
+  }
+  // Inline object literal types (e.g. `{ lines: number; bytes: number }`).
+  if (annotation.trimStart().startsWith('{')) {
     return true;
   }
   // Inline union literal types (e.g., "'user' | 'assistant' | 'system' | 'tool'")
   if (annotation.includes("'") && annotation.includes('|')) {
+    return true;
+  }
+  // Anything that isn't a plain identifier can't be a `type X = string` LHS,
+  // so it's safer to treat it as builtin/inline and skip alias generation.
+  if (!IDENTIFIER_RE.test(annotation)) {
     return true;
   }
   return false;
