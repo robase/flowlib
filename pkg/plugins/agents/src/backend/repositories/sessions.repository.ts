@@ -25,6 +25,7 @@ interface AgentSessionRow {
   title: string;
   provider_id: string;
   provider_config: unknown;
+  credential_id: string | null;
   model: string | null;
   permission_mode: string | null;
   system_prompt: string | null;
@@ -55,6 +56,7 @@ export interface CreateSessionInput {
   title?: string;
   providerId: AgentProviderId;
   providerConfig?: Record<string, unknown>;
+  credentialId?: string | null;
   model?: string | null;
   permissionMode?: string | null;
   systemPrompt?: string | null;
@@ -73,6 +75,7 @@ export interface UpdateSessionInput {
   title?: string;
   providerId?: AgentProviderId;
   providerConfig?: Record<string, unknown>;
+  credentialId?: string | null;
   model?: string | null;
   permissionMode?: string | null;
   systemPrompt?: string | null;
@@ -109,6 +112,7 @@ function mapRow(row: AgentSessionRow): AgentSession {
     title: row.title,
     providerId: row.provider_id as AgentProviderId,
     providerConfig: parseJsonOrNull<Record<string, unknown>>(row.provider_config) ?? {},
+    credentialId: row.credential_id ?? null,
     model: row.model,
     permissionMode: row.permission_mode,
     systemPrompt: row.system_prompt,
@@ -191,6 +195,7 @@ export class SessionsRepository {
         title: input.title ?? 'New chat',
         provider_id: input.providerId,
         provider_config: encodeJsonOrNull(input.providerConfig ?? {}) ?? '{}',
+        credential_id: input.credentialId ?? null,
         model: input.model ?? null,
         permission_mode: input.permissionMode ?? null,
         system_prompt: input.systemPrompt ?? null,
@@ -236,6 +241,9 @@ export class SessionsRepository {
     }
     if (patch.providerConfig !== undefined) {
       set.provider_config = encodeJsonOrNull(patch.providerConfig) ?? '{}';
+    }
+    if (patch.credentialId !== undefined) {
+      set.credential_id = patch.credentialId;
     }
     if (patch.model !== undefined) {
       set.model = patch.model;

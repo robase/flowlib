@@ -6,8 +6,8 @@
  */
 
 import { useState, useRef, type FC } from 'react';
-import { Globe, Plus, Search, Clock, Hash, ChevronRight, Loader2, Workflow } from 'lucide-react';
-import { PageLayout, Dialog, DialogContent, useFlows } from '@flowlib/ui';
+import { Globe, Plus, Search, Clock, Hash, ChevronRight, Workflow } from 'lucide-react';
+import { PageLayout, Dialog, DialogContent, Skeleton, useFlows } from '@flowlib/ui';
 import { useWebhookTriggers } from '../hooks/useWebhookQueries';
 import { CreateWebhookModal } from './CreateWebhookModal';
 import { WebhookDetailPanel } from './WebhookDetailPanel';
@@ -238,9 +238,24 @@ export const WebhooksPage: FC<{ basePath: string }> = () => {
 
         {/* Content */}
         {isLoading ? (
-          <div className="flex items-center justify-center gap-2 py-16 text-sm text-muted-foreground">
-            <Loader2 className="w-4 h-4 animate-spin" />
-            Loading webhooks…
+          <div className="overflow-hidden rounded-lg border bg-card">
+            <div className="divide-y">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <div key={i} className="w-full flex items-center gap-3 px-4 py-3">
+                  <Skeleton className="w-9 h-9 rounded-lg shrink-0" />
+                  <div className="flex-1 min-w-0 space-y-1.5">
+                    <Skeleton className="h-3.5 w-40" />
+                    <Skeleton className="h-3 w-28" />
+                  </div>
+                  <Skeleton className="hidden sm:block h-4 w-20 rounded-full shrink-0" />
+                  <div className="hidden md:flex items-center gap-4 shrink-0">
+                    <Skeleton className="h-3 w-6" />
+                    <Skeleton className="h-3 w-12" />
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-muted-foreground/30 shrink-0" />
+                </div>
+              ))}
+            </div>
           </div>
         ) : error ? (
           <div className="rounded-lg border border-red-200 bg-red-50 dark:border-red-900 dark:bg-red-950/30 p-4 text-sm text-red-600 dark:text-red-400">

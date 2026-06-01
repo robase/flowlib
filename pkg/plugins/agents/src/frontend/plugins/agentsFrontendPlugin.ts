@@ -16,10 +16,10 @@
  * routes out so the two streams stay merge-clean.
  */
 
-import { MessageSquare, Plug } from 'lucide-react';
+import { MessageSquare } from 'lucide-react';
 import type { ComponentType, ReactNode } from 'react';
 import { AgentsApiProvider } from '../api/context';
-import { AgentsPage } from '../routes/AgentsPage';
+import { AgentsLayout } from '../routes/AgentsLayout';
 import { McpServersPage } from '../routes/McpServersPage';
 
 /**
@@ -63,12 +63,6 @@ export const agentsFrontendPlugin: FlowlibFrontendPluginShape = {
       path: '/agents',
       position: 'top',
     },
-    {
-      label: 'MCP servers',
-      icon: Plug,
-      path: '/agents/mcp-servers',
-      position: 'top',
-    },
   ],
 
   // Wrap the entire React tree in `AgentsApiProvider` so any descendant
@@ -78,7 +72,7 @@ export const agentsFrontendPlugin: FlowlibFrontendPluginShape = {
   providers: [AgentsApiProvider],
 
   routes: [
-    { path: '/agents', component: AgentsPage },
+    { path: '/agents', component: AgentsLayout },
     { path: '/agents/mcp-servers', component: McpServersPage },
   ],
 };

@@ -13,14 +13,26 @@
  * only filesystem. `rootPath` is therefore an *in-sandbox* absolute path
  * (`/workspace`), not a host path.
  *
- * `metadata.startOpencode()` is a lazy starter that boots `opencode serve`
- * inside the sandbox and exposes its port. Stream D's `openCodeProvider`
- * calls it when it needs an HTTP base URL. The default impl is a
- * placeholder that documents the integration point — Stream H/D may
- * supply a real implementation through `metadata.opencodeStarter`.
+ * `metadata.getOpencode()` is a lazy starter that boots an OpenCode server
+ * inside the sandbox via `@cloudflare/sandbox/opencode`'s `createOpencode`
+ * helper. It returns the typed `OpencodeClient` (whose transport routes
+ * through `sandbox.containerFetch`, so no `exposePort` / wildcard DNS is
+ * required for SDK traffic) plus a server handle. The result is cached
+ * on the metadata object — subsequent calls reuse the same client.
+ *
+ * The lifecycle helper handles container cold-start and process readiness
+ * internally (it polls until the OpenCode HTTP port responds), and reuses
+ * an existing OpenCode process on the same port if one is already running.
+ * That replaces the prior manual `startProcess` + `exposePort` dance which
+ * raced cold-start and produced `Sandbox.startProcess - Canceled` errors.
  */
 
 import type { WorkspaceExecOptions, WorkspaceExecResult, WorkspaceHandle } from '../types';
+import {
+  OutboundCredentialKV,
+  type OutboundCredentialKVStore,
+  type OutboundVendor,
+} from '../../cloudflare/outbound-auth';
 
 /**
  * Subset of the `@cloudflare/sandbox` `Sandbox` stub surface this handle
@@ -48,19 +60,45 @@ export interface SandboxStub {
       type: 'file' | 'directory' | 'symlink' | 'other';
     }>;
   }>;
-  startProcess(
-    command: string,
-    options?: { cwd?: string; env?: Record<string, string | undefined> },
-  ): Promise<{ id: string }>;
-  exposePort(
-    port: number,
-    options: { name?: string; hostname: string; token?: string },
-  ): Promise<{ url: string; port: number }>;
   destroy(): Promise<void>;
 }
 
-/** Lazy starter contract for spinning up `opencode serve` inside the sandbox. */
-export type OpencodeStarter = (sandbox: SandboxStub) => Promise<string>;
+/**
+ * Structural shape of the result returned by
+ * `@cloudflare/sandbox/opencode`'s `createOpencode()`. We import the
+ * type loosely so the workspace handle doesn't take a hard runtime
+ * dependency on `@opencode-ai/sdk`.
+ */
+export interface OpencodeServerHandle {
+  port: number;
+  url: string;
+  close(): Promise<void>;
+}
+
+export interface OpencodeBundle {
+  client: unknown;
+  server: OpencodeServerHandle;
+}
+
+/**
+ * Options passed through to `createOpencode()`. Mirrors `OpencodeOptions`
+ * from `@cloudflare/sandbox/opencode` without forcing the import.
+ */
+export interface OpencodeBootOptions {
+  port?: number;
+  directory?: string;
+  config?: Record<string, unknown>;
+  env?: Record<string, string>;
+}
+
+/**
+ * Loader contract for `@cloudflare/sandbox/opencode`. Tests inject a fake;
+ * production code falls through to a dynamic `import()`.
+ */
+export type OpencodeLoader = (
+  sandbox: SandboxStub,
+  options?: OpencodeBootOptions,
+) => Promise<OpencodeBundle>;
 
 /**
  * Workspace-root inside the sandbox container.
@@ -108,10 +146,27 @@ export interface CloudflareSandboxHandleOptions {
   sandbox: SandboxStub;
   /** The full sandbox identity (`org:${orgId}/ws:${workspaceId}`). */
   sandboxName: string;
-  /** Optional opencode starter; supplied by Stream H/D when ready. */
-  opencodeStarter?: OpencodeStarter;
-  /** Hostname used by `exposePort` for opencode's preview URL. */
-  exposeHostname?: string;
+  /**
+   * Default options merged into every `getOpencode()` call. Typically
+   * supplied by the `cloudflareSandbox()` factory and contains the
+   * OpenCode `Config` (provider keys, AI Gateway routing, …) plus any
+   * extra env vars to forward into the OpenCode process.
+   */
+  defaultOpencodeOptions?: OpencodeBootOptions;
+  /**
+   * Test seam — overrides the dynamic import of
+   * `@cloudflare/sandbox/opencode`. Production code leaves this unset.
+   */
+  opencodeLoader?: OpencodeLoader;
+  /**
+   * When set, the workspace exposes an `outboundAuth` namespace on its
+   * metadata (`bindCredential` / `unbindCredential`). The agents
+   * endpoint writes per-session credential bindings into this KV store;
+   * the consumer Worker's `Sandbox.outboundByHost` handlers read from
+   * the same keys to inject auth headers — keeping the LLM API key
+   * out of the sandbox container. See [outbound-auth.ts](../../cloudflare/outbound-auth.ts).
+   */
+  outboundAuth?: { kv: OutboundCredentialKVStore; ttlSeconds?: number };
 }
 
 /**
@@ -124,22 +179,32 @@ export class CloudflareSandboxHandle implements WorkspaceHandle {
   readonly remoteEndpoint?: string;
   readonly metadata: {
     sandboxName: string;
+    /** The raw sandbox stub — exposed so providers (e.g. opencode) can call SDK helpers like `containerFetch`. */
+    sandbox: SandboxStub;
+    /** Cached opencode bundle (filled lazily by `getOpencode`). Null until the first call. */
+    opencode: OpencodeBundle | null;
     /**
-     * Cached opencode base URL (filled lazily by `startOpencode`). Null
-     * until opencode has been started for this handle.
+     * Boot (or return the cached) OpenCode server inside the sandbox via
+     * `@cloudflare/sandbox/opencode`. Returns the typed SDK client plus a
+     * server handle. Subsequent calls are idempotent and ignore options
+     * (the first call wins).
      */
-    opencodeBaseUrl: string | null;
+    getOpencode: (options?: OpencodeBootOptions) => Promise<OpencodeBundle>;
     /**
-     * Lazy starter — boots `opencode serve` in the sandbox, exposes
-     * port 4096, and resolves to the public preview URL.
+     * Outbound-Workers credential binding surface. Present iff the
+     * `cloudflareSandbox()` factory was configured with an
+     * `outboundAuth` KV namespace. The opencode provider uses this
+     * to pre-decrypt + bind LLM API keys for the session before
+     * booting OpenCode with a placeholder header.
      *
-     * If no `opencodeStarter` was supplied at construction time, the
-     * stub returns a documented "not yet implemented" string. Stream
-     * D's `openCodeProvider` checks for this sentinel and either falls
-     * back to the configured `opencodeBaseUrl` or surfaces a clear
-     * error.
+     * Absent on workspaces where outbound-Workers auth isn't
+     * configured — providers fall back to the legacy in-container
+     * key injection path.
      */
-    startOpencode: () => Promise<string>;
+    outboundAuth?: {
+      bindCredential: (sessionId: string, vendor: OutboundVendor, apiKey: string) => Promise<void>;
+      unbindCredential: (sessionId: string, vendor: OutboundVendor) => Promise<void>;
+    };
   };
 
   private readonly sandbox: SandboxStub;
@@ -147,37 +212,58 @@ export class CloudflareSandboxHandle implements WorkspaceHandle {
   constructor(opts: CloudflareSandboxHandleOptions) {
     this.id = opts.workspaceId;
     this.sandbox = opts.sandbox;
-    const starter = opts.opencodeStarter;
-    const hostname = opts.exposeHostname;
+    const loader = opts.opencodeLoader ?? defaultOpencodeLoader;
+    const defaults = opts.defaultOpencodeOptions;
+
+    let inflight: Promise<OpencodeBundle> | undefined;
+
+    const getOpencode = async (override?: OpencodeBootOptions): Promise<OpencodeBundle> => {
+      if (this.metadata.opencode) {
+        return this.metadata.opencode;
+      }
+      if (!inflight) {
+        const merged: OpencodeBootOptions = {
+          directory: SANDBOX_WORKSPACE_ROOT,
+          ...defaults,
+          ...override,
+          // Merge config + env shallowly so callers can extend defaults
+          // without dropping factory-supplied provider keys.
+          ...(defaults?.config || override?.config
+            ? { config: { ...defaults?.config, ...override?.config } }
+            : {}),
+          ...(defaults?.env || override?.env
+            ? { env: { ...defaults?.env, ...override?.env } }
+            : {}),
+        };
+        inflight = loader(this.sandbox, merged)
+          .then((bundle) => {
+            this.metadata.opencode = bundle;
+            return bundle;
+          })
+          .catch((err) => {
+            // Allow retry on next call after a failure.
+            inflight = undefined;
+            throw err;
+          });
+      }
+      return inflight;
+    };
+
+    let outboundAuth: CloudflareSandboxHandle['metadata']['outboundAuth'];
+    if (opts.outboundAuth) {
+      const credKv = new OutboundCredentialKV(opts.outboundAuth.kv, opts.outboundAuth.ttlSeconds);
+      outboundAuth = {
+        bindCredential: (sessionId, vendor, apiKey) => credKv.bind(sessionId, vendor, apiKey),
+        unbindCredential: (sessionId, vendor) => credKv.unbind(sessionId, vendor),
+      };
+    }
+
     this.metadata = {
       sandboxName: opts.sandboxName,
-      opencodeBaseUrl: null,
-      startOpencode: async () => {
-        if (this.metadata.opencodeBaseUrl) {
-          return this.metadata.opencodeBaseUrl;
-        }
-        if (starter) {
-          const url = await starter(this.sandbox);
-          this.metadata.opencodeBaseUrl = url;
-          return url;
-        }
-        // Default impl: start opencode serve and expose port 4096. Only
-        // works when an `exposeHostname` was supplied so we know how to
-        // construct the preview URL.
-        if (hostname) {
-          await this.sandbox.startProcess('opencode serve --port 4096 --host 0.0.0.0', {
-            cwd: SANDBOX_WORKSPACE_ROOT,
-          });
-          const exposed = await this.sandbox.exposePort(4096, {
-            name: 'opencode',
-            hostname,
-          });
-          this.metadata.opencodeBaseUrl = exposed.url;
-          return exposed.url;
-        }
-        // No starter, no hostname — return a sentinel the caller checks.
-        return 'opencode-not-configured';
-      },
+      sandbox: opts.sandbox,
+      opencode: null,
+      getOpencode,
+      outboundAuth,
     };
   }
 
@@ -265,4 +351,36 @@ export class CloudflareSandboxHandle implements WorkspaceHandle {
     }
     return `${SANDBOX_WORKSPACE_ROOT}/${segments.join('/')}`;
   }
+}
+
+/**
+ * Default opencode loader — dynamically imports `@cloudflare/sandbox/opencode`
+ * the first time it is needed. Cached at module scope so repeated calls
+ * across handles only pay the import cost once.
+ */
+let cachedOpencodeFactory:
+  | ((sandbox: unknown, options?: OpencodeBootOptions) => Promise<OpencodeBundle>)
+  | undefined;
+
+const defaultOpencodeLoader: OpencodeLoader = async (sandbox, options) => {
+  if (!cachedOpencodeFactory) {
+    const mod = (await import('@cloudflare/sandbox/opencode')) as {
+      createOpencode: (sandbox: unknown, options?: OpencodeBootOptions) => Promise<OpencodeBundle>;
+    };
+    if (typeof mod.createOpencode !== 'function') {
+      throw new Error(
+        '[cloudflare-sandbox] @cloudflare/sandbox/opencode did not expose `createOpencode`',
+      );
+    }
+    cachedOpencodeFactory = mod.createOpencode;
+  }
+  return cachedOpencodeFactory(sandbox, options);
+};
+
+/**
+ * Reset the cached opencode factory. Used by tests; production code never
+ * calls this. @internal
+ */
+export function _resetOpencodeFactoryCacheForTests(): void {
+  cachedOpencodeFactory = undefined;
 }

@@ -22,10 +22,11 @@
  * that just logs — INT replaces the import with the real one below.
  */
 
+import { createPluginDatabaseApi, type PluginDatabaseApi } from '@flowlib/core';
 import type { PluginContext } from '../plugin-context';
 
 import { AgentChatDO } from './chat-agent-do';
-import { setAgentsRuntime } from './runtime-singleton';
+import { setAgentsRuntime, setAgentsDatabaseResolver } from './runtime-singleton';
 
 /**
  * Register the Cloudflare Durable Object surface with the plugin
@@ -36,6 +37,17 @@ import { setAgentsRuntime } from './runtime-singleton';
 export function registerCloudflareDO(ctx: PluginContext): void {
   // Make the runtime registries reachable from inside the DO class.
   setAgentsRuntime(ctx.registries);
+
+  // The repositories slot in the registry holds a *factory* keyed by
+  // a `PluginDatabaseApi`. Endpoints get the database from their
+  // request-scoped `PluginEndpointContext`, but the DO has no such
+  // context. Stash a closure that captures this isolate's Flowlib
+  // instance so the DO can lazily materialise repositories without
+  // re-discovering the database connection on every turn.
+  setAgentsDatabaseResolver((): PluginDatabaseApi => {
+    const flowlib = ctx.flowlib.getFlowlib();
+    return createPluginDatabaseApi(flowlib.plugins.getDatabaseConnection());
+  });
 
   // Expose the DO class for downstream consumers (e.g. the consumer
   // Worker that re-exports it for its `wrangler.jsonc` migration).

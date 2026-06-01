@@ -518,6 +518,7 @@ function paramFieldToNodeParamField(f: ParamField): NodeParamField {
     // Serialize only the metadata (dependsOn) — the handler stays server-side
     ...(f.loadOptions ? { loadOptions: { dependsOn: f.loadOptions.dependsOn } } : {}),
     ...(f.helper ? { helper: f.helper } : {}),
+    ...(f.addNew ? { addNew: f.addNew } : {}),
   };
 }
 

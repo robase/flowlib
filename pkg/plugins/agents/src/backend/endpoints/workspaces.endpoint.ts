@@ -52,23 +52,22 @@ async function createWorkspace(deps: EndpointDeps): Promise<PluginEndpointRespon
     return badRequest('name is required');
   }
 
-  const configured = deps.pluginCtx.options.workspaceProvider;
-  const requestedId = body.workspaceProviderId ?? configured?.id;
+  const configured = deps.pluginCtx.options.workspaceProviders;
+  // Default: the first configured provider when the caller doesn't
+  // pick one explicitly. Hosts with multiple workspace providers can
+  // route by passing `workspaceProviderId` on the request.
+  const requestedId = body.workspaceProviderId ?? configured[0]?.id;
 
   if (!requestedId) {
     return badRequest('workspaceProviderId is required (no default configured)');
   }
 
-  // For v1, the configured workspaceProvider is authoritative — only its
-  // id is accepted (or absent, in which case the configured one is used).
-  if (configured && requestedId !== configured.id) {
+  const provider = deps.pluginCtx.registries.workspaces.get(requestedId);
+  if (!provider) {
     return badRequest('Unknown workspaceProviderId', {
       workspaceProviderId: requestedId,
-      configured: configured.id,
+      registered: Array.from(deps.pluginCtx.registries.workspaces.keys()),
     });
-  }
-  if (!configured) {
-    return badRequest('No workspace provider is configured for this deployment');
   }
 
   const id = body.id ?? crypto.randomUUID();
@@ -76,7 +75,7 @@ async function createWorkspace(deps: EndpointDeps): Promise<PluginEndpointRespon
   // Provider-side create. Failure leaves no DB row behind.
   let providerOk = false;
   try {
-    await configured.create({
+    await provider.create({
       workspaceId: id,
       auth: deps.auth,
       name: body.name,
@@ -100,7 +99,7 @@ async function createWorkspace(deps: EndpointDeps): Promise<PluginEndpointRespon
     id,
     orgId: deps.auth.orgId,
     name: body.name,
-    workspaceProviderId: configured.id as WorkspaceProviderId,
+    workspaceProviderId: provider.id as WorkspaceProviderId,
     rootPath: body.rootPath ?? null,
     gitRemote: body.gitRemote ?? null,
     gitBranch: body.gitBranch ?? null,
@@ -148,8 +147,8 @@ async function deleteWorkspace(deps: EndpointDeps): Promise<PluginEndpointRespon
     return notFound('Workspace not found');
   }
 
-  const provider = deps.pluginCtx.options.workspaceProvider;
-  if (provider && provider.id === existing.workspaceProviderId) {
+  const provider = deps.pluginCtx.registries.workspaces.get(existing.workspaceProviderId);
+  if (provider) {
     try {
       await provider.destroy(id, deps.auth);
     } catch (err) {

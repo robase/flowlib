@@ -233,23 +233,81 @@ describe('openCodeProvider.validateConfig', () => {
 
 // ─── createSession ─────────────────────────────────────────────────────
 
+/**
+ * Drive the lazy-boot path by starting a prompt iterator. Yields back
+ * once the upstream `session.create` has fired, then closes the stream
+ * so the iterator drains. This mirrors how the runtime works: the
+ * upstream session is provisioned on the first prompt, not at create
+ * time.
+ */
+async function triggerLazyBoot(
+  provider: ReturnType<typeof openCodeProvider>,
+  providerSessionId: string,
+): Promise<AgentEvent[]> {
+  const ac = new AbortController();
+  const collected: AgentEvent[] = [];
+  const iterPromise = (async () => {
+    for await (const e of provider.prompt({
+      providerSessionId,
+      parts: [{ type: 'text', text: 'hi' }],
+      abortSignal: ac.signal,
+    })) {
+      collected.push(e);
+    }
+  })();
+  await flushMicrotasks();
+  activeClient.__closeStream();
+  await iterPromise;
+  return collected;
+}
+
+/**
+ * Yield enough microtasks for the lazy-boot chain to settle: SDK
+ * dynamic-import, `client.session.create`, then `client.event.subscribe`.
+ */
+async function flushMicrotasks(): Promise<void> {
+  for (let i = 0; i < 8; i++) {
+    await Promise.resolve();
+  }
+}
+
+/**
+ * The fake `session.create` returns `session-N` ids starting at 1 and
+ * resets on every test. The first session created in a test always gets
+ * `session-1` — that's the upstream id our SSE filter compares against.
+ */
+const FAKE_UPSTREAM_ID = 'session-1';
+
 describe('openCodeProvider.createSession', () => {
-  it('creates a session against the resolved baseUrl', async () => {
+  it('returns a placeholder id without touching the SDK (lazy boot)', async () => {
     const provider = openCodeProvider();
     const out = await provider.createSession({
       auth: { orgId: 'o', userId: 'u', roles: [] } as never,
       config: {},
       extras: { baseUrl: 'http://opencode.local' },
     });
-    expect(out.providerSessionId).toMatch(/^session-/);
+    expect(typeof out.providerSessionId).toBe('string');
+    expect(out.providerSessionId.length).toBeGreaterThan(0);
+    // Lazy boot: the SDK is not loaded until first prompt.
+    expect(createOpencodeClient).not.toHaveBeenCalled();
+  });
+
+  it('boots against the resolved baseUrl on first prompt', async () => {
+    const provider = openCodeProvider();
+    const out = await provider.createSession({
+      auth: { orgId: 'o', userId: 'u', roles: [] } as never,
+      config: {},
+      extras: { baseUrl: 'http://opencode.local' },
+    });
+    await triggerLazyBoot(provider, out.providerSessionId);
     expect(createOpencodeClient).toHaveBeenCalledWith(
       expect.objectContaining({ baseUrl: 'http://opencode.local' }),
     );
   });
 
-  it('threads workspace.metadata.opencodeBaseUrl into the SDK config', async () => {
+  it('threads workspace.metadata.opencodeBaseUrl into the SDK config on first prompt', async () => {
     const provider = openCodeProvider();
-    await provider.createSession({
+    const out = await provider.createSession({
       auth: { orgId: 'o', userId: 'u', roles: [] } as never,
       config: {},
       workspace: {
@@ -258,17 +316,88 @@ describe('openCodeProvider.createSession', () => {
         metadata: { opencodeBaseUrl: 'http://sandbox-7.internal' },
       } as never,
     });
+    await triggerLazyBoot(provider, out.providerSessionId);
     expect(createOpencodeClient).toHaveBeenCalledWith(
       expect.objectContaining({ baseUrl: 'http://sandbox-7.internal', directory: '/work' }),
     );
   });
 
-  it('throws when no baseUrl can be resolved', async () => {
+  it('surfaces a session-end:error from prompt when no baseUrl can be resolved', async () => {
     const provider = openCodeProvider();
     delete process.env.OPENCODE_BASE_URL;
-    await expect(provider.createSession({ auth: {} as never, config: {} })).rejects.toThrow(
-      /baseUrl/,
-    );
+    const out = await provider.createSession({ auth: {} as never, config: {} });
+    const events = await triggerLazyBoot(provider, out.providerSessionId);
+    const sessionEnd = events.find((e) => e.type === 'session-end');
+    expect(sessionEnd).toMatchObject({ reason: 'error' });
+    expect((sessionEnd as { error?: string }).error).toMatch(/baseUrl/);
+  });
+
+  it('boots with placeholder API keys + session-id header in outbound-auth mode', async () => {
+    const provider = openCodeProvider();
+    const sandboxClient = activeClient as unknown;
+    type GetOpencodeOpts = {
+      config?: {
+        provider?: Record<
+          string,
+          { options?: { apiKey?: string; headers?: Record<string, string> } }
+        >;
+      };
+    };
+    const getOpencode = vi.fn(async (_opts?: GetOpencodeOpts) => ({
+      client: sandboxClient,
+      server: { url: 'http://sandbox-managed' },
+    }));
+    const bindCredential = vi.fn(async () => {});
+    const unbindCredential = vi.fn(async () => {});
+    const out = await provider.createSession({
+      auth: { orgId: 'o', userId: 'u', roles: [] } as never,
+      config: {},
+      credentialId: 'cred-anthropic-1',
+      workspace: {
+        id: 'ws-cf',
+        rootPath: '/work',
+        metadata: {
+          getOpencode,
+          outboundAuth: { bindCredential, unbindCredential },
+        },
+      } as never,
+    });
+    await triggerLazyBoot(provider, out.providerSessionId);
+
+    // getOpencode is called with config.provider populated by placeholder
+    // entries that carry the session-id header. The provider does NOT
+    // call loadProviderConfig in outbound mode. (The handle's
+    // `getOpencode` may be called once for boot and once for the
+    // post-boot client resolve — they're idempotent and cached.)
+    expect(getOpencode.mock.calls.length).toBeGreaterThanOrEqual(1);
+    const opts = getOpencode.mock.calls[0]?.[0];
+    const anthropicSlot = opts?.config?.provider?.anthropic;
+    expect(anthropicSlot?.options?.apiKey).toBe('flowlib-outbound-placeholder');
+    expect(anthropicSlot?.options?.headers?.['x-flowlib-session-id']).toBe(out.providerSessionId);
+    // Sandbox transport — NOT the HTTP factory.
+    expect(createOpencodeClient).not.toHaveBeenCalled();
+  });
+
+  it('auto-selects sandbox mode when workspace.metadata.getOpencode is present', async () => {
+    const provider = openCodeProvider();
+    const sandboxClient = activeClient as unknown;
+    const getOpencode = vi.fn(async () => ({
+      client: sandboxClient,
+      server: { url: 'http://sandbox-managed' },
+    }));
+    const out = await provider.createSession({
+      auth: { orgId: 'o', userId: 'u', roles: [] } as never,
+      config: {},
+      workspace: {
+        id: 'ws-cf',
+        rootPath: '/work',
+        metadata: { getOpencode },
+      } as never,
+    });
+    await triggerLazyBoot(provider, out.providerSessionId);
+    expect(getOpencode).toHaveBeenCalled();
+    // Sandbox mode should NOT touch the HTTP client factory.
+    expect(createOpencodeClient).not.toHaveBeenCalled();
   });
 });
 
@@ -311,9 +440,8 @@ describe('openCodeProvider.prompt', () => {
       }
     })();
 
-    // Wait one microtask so prompt() can subscribe to the event stream.
-    await Promise.resolve();
-    await Promise.resolve();
+    // Wait for lazy boot (SDK import + session.create + event.subscribe).
+    await flushMicrotasks();
 
     activeClient.__pushEvent({
       type: 'message.part.updated',
@@ -321,7 +449,7 @@ describe('openCodeProvider.prompt', () => {
         delta: 'Hello',
         part: {
           id: 'p',
-          sessionID: session.providerSessionId,
+          sessionID: FAKE_UPSTREAM_ID,
           messageID: 'm1',
           type: 'text',
           text: '',
@@ -334,7 +462,7 @@ describe('openCodeProvider.prompt', () => {
         info: {
           id: 'm1',
           role: 'assistant',
-          sessionID: session.providerSessionId,
+          sessionID: FAKE_UPSTREAM_ID,
           time: { created: 1, completed: 2 },
           tokens: { input: 1, output: 1, reasoning: 0, cache: { read: 0, write: 0 } },
         },
@@ -342,7 +470,7 @@ describe('openCodeProvider.prompt', () => {
     });
     activeClient.__pushEvent({
       type: 'session.idle',
-      properties: { sessionID: session.providerSessionId },
+      properties: { sessionID: FAKE_UPSTREAM_ID },
     });
     activeClient.__closeStream();
 
@@ -350,9 +478,9 @@ describe('openCodeProvider.prompt', () => {
 
     expect(collected.find((e) => e.type === 'text-delta')).toBeTruthy();
     expect(collected.find((e) => e.type === 'message-complete')).toBeTruthy();
-    // Prompt was actually issued.
+    // Prompt was actually issued against the upstream session id.
     expect(activeClient.__sentPrompts).toHaveLength(1);
-    expect(activeClient.__sentPrompts[0].id).toBe(session.providerSessionId);
+    expect(activeClient.__sentPrompts[0].id).toBe(FAKE_UPSTREAM_ID);
   });
 
   it('drops events from a different session id', async () => {
@@ -375,8 +503,7 @@ describe('openCodeProvider.prompt', () => {
       }
     })();
 
-    await Promise.resolve();
-    await Promise.resolve();
+    await flushMicrotasks();
 
     // Belongs to *another* session — must be filtered out.
     activeClient.__pushEvent({
@@ -394,7 +521,7 @@ describe('openCodeProvider.prompt', () => {
     });
     activeClient.__pushEvent({
       type: 'session.idle',
-      properties: { sessionID: session.providerSessionId },
+      properties: { sessionID: FAKE_UPSTREAM_ID },
     });
     activeClient.__closeStream();
     // Synthesise a lastMessageId so session.idle has something to terminate on.
@@ -404,7 +531,7 @@ describe('openCodeProvider.prompt', () => {
         delta: 'mine',
         part: {
           id: 'p2',
-          sessionID: session.providerSessionId,
+          sessionID: FAKE_UPSTREAM_ID,
           messageID: 'mY',
           type: 'text',
           text: '',
@@ -458,8 +585,7 @@ describe('openCodeProvider.prompt', () => {
       }
     })();
 
-    await Promise.resolve();
-    await Promise.resolve();
+    await flushMicrotasks();
     activeClient.__closeStream();
     await iterPromise;
 
@@ -489,15 +615,14 @@ describe('openCodeProvider.prompt', () => {
       }
     })();
 
-    await Promise.resolve();
-    await Promise.resolve();
+    await flushMicrotasks();
 
     activeClient.__pushEvent({
       type: 'message.part.updated',
       properties: {
         part: {
           id: 'tool-c1',
-          sessionID: session.providerSessionId,
+          sessionID: FAKE_UPSTREAM_ID,
           messageID: 'm1',
           type: 'tool',
           callID: 'c1',
@@ -509,7 +634,7 @@ describe('openCodeProvider.prompt', () => {
     activeClient.__closeStream();
     await iterPromise;
 
-    expect(activeClient.__aborted).toContain(session.providerSessionId);
+    expect(activeClient.__aborted).toContain(FAKE_UPSTREAM_ID);
     expect(collected.find((e) => e.type === 'tool-result' && e.isError === true)).toBeTruthy();
     expect(collected.find((e) => e.type === 'session-end' && e.reason === 'stopped')).toBeTruthy();
   });
@@ -518,7 +643,20 @@ describe('openCodeProvider.prompt', () => {
 // ─── closeSession / shutdown ───────────────────────────────────────────
 
 describe('openCodeProvider.closeSession + shutdown', () => {
-  it('deletes the session and clears local state', async () => {
+  it('deletes the upstream session after a prompt has provisioned it', async () => {
+    const provider = openCodeProvider();
+    const session = await provider.createSession({
+      auth: {} as never,
+      config: {},
+      extras: { baseUrl: 'http://local' },
+    });
+    // Trigger lazy boot so the upstream session exists.
+    await triggerLazyBoot(provider, session.providerSessionId);
+    await provider.closeSession?.(session.providerSessionId);
+    expect(activeClient.__deleted).toContain(FAKE_UPSTREAM_ID);
+  });
+
+  it('closeSession is a no-op when the upstream session was never provisioned', async () => {
     const provider = openCodeProvider();
     const session = await provider.createSession({
       auth: {} as never,
@@ -526,25 +664,27 @@ describe('openCodeProvider.closeSession + shutdown', () => {
       extras: { baseUrl: 'http://local' },
     });
     await provider.closeSession?.(session.providerSessionId);
-    expect(activeClient.__deleted).toContain(session.providerSessionId);
+    expect(activeClient.__deleted).toEqual([]);
   });
 
-  it('shutdown() drops all sessions and the client cache', async () => {
+  it('shutdown() drops the client cache so the next prompt rebuilds it', async () => {
     const provider = openCodeProvider();
-    await provider.createSession({
+    const first = await provider.createSession({
       auth: {} as never,
       config: {},
       extras: { baseUrl: 'http://local' },
     });
+    await triggerLazyBoot(provider, first.providerSessionId);
+    expect(createOpencodeClient).toHaveBeenCalledTimes(1);
     await provider.shutdown?.();
-    // Subsequent createSession should re-create the client (fresh cache).
     createOpencodeClient.mockClear();
     activeClient = createFakeClient();
-    await provider.createSession({
+    const second = await provider.createSession({
       auth: {} as never,
       config: {},
       extras: { baseUrl: 'http://local' },
     });
+    await triggerLazyBoot(provider, second.providerSessionId);
     expect(createOpencodeClient).toHaveBeenCalledTimes(1);
   });
 });
@@ -656,51 +796,54 @@ describe('runtime helpers', () => {
 // ─── Factory options: mode + baseUrl ────────────────────────────────────
 
 describe('openCodeProvider factory options', () => {
-  it('uses factory baseUrl as a fallback when no workspace / extras supply one', async () => {
+  it('uses factory baseUrl as a fallback on first prompt when no workspace / extras supply one', async () => {
     const provider = openCodeProvider({ baseUrl: 'http://factory.local' });
     const out = await provider.createSession({
       auth: {} as never,
       config: {},
     });
-    expect(out.providerSessionId).toMatch(/^session-/);
+    await triggerLazyBoot(provider, out.providerSessionId);
     expect(createOpencodeClient).toHaveBeenCalledWith(
       expect.objectContaining({ baseUrl: 'http://factory.local' }),
     );
   });
 
-  it('embedded mode: starts createOpencode() and never calls createOpencodeClient', async () => {
+  it('embedded mode: starts createOpencode() on first prompt and never calls createOpencodeClient', async () => {
     const provider = openCodeProvider({ mode: 'embedded' });
     const session = await provider.createSession({
       auth: {} as never,
       config: {},
       workspace: { id: 'w', rootPath: '/work', metadata: {} } as never,
     });
-    expect(session.providerSessionId).toMatch(/^session-/);
+    await triggerLazyBoot(provider, session.providerSessionId);
     expect(createOpencode).toHaveBeenCalledTimes(1);
     expect(createOpencodeClient).not.toHaveBeenCalled();
   });
 
-  it('embedded mode: caches the server per workspace directory', async () => {
+  it('embedded mode: caches the server per workspace directory across sessions', async () => {
     const provider = openCodeProvider({ mode: 'embedded' });
-    await provider.createSession({
+    const a = await provider.createSession({
       auth: {} as never,
       config: {},
       workspace: { id: 'w', rootPath: '/work', metadata: {} } as never,
     });
-    await provider.createSession({
+    const b = await provider.createSession({
       auth: {} as never,
       config: {},
       workspace: { id: 'w', rootPath: '/work', metadata: {} } as never,
     });
+    await triggerLazyBoot(provider, a.providerSessionId);
+    await triggerLazyBoot(provider, b.providerSessionId);
     expect(createOpencode).toHaveBeenCalledTimes(1);
   });
 
   it('per-session config.mode overrides the factory mode', async () => {
     const provider = openCodeProvider({ mode: 'external', baseUrl: 'http://factory' });
-    await provider.createSession({
+    const session = await provider.createSession({
       auth: {} as never,
       config: { mode: 'embedded' },
     });
+    await triggerLazyBoot(provider, session.providerSessionId);
     expect(createOpencode).toHaveBeenCalledTimes(1);
     expect(createOpencodeClient).not.toHaveBeenCalled();
   });
@@ -712,11 +855,12 @@ describe('openCodeProvider factory options', () => {
       client: activeClient as unknown,
       server: fakeServer as never,
     }));
-    await provider.createSession({
+    const session = await provider.createSession({
       auth: {} as never,
       config: {},
       workspace: { id: 'w', rootPath: '/x', metadata: {} } as never,
     });
+    await triggerLazyBoot(provider, session.providerSessionId);
     await provider.shutdown?.();
     expect(fakeServer.close).toHaveBeenCalled();
   });

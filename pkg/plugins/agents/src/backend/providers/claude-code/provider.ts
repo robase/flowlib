@@ -30,6 +30,7 @@ import {
   type ClaudeSession,
   type ClaudePermissionMode,
 } from './runtime';
+import { createClaudeSandboxSession, tryGetClaudeServerAccessor } from './runtime-sandbox';
 import {
   mapSdkMessage,
   isFileEditTool,
@@ -65,8 +66,13 @@ export interface ClaudeCodeAgentConfig extends AgentProviderConfig {
 export type ApiKeyResolver = (credentialId: string) => Promise<string>;
 
 export interface ClaudeCodeProviderOptions {
-  /** Flowlib credential id used to source the Anthropic API key. */
-  credentialId: string;
+  /**
+   * Default Flowlib credential id. Used when a session is created
+   * without a per-session `credentialId`. Optional — if omitted, every
+   * session must supply its own `credentialId` (otherwise session
+   * creation fails with a clear error).
+   */
+  credentialId?: string;
   /**
    * Async resolver from credential id → decrypted API key. Wired by
    * the host to `flowlib.credentials.getDecryptedWithRefresh()`.
@@ -93,6 +99,13 @@ const CLAUDE_CAPABILITIES: AgentCapabilities = {
   resumableStream: true,
   workspaceRequired: true,
   permissionPrompts: true,
+  // Hosted deployments register both `cloudflare-sandbox` (opencode
+  // image) and `cloudflare-sandbox-claude` (claude image). When both
+  // are present, claude-code sessions auto-provision against the
+  // claude-flavoured sandbox so the in-container `claude` binary is
+  // available. Self-hosted deployments without the claude image fall
+  // back to the first registered workspace provider.
+  preferredWorkspaceProviderId: 'cloudflare-sandbox-claude',
 };
 
 // ─── Built-in model list (rough, surfaced via `listModels`) ────────────
@@ -150,14 +163,14 @@ export interface ClaudeCodeAgentProvider extends AgentProvider {
 }
 
 export function claudeCodeProvider(options: ClaudeCodeProviderOptions): ClaudeCodeAgentProvider {
-  if (!options.credentialId || typeof options.credentialId !== 'string') {
-    throw new Error('[agents/claude-code] claudeCodeProvider({ credentialId }) is required');
-  }
   if (typeof options.apiKeyResolver !== 'function') {
     throw new Error(
       '[agents/claude-code] claudeCodeProvider({ apiKeyResolver }) is required — ' +
         'wire to flowlib.credentials.getDecryptedWithRefresh() at plugin init',
     );
+  }
+  if (options.credentialId !== undefined && typeof options.credentialId !== 'string') {
+    throw new Error('[agents/claude-code] credentialId option must be a string when supplied');
   }
 
   const logger = options.logger ?? {};
@@ -238,10 +251,17 @@ export function claudeCodeProvider(options: ClaudeCodeProviderOptions): ClaudeCo
 
     async createSession(input: CreateSessionInput) {
       const cfg = input.config as ClaudeCodeAgentConfig;
-      const apiKey = await options.apiKeyResolver(options.credentialId);
+      const credentialId = input.credentialId ?? options.credentialId;
+      if (!credentialId) {
+        throw new Error(
+          '[agents/claude-code] no credential supplied — pass `credentialId` in the session ' +
+            'request or configure a default via `claudeCodeProvider({ credentialId })`',
+        );
+      }
+      const apiKey = await options.apiKeyResolver(credentialId);
       if (!apiKey) {
         throw new Error(
-          `[agents/claude-code] credential "${options.credentialId}" did not resolve to an API key`,
+          `[agents/claude-code] credential "${credentialId}" did not resolve to an API key`,
         );
       }
 
@@ -261,7 +281,16 @@ export function claudeCodeProvider(options: ClaudeCodeProviderOptions): ClaudeCo
         hooks?: unknown;
       };
 
-      const session = await createClaudeSession({
+      // Two transports:
+      //   1. Sandbox HTTP — when the workspace handle exposes
+      //      `metadata.getClaudeCode()` (cloudflare-sandbox-claude
+      //      provider). The SDK runs inside the container; the host
+      //      proxies via containerFetch. This is the only path that
+      //      works in Cloudflare Workers (no child_process there).
+      //   2. In-process SDK — when the workspace handle is local
+      //      (Mode A / B / D) and the runtime can spawn child
+      //      processes. Keeps the existing local-dev path intact.
+      const sessionInput = {
         apiKey,
         cwd: workspace.rootPath,
         systemPrompt: input.systemPrompt,
@@ -272,10 +301,15 @@ export function claudeCodeProvider(options: ClaudeCodeProviderOptions): ClaudeCo
         // mcpServers / hooks are passed straight through — the SDK's
         // typings carry the canonical shape and the agents-plugin's
         // hook bridge (Stream S1) and MCP bridge (Stream G) supply
-        // them at session-create time.
+        // them at session-create time. The sandbox path forwards only
+        // serialisable fields; v1 sends neither, so this is moot.
         mcpServers: extras.mcpServers as never,
         hooks: extras.hooks as never,
-      });
+      };
+
+      const session = tryGetClaudeServerAccessor(workspace)
+        ? await createClaudeSandboxSession({ ...sessionInput, workspace })
+        : await createClaudeSession(sessionInput);
 
       sessions.set(providerSessionId, session);
       logger.debug?.('[agents/claude-code] session created', {

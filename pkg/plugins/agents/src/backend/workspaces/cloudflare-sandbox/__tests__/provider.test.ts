@@ -28,11 +28,6 @@ function makeStub(over: Partial<SandboxStub> = {}): SandboxStub {
     readFile: vi.fn(async () => ({ content: '' })),
     writeFile: vi.fn(async () => ({ success: true })),
     listFiles: vi.fn(async () => ({ files: [] })),
-    startProcess: vi.fn(async () => ({ id: 'p1' })),
-    exposePort: vi.fn(async () => ({
-      url: 'https://x.example.com',
-      port: 4096,
-    })),
     destroy: vi.fn(async () => {}),
     ...over,
   };

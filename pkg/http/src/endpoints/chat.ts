@@ -5,6 +5,7 @@
  *   GET    /chat/models/:credentialId
  *   POST   /chat                            — SSE stream
  *   GET    /chat/stream/:sessionId          — SSE reattach
+ *   DELETE /chat/stream/:sessionId          — stop an in-flight session
  *   GET    /chat/messages/:flowId
  *   PUT    /chat/messages/:flowId
  *   DELETE /chat/messages/:flowId
@@ -128,15 +129,43 @@ const chatReattach = defineEndpoint({
         upstream.addEventListener('abort', () => abortController.abort(), { once: true });
       }
     }
+    // Identity is checked inside subscribe(); ChatSessionForbiddenError
+    // surfaces as a thrown async error and is rendered as an `event: error`
+    // SSE frame by streamChatEvents. (No way to set 403 status mid-stream
+    // once SSE headers have flushed.)
     const events = flowlib.chat.subscribeToSession(
       request.params.sessionId,
       abortController.signal,
+      request.identity?.id,
     );
     return {
       kind: 'stream',
       status: 200,
       stream: streamChatEvents(events, abortController.signal, 'Chat reattach failed'),
     };
+  },
+});
+
+const chatAbort = defineEndpoint({
+  id: 'chat.abort',
+  method: 'DELETE',
+  path: '/chat/stream/:sessionId',
+  auth: { kind: 'protected', permission: 'flow:update' },
+  handle({ flowlib, request }) {
+    try {
+      const aborted = flowlib.chat.abortSession(request.params.sessionId, request.identity?.id);
+      return { kind: 'json', status: 200, body: { aborted } };
+    } catch (error: unknown) {
+      const name = error instanceof Error ? error.name : '';
+      if (name === 'ChatSessionForbiddenError') {
+        return {
+          kind: 'json',
+          status: 403,
+          body: { error: 'Forbidden', message: 'You do not own this chat session' },
+        };
+      }
+      throw error;
+    }
   },
 });
 
@@ -186,7 +215,10 @@ const deleteMessages = defineEndpoint({
   id: 'chat.deleteMessages',
   method: 'DELETE',
   path: '/chat/messages/:flowId',
-  auth: { kind: 'protected', permission: 'flow:delete' },
+  // Anyone who can chat (flow:update) can also clear their chat history.
+  // saveMessages is full-replace, so a flow:update caller can already wipe
+  // it by sending []; matching the permission here removes a leaky gap.
+  auth: { kind: 'protected', permission: 'flow:update' },
   async handle({ flowlib, request }) {
     await flowlib.chat.deleteMessages(request.params.flowId);
     return { kind: 'json', status: 200, body: { success: true } };
@@ -198,6 +230,7 @@ export const chatEndpoints: readonly FlowlibHttpEndpoint<unknown>[] = [
   chatModels,
   // /chat/stream/:sessionId before /chat/messages/:flowId — both are 3-segment paths
   chatReattach,
+  chatAbort,
   getMessages,
   saveMessages,
   deleteMessages,

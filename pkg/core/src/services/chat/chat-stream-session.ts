@@ -127,6 +127,43 @@ const MAX_CONSECUTIVE_EDIT_FAILURES = 3;
 /** Tool IDs that count toward (and reset) the consecutive-failure counter. */
 const EDIT_FAILURE_TOOLS = new Set(['edit_flow_source', 'write_flow_source']);
 
+/**
+ * Default output-token cap, picked per-model. Covers the common case
+ * (`gpt-4o-mini` → 16K, `claude-sonnet-4*` → 64K, etc.); unknown ids fall
+ * back to a conservative 8K so we don't reject calls against models with
+ * smaller output windows.
+ */
+const DEFAULT_MAX_TOKENS = 8_192;
+
+function resolveMaxTokens(model: string): number {
+  const id = model.toLowerCase();
+  // Anthropic Claude 4 family — 64K output supported on Sonnet/Opus.
+  if (id.startsWith('claude-opus-4') || id.startsWith('claude-sonnet-4')) {
+    return 64_000;
+  }
+  if (id.startsWith('claude-haiku-4')) {
+    return 16_000;
+  }
+  // Claude 3.5 family — 8K output cap.
+  if (id.startsWith('claude-3-5') || id.startsWith('claude-3.5')) {
+    return 8_192;
+  }
+  // OpenAI gpt-4o family — 16K output.
+  if (id.startsWith('gpt-4o') || id.startsWith('gpt-4.1') || id.startsWith('gpt-5')) {
+    return 16_384;
+  }
+  if (id.startsWith('gpt-4-turbo') || id.startsWith('gpt-4')) {
+    return 4_096;
+  }
+  // OpenRouter routes carry the underlying provider as a prefix (e.g.
+  // `anthropic/claude-sonnet-4-…`). Recurse on the suffix.
+  const slash = model.indexOf('/');
+  if (slash > 0 && slash < model.length - 1) {
+    return resolveMaxTokens(model.slice(slash + 1));
+  }
+  return DEFAULT_MAX_TOKENS;
+}
+
 /** Reset the failure counter when any of these tools succeed, or when a
  *  successful `get_flow_source` happens. */
 const FAILURE_RESET_TOOLS = new Set(['get_flow_source', 'update_node_config']);
@@ -207,7 +244,7 @@ export class ChatStreamSession {
               messages: conversationMessages,
               tools: toolDefs,
               systemPrompt,
-              maxTokens: 8192,
+              maxTokens: resolveMaxTokens(config.model),
               thinking: { enabled: true, effort: 'medium' },
               onTextDelta: (text) => queue.push({ type: 'text_delta', text }),
               onReasoningDelta: (text) => queue.push({ type: 'reasoning_delta', text }),
@@ -367,11 +404,20 @@ export class ChatStreamSession {
             })),
           });
 
-          // Append one tool-result message per call
+          // Append one tool-result message per call. Strip fields that are
+          // pure presentation concerns (`uiAction`, `errorType`, `suggestion`)
+          // so we don't burn tokens on payload the LLM can't act on.
           for (const t of toolResults) {
+            const payload: Record<string, unknown> = { success: t.result.success };
+            if (t.result.data !== undefined) {
+              payload.data = t.result.data;
+            }
+            if (t.result.error) {
+              payload.error = t.result.error;
+            }
             conversationMessages.push({
               role: 'tool',
-              content: JSON.stringify(t.result),
+              content: JSON.stringify(payload),
               toolCallId: t.id,
             });
           }

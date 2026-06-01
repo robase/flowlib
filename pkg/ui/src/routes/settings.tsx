@@ -7,6 +7,7 @@ import { Label } from '../components/ui/label';
 import { Textarea } from '../components/ui/textarea';
 import { Switch } from '../components/ui/switch';
 import { Badge } from '../components/ui/badge';
+import { Skeleton } from '../components/ui/skeleton';
 import {
   Select,
   SelectContent,
@@ -46,10 +47,40 @@ export const Settings: React.FC<SettingsPageProps> = ({ basePath: _basePath = '/
 
   if (groupsLoading || settingsLoading) {
     return (
-      <PageLayout title="Settings" icon={SettingsIcon}>
-        <div className="flex items-center gap-2 text-fl-muted-foreground py-6">
-          <Loader2 className="h-4 w-4 animate-spin" />
-          Loading settings…
+      <PageLayout
+        title="Settings"
+        subtitle="Runtime configuration for the core app and registered plugins."
+        icon={SettingsIcon}
+      >
+        <div className="space-y-8">
+          {Array.from({ length: 2 }).map((_, gi) => (
+            <section key={gi} className="rounded-lg border border-fl-border bg-fl-card">
+              <header className="border-b border-fl-border px-4 py-3">
+                <div className="flex items-center gap-2">
+                  <Skeleton className="h-4 w-32" />
+                  <Skeleton className="h-4 w-20 rounded-full" />
+                </div>
+                <Skeleton className="mt-2 h-3 w-64" />
+              </header>
+              <div className="divide-y divide-fl-border">
+                {Array.from({ length: 3 }).map((_, fi) => (
+                  <div
+                    key={fi}
+                    className="flex flex-col gap-3 px-4 py-4 sm:flex-row sm:items-start sm:justify-between"
+                  >
+                    <div className="min-w-0 flex-1 sm:max-w-md space-y-2">
+                      <Skeleton className="h-3.5 w-28" />
+                      <Skeleton className="h-3 w-56" />
+                      <Skeleton className="h-2.5 w-40" />
+                    </div>
+                    <div className="flex flex-1 flex-col gap-2 sm:max-w-sm">
+                      <Skeleton className="h-9 w-full" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+          ))}
         </div>
       </PageLayout>
     );
@@ -269,14 +300,22 @@ const FieldInput: React.FC<{
   }
 
   if (field.type === 'select') {
+    // Radix <Select.Item /> forbids empty-string values, so translate "" to a
+    // sentinel for rendering only. Stored values stay as "".
+    const EMPTY_SENTINEL = '__empty__';
+    const toSentinel = (v: string) => (v === '' ? EMPTY_SENTINEL : v);
+    const fromSentinel = (v: string) => (v === EMPTY_SENTINEL ? '' : v);
     return (
-      <Select value={String(value ?? '')} onValueChange={(v) => onChange(v)}>
+      <Select
+        value={toSentinel(String(value ?? ''))}
+        onValueChange={(v) => onChange(fromSentinel(v))}
+      >
         <SelectTrigger>
           <SelectValue placeholder={placeholder} />
         </SelectTrigger>
         <SelectContent>
           {(field.options ?? []).map((opt) => (
-            <SelectItem key={opt.value} value={opt.value}>
+            <SelectItem key={opt.value} value={toSentinel(opt.value)}>
               {opt.label}
             </SelectItem>
           ))}

@@ -123,11 +123,19 @@ describe('claudeCodeProvider — factory', () => {
     });
   });
 
-  it('throws when credentialId is missing', () => {
+  it('accepts factory construction without a credentialId (per-session override required)', () => {
+    expect(() =>
+      claudeCodeProvider({
+        apiKeyResolver: makeApiKeyResolver(),
+      }),
+    ).not.toThrow();
+  });
+
+  it('rejects non-string credentialId', () => {
     expect(() =>
       claudeCodeProvider({
         // @ts-expect-error — testing runtime validation
-        credentialId: undefined,
+        credentialId: 123,
         apiKeyResolver: makeApiKeyResolver(),
       }),
     ).toThrow(/credentialId/);

@@ -1,36 +1,45 @@
-name: Changeset from PR
+name: Changeset from merged PR
 
-# Auto-derive a changeset from the PR title (conventional commit format)
-# and the diff against the base branch. Commits the file back to the PR
-# branch so the existing Release workflow on push-to-main picks it up.
+# Auto-derive a changeset from a merged PR's title + diff and commit it to
+# the base branch (main). The Release workflow's `changesets/action` then
+# rolls the new changeset into the existing "chore: version packages" PR,
+# which serves as the running accumulator. Feature PR branches stay clean —
+# no bot commits land on them.
+#
+# Trigger lag: GitHub does NOT fire downstream workflows for pushes made
+# with the default `GITHUB_TOKEN` (loop-prevention). So a changeset pushed
+# by this workflow won't trigger `release.yml` on its own — it'll be picked
+# up by the next push to `main` (e.g. the next PR merge). To remove the lag,
+# swap `secrets.GITHUB_TOKEN` below for a PAT with `contents: write`.
 #
 # Skip conditions:
-#   - PR is from a fork (we can't push back to it)
+#   - PR was closed without merging
+#   - PR is from a fork (we can't run with write permissions safely)
 #   - PR head is the version-packages branch (`changeset-release/main`)
 #   - PR has the `skip-changeset` label
 #   - PR title prefix is non-versioning (chore/docs/ci/build/style/refactor/test)
 #   - No workspace packages are affected by the diff
 #
 # The script (`.github/scripts/changeset-from-pr.mjs`) is idempotent: if
-# the target `.changeset/pr-<N>.md` already matches what we'd generate,
-# nothing is committed — so the workflow is safe to re-run on every
-# `synchronize` event without infinite-looping on its own commits.
+# `.changeset/pr-<N>.md` already matches what we'd generate, nothing is
+# committed.
 
 on:
   pull_request:
-    types: [opened, synchronize, edited, reopened, labeled, unlabeled]
+    types: [closed]
+    branches: [main]
 
 permissions:
   contents: write
   pull-requests: read
 
 concurrency:
-  group: changeset-from-pr-${{ github.event.pull_request.number }}
-  cancel-in-progress: true
+  group: changeset-from-merged-pr-${{ github.event.pull_request.number }}
 
 jobs:
   changeset:
     if: |
+      github.event.pull_request.merged == true &&
       github.event.pull_request.head.repo.full_name == github.repository &&
       github.event.pull_request.head.ref != 'changeset-release/main' &&
       !contains(github.event.pull_request.labels.*.name, 'skip-changeset')
@@ -38,9 +47,8 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with:
-          ref: ${{ github.event.pull_request.head.ref }}
-          # Need history back to the merge-base so `git diff origin/<base>...HEAD`
-          # works. Shallow clone is OK; the script fetches base on demand.
+          ref: ${{ github.event.pull_request.base.ref }}
+          # Need history reachable from base.sha so the diff range works.
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
 
@@ -55,15 +63,17 @@ jobs:
           PR_NUMBER: ${{ github.event.pull_request.number }}
           PR_TITLE: ${{ github.event.pull_request.title }}
           PR_BASE: ${{ github.event.pull_request.base.ref }}
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: node .github/scripts/changeset-from-pr.mjs
 
-      - name: Commit + push
+      - name: Commit + push to base branch
         if: steps.gen.outputs.changed == 'true'
         env:
           PR_NUMBER: ${{ github.event.pull_request.number }}
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add ".changeset/pr-${PR_NUMBER}.md"
           git commit -m "chore: changeset for #${PR_NUMBER}"
-          git push
+          git push origin "HEAD:${BASE_REF}"

@@ -261,9 +261,20 @@ function NodeCard({
         'relative flex items-center gap-2.5 p-2.5 transition-all border rounded-lg group border-border bg-fl-card',
         isAtLimit
           ? 'opacity-50 cursor-not-allowed'
-          : 'cursor-pointer hover:border-muted-foreground/50 hover:bg-muted/50',
+          : 'cursor-grab active:cursor-grabbing hover:border-muted-foreground/50 hover:bg-muted/50',
       )}
       onClick={() => !isAtLimit && onAddNode(node.type)}
+      draggable={!isAtLimit}
+      onDragStart={(e) => {
+        if (isAtLimit) {
+          e.preventDefault();
+          return;
+        }
+        e.dataTransfer.effectAllowed = 'copy';
+        e.dataTransfer.setData('application/flowlib-node-type', node.type);
+        // Plain-text fallback for environments that strip custom MIME types.
+        e.dataTransfer.setData('text/plain', node.type);
+      }}
       title={
         isAtLimit ? `Only ${node.maxInstances} ${node.label} allowed per flow` : node.description
       }

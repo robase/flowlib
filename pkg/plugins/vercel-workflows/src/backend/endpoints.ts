@@ -118,11 +118,22 @@ export interface VercelWorkflowsBackendOptions {
   defaultConfigImport?: string;
 }
 
-export function buildBackendPlugin(options: VercelWorkflowsBackendOptions = {}): FlowlibPlugin {
-  const defaultFlowImport = options.defaultFlowImport ?? './flow';
-  const defaultConfigImport = options.defaultConfigImport ?? './flow.config';
+/** Mutable runtime config — exported so the wrapping plugin can subscribe to settings changes. */
+export interface VercelWorkflowsEffectiveConfig {
+  defaultFlowImport: string;
+  defaultConfigImport: string;
+}
 
-  return {
+export function buildBackendPlugin(options: VercelWorkflowsBackendOptions = {}): {
+  plugin: FlowlibPlugin;
+  effective: VercelWorkflowsEffectiveConfig;
+} {
+  const effective: VercelWorkflowsEffectiveConfig = {
+    defaultFlowImport: options.defaultFlowImport ?? './flow',
+    defaultConfigImport: options.defaultConfigImport ?? './flow.config',
+  };
+
+  const plugin: FlowlibPlugin = {
     id: 'vercel-workflows',
     name: 'Vercel Workflows',
 
@@ -244,9 +255,9 @@ export function buildBackendPlugin(options: VercelWorkflowsBackendOptions = {}):
               },
               {
                 workflowName,
-                flowImport: ctx.query.flowImport ?? defaultFlowImport,
+                flowImport: ctx.query.flowImport ?? effective.defaultFlowImport,
                 flowExport,
-                configImport: ctx.query.configImport ?? defaultConfigImport,
+                configImport: ctx.query.configImport ?? effective.defaultConfigImport,
                 configExport: 'getFlowConfig',
                 // Inject flow-output assignments sourced from upstream step results.
                 orchestratorTail: outputAssignments.map(
@@ -312,6 +323,8 @@ export function buildBackendPlugin(options: VercelWorkflowsBackendOptions = {}):
       },
     ],
   };
+
+  return { plugin, effective };
 }
 
 function edgeRef(nodes: ReadonlyArray<{ id: string; referenceId?: string }>, id: string): string {

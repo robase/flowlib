@@ -13,8 +13,9 @@ interface WindowEntry {
 }
 
 export class WebhookRateLimiter {
-  private readonly maxRequests: number;
-  private readonly windowMs: number;
+  // Mutable so the webhooks plugin can hot-reload these from settings.
+  private maxRequests: number;
+  private windowMs: number;
   private readonly windows = new Map<string, WindowEntry>();
   private cleanupTimer: ReturnType<typeof setInterval> | null = null;
 
@@ -25,6 +26,20 @@ export class WebhookRateLimiter {
     this.cleanupTimer = setInterval(() => this.cleanup(), 5 * 60_000);
     if (this.cleanupTimer.unref) {
       this.cleanupTimer.unref();
+    }
+  }
+
+  /** Update the max requests cap. Existing window entries are preserved. */
+  setMaxRequests(value: number): void {
+    if (Number.isFinite(value) && value > 0) {
+      this.maxRequests = Math.floor(value);
+    }
+  }
+
+  /** Update the rolling-window size in ms. Future `check()` calls use the new value. */
+  setWindowMs(value: number): void {
+    if (Number.isFinite(value) && value > 0) {
+      this.windowMs = Math.floor(value);
     }
   }
 

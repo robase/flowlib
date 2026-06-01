@@ -6,7 +6,7 @@
  * level once a DOM-capable vitest environment is wired up.
  */
 import { describe, it, expect } from 'vitest';
-import { parseInboundFrame } from '../hooks/useChatStream';
+import { parseInboundFrame } from '../hooks/parse-inbound-frame';
 
 describe('parseInboundFrame', () => {
   it('decodes a valid agent-event envelope', () => {

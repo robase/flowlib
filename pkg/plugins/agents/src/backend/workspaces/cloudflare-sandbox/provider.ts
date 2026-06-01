@@ -44,7 +44,13 @@
 
 import type { AgentsAuthContext } from '../../../shared/auth-context';
 import type { CreateWorkspaceInput, WorkspaceHandle, WorkspaceProvider } from '../types';
-import { CloudflareSandboxHandle, type OpencodeStarter, type SandboxStub } from './handle';
+import {
+  CloudflareSandboxHandle,
+  type OpencodeBootOptions,
+  type OpencodeLoader,
+  type SandboxStub,
+} from './handle';
+import type { OutboundCredentialKVStore } from '../../cloudflare/outbound-auth';
 
 /**
  * Lookup contract the provider uses to materialise a sandbox stub by id.
@@ -76,16 +82,20 @@ export interface CloudflareSandboxOptions {
   /** Optional R2 bucket binding name for `/workspace/persistent`. */
   persistentBucketBinding?: string;
   /**
-   * Optional hostname used when exposing ports for opencode serve.
-   * Required if you want `metadata.startOpencode()` to return a real
-   * URL. Without it the starter returns `'opencode-not-configured'`.
+   * Default options forwarded to `createOpencode()` when the workspace's
+   * `metadata.getOpencode()` is invoked. Typical use: pin the OpenCode
+   * `Config` (provider keys, AI Gateway routing) and forward env vars
+   * (e.g. `ANTHROPIC_API_KEY`) into the in-container OpenCode process.
+   *
+   * Per-call overrides supplied to `getOpencode()` shallow-merge on top
+   * of these defaults (with `config` and `env` merged key-by-key).
    */
-  exposeHostname?: string;
+  opencodeOptions?: OpencodeBootOptions;
   /**
-   * Custom opencode starter. Stream D / H may inject one to swap in a
-   * different server (raw HTTP server, sidecar process, …).
+   * Test seam — overrides the dynamic import of
+   * `@cloudflare/sandbox/opencode`. Production code leaves this unset.
    */
-  opencodeStarter?: OpencodeStarter;
+  opencodeLoader?: OpencodeLoader;
   /**
    * Test seam — supply a sandbox lookup that bypasses
    * `@cloudflare/sandbox`. When set, the provider ignores
@@ -98,6 +108,38 @@ export interface CloudflareSandboxOptions {
    * skip the per-request `setEnv()` dance.
    */
   envAccessor?: () => CloudflareSandboxEnv;
+  /**
+   * Hostname forwarded to `sandbox.exposePort(port, { hostname })` when
+   * the opencode helper publishes its preview URL. Without one, the
+   * helper returns an `'opencode-not-configured'` sentinel and the
+   * opencode provider can't dial in.
+   *
+   * Currently consumed at the host level (the hosted Worker passes
+   * this through to `@cloudflare/sandbox/opencode` via its own
+   * configuration). The plugin accepts it here for forward-compat so
+   * the option doesn't trip the typecheck.
+   */
+  exposeHostname?: string;
+  /**
+   * Outbound-Workers auth wiring. When set, every workspace handle
+   * exposes `metadata.outboundAuth` (bind/unbind credential helpers)
+   * and the agents plugin uses outbound-Worker injection instead of
+   * baking LLM API keys into OpenCode's `Config.provider.*.apiKey`.
+   *
+   * - `kvBinding`: name of the KV binding the consumer Worker has
+   *   declared. The factory looks up `env[kvBinding]` at request time
+   *   (via the same accessor `setEnv` / `envAccessor` chain used for
+   *   the sandbox DO namespace).
+   * - `ttlSeconds`: optional override for credential TTL (default 24h).
+   *
+   * The matching outbound handlers ship from
+   * `@flowlib/agents` via `buildFlowlibOutboundHandlers()` — the
+   * consumer Worker assigns them to its `Sandbox.outboundByHost`.
+   */
+  outboundAuth?: {
+    kvBinding: string;
+    ttlSeconds?: number;
+  };
 }
 
 /**
@@ -178,8 +220,8 @@ export function cloudflareSandbox(options: CloudflareSandboxOptions): Cloudflare
   }
 
   let activeEnv: CloudflareSandboxEnv | undefined;
-  const exposeHostname = options.exposeHostname;
-  const opencodeStarter = options.opencodeStarter;
+  const defaultOpencodeOptions = options.opencodeOptions;
+  const opencodeLoader = options.opencodeLoader;
 
   /**
    * Resolve the active env. Order:
@@ -276,6 +318,35 @@ export function cloudflareSandbox(options: CloudflareSandboxOptions): Cloudflare
     });
   };
 
+  /**
+   * Resolve the outbound-auth KV namespace from `env` for the current
+   * request. Returns `undefined` when the option isn't configured or
+   * the binding is missing — the handle simply skips the
+   * `outboundAuth` namespace on metadata, and the opencode provider
+   * falls back to in-container key injection.
+   */
+  const resolveOutboundAuth = ():
+    | {
+        kv: OutboundCredentialKVStore;
+        ttlSeconds?: number;
+      }
+    | undefined => {
+    if (!options.outboundAuth) {
+      return undefined;
+    }
+    let env: CloudflareSandboxEnv;
+    try {
+      env = getEnv();
+    } catch {
+      return undefined;
+    }
+    const kv = env[options.outboundAuth.kvBinding] as OutboundCredentialKVStore | undefined;
+    if (!kv || typeof kv.put !== 'function' || typeof kv.get !== 'function') {
+      return undefined;
+    }
+    return { kv, ttlSeconds: options.outboundAuth.ttlSeconds };
+  };
+
   const buildHandle = (
     workspaceId: string,
     sandbox: SandboxStub,
@@ -285,8 +356,9 @@ export function cloudflareSandbox(options: CloudflareSandboxOptions): Cloudflare
       workspaceId,
       sandbox,
       sandboxName,
-      opencodeStarter,
-      exposeHostname,
+      defaultOpencodeOptions,
+      opencodeLoader,
+      outboundAuth: resolveOutboundAuth(),
     });
 
   return {

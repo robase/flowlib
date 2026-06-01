@@ -5,7 +5,7 @@
 // projects. No database tables required — compilation is stateless.
 // ============================================================================
 
-import type { FlowlibPlugin, FlowlibPluginDefinition } from '@flowlib/core/types';
+import type { FlowlibInstance, FlowlibPlugin, FlowlibPluginDefinition } from '@flowlib/core/types';
 import { compileFlow, scaffoldProject } from '../compiler/flow-compiler';
 import type { CompileFlowOptions, CompileTarget, ScaffoldOptions } from '../shared/types';
 
@@ -27,12 +27,87 @@ export function cloudflareAgentsPlugin(
 }
 
 function _backendPlugin(options?: CloudflareAgentsPluginOptions): FlowlibPlugin {
-  const defaultTarget = options?.defaultTarget ?? 'agent-workflow';
-  const defaultCredentialStrategy = options?.defaultCredentialStrategy ?? 'env';
+  // Mutable runtime config — read on every request so settings changes take
+  // effect without restart. Initialized from constructor options + DB on init().
+  const effective: {
+    defaultTarget: CompileTarget;
+    defaultCredentialStrategy: 'env' | 'inline';
+  } = {
+    defaultTarget: options?.defaultTarget ?? 'agent-workflow',
+    defaultCredentialStrategy: options?.defaultCredentialStrategy ?? 'env',
+  };
 
   return {
     id: 'cloudflare-agents',
     name: 'Cloudflare Agents',
+
+    settings: {
+      namespace: 'cloudflare-agents',
+      label: 'Cloudflare Agents',
+      description:
+        'Defaults for compiling Flowlib flows into Cloudflare Workers / Workflows. Changes take effect on the next compile or scaffold call.',
+      fields: [
+        {
+          key: 'cloudflare-agents.defaultTarget',
+          label: 'Default compile target',
+          description:
+            'Target runtime when a request omits `target`. agent-workflow compiles to a Cloudflare Agent + Workflow; standalone-workflow emits a plain Workflow.',
+          type: 'select',
+          options: [
+            { value: 'agent-workflow', label: 'Agent + Workflow' },
+            { value: 'standalone-workflow', label: 'Standalone Workflow' },
+          ],
+          defaultValue: options?.defaultTarget ?? 'agent-workflow',
+        },
+        {
+          key: 'cloudflare-agents.defaultCredentialStrategy',
+          label: 'Default credential strategy',
+          description:
+            'How credentials are wired into compiled output. `env` reads from `env.<NAME>` bindings; `inline` embeds values into the source.',
+          type: 'select',
+          options: [
+            { value: 'env', label: 'Env bindings (recommended)' },
+            { value: 'inline', label: 'Inline (debug only)' },
+          ],
+          defaultValue: options?.defaultCredentialStrategy ?? 'env',
+        },
+      ],
+    },
+
+    init(ctx) {
+      // Stash a post-init applier — the FlowlibInstance isn't ready yet.
+      ctx.store.set('__settingsApplier', async (flowlib: FlowlibInstance) => {
+        const persistedTarget = await flowlib.settings.get<CompileTarget>(
+          'cloudflare-agents.defaultTarget',
+        );
+        if (persistedTarget === 'agent-workflow' || persistedTarget === 'standalone-workflow') {
+          effective.defaultTarget = persistedTarget;
+        }
+        const persistedStrategy = await flowlib.settings.get<'env' | 'inline'>(
+          'cloudflare-agents.defaultCredentialStrategy',
+        );
+        if (persistedStrategy === 'env' || persistedStrategy === 'inline') {
+          effective.defaultCredentialStrategy = persistedStrategy;
+        }
+
+        flowlib.settings.onChange('cloudflare-agents', (event) => {
+          if (event.type !== 'set') {
+            return;
+          }
+          if (
+            event.key === 'cloudflare-agents.defaultTarget' &&
+            (event.value === 'agent-workflow' || event.value === 'standalone-workflow')
+          ) {
+            effective.defaultTarget = event.value as CompileTarget;
+          } else if (
+            event.key === 'cloudflare-agents.defaultCredentialStrategy' &&
+            (event.value === 'env' || event.value === 'inline')
+          ) {
+            effective.defaultCredentialStrategy = event.value as 'env' | 'inline';
+          }
+        });
+      });
+    },
 
     endpoints: [
       // ── POST /cloudflare/compile ──────────────────────────────────
@@ -66,8 +141,8 @@ function _backendPlugin(options?: CloudflareAgentsPluginOptions): FlowlibPlugin 
             flowId,
             flowName: flow.name,
             version: flowVersion.version,
-            target: (target ?? defaultTarget) as CompileTarget,
-            credentialStrategy: credentialStrategy ?? defaultCredentialStrategy,
+            target: (target ?? effective.defaultTarget) as CompileTarget,
+            credentialStrategy: credentialStrategy ?? effective.defaultCredentialStrategy,
           });
 
           return { status: result.success ? 200 : 422, body: result };
@@ -98,7 +173,7 @@ function _backendPlugin(options?: CloudflareAgentsPluginOptions): FlowlibPlugin 
             return { status: 404, body: { error: `Flow version not found` } };
           }
 
-          const compileTarget = (target ?? defaultTarget) as CompileTarget;
+          const compileTarget = (target ?? effective.defaultTarget) as CompileTarget;
 
           const compileResult = compileFlow({
             definition: flowVersion.flowlibDefinition,
@@ -106,7 +181,7 @@ function _backendPlugin(options?: CloudflareAgentsPluginOptions): FlowlibPlugin 
             flowName: flow.name,
             version: flowVersion.version,
             target: compileTarget,
-            credentialStrategy: credentialStrategy ?? defaultCredentialStrategy,
+            credentialStrategy: credentialStrategy ?? effective.defaultCredentialStrategy,
           });
 
           if (!compileResult.success) {
@@ -137,7 +212,7 @@ function _backendPlugin(options?: CloudflareAgentsPluginOptions): FlowlibPlugin 
         path: '/cloudflare/preview/:flowId',
         handler: async (ctx) => {
           const { flowId } = ctx.params;
-          const target = (ctx.query.target ?? defaultTarget) as CompileTarget;
+          const target = (ctx.query.target ?? effective.defaultTarget) as CompileTarget;
 
           const flowlib = ctx.getFlowlib();
 

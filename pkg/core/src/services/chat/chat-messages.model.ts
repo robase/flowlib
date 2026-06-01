@@ -82,6 +82,7 @@ export class ChatMessagesModel {
    */
   async create(input: CreateChatMessageInput): Promise<ChatMessageRecord> {
     const id = randomUUID();
+    const now = new Date();
     try {
       await this.adapter.create({
         model: TABLE,
@@ -91,7 +92,7 @@ export class ChatMessagesModel {
           role: input.role,
           content: input.content,
           tool_meta: input.toolMeta ?? null,
-          created_at: new Date(),
+          created_at: now,
         },
       });
 
@@ -101,7 +102,7 @@ export class ChatMessagesModel {
         role: input.role,
         content: input.content,
         toolMeta: input.toolMeta ?? null,
-        createdAt: new Date().toISOString(),
+        createdAt: now.toISOString(),
       };
     } catch (error) {
       this.logger.error('Failed to create chat message', { input, error });
@@ -117,36 +118,36 @@ export class ChatMessagesModel {
       return [];
     }
 
-    const records: ChatMessageRecord[] = [];
-    const now = new Date().toISOString();
-
     try {
-      for (const input of inputs) {
-        const id = randomUUID();
-        await this.adapter.create({
-          model: TABLE,
-          data: {
-            id,
-            flow_id: input.flowId,
-            role: input.role,
-            content: input.content,
-            tool_meta: input.toolMeta ?? null,
-            created_at: new Date(),
-          },
-        });
-        records.push({
-          id,
-          flowId: input.flowId,
-          role: input.role,
-          content: input.content,
-          toolMeta: input.toolMeta ?? null,
-          createdAt: now,
-        });
-      }
-
-      return records;
+      return this.insertAll(this.adapter, inputs);
     } catch (error) {
       this.logger.error('Failed to create chat messages in bulk', { count: inputs.length, error });
+      throw error;
+    }
+  }
+
+  /**
+   * Replace the entire message list for a flow atomically: delete + insert in
+   * a single transaction so a mid-save failure can't leave the table empty.
+   */
+  async replaceForFlow(
+    flowId: string,
+    inputs: CreateChatMessageInput[],
+  ): Promise<ChatMessageRecord[]> {
+    try {
+      return await this.adapter.transaction(async (trx) => {
+        await trx.delete({ model: TABLE, where: [{ field: 'flow_id', value: flowId }] });
+        if (inputs.length === 0) {
+          return [];
+        }
+        return this.insertAll(trx, inputs);
+      });
+    } catch (error) {
+      this.logger.error('Failed to replace chat messages for flow', {
+        flowId,
+        count: inputs.length,
+        error,
+      });
       throw error;
     }
   }
@@ -164,6 +165,38 @@ export class ChatMessagesModel {
       this.logger.error('Failed to delete chat messages by flowId', { flowId, error });
       throw error;
     }
+  }
+
+  private async insertAll(
+    target: FlowlibAdapter,
+    inputs: CreateChatMessageInput[],
+  ): Promise<ChatMessageRecord[]> {
+    const records: ChatMessageRecord[] = [];
+    const now = new Date();
+    const nowIso = now.toISOString();
+    for (const input of inputs) {
+      const id = randomUUID();
+      await target.create({
+        model: TABLE,
+        data: {
+          id,
+          flow_id: input.flowId,
+          role: input.role,
+          content: input.content,
+          tool_meta: input.toolMeta ?? null,
+          created_at: now,
+        },
+      });
+      records.push({
+        id,
+        flowId: input.flowId,
+        role: input.role,
+        content: input.content,
+        toolMeta: input.toolMeta ?? null,
+        createdAt: nowIso,
+      });
+    }
+    return records;
   }
 
   // =====================================

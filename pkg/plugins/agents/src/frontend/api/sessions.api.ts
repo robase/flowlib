@@ -21,6 +21,7 @@
  */
 
 import type {
+  AgentMessage,
   AgentProviderId,
   AgentSession,
   AgentSessionStatus,
@@ -32,6 +33,8 @@ export interface CreateSessionInput {
   title?: string;
   providerId?: AgentProviderId;
   providerConfig?: Record<string, unknown>;
+  /** Flowlib credential id whose API key the LLM provider should use. */
+  credentialId?: string | null;
   model?: string | null;
   permissionMode?: string | null;
   systemPrompt?: string | null;
@@ -48,6 +51,7 @@ export interface UpdateSessionInput {
   title?: string;
   providerId?: AgentProviderId;
   providerConfig?: Record<string, unknown>;
+  credentialId?: string | null;
   model?: string | null;
   permissionMode?: string | null;
   systemPrompt?: string | null;
@@ -128,6 +132,29 @@ export class SessionsApiClient {
     return this.request<void>(`/sessions/${encodeURIComponent(sessionId)}`, {
       method: 'DELETE',
     });
+  }
+
+  /**
+   * Load message history for a session. Backend returns messages in
+   * ascending sequence order. Pagination via `before=<sequence>` is
+   * supported for older messages.
+   */
+  listMessages(
+    sessionId: string,
+    options: { before?: number; limit?: number } = {},
+  ): Promise<{
+    data: AgentMessage[];
+    pagination: { before: string | null; limit: number; nextBefore: number | null };
+  }> {
+    const params = new URLSearchParams();
+    if (options.before !== undefined) {
+      params.set('before', String(options.before));
+    }
+    if (options.limit !== undefined) {
+      params.set('limit', String(options.limit));
+    }
+    const qs = params.toString();
+    return this.request(`/sessions/${encodeURIComponent(sessionId)}/messages${qs ? `?${qs}` : ''}`);
   }
 }
 

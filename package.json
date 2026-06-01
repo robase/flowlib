@@ -131,7 +131,7 @@
     "node": ">=18.0.0",
     "npm": ">=8.0.0"
   },
-  "packageManager": "pnpm@10.12.1",
+  "packageManager": "pnpm@11.5.0",
   "pnpm": {
     "overrides": {
       "@types/react": "18.3.7",

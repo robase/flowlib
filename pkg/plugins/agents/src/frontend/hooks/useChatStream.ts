@@ -7,8 +7,12 @@
  *      Stream I).
  *   2. Wrap `useAgent({ agent: 'AgentChatDO', name: doAgentName })` from
  *      `agents/react` (Cloudflare Agents SDK 0.12.x).
- *   3. Layer `useAgentChat` from `@cloudflare/ai-chat/react` on top to
- *      get a `sendMessage` we can call.
+ *   3. Speak the `cf_agent_use_chat_request` envelope directly on the
+ *      socket to submit the user's text. We used to layer
+ *      `useAgentChat` from `@cloudflare/ai-chat/react` here, but that
+ *      hook calls `React.use(...)` which is a React 19 API; consumer
+ *      bundles pinned to React 18 crash with `E.use is not a function`.
+ *      The wire format is small and stable, so we emit it inline.
  *   4. Listen for `flowlib.agent-event` envelopes on the same socket and
  *      accumulate the `AgentEvent[]` the chat UI renders.
  *   5. Send typed envelopes for `interrupt`, permission responses, and
@@ -18,26 +22,32 @@
  * **SDK divergence notes (probed against `agents@0.12.3`):**
  *
  * - `useAgent` returns a PartySocket-like object with `send` and
- *   `addEventListener`. We hold it and pass it straight to
- *   `useAgentChat`.
- * - `useAgentChat` is built around AI SDK v5 `UIMessage`s, which is a
- *   different shape than our `AgentEvent` union. We use `useAgentChat`
- *   only for its `sendMessage` (text submission) and `setMessages([])`
- *   (clear) helpers, NOT for rendering. Rendering uses the
- *   `flowlib.agent-event` envelope stream we manage ourselves on the
- *   underlying socket — that union IS the canonical wire format
- *   (`pkg/plugins/agents/src/shared/events.ts`).
- * - `useAgentChat`'s `stop()` cancels the local fetch but does NOT push
- *   anything back over the WS. Our `interrupt()` sends a typed envelope
- *   the DO is expected to handle, and also calls `stop()` for parity.
+ *   `addEventListener`. We hold it and emit `cf_agent_use_chat_request`
+ *   frames directly through `send`.
+ * - The CF SDK's persisted-messages table (`cf_ai_chat_agent_messages`
+ *   on the DO) is not consulted by flowlib — the backend reads the last
+ *   user-message text out of `self.messages` only. We send a
+ *   single-element `messages: [user]` array each turn.
+ * - The CF SDK's `stop()` cancels the local fetch but does NOT push
+ *   anything back over the WS. Our `interrupt()` sends a typed
+ *   `flowlib.interrupt` envelope the DO handles, plus a
+ *   `cf_agent_chat_request_cancel` for the latest in-flight request id
+ *   (parity with what `useAgentChat.stop()` used to send).
  *
- * For tests, the SDK calls are isolated behind two small adapter
- * factories (`defaultUseAgent`, `defaultUseAgentChat`). Tests inject
- * mocks via `useChatStream`'s second parameter.
+ * For tests, the SDK call to `useAgent` is isolated behind a small
+ * adapter factory. The chat helpers (`sendMessage`/`stop`) are also
+ * exposed via the adapter so tests can substitute fakes; the default
+ * implementation is the inline one described above.
  */
 import * as React from 'react';
 import type { AgentSession } from '../../shared/types';
-import { isAgentEvent, type AgentEvent } from '../../shared/events';
+import type { AgentEvent } from '../../shared/events';
+import { useAgentsApiClients } from '../api/context';
+import { parseInboundFrame, type ParsedInboundFrame } from './parse-inbound-frame';
+
+// Re-export so existing consumers of `useChatStream` keep working.
+export { parseInboundFrame } from './parse-inbound-frame';
+export type { ParsedInboundFrame } from './parse-inbound-frame';
 
 /**
  * Subset of the PartySocket-like surface returned by `useAgent` that we
@@ -57,7 +67,9 @@ export interface ChatSocketLike {
 }
 
 /**
- * Subset of `useAgentChat`'s return value we use.
+ * Outbound chat helpers we hand back to consumers. Mirrors the subset of
+ * the old `useAgentChat` surface we relied on, but is now produced by an
+ * inline implementation that speaks `cf_agent_use_chat_request` directly.
  */
 export interface ChatHelpers {
   sendMessage: (message: { text: string }) => void;
@@ -94,44 +106,11 @@ export type OutboundControlEnvelope =
   | { type: 'flowlib.hil-response'; id: string; response: unknown };
 
 /**
- * Pure helper: parse an inbound WS frame into a canonical action.
- * Exposed for testing. Returns `null` for frames we don't understand
- * (e.g. SDK protocol traffic) so callers can ignore them.
+ * Pure parser for inbound WS frames. Lives in `./parse-inbound-frame.ts`
+ * so test consumers can import it without pulling the React context /
+ * `@flowlib/ui` chain. Re-exported at the top of this file for
+ * backward compatibility.
  */
-export type ParsedInboundFrame =
-  | { kind: 'agent-event'; event: AgentEvent }
-  | { kind: 'agent-error'; error: { message: string; code?: string } }
-  | { kind: 'unknown' };
-
-export function parseInboundFrame(data: unknown): ParsedInboundFrame {
-  if (typeof data !== 'string') {
-    return { kind: 'unknown' };
-  }
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(data);
-  } catch {
-    return { kind: 'unknown' };
-  }
-  if (!parsed || typeof parsed !== 'object') {
-    return { kind: 'unknown' };
-  }
-  const env = parsed as { type?: unknown; event?: unknown; error?: unknown };
-  if (env.type === 'flowlib.agent-event' && env.event && isAgentEvent(env.event)) {
-    return { kind: 'agent-event', event: env.event };
-  }
-  if (env.type === 'flowlib.agent-error' && env.error && typeof env.error === 'object') {
-    const err = env.error as { message?: unknown; code?: unknown };
-    return {
-      kind: 'agent-error',
-      error: {
-        message: typeof err.message === 'string' ? err.message : 'Unknown error',
-        code: typeof err.code === 'string' ? err.code : undefined,
-      },
-    };
-  }
-  return { kind: 'unknown' };
-}
 
 /**
  * Test-injection seam: the production hook calls these adapters which
@@ -139,7 +118,20 @@ export function parseInboundFrame(data: unknown): ParsedInboundFrame {
  * the optional second parameter to `useChatStream`.
  */
 export interface ChatStreamAdapters {
-  useAgent: (options: { agent: string; name: string }) => ChatSocketLike;
+  useAgent: (options: {
+    agent: string;
+    name: string;
+    /**
+     * Forwarded to the underlying `usePartySocket`. When `false`, the
+     * SDK skips opening the WebSocket entirely and returns a stub
+     * socket (still safe to register listeners on). We use this to
+     * defer the connection until the session row resolves and a
+     * tenant-scoped `doAgentName` is available — without it, the SDK
+     * eagerly connects to `/agents/<kebab-class>/default` which is a
+     * non-existent room.
+     */
+    enabled?: boolean;
+  }) => ChatSocketLike;
   useAgentChat: (options: {
     agent: ChatSocketLike & { agent: string; name: string };
   }) => ChatHelpers;
@@ -164,28 +156,71 @@ async function defaultLoadSession(sessionId: string, baseUrl = ''): Promise<Agen
   return (await response.json()) as AgentSession;
 }
 
-// The `@ts-ignore`s are necessary because `agents/react` declares
+// The `@ts-ignore` is necessary because `agents/react` declares
 // `react@^19` peer-dep types but the consumer bundle pins react 18. The
-// runtime contract is identical — we only use `useAgent`'s return shape,
-// which is stable across the two react majors. Both are listed in
-// `tsdown.config.ts` `neverBundle`, so static imports stay as bare
-// specifiers in the emitted ESM.
+// runtime contract for `useAgent({ agent, name })` (no `query` option)
+// is identical across the two react majors — `agents/react` only calls
+// `React.use()` on the `query` code path, which we don't use. The
+// import is listed in `tsdown.config.ts` `neverBundle`, so the static
+// import stays as a bare specifier in the emitted ESM.
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore — peer dep, resolved by host bundler
 // eslint-disable-next-line import/no-unresolved
 import { useAgent as agentsUseAgent } from 'agents/react';
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore — peer dep, resolved by host bundler
-// eslint-disable-next-line import/no-unresolved
-import { useAgentChat as aiChatUseAgentChat } from '@cloudflare/ai-chat/react';
 
 /**
- * Default adapters resolve `agents/react` and `@cloudflare/ai-chat/react`
- * via static `import`. Both are marked as `neverBundle` peer deps in
- * `tsdown.config.ts`, so the bundler emits bare specifiers and the
- * consumer's package manager satisfies them at runtime.
+ * Generate a short opaque id for a chat request / message. Browsers all
+ * have `crypto.randomUUID`; if for some reason it's missing we fall
+ * back to `Math.random` which is fine for the purpose (uniqueness over
+ * a single tab's session).
+ */
+function newId(): string {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
+  return Math.random().toString(36).slice(2) + Date.now().toString(36);
+}
+
+/**
+ * Build the `cf_agent_use_chat_request` envelope expected by
+ * `AIChatAgent` (the base class `AgentChatDO` extends). This is the
+ * same shape `@cloudflare/ai-chat`'s `useAgentChat` would emit, minus
+ * the AI-SDK-specific fields the flowlib backend ignores.
  *
- * For tests that don't have those peer deps installed (the workerd
+ * The backend reads `self.messages[self.messages.length - 1]` and
+ * extracts the text from its `parts`; flowlib's runtime persists its
+ * own session-level history elsewhere, so sending only the new user
+ * message each turn is correct.
+ */
+function buildChatRequestEnvelope(requestId: string, text: string): string {
+  return JSON.stringify({
+    id: requestId,
+    type: 'cf_agent_use_chat_request',
+    init: {
+      method: 'POST',
+      body: JSON.stringify({
+        trigger: 'submit-user-message',
+        messages: [
+          {
+            id: newId(),
+            role: 'user',
+            parts: [{ type: 'text', text }],
+          },
+        ],
+      }),
+    },
+  });
+}
+
+/**
+ * Default adapters: `useAgent` resolves `agents/react` (peer dep,
+ * `neverBundle`d). The chat helpers are produced inline — we used to
+ * import `useAgentChat` from `@cloudflare/ai-chat/react`, but that
+ * hook calls `React.use()` (a React 19 API) and crashed consumer
+ * bundles pinned to React 18. The wire format
+ * (`cf_agent_use_chat_request`) is documented and small.
+ *
+ * For tests that don't have `agents/react` available (the workerd
  * vitest pool, for example), pass an `adapters` override on
  * `useChatStream(sessionId, adapters)` — the default adapter is only
  * invoked when no override is supplied.
@@ -193,15 +228,94 @@ import { useAgentChat as aiChatUseAgentChat } from '@cloudflare/ai-chat/react';
 function loadDefaultAdapters(): ChatStreamAdapters {
   return {
     useAgent: (options) =>
-      (agentsUseAgent as unknown as (opts: { agent: string; name: string }) => ChatSocketLike)(
-        options,
-      ),
-    useAgentChat: (options) =>
       (
-        aiChatUseAgentChat as unknown as (opts: {
-          agent: ChatSocketLike & { agent: string; name: string };
-        }) => ChatHelpers
+        agentsUseAgent as unknown as (opts: {
+          agent: string;
+          name: string;
+          enabled?: boolean;
+        }) => ChatSocketLike
       )(options),
+    useAgentChat: ({ agent }) => {
+      // Track the most recent in-flight request id so `stop()` can send
+      // a `cf_agent_chat_request_cancel` for it. Using a module-level
+      // ref-by-closure here is fine: the adapter is invoked once per
+      // `useChatStream` instance (the outer hook caches `adapters` in a
+      // ref), and each instance gets its own closure.
+      let lastRequestId: string | null = null;
+      return {
+        sendMessage: ({ text }) => {
+          const requestId = newId();
+          lastRequestId = requestId;
+          const envelope = buildChatRequestEnvelope(requestId, text);
+          // Pre-flight: when the user presses Send during the ~100ms
+          // window between `enabled: Boolean(doName)` flipping true and
+          // partysocket finishing the WS handshake, `readyState` is
+          // `CONNECTING` (0). partysocket's `send()` silently queues
+          // the data in that case AND if the socket gets re-created
+          // before the queue flushes (which happens when usePartySocket's
+          // memo key changes — room/enabled), the queue is abandoned
+          // and the message is lost forever.
+          //
+          // The Agents SDK exposes `agent.ready` — a promise that
+          // resolves once the WS is OPEN AND the server has sent a
+          // `cf_agent_identity` frame. Awaiting it before send is the
+          // canonical fix.
+          const sockLike = agent as ChatSocketLike & {
+            readyState?: number;
+            url?: string;
+            ready?: Promise<unknown>;
+          };
+          const dispatch = async () => {
+            const initialReadyState = sockLike.readyState;
+            // eslint-disable-next-line no-console
+            console.log('[useChatStream] sendMessage queued', {
+              agentName: (agent as { name?: string }).name,
+              readyState: initialReadyState,
+              hasReadyPromise: typeof sockLike.ready?.then === 'function',
+              envelopeLen: envelope.length,
+              url: sockLike.url,
+            });
+            if (sockLike.ready && typeof sockLike.ready.then === 'function') {
+              try {
+                await sockLike.ready;
+              } catch (err) {
+                // eslint-disable-next-line no-console
+                console.warn('[useChatStream] sendMessage → agent.ready rejected', err);
+                // Keep going; agent.send will throw or queue as
+                // appropriate. The user can retry.
+              }
+            }
+            // eslint-disable-next-line no-console
+            console.log('[useChatStream] sendMessage dispatching', {
+              readyState: sockLike.readyState,
+            });
+            try {
+              agent.send(envelope);
+              // eslint-disable-next-line no-console
+              console.log('[useChatStream] sendMessage → agent.send did not throw');
+            } catch (err) {
+              // eslint-disable-next-line no-console
+              console.warn('[useChatStream] sendMessage → agent.send threw', err);
+            }
+          };
+          // Fire-and-forget — the adapter's `sendMessage` signature is
+          // synchronous (matches useAgentChat). The dispatcher schedules
+          // the actual send on a microtask after `agent.ready` resolves.
+          void dispatch();
+        },
+        stop: () => {
+          if (!lastRequestId) {
+            return;
+          }
+          try {
+            agent.send(JSON.stringify({ id: lastRequestId, type: 'cf_agent_chat_request_cancel' }));
+          } catch {
+            // Swallow — same readyState reasoning as `sendMessage`.
+          }
+          lastRequestId = null;
+        },
+      };
+    },
   };
 }
 
@@ -228,6 +342,23 @@ export function useChatStream(
   }
   const a = adaptersRef.current;
 
+  // Prefer the shared API client from `AgentsApiProvider` over a
+  // hand-rolled fetch. The provider already resolves `apiPath` from
+  // `<Flowlib config>`, so we don't have to thread `apiBaseUrl`
+  // through. Without this we used to hit `/plugins/agents/sessions/:id`
+  // (no `/api/` prefix) which the hosted Worker doesn't route — the
+  // SPA shell returned `index.html` with 200 OK, `response.json()`
+  // threw "JSON.parse: unexpected character at line 1 column 1", the
+  // session never loaded, and `send()` raised "Session not loaded
+  // yet" on the first user message.
+  //
+  // `useAgentsApiClients` throws if no provider is mounted. We always
+  // call it unconditionally (rules of hooks) and let tests exercise
+  // the hook outside a provider by either supplying their own provider
+  // wrapper or an `adapters.loadSession` override (the override path
+  // skips the apiClients-derived loader below).
+  const apiClients = useAgentsApiClients();
+
   const [session, setSession] = React.useState<AgentSession | undefined>();
   const [events, setEvents] = React.useState<AgentEvent[]>([]);
   const [status, setStatus] = React.useState<UseChatStreamReturn['status']>('connecting');
@@ -237,10 +368,28 @@ export function useChatStream(
   >({});
   const [resolvedHumanInputs, setResolvedHumanInputs] = React.useState<Record<string, true>>({});
 
-  // Step 1 — load the session.
+  // Step 1 — load the session. Prefer the shared API client; fall back
+  // to the legacy fetch-based loader when callers explicitly inject an
+  // `options.apiBaseUrl` override (used by some embed scenarios), and
+  // let tests override via `adapters.loadSession`.
+  //
+  // The hook is always called (rules of hooks) but an empty sessionId
+  // means we're between thread switches in the hoisted-runtime setup —
+  // skip the loader so we don't hit `/sessions/` and 404. The socket
+  // stays idle because `enabled` below depends on `doName`.
   React.useEffect(() => {
+    if (!sessionId) {
+      setStatus('idle');
+      setError(undefined);
+      setSession(undefined);
+      return;
+    }
     let cancelled = false;
-    const loader = a.loadSession ?? ((id) => defaultLoadSession(id, options.apiBaseUrl));
+    const loader =
+      a.loadSession ??
+      (options.apiBaseUrl
+        ? (id: string) => defaultLoadSession(id, options.apiBaseUrl ?? '')
+        : (id: string) => apiClients.sessions.getSession(id));
     setStatus('connecting');
     setError(undefined);
     loader(sessionId)
@@ -260,16 +409,21 @@ export function useChatStream(
     return () => {
       cancelled = true;
     };
-  }, [sessionId, a, options.apiBaseUrl]);
+  }, [sessionId, a, options.apiBaseUrl, apiClients]);
 
-  // Step 2 — connect to the DO. We MUST NOT call `useAgent` until we
-  // have a `doAgentName`; conditionally-calling a hook breaks the rules
-  // of hooks. The trick: we always call `useAgent` but pass `''` when
-  // not ready, and the underlying PartySocket either no-ops or 404s —
-  // either way our local code guards on `session?.doAgentName` before
-  // sending. In production this is fine; tests stub the adapter.
+  // Step 2 — connect to the DO. We MUST NOT call `useAgent` conditionally
+  // (rules of hooks), but we CAN tell it not to open a socket until the
+  // session row resolves: passing `enabled: false` keeps PartySocket idle
+  // while still letting us register listeners on the returned stub. Without
+  // this, the SDK eagerly connects to `/agents/<kebab-class>/default` (its
+  // fallback for empty `name`), which 404s — and on the production worker
+  // floods the logs with failed upgrades.
   const doName = session?.doAgentName ?? '';
-  const socket = a.useAgent({ agent: 'AgentChatDO', name: doName });
+  const socket = a.useAgent({
+    agent: 'AgentChatDO',
+    name: doName || 'pending',
+    enabled: Boolean(doName),
+  });
   const chat = a.useAgentChat({
     agent: Object.assign(socket, { agent: 'AgentChatDO', name: doName }),
   });

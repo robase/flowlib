@@ -55,8 +55,15 @@ export interface ResolvedAgentsOptions extends AgentsPluginPublicOptions {
   orgScope: 'optional' | 'required';
   /** Provider singletons (Claude Code, opencode, etc.) registered at init. */
   providers: ReadonlyArray<import('./providers/types').AgentProvider>;
-  /** Workspace provider (cloudflareSandbox in v1). Optional — not all agents need a workspace. */
-  workspaceProvider?: import('./workspaces/types').WorkspaceProvider;
+  /**
+   * Workspace providers registered at init (e.g. `cloudflareSandbox`,
+   * `cloudflareSandboxClaude`). Each entry is keyed by its provider id;
+   * workspace rows persist that id and endpoints look it up here.
+   *
+   * The first entry is the implicit default when `POST /workspaces`
+   * omits an explicit `workspaceProviderId`.
+   */
+  workspaceProviders: ReadonlyArray<import('./workspaces/types').WorkspaceProvider>;
   /** Whether new agents default `exposeFlowlibActions: true`. Default false. */
   exposeFlowlibActions: boolean;
   /** Tool ids hard-denied for every agent in this deployment (e.g. `['Bash']`). */

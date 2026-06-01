@@ -4,6 +4,25 @@ packages:
   - examples/*
   - experiments/*
 
+allowBuilds:
+  '@nestjs/core': true
+  '@prisma/client': true
+  '@prisma/engines': true
+  '@swc/core': true
+  '@vscode/vsce-sign': true
+  better-sqlite3: true
+  cbor-extract: false
+  core-js-pure: false
+  esbuild: true
+  isolated-vm: true
+  keytar: false
+  msw: true
+  prisma: true
+  sharp: false
+  sqlite3: true
+  unrs-resolver: false
+  workerd: false
+
 onlyBuiltDependencies:
   - '@nestjs/core'
   - '@prisma/client'

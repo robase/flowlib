@@ -868,6 +868,33 @@ function _rbacBackendPlugin(options: Omit<RbacPluginOptions, 'frontend'> = {}): 
       'Make sure @flowlib/user-auth is configured, then run ' +
       '`npx flowlib-cli generate` followed by `npx drizzle-kit push`.',
 
+    settings: {
+      namespace: 'rbac',
+      label: 'Role-Based Access Control',
+      description:
+        'RBAC settings are bound at startup. `adminPermission` controls which permission gates the RBAC admin page; `enableTeams` toggles the teams subsystem and the rbac_teams* tables. Both require restart to change.',
+      fields: [
+        {
+          key: 'rbac.adminPermission',
+          label: 'Admin permission',
+          description:
+            'Configured in flowlib.config.ts. Permission required to access the RBAC admin pages — wired into endpoint definitions at startup.',
+          type: 'string',
+          readOnly: true,
+          defaultValue: adminPermission,
+        },
+        {
+          key: 'rbac.enableTeams',
+          label: 'Teams enabled',
+          description:
+            'Configured in flowlib.config.ts. Toggling this changes which DB tables are required and which routes are mounted.',
+          type: 'boolean',
+          readOnly: true,
+          defaultValue: enableTeams,
+        },
+      ],
+    },
+
     // ─── Initialization ───────────────────────────────────────
 
     init: async (ctx: FlowlibPluginContext) => {

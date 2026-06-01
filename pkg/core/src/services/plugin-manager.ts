@@ -121,6 +121,40 @@ export class PluginManager implements PluginHookRunner {
   }
 
   /**
+   * Run each plugin's `__settingsApplier` callback (if it stashed one in
+   * `ctx.store` during init). Called by `createFlowlib` after the
+   * FlowlibInstance has been assembled — this is the post-init hook the
+   * plugin context's `getFlowlib()` accessor needs to be valid.
+   *
+   * Plugins use this to:
+   *   1. Overlay any DB-persisted settings on top of constructor options.
+   *   2. Subscribe to `flowlib.settings.onChange()` so subsequent UI edits
+   *      hot-reload the plugin's mutable runtime config.
+   *
+   * Failures are logged and swallowed — a broken applier should not block
+   * the rest of the startup path.
+   */
+  async runSettingsAppliers(flowlib: FlowlibInstance): Promise<void> {
+    for (const plugin of this.plugins) {
+      const store = this.pluginStores.get(plugin.id);
+      if (!store) {
+        continue;
+      }
+      const applier = store.get('__settingsApplier') as
+        | ((flowlib: FlowlibInstance) => Promise<void> | void)
+        | undefined;
+      if (typeof applier !== 'function') {
+        continue;
+      }
+      try {
+        await applier(flowlib);
+      } catch (error) {
+        this.logger.warn(`Plugin "${plugin.id}" settings applier threw`, error);
+      }
+    }
+  }
+
+  /**
    * Shut down all plugins in reverse order.
    */
   async shutdownPlugins(logger: {

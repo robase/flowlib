@@ -12,8 +12,12 @@ export function createChatAPI(sf: ServiceFactory): ChatAPI {
       });
     },
 
-    subscribeToSession(sessionId, signal) {
-      return sf.getChatStreamService().subscribeToSession(sessionId, signal);
+    subscribeToSession(sessionId, signal, requesterId) {
+      return sf.getChatStreamService().subscribeToSession(sessionId, signal, requesterId);
+    },
+
+    abortSession(sessionId, requesterId) {
+      return sf.getChatStreamService().abortSession(sessionId, requesterId);
     },
 
     hasActiveSession(sessionId) {
@@ -34,8 +38,8 @@ export function createChatAPI(sf: ServiceFactory): ChatAPI {
 
     async saveMessages(flowId, messages) {
       const db = sf.getDatabaseService();
-      await db.chatMessages.deleteByFlowId(flowId);
-      return db.chatMessages.createMany(
+      return db.chatMessages.replaceForFlow(
+        flowId,
         messages.map((m) => ({
           flowId,
           role: m.role,

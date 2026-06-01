@@ -30,33 +30,57 @@ import type { WorkspaceHandle } from '../../workspaces/types';
  * The slice of the opencode SDK we depend on. Defined structurally so we
  * don't have to keep up with the SDK's `gen/sdk.gen.d.ts` line-by-line.
  */
+/**
+ * The v2 opencode SDK (`@opencode-ai/sdk/v2/client`) uses a **flat**
+ * parameter shape: each method takes a single object whose keys are
+ * routed to URL path / query / body via the SDK's internal field map.
+ * Do NOT nest under `{ path: {…}, body: {…}, query: {…} }` — those keys
+ * are not in the field map and would be silently dropped, leaving URL
+ * placeholders like `{sessionID}` un-substituted and the server
+ * rejecting the request with a Zod validation error.
+ */
 export interface OpencodeClientLike {
   session: {
     create(options: {
-      body?: { title?: string; parentID?: string };
-      query?: { directory?: string };
+      title?: string;
+      parentID?: string;
+      directory?: string;
     }): Promise<{ data?: { id: string } } | { id: string }>;
     prompt(options: {
-      path: { id: string };
-      body: {
-        parts: Array<unknown>;
-        model?: { providerID: string; modelID: string };
-        system?: string;
-        tools?: Record<string, boolean>;
-      };
-      query?: { directory?: string };
+      sessionID: string;
+      parts: Array<unknown>;
+      model?: { providerID: string; modelID: string };
+      system?: string;
+      tools?: Record<string, boolean>;
+      directory?: string;
     }): Promise<unknown>;
-    abort(options: { path: { id: string }; query?: { directory?: string } }): Promise<unknown>;
-    delete(options: { path: { id: string }; query?: { directory?: string } }): Promise<unknown>;
-    messages(options: { path: { id: string }; query?: { directory?: string } }): Promise<unknown>;
+    /**
+     * Fire-and-forget version of `prompt`. Posts the user message to
+     * `/session/{sessionID}/prompt_async` and returns immediately with
+     * an ack, without waiting for the LLM. Used by the provider's
+     * polling loop to escape Cloudflare Sandbox's `containerFetch`
+     * request-lifetime budget — see provider.ts comment block for the
+     * full rationale.
+     */
+    promptAsync(options: {
+      sessionID: string;
+      parts: Array<unknown>;
+      model?: { providerID: string; modelID: string };
+      system?: string;
+      tools?: Record<string, boolean>;
+      directory?: string;
+    }): Promise<unknown>;
+    abort(options: { sessionID: string; directory?: string }): Promise<unknown>;
+    delete(options: { sessionID: string; directory?: string }): Promise<unknown>;
+    messages(options: { sessionID: string; directory?: string }): Promise<unknown>;
   };
   event: {
-    subscribe(options?: { query?: { directory?: string } }): Promise<{
+    subscribe(options?: { directory?: string }): Promise<{
       stream: AsyncGenerator<unknown, unknown, unknown>;
     }>;
   };
   provider: {
-    list(options?: { query?: { directory?: string } }): Promise<unknown>;
+    list(options?: { directory?: string }): Promise<unknown>;
   };
 }
 
@@ -255,26 +279,84 @@ export function resolveBaseUrl(input: {
 /**
  * Mode selector for the opencode connection.
  *
- *   - `'external'`: HTTP client → existing `opencode serve` (recommended for
- *     production with `cloudflareSandbox`).
- *   - `'embedded'`: in-process server via `createOpencode()`. Useful for
- *     local dev or single-tenant non-CF deployments.
+ *   - `'sandbox'`: typed client returned by `@cloudflare/sandbox/opencode`'s
+ *     `createOpencode()`. The transport routes through `sandbox.containerFetch`,
+ *     so no `exposePort` / wildcard DNS is required and the helper handles
+ *     container cold-start + port readiness internally. This is the v1
+ *     production path when the workspace is a `cloudflareSandbox`.
+ *   - `'external'`: HTTP client → an existing `opencode serve` reachable
+ *     by URL. Useful when ops runs OpenCode out-of-band.
+ *   - `'embedded'`: in-process server via the SDK's own `createOpencode()`.
+ *     Useful for local dev or single-tenant non-CF deployments.
  */
-export type OpencodeMode = 'embedded' | 'external';
+export type OpencodeMode = 'sandbox' | 'embedded' | 'external';
+
+/**
+ * Options accepted by `cloudflareSandbox`'s `metadata.getOpencode`.
+ */
+export interface SandboxOpencodeOptions {
+  port?: number;
+  directory?: string;
+  config?: Record<string, unknown>;
+  env?: Record<string, string>;
+}
+
+/**
+ * Workspace metadata shape exposed by `cloudflareSandbox` for the
+ * sandbox-managed mode. Defined structurally so we don't import the
+ * cloudflare-sandbox handle type into the opencode provider.
+ */
+export interface SandboxOpencodeMetadata {
+  getOpencode: (
+    options?: SandboxOpencodeOptions,
+  ) => Promise<{ client: OpencodeClientLike; server: { url: string } }>;
+}
+
+function asSandboxMeta(workspace?: WorkspaceHandle): SandboxOpencodeMetadata | undefined {
+  const meta = workspace?.metadata as Record<string, unknown> | undefined;
+  if (meta && typeof meta.getOpencode === 'function') {
+    return meta as unknown as SandboxOpencodeMetadata;
+  }
+  return undefined;
+}
 
 /**
  * Resolve the right `OpencodeClientLike` for the requested mode.
  *
- * Embedded mode caches one server per `directory`. External mode falls
- * back to `resolveBaseUrl` for the connection target.
+ * Sandbox mode delegates to `workspace.metadata.getOpencode` (cached on
+ * the handle). Embedded mode caches one server per `directory`. External
+ * mode falls back to `resolveBaseUrl` for the connection target.
+ *
+ * `opencodeOverride` is the per-call options blob passed through to
+ * `metadata.getOpencode` — typically the multi-provider OpenCode
+ * `Config` built from the org's LLM credentials. Only applied to
+ * sandbox mode (the other modes don't accept runtime config). The
+ * cloudflare-sandbox handle merges this with any factory-level
+ * `defaultOpencodeOptions`; first-call wins for caching purposes.
  */
 export async function getClientForMode(input: {
   mode: OpencodeMode;
   workspace?: WorkspaceHandle;
   extras?: Record<string, unknown>;
   factoryBaseUrl?: string;
+  opencodeOverride?: SandboxOpencodeOptions;
 }): Promise<{ client: OpencodeClientLike; baseUrl?: string }> {
   const directory = input.workspace?.rootPath;
+  if (input.mode === 'sandbox') {
+    const meta = asSandboxMeta(input.workspace);
+    if (!meta) {
+      throw new Error(
+        '[agents/opencode] mode="sandbox" requires a workspace whose metadata exposes `getOpencode` ' +
+          '(supplied by `cloudflareSandbox`). Use mode "external" or "embedded" for non-sandbox deployments.',
+      );
+    }
+    const opts: SandboxOpencodeOptions = {
+      ...(directory ? { directory } : {}),
+      ...input.opencodeOverride,
+    };
+    const bundle = await meta.getOpencode(opts);
+    return { client: bundle.client, baseUrl: bundle.server.url };
+  }
   if (input.mode === 'embedded') {
     const handle = await getEmbedded(directory ?? '');
     return { client: handle.client, baseUrl: handle.server.url };

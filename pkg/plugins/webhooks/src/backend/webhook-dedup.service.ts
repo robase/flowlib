@@ -14,10 +14,18 @@ interface DedupEntry {
 }
 
 export class WebhookDedupService {
-  private readonly ttlMs: number;
+  // Mutable so the webhooks plugin can hot-reload TTL from settings.
+  private ttlMs: number;
   private readonly maxEntries: number;
   private readonly entries = new Map<string, DedupEntry>();
   private cleanupTimer: ReturnType<typeof setInterval> | null = null;
+
+  /** Update the dedup TTL. Future `check()` calls use the new value. */
+  setTtlMs(value: number): void {
+    if (Number.isFinite(value) && value > 0) {
+      this.ttlMs = Math.floor(value);
+    }
+  }
 
   constructor(options?: WebhookDedupOptions) {
     this.ttlMs = options?.ttlMs ?? 24 * 60 * 60 * 1000;

@@ -1,9 +1,10 @@
 import React, { useState, useRef, useMemo } from 'react';
 import { PageLayout } from '../components/PageLayout';
 import { Link } from 'react-router';
-import { Plus, Shield, Clock, AlertCircle, Search, Loader2, ChevronRight } from 'lucide-react';
+import { Plus, Shield, Clock, AlertCircle, Search, ChevronRight } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Badge } from '../components/ui/badge';
+import { Skeleton } from '../components/ui/skeleton';
 
 import {
   AlertDialog,
@@ -178,9 +179,19 @@ export const Credentials: React.FC<CredentialsProps> = ({ basePath: _basePath = 
       {/* Content */}
       <TooltipProvider>
         {isLoading ? (
-          <div className="flex flex-col items-center justify-center py-20">
-            <Loader2 className="w-8 h-8 mb-3 text-muted-foreground animate-spin" />
-            <p className="text-sm text-muted-foreground">Loading credentials...</p>
+          <div className="border border-border rounded-lg overflow-hidden bg-card divide-y divide-border">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <div key={i} className="w-full flex items-center gap-3 px-4 py-3">
+                <Skeleton className="w-9 h-9 rounded-lg shrink-0" />
+                <div className="flex-1 min-w-0 space-y-1.5">
+                  <Skeleton className="h-3.5 w-40" />
+                  <Skeleton className="h-3 w-24" />
+                </div>
+                <Skeleton className="hidden sm:block h-4 w-16 rounded-full shrink-0" />
+                <Skeleton className="hidden sm:block h-3 w-16 shrink-0" />
+                <ChevronRight className="w-4 h-4 text-muted-foreground/30 shrink-0" />
+              </div>
+            ))}
           </div>
         ) : error ? (
           <div className="flex flex-col items-center justify-center py-20">

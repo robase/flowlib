@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
-import { Check, ChevronsUpDown, Loader2 } from 'lucide-react';
+import { Check, ChevronsUpDown, Loader2, Plus } from 'lucide-react';
 import { cn } from '../../../lib/utils';
 import { Button } from '../../ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '../../ui/popover';
@@ -12,6 +12,7 @@ import {
   CommandList,
 } from '../../ui/command';
 import { useLoadFieldOptions } from '../../../api/node-data.api';
+import { useFrontendPath } from '../../../contexts/FrontendPathContext';
 import type { NodeParamField } from '../../../types/node-definition.types';
 
 interface DynamicSelectFieldProps {
@@ -40,11 +41,12 @@ export function DynamicSelectField({
   value,
   onChange,
   formValues,
-  portalContainer: _portalContainer,
+  portalContainer,
 }: DynamicSelectFieldProps) {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
   const dependsOn = field.loadOptions?.dependsOn ?? [];
+  const basePath = useFrontendPath();
 
   // Build dependency values from formValues
   const dependencyValues = useMemo(() => {
@@ -172,7 +174,11 @@ export function DynamicSelectField({
             <ChevronsUpDown className="ml-auto h-3 w-3 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-(--radix-popover-trigger-width) p-0" align="start">
+        <PopoverContent
+          className="w-(--radix-popover-trigger-width) p-0"
+          align="start"
+          container={portalContainer}
+        >
           <Command shouldFilter={false}>
             <CommandInput
               placeholder="Search…"
@@ -210,6 +216,20 @@ export function DynamicSelectField({
                 </CommandGroup>
               )}
             </CommandList>
+            {field.addNew && (
+              <div className="p-2 border-t">
+                <a
+                  href={`${basePath}${field.addNew.href}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex w-full items-center justify-center gap-2 h-8 rounded-md bg-primary text-primary-foreground text-xs font-medium hover:bg-primary/90 transition-colors"
+                  onClick={() => setOpen(false)}
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  {field.addNew.label}
+                </a>
+              </div>
+            )}
           </Command>
         </PopoverContent>
       </Popover>

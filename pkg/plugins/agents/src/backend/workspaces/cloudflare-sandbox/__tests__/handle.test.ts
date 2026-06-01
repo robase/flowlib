@@ -6,7 +6,14 @@
  * marshalling, path normalisation, and metadata wiring in isolation.
  */
 import { describe, it, expect, vi } from 'vitest';
-import { CloudflareSandboxHandle, SANDBOX_WORKSPACE_ROOT, type SandboxStub } from '../handle';
+import {
+  CloudflareSandboxHandle,
+  SANDBOX_WORKSPACE_ROOT,
+  type OpencodeBootOptions,
+  type OpencodeBundle,
+  type OpencodeLoader,
+  type SandboxStub,
+} from '../handle';
 
 function makeStub(overrides: Partial<SandboxStub> = {}): SandboxStub {
   return {
@@ -36,11 +43,6 @@ function makeStub(overrides: Partial<SandboxStub> = {}): SandboxStub {
         },
       ],
     })),
-    startProcess: vi.fn(async () => ({ id: 'p1' })),
-    exposePort: vi.fn(async () => ({
-      url: 'https://4096-sandbox.example.com',
-      port: 4096,
-    })),
     destroy: vi.fn(async () => {}),
     ...overrides,
   };
@@ -61,7 +63,39 @@ describe('CloudflareSandboxHandle', () => {
     expect(handle.id).toBe('ws-1');
     expect(handle.rootPath).toBe(SANDBOX_WORKSPACE_ROOT);
     expect(handle.metadata.sandboxName).toBe('org:o1/ws:ws-1');
-    expect(handle.metadata.opencodeBaseUrl).toBe(null);
+    expect(handle.metadata.sandbox).toBe(stub);
+    expect(handle.metadata.opencode).toBe(null);
+    expect(typeof handle.metadata.getOpencode).toBe('function');
+    expect(handle.metadata.outboundAuth).toBeUndefined();
+  });
+
+  it('exposes outboundAuth bind/unbind helpers when configured', async () => {
+    const stub = makeStub();
+    const kvStore = new Map<string, string>();
+    const kv = {
+      get: vi.fn(async (k: string) => kvStore.get(k) ?? null),
+      put: vi.fn(async (k: string, v: string) => {
+        kvStore.set(k, v);
+      }),
+      delete: vi.fn(async (k: string) => {
+        kvStore.delete(k);
+      }),
+    };
+    const handle = new CloudflareSandboxHandle({
+      workspaceId: 'ws-1',
+      sandbox: stub,
+      sandboxName: 'org:o1/ws:ws-1',
+      outboundAuth: { kv },
+    });
+    expect(handle.metadata.outboundAuth).toBeDefined();
+    await handle.metadata.outboundAuth!.bindCredential('sess-1', 'anthropic', 'sk-real');
+    expect(kv.put).toHaveBeenCalledWith(
+      'agents/cred/session/sess-1/anthropic',
+      'sk-real',
+      expect.objectContaining({ expirationTtl: expect.any(Number) }),
+    );
+    await handle.metadata.outboundAuth!.unbindCredential('sess-1', 'anthropic');
+    expect(kv.delete).toHaveBeenCalledWith('agents/cred/session/sess-1/anthropic');
   });
 
   describe('exec', () => {
@@ -191,50 +225,103 @@ describe('CloudflareSandboxHandle', () => {
     });
   });
 
-  describe('metadata.startOpencode', () => {
-    it('returns the cached URL on subsequent calls', async () => {
+  describe('metadata.getOpencode', () => {
+    function makeBundle(url = 'http://localhost:4096') {
+      return {
+        client: { __fake: true },
+        server: { port: 4096, url, close: vi.fn(async () => {}) },
+      };
+    }
+
+    it('invokes the loader with the sandbox stub and merged options', async () => {
       const stub = makeStub();
+      const bundle = makeBundle();
+      const loader: OpencodeLoader = vi.fn(async () => bundle);
       const handle = new CloudflareSandboxHandle({
         workspaceId: 'ws-1',
         sandbox: stub,
         sandboxName: 'org:o1/ws:ws-1',
-        exposeHostname: 'sandbox.example.com',
+        defaultOpencodeOptions: {
+          port: 4096,
+          config: { provider: { anthropic: { options: { apiKey: 'sk-test' } } } },
+          env: { ANTHROPIC_API_KEY: 'sk-test' },
+        },
+        opencodeLoader: loader,
       });
-      const url = await handle.metadata.startOpencode();
-      expect(url).toBe('https://4096-sandbox.example.com');
-      expect(stub.startProcess).toHaveBeenCalledTimes(1);
-      expect(stub.exposePort).toHaveBeenCalledTimes(1);
-      // Second call hits the cache.
-      const url2 = await handle.metadata.startOpencode();
-      expect(url2).toBe('https://4096-sandbox.example.com');
-      expect(stub.startProcess).toHaveBeenCalledTimes(1);
+
+      const result = await handle.metadata.getOpencode({ env: { EXTRA: '1' } });
+      expect(result).toBe(bundle);
+      expect(loader).toHaveBeenCalledTimes(1);
+      expect(loader).toHaveBeenCalledWith(
+        stub,
+        expect.objectContaining({
+          port: 4096,
+          directory: '/workspace',
+          config: { provider: { anthropic: { options: { apiKey: 'sk-test' } } } },
+          env: { ANTHROPIC_API_KEY: 'sk-test', EXTRA: '1' },
+        }),
+      );
     });
 
-    it('returns the not-configured sentinel without hostname or starter', async () => {
+    it('caches the bundle across calls and exposes it on metadata.opencode', async () => {
       const stub = makeStub();
+      const bundle = makeBundle();
+      const loader: OpencodeLoader = vi.fn(async () => bundle);
       const handle = new CloudflareSandboxHandle({
         workspaceId: 'ws-1',
         sandbox: stub,
         sandboxName: 'org:o1/ws:ws-1',
+        opencodeLoader: loader,
       });
-      const url = await handle.metadata.startOpencode();
-      expect(url).toBe('opencode-not-configured');
-      expect(stub.startProcess).not.toHaveBeenCalled();
+
+      const first = await handle.metadata.getOpencode();
+      const second = await handle.metadata.getOpencode();
+      expect(first).toBe(second);
+      expect(loader).toHaveBeenCalledTimes(1);
+      expect(handle.metadata.opencode).toBe(bundle);
     });
 
-    it('uses the supplied opencodeStarter callback', async () => {
+    it('coalesces concurrent callers onto a single in-flight loader call', async () => {
       const stub = makeStub();
-      const starter = vi.fn(async () => 'https://custom.example.com');
+      let resolve: ((b: OpencodeBundle) => void) | undefined;
+      const pending = new Promise<OpencodeBundle>((r) => {
+        resolve = r;
+      });
+      const loader: OpencodeLoader = vi.fn(() => pending);
       const handle = new CloudflareSandboxHandle({
         workspaceId: 'ws-1',
         sandbox: stub,
         sandboxName: 'org:o1/ws:ws-1',
-        opencodeStarter: starter,
+        opencodeLoader: loader,
       });
-      const url = await handle.metadata.startOpencode();
-      expect(url).toBe('https://custom.example.com');
-      expect(starter).toHaveBeenCalledWith(stub);
-      expect(stub.startProcess).not.toHaveBeenCalled();
+
+      const a = handle.metadata.getOpencode();
+      const b = handle.metadata.getOpencode();
+      const bundle = makeBundle();
+      resolve?.(bundle);
+      const [ra, rb] = await Promise.all([a, b]);
+      expect(ra).toBe(bundle);
+      expect(rb).toBe(bundle);
+      expect(loader).toHaveBeenCalledTimes(1);
+    });
+
+    it('allows retry after a failed loader call', async () => {
+      const stub = makeStub();
+      const loader = vi
+        .fn<(s: SandboxStub, opts?: OpencodeBootOptions) => Promise<OpencodeBundle>>()
+        .mockRejectedValueOnce(new Error('boom'))
+        .mockResolvedValueOnce(makeBundle('http://localhost:4096'));
+      const handle = new CloudflareSandboxHandle({
+        workspaceId: 'ws-1',
+        sandbox: stub,
+        sandboxName: 'org:o1/ws:ws-1',
+        opencodeLoader: loader,
+      });
+
+      await expect(handle.metadata.getOpencode()).rejects.toThrow(/boom/);
+      const second = await handle.metadata.getOpencode();
+      expect(second.server.url).toBe('http://localhost:4096');
+      expect(loader).toHaveBeenCalledTimes(2);
     });
   });
 });
