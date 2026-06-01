@@ -10,7 +10,7 @@
 <p align="center">
   NestJS module adapter for Flowlib.
   <br />
-  <a href="https://flowlib.dev/docs/integrations/nestjs"><strong>Docs</strong></a> · <a href="https://flowlib.dev/docs/quick-start"><strong>Quick Start</strong></a>
+  <a href="https://flowlib.dev/docs/integrations/nestjs"><strong>Docs</strong></a> · <a href="https://flowlib.dev/docs"><strong>Quick Start</strong></a>
 </p>
 
 ---

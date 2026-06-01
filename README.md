@@ -10,7 +10,7 @@
 <p align="center">
   Drop-in AI workflows for your Node.js app.
   <br />
-  <a href="https://flowlib.dev/docs"><strong>Documentation</strong></a> · <a href="https://flowlib.dev/docs/quick-start"><strong>Quick Start</strong></a> · <a href="https://github.com/robase/flowlib"><strong>GitHub</strong></a>
+  <a href="https://flowlib.dev/docs"><strong>Documentation</strong></a> · <a href="https://flowlib.dev/docs"><strong>Quick Start</strong></a> · <a href="https://github.com/robase/flowlib"><strong>GitHub</strong></a>
 </p>
  
 <p align="center">

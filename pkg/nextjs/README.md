@@ -10,7 +10,7 @@
 <p align="center">
   Next.js App Router handler for Flowlib.
   <br />
-  <a href="https://flowlib.dev/docs/integrations/nextjs"><strong>Docs</strong></a> · <a href="https://flowlib.dev/docs/quick-start"><strong>Quick Start</strong></a>
+  <a href="https://flowlib.dev/docs/integrations/nextjs"><strong>Docs</strong></a> · <a href="https://flowlib.dev/docs"><strong>Quick Start</strong></a>
 </p>
 
 ---
