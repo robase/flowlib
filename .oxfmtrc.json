@@ -18,6 +18,6 @@
     "drizzle",
     "pnpm-lock.yaml",
     "**/next-env.d.ts",
-    "pkg/vscode-extension/webview/static-action-catalogue.json"
+    "pkg/vsix-extension/webview/static-action-catalogue.json"
   ]
 }
