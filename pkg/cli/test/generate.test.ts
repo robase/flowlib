@@ -72,14 +72,13 @@ describe('generate core-only schema (no plugins)', () => {
     // gzip) instead of `@flowlib/core` (~9 MB) so generated schemas in
     // consumer repos are Worker-safe by default.
     expect(sqlite).toContain(
-      "import { BatchStatus, FlowRunStatus, NodeExecutionStatus } from '@flowlib/action-kit';",
+      "import type { BatchStatus, FlowRunStatus, NodeExecutionStatus } from '@flowlib/action-kit';",
     );
     expect(sqlite).toContain("sqliteTable('flowlib_flows'");
     expect(sqlite).toContain("sqliteTable('flowlib_flow_versions'");
     expect(sqlite).toContain("sqliteTable('flowlib_flow_executions'");
     expect(sqlite).toContain("sqliteTable('flowlib_credentials'");
-    expect(sqlite).toContain('default(FlowRunStatus.PENDING)');
-    expect(sqlite).toContain('default(NodeExecutionStatus.PENDING)');
+    expect(sqlite).toContain(".default('PENDING')");
     // SQLite uses text for dates
     expect(sqlite).toContain("text('created_at')");
     // SQLite uses integer for booleans
@@ -792,8 +791,7 @@ describe('append-mode schema generators', () => {
     expect(result.code).toContain('Flowlib tables — AUTO-GENERATED');
     expect(result.code).toContain('sqliteTable');
     expect(result.code).toContain('relations(');
-    expect(result.code).toContain('default(FlowRunStatus.PENDING)');
-    expect(result.code).toContain('default(NodeExecutionStatus.PENDING)');
+    expect(result.code).toContain(".default('PENDING')");
     // Should NOT contain import statements in the code portion
     expect(result.code).not.toContain("from 'drizzle-orm");
   });

@@ -35,7 +35,6 @@ import { buildSandboxName } from '../cloudflare-sandbox/provider';
 import {
   CloudflareSandboxClaudeHandle,
   type ClaudeServerBootOptions,
-  type ClaudeServerBundle,
   type ClaudeServerClient,
   type ClaudeServerLoader,
 } from './handle';

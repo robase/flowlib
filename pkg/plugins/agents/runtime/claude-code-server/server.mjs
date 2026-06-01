@@ -154,7 +154,9 @@ async function createSession(req, res) {
   try {
     body = await readJsonBody(req);
   } catch (err) {
-    return sendJson(res, 400, { error: 'invalid json body', message: String(err?.message ?? err) });
+    // eslint-disable-next-line no-console
+    console.error('[agents/claude-code-server] invalid json body in createSession', err);
+    return sendJson(res, 400, { error: 'invalid json body' });
   }
 
   if (!body.apiKey || typeof body.apiKey !== 'string') {
@@ -211,7 +213,9 @@ async function promptSession(req, res, sessionId) {
   try {
     body = await readJsonBody(req);
   } catch (err) {
-    return sendJson(res, 400, { error: 'invalid json body', message: String(err?.message ?? err) });
+    // eslint-disable-next-line no-console
+    console.error('[agents/claude-code-server] invalid json body in promptSession', err);
+    return sendJson(res, 400, { error: 'invalid json body' });
   }
 
   const text = typeof body.text === 'string' ? body.text : '';
@@ -239,7 +243,10 @@ async function promptSession(req, res, sessionId) {
   let aborted = false;
   req.on('close', () => {
     aborted = true;
-    session.query.interrupt?.().catch(() => {});
+    session.query.interrupt?.().catch((err) => {
+      // eslint-disable-next-line no-console
+      console.error('[agents/claude-code-server] interrupt failed', err);
+    });
   });
 
   session.queue.push(asUserMessage(text));
@@ -313,8 +320,10 @@ const server = createServer(async (req, res) => {
 
     sendJson(res, 404, { error: 'not found' });
   } catch (err) {
+    // eslint-disable-next-line no-console
+    console.error('[agents/claude-code-server] unhandled request error', err);
     if (!res.headersSent) {
-      sendJson(res, 500, { error: String(err?.message ?? err) });
+      sendJson(res, 500, { error: 'internal server error' });
     } else {
       try {
         res.end();

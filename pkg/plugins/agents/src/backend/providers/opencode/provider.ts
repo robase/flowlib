@@ -429,7 +429,12 @@ export function openCodeProvider(options: OpenCodeProviderOptions = {}): AgentPr
         throw err;
       });
     }
-    const upstreamId = session.upstreamSessionId ?? (await session.upstreamSessionPromise!);
+    const upstreamId =
+      session.upstreamSessionId ??
+      (session.upstreamSessionPromise ? await session.upstreamSessionPromise : undefined);
+    if (!upstreamId) {
+      throw new Error('opencode: failed to resolve upstream session id');
+    }
     const client = await resolveSessionClient(session);
     // eslint-disable-next-line no-console
     console.log('[agents/opencode] ensureUpstream done', {

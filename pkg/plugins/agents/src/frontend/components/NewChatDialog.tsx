@@ -53,8 +53,12 @@ export function NewChatDialog({
 }: NewChatDialogProps): React.ReactElement | null {
   const [selectedId, setSelectedId] = React.useState<string | null>(null);
   const [selectedModel, setSelectedModel] = React.useState<ModelSelection>(() => {
-    const fallback = PROVIDER_CATALOGUE[0]!;
-    return { providerId: fallback.id, model: fallback.models[0]!.id };
+    const fallback = PROVIDER_CATALOGUE[0];
+    const fallbackModel = fallback?.models[0];
+    if (!fallback || !fallbackModel) {
+      throw new Error('NewChatDialog: PROVIDER_CATALOGUE is empty');
+    }
+    return { providerId: fallback.id, model: fallbackModel.id };
   });
 
   // Auto-select the first active credential when the dialog opens so

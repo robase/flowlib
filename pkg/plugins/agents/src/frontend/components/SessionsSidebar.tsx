@@ -50,7 +50,6 @@ interface WorkspaceGroup {
 }
 
 function groupSessions(sessions: AgentSession[], workspaces: AgentWorkspace[]): WorkspaceGroup[] {
-  const wsById = new Map(workspaces.map((w) => [w.id, w] as const));
   const byId = new Map<string | '__none__', WorkspaceGroup>();
   // Seed the groups with all known workspaces in order so empty
   // workspaces still render a row (lets users start their first chat
@@ -204,7 +203,7 @@ function WorkspaceGroupRow({
         {!isOrphan && group.workspace ? (
           <button
             type="button"
-            onClick={() => onNewChat(group.workspace!.id)}
+            onClick={() => onNewChat(group.workspace?.id ?? '')}
             title="New chat in this workspace"
             aria-label={`New chat in ${headerLabel}`}
             className="opacity-0 group-hover:opacity-100 focus:opacity-100 p-1 rounded text-fl-muted-foreground hover:bg-fl-accent hover:text-fl-foreground"

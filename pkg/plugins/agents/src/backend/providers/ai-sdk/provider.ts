@@ -38,6 +38,7 @@ import type {
 } from '../types';
 import type { WorkspaceHandle } from '../../workspaces/types';
 import type { AiSdkCredential, AiSdkProviderOptions } from './types';
+import { randomBytes } from 'node:crypto';
 import { parseModelSpec, resolveModel } from './models';
 import { buildToolSet, type AiSdkToolSet } from './tools';
 
@@ -143,7 +144,7 @@ export function aiSdkProvider(options: AiSdkProviderOptions): AgentProvider {
 
   function newPlaceholderSessionId(): string {
     const c = (globalThis as { crypto?: { randomUUID?: () => string } }).crypto;
-    return c?.randomUUID?.() ?? `ai-sdk-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+    return c?.randomUUID?.() ?? `ai-sdk-${Date.now()}-${randomBytes(8).toString('hex')}`;
   }
 
   /**
@@ -218,7 +219,7 @@ export function aiSdkProvider(options: AiSdkProviderOptions): AgentProvider {
       console.log('[agents/ai-sdk] session created', {
         providerId,
         providerSessionId: sessionId,
-        defaultModel: sessionsById.get(sessionId)!.defaultModel,
+        defaultModel: sessionsById.get(sessionId)?.defaultModel,
         hasSystemPrompt: Boolean(input.systemPrompt),
       });
       return { providerSessionId: sessionId };
@@ -389,7 +390,7 @@ export function aiSdkProvider(options: AiSdkProviderOptions): AgentProvider {
       //   - { type: 'error', error }                → session-end (error)
       // Some chunk shapes differ slightly between v4 and v5 of the
       // `ai` package; we read defensively from optional fields.
-      const messageId = `msg_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+      const messageId = `msg_${Date.now()}_${randomBytes(4).toString('hex')}`;
       let messageStarted = false;
       let forwardedChunks = 0;
       let usage: { inputTokens?: number; outputTokens?: number } | undefined;

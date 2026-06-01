@@ -371,6 +371,7 @@ describe('authentication', () => {
         config: {},
         logger,
         registerAction: vi.fn(),
+        store: new Map(),
       });
 
       expect(logger.info).toHaveBeenCalledWith(
@@ -420,6 +421,7 @@ describe('authentication', () => {
         config: {},
         logger,
         registerAction: vi.fn(),
+        store: new Map(),
       });
 
       expect(findUserByEmail).toHaveBeenCalledWith('admin@example.com');
