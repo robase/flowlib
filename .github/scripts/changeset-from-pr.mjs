@@ -3,9 +3,13 @@
  * Generate a changeset from the current PR's title + diff.
  *
  * Inputs (env):
- *   PR_NUMBER  — pull_request.number
- *   PR_TITLE   — pull_request.title (conventional commit format expected)
- *   PR_BASE    — pull_request.base.ref (e.g. "main")
+ *   PR_NUMBER    — pull_request.number
+ *   PR_TITLE     — pull_request.title (conventional commit format expected)
+ *   PR_BASE      — pull_request.base.ref (e.g. "main")
+ *   PR_BASE_SHA  — optional pull_request.base.sha. When set, the diff is
+ *                   computed as `<PR_BASE_SHA>...HEAD` directly (used when
+ *                   running post-merge on the base branch). Otherwise the
+ *                   script fetches `origin/<PR_BASE>` and diffs against it.
  *
  * Outputs (GITHUB_OUTPUT):
  *   changed=true|false  — whether `.changeset/pr-<N>.md` was written or
@@ -33,6 +37,7 @@ import { glob } from 'node:fs/promises';
 const PR_NUMBER = mustEnv('PR_NUMBER');
 const PR_TITLE = mustEnv('PR_TITLE').trim();
 const PR_BASE = mustEnv('PR_BASE');
+const PR_BASE_SHA = process.env.PR_BASE_SHA;
 const GITHUB_OUTPUT = process.env.GITHUB_OUTPUT;
 
 const SKIP_PREFIXES = new Set(['chore', 'docs', 'style', 'refactor', 'test', 'ci', 'build']);
@@ -54,12 +59,20 @@ async function main() {
     return skip(`Type "${parsed.type}" is non-versioning — no changeset.`);
   }
 
-  // 2. Diff against base to find affected files. Fetch base first because
-  //    `actions/checkout@v6` only fetches the PR head ref by default.
-  execSync(`git fetch --no-tags --depth=200 origin ${PR_BASE}`, {
-    stdio: 'inherit',
-  });
-  const changedFiles = execSync(`git diff --name-only origin/${PR_BASE}...HEAD`, {
+  // 2. Diff against base to find affected files. When PR_BASE_SHA is
+  //    provided (post-merge runs check out the base branch with full
+  //    history) use it directly. Otherwise fetch the base ref because
+  //    `actions/checkout@v6` only fetches the PR head by default.
+  let diffRange;
+  if (PR_BASE_SHA) {
+    diffRange = `${PR_BASE_SHA}...HEAD`;
+  } else {
+    execSync(`git fetch --no-tags --depth=200 origin ${PR_BASE}`, {
+      stdio: 'inherit',
+    });
+    diffRange = `origin/${PR_BASE}...HEAD`;
+  }
+  const changedFiles = execSync(`git diff --name-only ${diffRange}`, {
     encoding: 'utf8',
   })
     .split('\n')

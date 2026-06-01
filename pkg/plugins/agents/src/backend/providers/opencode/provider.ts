@@ -56,6 +56,7 @@ import type {
   AgentProviderMessage,
   AgentModel,
 } from '../types';
+import { randomBytes } from 'node:crypto';
 import type { AgentEvent } from '../../../shared/events';
 import type { WorkspaceHandle } from '../../workspaces/types';
 import { FLOWLIB_SESSION_HEADER, type OutboundVendor } from '../../cloudflare/outbound-auth';
@@ -276,9 +277,7 @@ export function openCodeProvider(options: OpenCodeProviderOptions = {}): AgentPr
 
   function newPlaceholderSessionId(): string {
     const c = (globalThis as { crypto?: { randomUUID?: () => string } }).crypto;
-    return (
-      c?.randomUUID?.() ?? `oc-pending-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`
-    );
+    return c?.randomUUID?.() ?? `oc-pending-${Date.now()}-${randomBytes(8).toString('hex')}`;
   }
 
   /**
