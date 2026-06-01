@@ -1,5 +1,5 @@
 import { resolve } from 'node:path';
-import { copyFileSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
+import { copyFileSync, existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { defineConfig } from 'vite';
 import type { Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
@@ -17,6 +17,12 @@ function extractInlinedFonts(): Plugin {
       const distDir = resolve(__dirname, 'dist');
       const fontsDir = resolve(distDir, 'fonts');
       const cssPath = resolve(distDir, 'index.css');
+
+      // If the bundle failed to produce CSS, bail so the real error is visible
+      // instead of being masked by an ENOENT here.
+      if (!existsSync(cssPath)) {
+        return;
+      }
 
       // Copy font files to dist/fonts/
       const srcFontsDir = resolve(__dirname, 'src/assets/fonts');
