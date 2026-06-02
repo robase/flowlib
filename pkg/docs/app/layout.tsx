@@ -1,4 +1,5 @@
 import localFont from 'next/font/local';
+import { GeistMono } from 'geist/font/mono';
 import { RootProvider } from 'fumadocs-ui/provider/next';
 import type { ReactNode } from 'react';
 import './global.css';
@@ -8,13 +9,6 @@ const geistSans = localFont({
   variable: '--font-geist-sans',
   display: 'swap',
   weight: '100 900',
-});
-
-const iosevkaMono = localFont({
-  src: '../../ui/src/assets/fonts/iosevka-latin-400-normal.woff2',
-  variable: '--font-iosevka',
-  display: 'swap',
-  weight: '400',
 });
 
 export const metadata = {
@@ -30,7 +24,7 @@ export default function Layout({ children }: { children: ReactNode }) {
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${iosevkaMono.variable} dark`}
+      className={`${geistSans.variable} ${GeistMono.variable} dark`}
       suppressHydrationWarning
     >
       <body className="flex flex-col min-h-screen">

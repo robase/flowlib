@@ -6,7 +6,7 @@
   --font-sans:
     var(--font-geist-sans), 'Geist Variable', 'Geist', ui-sans-serif, system-ui, sans-serif;
   --font-mono:
-    var(--font-iosevka), 'Iosevka', ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas,
+    var(--font-geist-mono), 'Geist Mono', ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas,
     'Liberation Mono', monospace;
   --font-serif:
     var(--font-geist-sans), 'Geist Variable', 'Geist', ui-serif, Georgia, Cambria,
@@ -79,7 +79,7 @@
   --font-sans:
     var(--font-geist-sans), 'Geist Variable', 'Geist', ui-sans-serif, system-ui, sans-serif;
   --font-mono:
-    var(--font-iosevka), 'Iosevka', ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas,
+    var(--font-geist-mono), 'Geist Mono', ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas,
     'Liberation Mono', monospace;
   --color-fd-background: var(--background);
   --color-fd-foreground: var(--foreground);
