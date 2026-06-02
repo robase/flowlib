@@ -27,18 +27,29 @@ export default flowlibConfig;
 
 | Field              | Type                                  | Default       | Description                                                                                                                        |
 | ------------------ | ------------------------------------- | ------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| `connectionString` | `string`                              | —             | Database URL. SQLite: `file:./dev.db`. PostgreSQL: `postgresql://user:pass@host:port/db`. MySQL: `mysql://user:pass@host:port/db`. |
+| `connectionString` | `string`                              | —             | Database URL. SQLite: `file:./dev.db`. PostgreSQL: `postgresql://user:pass@host:port/db`. MySQL: `mysql://user:pass@host:port/db`. Required for every driver except `d1`. |
 | `type`             | `'sqlite' \| 'postgresql' \| 'mysql'` | —             | Database dialect.                                                                                                                  |
 | `name`             | `string`                              | —             | Optional human-readable name.                                                                                                      |
 | `driver`           | see below                             | auto-detected | Database driver.                                                                                                                   |
+| `binding`          | `D1Database`                          | —             | Cloudflare D1 binding. Required (instead of `connectionString`) when `driver` is `d1`. Pass the `env.DB` your Worker received.     |
 
 ### Supported drivers
 
 | Database   | Drivers                             | Default          |
 | ---------- | ----------------------------------- | ---------------- |
 | PostgreSQL | `postgres`, `pg`, `neon-serverless` | `postgres`       |
-| SQLite     | `better-sqlite3`, `libsql`          | `better-sqlite3` |
+| SQLite     | `better-sqlite3`, `libsql`, `d1`    | `better-sqlite3` |
 | MySQL      | `mysql2`                            | `mysql2`         |
+
+`d1` is a SQLite-dialect driver for Cloudflare Workers — pass a runtime `binding` instead of a `connectionString`:
+
+```ts
+database: {
+  type: 'sqlite',
+  driver: 'd1',
+  binding: env.DB, // the D1Database from your Worker's env
+},
+```
 
 ## `logging` (optional)
 
@@ -62,14 +73,19 @@ logging: {
 
 ## `execution` (optional)
 
-| Field                     | Type      | Default  | Description                                    |
-| ------------------------- | --------- | -------- | ---------------------------------------------- |
-| `defaultTimeout`          | `number`  | `60000`  | Node execution timeout (ms).                   |
-| `maxConcurrentExecutions` | `number`  | `10`     | Maximum parallel flow runs.                    |
-| `enableTracing`           | `boolean` | `true`   | Store node-level execution traces.             |
-| `flowTimeoutMs`           | `number`  | `600000` | Flow run timeout (10 min).                     |
-| `heartbeatIntervalMs`     | `number`  | `30000`  | Status heartbeat interval (ms).                |
-| `staleRunCheckIntervalMs` | `number`  | `60000`  | Batch polling / stale run check interval (ms). |
+| Field                     | Type                        | Default   | Description                                                                                              |
+| ------------------------- | --------------------------- | --------- | ------------------------------------------------------------------------------------------------------- |
+| `defaultTimeout`          | `number`                    | `60000`   | Node execution timeout (ms).                                                                            |
+| `maxConcurrentExecutions` | `number`                    | `10`      | Maximum parallel flow runs.                                                                             |
+| `enableTracing`           | `boolean`                   | `true`    | Store node-level execution traces.                                                                     |
+| `flowTimeoutMs`           | `number`                    | `600000`  | Stale-run heartbeat threshold (10 min). A run is failed only if heartbeats stop, not on wall-clock.    |
+| `modelNodeTimeoutMs`      | `number`                    | `300000`  | Per-node timeout for `core.model` (5 min) unless the node sets its own `timeoutMs`.                    |
+| `agentNodeTimeoutMs`      | `number`                    | `900000`  | Per-node timeout for the `core.agent` loop (15 min) unless the node sets its own `timeoutMs`.          |
+| `heartbeatIntervalMs`     | `number`                    | `30000`   | Heartbeat write interval during a run (ms).                                                            |
+| `staleRunCheckIntervalMs` | `number`                    | `60000`   | Stale-run detector poll interval (ms).                                                                 |
+| `sseHeartbeatIntervalMs`  | `number`                    | `15000`   | SSE keep-alive frame interval for the run event stream (ms). Lower it behind aggressive proxies.       |
+| `disableNativeEval`       | `boolean`                   | `false`   | Force-disable the `new Function` fast path in `DirectEvaluator` (edge-runtime hosts only).             |
+| `persistence`             | `'per-node' \| 'per-run'`   | `'per-node'` | Node-execution write strategy. `'per-run'` buffers in memory and flushes one blob on completion (~30× fewer writes) at the cost of in-flight node visibility. |
 
 ## `triggers` (optional)
 
@@ -106,12 +122,6 @@ Array of credentials to seed on startup. Matched by name — existing credential
 | `description` | `string`                            | No        | Human-readable note.                               |
 | `isShared`    | `boolean`                           | No        | Visible to all users.                              |
 
-## `basePath` (optional)
-
-| Field      | Type     | Default | Description                          |
-| ---------- | -------- | ------- | ------------------------------------ |
-| `basePath` | `string` | —       | Base URL path prefix for all routes. |
-
 ## `apiPath` (optional)
 
 The URL path where the Flowlib API is mounted (e.g. `'/api/flowlib'` or `'http://localhost:3000/flowlib'`). Read by `<Flowlib>` on the frontend to know where to send API requests.
@@ -122,11 +132,22 @@ The URL path where `<Flowlib>` is mounted in the frontend router (e.g. `'/flowli
 
 ## `theme` (optional)
 
-`'light' | 'dark' | 'system'` — default `'system'`. Controls the editor color scheme.
+`'light' | 'dark' | 'system'` — default `'dark'`. Controls the editor color scheme. Read by `<Flowlib>` on the frontend.
 
 ## `logger` (optional)
 
 Custom logger instance. Must implement `info`, `debug`, `warn`, `error` methods.
+
+## Edge / serverless options (optional)
+
+These matter only on cold-start-per-request runtimes (Cloudflare Workers, Vercel, etc.). Self-hosted long-running servers can ignore them.
+
+| Field               | Type      | Default | Description                                                                                                                       |
+| ------------------- | --------- | ------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| `skipDatabaseInit`  | `boolean` | `false` | Throw before connecting to the database — used by build steps. The Next.js adapter sets this automatically during a production build. |
+| `skipStartupChecks` | `boolean` | `false` | Skip the per-startup connectivity probe and table/schema checks. Use only when the deploy pipeline already ran `generate` + `push`; saves ~4 DB round-trips per cold start. |
+| `services`          | `object`  | —       | Adapter overrides for cross-cutting infrastructure (`encryption`, `eventBus`, `chatSessionStore`, `cronScheduler`, `batchPoller`, `jobRunner`). Edge runtimes inject runtime-native implementations here. |
+| `auth`              | `object`  | —       | Authorization config for the RBAC layer (`customAuthorize` callback, etc.). Consumed by plugin `onAuthorize` hooks.              |
 
 ## Full example
 

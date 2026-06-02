@@ -667,49 +667,6 @@ app.<span class="func">use</span>(<span class="string">'/workflows'</span>, <spa
                   />
                 </div>
               </div>
-
-              <div className="why-item">
-                <div className="why-item-text">
-                  <h3>Deploy anywhere</h3>
-                  <p>
-                    SQLite for local dev, PostgreSQL for production, serverless on Vercel, Docker
-                    on-prem. Not vendor-locked — run in air-gapped networks with zero
-                    external&nbsp;dependencies.
-                  </p>
-                </div>
-                <div className="why-visual">
-                  <div className="compare-group">
-                    <div className="compare-label">Hosted platforms</div>
-                    <div className="compare-row">
-                      <span>Zapier</span>
-                      <span className="compare-cost">$0.01–0.05 / task</span>
-                    </div>
-                    <div className="compare-row">
-                      <span>Make</span>
-                      <span className="compare-cost">metered ops</span>
-                    </div>
-                    <div className="compare-row">
-                      <span>Inngest</span>
-                      <span className="compare-cost">per-execution pricing</span>
-                    </div>
-                  </div>
-                  <div className="compare-group">
-                    <div className="compare-label">Self-hosted alternatives</div>
-                    <div className="compare-row">
-                      <span>n8n</span>
-                      <span className="compare-cost">separate Docker service</span>
-                    </div>
-                    <div className="compare-row">
-                      <span>Temporal</span>
-                      <span className="compare-cost">cluster + workers + DB</span>
-                    </div>
-                    <div className="compare-row">
-                      <span>Windmill</span>
-                      <span className="compare-cost">dedicated server</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
             </div>
           </div>
         </section>

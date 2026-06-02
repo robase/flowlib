@@ -31,25 +31,60 @@ npm install @flowlib/ui
 
 ## Usage
 
+`<Flowlib>` takes a single `config` prop — the same object you pass to the backend
+(`createFlowlibRouter(config)` / `defineConfig({...})`). The frontend reads only the
+fields it needs (`apiPath`, `frontendPath`, `theme`, `plugins`) and ignores the rest,
+so one `flowlib.config.ts` can be shared across backend and frontend.
+
 ```tsx
 import { Flowlib } from '@flowlib/ui';
 import '@flowlib/ui/styles';
 
 function App() {
-  return <Flowlib apiBaseUrl="http://localhost:3000/flowlib" />;
+  return (
+    <Flowlib
+      config={{
+        apiPath: 'http://localhost:3000/flowlib',
+        frontendPath: '/flowlib',
+        theme: 'dark',
+      }}
+    />
+  );
+}
+```
+
+Or import the shared config object directly:
+
+```tsx
+import { Flowlib } from '@flowlib/ui';
+import '@flowlib/ui/styles';
+import { flowlibConfig } from '../flowlib.config';
+
+function App() {
+  return <Flowlib config={flowlibConfig} />;
 }
 ```
 
 This renders the full Flowlib UI — flow list, drag-and-drop editor, execution monitoring, and credential management.
 
+Plugins go inside `config.plugins` (frontend surfaces resolve automatically via each
+plugin package's `browser` export, so no server code is bundled):
+
+```tsx
+import { auth } from '@flowlib/user-auth';
+import { rbac } from '@flowlib/rbac';
+
+<Flowlib config={{ apiPath: '/api/flowlib', frontendPath: '/flowlib', plugins: [auth(), rbac()] }} />;
+```
+
 ## Props
 
-| Prop               | Type                      | Default                         | Description                       |
-| ------------------ | ------------------------- | ------------------------------- | --------------------------------- |
-| `apiBaseUrl`       | `string`                  | `http://localhost:3000/flowlib` | Backend API URL                   |
-| `basePath`         | `string`                  | `/flowlib`                      | Base path for routing             |
-| `plugins`          | `FlowlibFrontendPlugin[]` | `[]`                            | Frontend plugins (RBAC, etc.)     |
-| `reactQueryClient` | `QueryClient`             | —                               | Bring your own React Query client |
+| Prop               | Type            | Default | Description                                                                |
+| ------------------ | --------------- | ------- | -------------------------------------------------------------------------- |
+| `config`           | `FlowlibConfig` | —       | Required. Shared config object — reads `apiPath`, `frontendPath`, `theme`, `plugins`. |
+| `reactQueryClient` | `QueryClient`   | —       | Bring your own React Query client.                                         |
+| `useMemoryRouter`  | `boolean`       | `false` | Use `MemoryRouter` instead of `BrowserRouter` (useful for testing).        |
+| `apiClient`        | `ApiClient`     | —       | Pre-configured API client (e.g. demo mode). Overrides `config.apiPath`.    |
 
 ## CSS Scoping
 

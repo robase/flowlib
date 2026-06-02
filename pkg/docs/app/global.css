@@ -47,24 +47,26 @@
 
 :root {
   color-scheme: light;
-  --background: #fafafa;
-  --foreground: #1a1a2e;
-  --card: #ffffff;
-  --card-foreground: #1a1a2e;
-  --popover: #ffffff;
-  --popover-foreground: #1a1a2e;
+  /* Neutral grayscale surfaces */
+  --background: hsl(0, 0%, 96%);
+  --foreground: hsl(0, 0%, 3.9%);
+  --card: hsl(0, 0%, 94.7%);
+  --card-foreground: hsl(0, 0%, 3.9%);
+  --popover: hsl(0, 0%, 98%);
+  --popover-foreground: hsl(0, 0%, 15.1%);
+  /* Brand accent — kept for links, primary buttons, focus ring, selection */
   --primary: #5b5bd6;
   --primary-foreground: #ffffff;
-  --secondary: #f0f0f8;
-  --secondary-foreground: #1a1a2e;
-  --muted: #f4f4f8;
-  --muted-foreground: #6e6e80;
-  --accent: #ededf7;
-  --accent-foreground: #1a1a2e;
+  --secondary: hsl(0, 0%, 93.1%);
+  --secondary-foreground: hsl(0, 0%, 9%);
+  --muted: hsl(0, 0%, 96.1%);
+  --muted-foreground: hsl(0, 0%, 45.1%);
+  --accent: hsla(0, 0%, 82%, 0.5);
+  --accent-foreground: hsl(0, 0%, 9%);
   --destructive: #e5484d;
   --destructive-foreground: #ffffff;
-  --border: #e0e0ec;
-  --input: #dcdce4;
+  --border: hsla(0, 0%, 80%, 0.5);
+  --input: hsl(0, 0%, 83%);
   --ring: #5b5bd6;
   --success: #30a46c;
   --success-foreground: #ffffff;
@@ -109,24 +111,26 @@
 
 .dark {
   color-scheme: dark;
-  --background: #111114;
-  --foreground: #ececf0;
-  --card: #1e1e24;
-  --card-foreground: #ececf0;
-  --popover: #222228;
-  --popover-foreground: #ececf0;
+  /* Neutral grayscale surfaces */
+  --background: hsl(0, 0%, 7.04%);
+  --foreground: hsl(0, 0%, 92%);
+  --card: hsl(0, 0%, 9.8%);
+  --card-foreground: hsl(0, 0%, 98%);
+  --popover: hsl(0, 0%, 11.6%);
+  --popover-foreground: hsl(0, 0%, 86.9%);
+  /* Brand accent — kept for links, primary buttons, focus ring, selection */
   --primary: #7b7bde;
   --primary-foreground: #ffffff;
-  --secondary: #22222c;
-  --secondary-foreground: #ececf0;
-  --muted: #22222c;
-  --muted-foreground: #8b8b9e;
-  --accent: #2c2c3a;
-  --accent-foreground: #ececf0;
+  --secondary: hsl(0, 0%, 12.9%);
+  --secondary-foreground: hsl(0, 0%, 92%);
+  --muted: hsl(0, 0%, 12.9%);
+  --muted-foreground: hsla(0, 0%, 70%, 0.8);
+  --accent: hsla(0, 0%, 40.9%, 0.3);
+  --accent-foreground: hsl(0, 0%, 90%);
   --destructive: #e5484d;
   --destructive-foreground: #ffffff;
-  --border: #2e2e3c;
-  --input: #3a3a4a;
+  --border: hsla(0, 0%, 40%, 0.2);
+  --input: hsl(0, 0%, 24%);
   --ring: #7b7bde;
   --success: #3dd68c;
   --success-foreground: #0d2118;

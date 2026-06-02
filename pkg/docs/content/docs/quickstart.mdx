@@ -42,13 +42,17 @@ app.listen(3000, () => console.log('http://localhost:3000/flowlib'));
 
 For NestJS or Next.js mounting patterns, see [Installation](/docs/installation).
 
-## Open the dashboard
+## Add the visual editor
 
-Start your server and visit `http://localhost:3000/flowlib`. You should see the Flowlib dashboard where you can create and run flows.
+The flow editor, execution viewer, and credential manager all live in the `<Flowlib>` React
+component. It takes a single `config` prop — the **same** object you passed to the backend, so
+import the generated `flowlib.config.ts` on both sides.
 
-## Add the visual editor (optional)
+With **Express** or **NestJS**, the UI is a separate React app. Install `@flowlib/ui` there:
 
-If your frontend is a separate React app, install `@flowlib/ui` and mount the editor:
+```bash
+pnpm add @flowlib/ui
+```
 
 ```tsx title="App.tsx"
 import { Flowlib } from '@flowlib/ui';
@@ -59,6 +63,37 @@ function App() {
   return <Flowlib config={flowlibConfig} />;
 }
 ```
+
+With **Next.js**, mount it in a catch-all client page (dynamic import with `ssr: false` — the
+editor uses browser APIs):
+
+```tsx title="app/flowlib/[[...slug]]/page.tsx"
+'use client';
+
+import dynamic from 'next/dynamic';
+import '@flowlib/ui/styles';
+import config from '../../flowlib.config';
+
+const Flowlib = dynamic(() => import('@flowlib/ui').then((m) => ({ default: m.Flowlib })), {
+  ssr: false,
+});
+
+export default function FlowlibPage() {
+  return <Flowlib config={config} />;
+}
+```
+
+<Callout type="info">
+  Plugins go inside `config.plugins` (e.g. `auth()`, `rbac()`). The `@flowlib/user-auth` plugin
+  auto-gates the UI with a sign-in screen — no wrapper component needed. See
+  [Installation](/docs/installation) for per-framework details.
+</Callout>
+
+## Open the dashboard
+
+Start your server and frontend, then visit your editor (e.g. `http://localhost:5173` for a Vite
+app, or `http://localhost:3000/flowlib` for Next.js). You should see the Flowlib dashboard where
+you can create and run flows.
 
 ## What's next?
 

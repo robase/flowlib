@@ -75,4 +75,5 @@ internal-docs
 
 .agents/skills
 .claude/skills
+.claude/settings.json
 skills-lock.json
