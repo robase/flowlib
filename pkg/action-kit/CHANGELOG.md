@@ -1,5 +1,11 @@
 # @flowlib/action-kit
 
+## 0.0.8
+
+### Patch Changes
+
+- [#19](https://github.com/robase/flowlib/pull/19) [`ae77ef5`](https://github.com/robase/flowlib/commit/ae77ef52a2b8ea4f9f9d592ccc160ac4ff0ce654) Thanks [@robase](https://github.com/robase)! - feat: agents + remote sessions + mcp tools ([#19](https://github.com/robase/flowlib/issues/19))
+
 ## 0.0.7
 
 ## 0.0.6

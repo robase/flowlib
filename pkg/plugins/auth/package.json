@@ -1,6 +1,6 @@
 {
   "name": "@flowlib/user-auth",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "description": "Better Auth plugin for Flowlib — adds user authentication, session management, identity resolution, and auth UI components",
   "keywords": [
     "auth",
