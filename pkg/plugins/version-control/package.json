@@ -58,7 +58,7 @@
     "@flowlib/core": "workspace:*",
     "@flowlib/db": "workspace:*",
     "@flowlib/sdk": "workspace:*",
-    "kysely": "^0.28.17",
+    "kysely": "^0.29.0",
     "zod": "^3.25.0"
   },
   "devDependencies": {

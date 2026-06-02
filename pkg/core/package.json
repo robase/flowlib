@@ -75,7 +75,7 @@
     "@secure-exec/node": "^0.1.0",
     "croner": "^10.0.1",
     "drizzle-orm": "^0.45.2",
-    "kysely": "^0.28.17",
+    "kysely": "^0.29.0",
     "nanoid": "^5.0.9",
     "openai": "^5.11.0",
     "quickjs-emscripten": "^0.32.0",
