@@ -1,5 +1,16 @@
 # @flowlib/user-auth
 
+## 0.0.9
+
+### Patch Changes
+
+- version bump
+
+- Updated dependencies []:
+  - @flowlib/core@0.0.9
+  - @flowlib/db@0.0.9
+  - @flowlib/ui@0.0.9
+
 ## 0.0.8
 
 ### Patch Changes

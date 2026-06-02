@@ -1,5 +1,14 @@
 # flowlib-cli
 
+## 0.0.9
+
+### Patch Changes
+
+- version bump
+
+- Updated dependencies []:
+  - @flowlib/cli@0.0.9
+
 ## 0.0.8
 
 ### Patch Changes

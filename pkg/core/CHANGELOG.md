@@ -1,5 +1,18 @@
 # @flowlib/core
 
+## 0.0.9
+
+### Patch Changes
+
+- version bump
+
+- Updated dependencies []:
+  - @flowlib/action-kit@0.0.9
+  - @flowlib/actions@0.0.9
+  - @flowlib/db@0.0.9
+  - @flowlib/layouts@0.0.9
+  - @flowlib/sdk@0.0.9
+
 ## 0.0.8
 
 ### Patch Changes

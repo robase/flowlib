@@ -1,6 +1,6 @@
 {
   "name": "@flowlib/sdk",
-  "version": "0.0.8",
+  "version": "0.0.9",
   "description": "Unified authoring SDK for Flowlib flows — defineFlow, core node helpers, and the canonical serializer",
   "keywords": [
     "flowlib",

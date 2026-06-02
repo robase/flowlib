@@ -1,6 +1,6 @@
 {
   "name": "@flowlib/agents",
-  "version": "0.0.8",
+  "version": "0.0.9",
   "description": "Code-editing AI agents plugin for Flowlib — Claude Code, opencode, raw-LLM providers; Cloudflare Sandbox workspaces; durable-object-backed sessions",
   "keywords": [
     "agents",
