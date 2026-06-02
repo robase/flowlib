@@ -1,6 +1,6 @@
 {
   "name": "@flowlib/express",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "description": "Express.js integration package for Flowlib Core",
   "keywords": [
     "api",
