@@ -68,7 +68,7 @@
     "release": "pnpm build && pnpm publish -r --access public --no-git-checks"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.56.0",
+    "@anthropic-ai/sdk": "^0.57.0",
     "@flowlib/cli": "workspace:*",
     "@nestjs/platform-express": "^11.1.18",
     "@nestjs/schedule": "^6.0.0",
