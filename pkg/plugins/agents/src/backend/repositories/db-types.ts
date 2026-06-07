@@ -119,6 +119,22 @@ export interface AgentProjectsTable {
   updated_at: TimestampColumn;
 }
 
+// ─── agent_skills ──────────────────────────────────────────────────────
+
+export interface AgentSkillsTable {
+  id: string;
+  org_id: string | null;
+  name: string;
+  description: string;
+  body: string;
+  scope: string;
+  owner_id: string | null;
+  /** JSON-encoded `string[]`. */
+  tags: string | string[] | null;
+  created_at: TimestampColumn;
+  updated_at: TimestampColumn;
+}
+
 // ─── agent_audit_events ────────────────────────────────────────────────
 
 export interface AgentAuditEventsTable {
@@ -151,6 +167,7 @@ export interface AgentsDB {
   agent_sessions: AgentSessionsTable;
   agent_messages: AgentMessagesTable;
   agent_projects: AgentProjectsTable;
+  agent_skills: AgentSkillsTable;
   agent_audit_events: AgentAuditEventsTable;
   agent_role_permissions: AgentRolePermissionsTable;
 }

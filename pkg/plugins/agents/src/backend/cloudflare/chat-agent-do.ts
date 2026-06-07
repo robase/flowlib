@@ -589,6 +589,13 @@ export class AgentChatDO extends (AIChatAgent as unknown as new (
       sessions: { findById(id: string): Promise<unknown> };
       workspaces?: { findById(id: string, orgId: string): Promise<unknown> };
       messages?: { append?: (input: unknown) => Promise<void> };
+      skills?: {
+        listForScope(scope: {
+          orgId: string | null;
+          userId?: string;
+          limit?: number;
+        }): Promise<ReadonlyArray<{ name: string; description: string; body: string }>>;
+      };
     };
     const reposSlot = runtime.repositories as unknown;
     let repositories: RepositoriesBag;
@@ -721,10 +728,15 @@ export class AgentChatDO extends (AIChatAgent as unknown as new (
     // dormant — see plans/agents §0. We compose here and feed the result
     // into `createSession`, which the provider stores as the session's
     // system prompt.
-    const effectiveSystemPrompt = await this._composeEffectiveSystemPrompt(resolved.sessionId, {
-      systemPrompt: sessionRow.systemPrompt,
-      denyList: sessionRow.denyList,
-    });
+    const skillSummaries = await this._loadSkillSummaries(repositories, resolved);
+    const effectiveSystemPrompt = await this._composeEffectiveSystemPrompt(
+      resolved.sessionId,
+      {
+        systemPrompt: sessionRow.systemPrompt,
+        denyList: sessionRow.denyList,
+      },
+      skillSummaries,
+    );
 
     try {
       await provider.createSession({
@@ -809,13 +821,14 @@ export class AgentChatDO extends (AIChatAgent as unknown as new (
   private async _composeEffectiveSystemPrompt(
     sessionId: string,
     row: { systemPrompt?: string | null; denyList?: string[] | null },
+    skillSummaries: ReadonlyArray<{ name: string; description: string; body?: string }>,
   ): Promise<string> {
     if (this._composedPrompt && this._composedPrompt.sessionId === sessionId) {
       return this._composedPrompt.prompt;
     }
     const prompt = await composeSystemPrompt({
       systemPrompt: row.systemPrompt ?? '',
-      skillSummaries: [],
+      skillSummaries,
       denyList: row.denyList ?? [],
       availableTools: [],
       memory: [],
@@ -823,6 +836,64 @@ export class AgentChatDO extends (AIChatAgent as unknown as new (
     });
     this._composedPrompt = { sessionId, prompt };
     return prompt;
+  }
+
+  /**
+   * Load the skills visible to this session (org `global` + the user's
+   * `personal`) and inline their bodies into the prompt. Bounded by
+   * count and total bytes so a large skill library can't blow the
+   * context window — skills past the budget are dropped (the cap is
+   * logged). Best-effort: any repository error yields no skills rather
+   * than failing the turn. v1 has no `skills.read` tool, so bodies are
+   * inlined here rather than fetched on demand (plans/agents §2).
+   */
+  private async _loadSkillSummaries(
+    repositories: {
+      skills?: {
+        listForScope(scope: {
+          orgId: string | null;
+          userId?: string;
+          limit?: number;
+        }): Promise<ReadonlyArray<{ name: string; description: string; body: string }>>;
+      };
+    },
+    resolved: ResolvedConnectionState,
+  ): Promise<ReadonlyArray<{ name: string; description: string; body: string }>> {
+    if (!repositories.skills) {
+      return [];
+    }
+    const MAX_SKILLS = 20;
+    const MAX_TOTAL_BODY_BYTES = 16 * 1024;
+    try {
+      const all = await repositories.skills.listForScope({
+        orgId: resolved.orgId,
+        userId: resolved.auth.userId,
+        limit: MAX_SKILLS,
+      });
+      const out: Array<{ name: string; description: string; body: string }> = [];
+      let bytes = 0;
+      for (const s of all) {
+        bytes += new TextEncoder().encode(s.body).length;
+        if (bytes > MAX_TOTAL_BODY_BYTES && out.length > 0) {
+          // eslint-disable-next-line no-console
+          console.warn('[AgentChatDO] skill budget exceeded — dropping remaining skills', {
+            sessionId: resolved.sessionId,
+            included: out.length,
+            dropped: all.length - out.length,
+          });
+          break;
+        }
+        out.push({ name: s.name, description: s.description, body: s.body });
+      }
+      return out;
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.warn('[AgentChatDO] skill load failed — proceeding without skills', {
+        sessionId: resolved.sessionId,
+        message: err instanceof Error ? err.message : String(err),
+      });
+      return [];
+    }
   }
 
   /**

@@ -166,6 +166,22 @@ describe('composeSystemPrompt', () => {
     expect(out).toContain('## Available skills');
     expect(out).toContain('**pr-workflow** — open a PR');
     expect(out).toContain('**release** — cut a release');
+    // Summary mode promises the (future) on-demand read tool.
+    expect(out).toContain('skills.read');
+  });
+
+  it('inlines skill bodies in full when provided (v1 — no skills.read tool)', async () => {
+    const out = await composeSystemPrompt(
+      baseInput({
+        skillSummaries: [{ name: 'pr-workflow', description: 'open a PR', body: 'step 1\nstep 2' }],
+      }),
+    );
+    expect(out).toContain('## Available skills');
+    expect(out).toContain('### pr-workflow');
+    expect(out).toContain('step 1');
+    expect(out).toContain('step 2');
+    // Inline mode must NOT claim a tool that doesn't exist yet.
+    expect(out).not.toContain('skills.read');
   });
 
   it('renders plan checkpoints with status boxes', async () => {

@@ -123,24 +123,44 @@ export function renderClaudeMd(files: ClaudeMdFile[]): string | null {
 // ─── Skill summaries ──────────────────────────────────────────────────
 
 /**
- * Render skill summaries (name + description only — bodies fetched on
- * demand via the `skills.read` MCP). Empty array → section omitted.
+ * Render the available skills.
+ *
+ * Two modes, chosen automatically:
+ *  - **Inline** — when every skill carries a `body`, the bodies are
+ *    rendered in full under per-skill `###` headers. Used in v1, where
+ *    the agent has no `skills.read` tool yet (see plans/agents §2).
+ *  - **Summary** — when no bodies are supplied, only name + description
+ *    show, with a note that the body is fetchable via `skills.read`.
+ *    This is the progressive-disclosure path for once that tool exists.
+ *
+ * Empty array → section omitted.
  */
 export function renderSkillSummaries(
-  skills: ReadonlyArray<{ name: string; description: string }>,
+  skills: ReadonlyArray<{ name: string; description: string; body?: string }>,
 ): string | null {
   if (skills.length === 0) {
     return null;
   }
-  const lines: string[] = [
-    '## Available skills',
-    'Each skill below is fetchable on demand via `skills.read`. Only the name and description are shown here.',
-    '',
-  ];
-  for (const s of skills) {
-    lines.push(`- **${s.name}** — ${s.description}`);
+  const hasBody = (s: { body?: string }): boolean => !!s.body && s.body.trim() !== '';
+  const allInline = skills.every(hasBody);
+
+  const lines: string[] = ['## Available skills'];
+  if (!allInline) {
+    lines.push(
+      'Each skill below is fetchable on demand via `skills.read`. Only the name and description are shown here.',
+    );
   }
-  return lines.join('\n');
+  lines.push('');
+
+  for (const s of skills) {
+    const body = s.body?.trim();
+    if (body) {
+      lines.push(`### ${s.name}`, s.description, '', body, '');
+    } else {
+      lines.push(`- **${s.name}** — ${s.description}`);
+    }
+  }
+  return lines.join('\n').trimEnd();
 }
 
 // ─── Tool restrictions (deny list) ────────────────────────────────────

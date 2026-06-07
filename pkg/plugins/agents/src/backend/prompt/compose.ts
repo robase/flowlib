@@ -66,8 +66,13 @@ export interface ComposeInput {
     /** Per-file truncation budget for the CLAUDE.md walk. Default 8 KB. */
     claudeMdMaxBytesPerFile?: number;
   };
-  /** Skill summaries (name + description only). Bodies fetched on demand. */
-  skillSummaries: ReadonlyArray<{ name: string; description: string }>;
+  /**
+   * Skills available to the session. When an item carries a `body` it is
+   * inlined in full (v1 — no `skills.read` tool yet); when it's just
+   * `{ name, description }` the composer renders a summary and notes the
+   * body is fetchable via `skills.read`. See `renderSkillSummaries`.
+   */
+  skillSummaries: ReadonlyArray<{ name: string; description: string; body?: string }>;
   /** Tools the role/session is denied. Soft mention only. */
   denyList: ReadonlyArray<string>;
   /** Tools available this session — one-line summary per tool. */

@@ -106,6 +106,13 @@ function makeRuntime(opts: {
   sessionRow?: unknown;
   provider?: AgentProvider | null;
   noRepositories?: boolean;
+  skills?: {
+    listForScope: (scope: {
+      orgId: string | null;
+      userId?: string;
+      limit?: number;
+    }) => Promise<ReadonlyArray<{ name: string; description: string; body: string }>>;
+  };
 }): AgentsRuntimeRegistries {
   const providers = new Map<string, AgentProvider>();
   if (opts.provider) {
@@ -121,6 +128,7 @@ function makeRuntime(opts: {
         messages: {
           append: vi.fn(async () => {}),
         },
+        ...(opts.skills ? { skills: opts.skills } : {}),
       };
 
   return {
@@ -429,6 +437,57 @@ describe('AgentChatDO.onChatMessage', () => {
     // … and the deny-list is surfaced as a soft restriction.
     expect(composed).toContain('## Tool restrictions');
     expect(composed).toContain('sandbox.run_shell');
+  });
+
+  it('inlines visible skill bodies into the composed system prompt', async () => {
+    const createSession = vi.fn(async (_input: { systemPrompt?: string }) => ({
+      providerSessionId: 'p-skill',
+    }));
+    const provider = fakeProvider('claude-code');
+    (provider as unknown as { createSession: typeof createSession }).createSession = createSession;
+
+    const runTurn = vi.fn(async () => ({
+      reason: 'completed' as const,
+      messageCount: 0,
+      toolCallCount: 0,
+      inputTokensTotal: 0,
+      outputTokensTotal: 0,
+      durationMs: 1,
+    }));
+
+    setAgentsRuntime(
+      makeRuntime({
+        agentService: { runTurn } as unknown as AgentService,
+        provider,
+        sessionRow: {
+          providerId: 'claude-code',
+          providerSessionId: 'p-skill',
+          orgId: 'org-a',
+        },
+        skills: {
+          listForScope: vi.fn(async () => [
+            {
+              name: 'pr-flow',
+              description: 'How to open a pull request',
+              body: '1. branch\n2. commit\n3. open PR',
+            },
+          ]),
+        },
+      }),
+    );
+    const stub = makeStubDO({
+      name: 'org:org-a/kind:chat/sess-1',
+      messages: [{ role: 'user', content: 'hi' }],
+    });
+
+    await stub.onChatMessage(onFinish);
+
+    const composed = createSession.mock.calls[0][0].systemPrompt as string;
+    expect(composed).toContain('## Available skills');
+    expect(composed).toContain('### pr-flow');
+    expect(composed).toContain('1. branch');
+    // Inline mode does not promise a (not-yet-existing) skills.read tool.
+    expect(composed).not.toContain('skills.read');
   });
 
   it('threads the session deny/allow lists onto PromptInput so they are enforced', async () => {
