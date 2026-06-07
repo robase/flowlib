@@ -53,6 +53,14 @@ export interface CreateSkillInput {
   tags?: string[];
 }
 
+export interface UpdateSkillInput {
+  name?: string;
+  description?: string;
+  body?: string;
+  scope?: SkillScope;
+  tags?: string[];
+}
+
 /**
  * Scope for `listForScope` — the org plus an optional user. Returns the
  * org's `global` skills, plus the user's own `personal` skills when
@@ -166,6 +174,46 @@ export class SkillsRepository {
     }
     const row = await query.limit(1).executeTakeFirst();
     return row ? mapRow(row as unknown as AgentSkillRow) : null;
+  }
+
+  async update(
+    id: string,
+    patch: UpdateSkillInput,
+    orgId?: string | null,
+  ): Promise<AgentSkill | null> {
+    const set: Record<string, unknown> = {};
+    if (patch.name !== undefined) {
+      set.name = patch.name;
+    }
+    if (patch.description !== undefined) {
+      set.description = patch.description;
+    }
+    if (patch.body !== undefined) {
+      set.body = patch.body;
+    }
+    if (patch.scope !== undefined) {
+      set.scope = patch.scope;
+    }
+    if (patch.tags !== undefined) {
+      set.tags = JSON.stringify(patch.tags);
+    }
+    if (Object.keys(set).length === 0) {
+      return this.findById(id, orgId);
+    }
+    set.updated_at = nowFor(this.database);
+
+    let query = this.database
+      .kysely<AgentsDB>()
+      .updateTable('agent_skills')
+      .set(set as never)
+      .where('id', '=', id);
+    if (orgId !== undefined) {
+      query =
+        orgId === null ? query.where('org_id', 'is', null) : query.where('org_id', '=', orgId);
+    }
+    await query.execute();
+
+    return this.findById(id, orgId);
   }
 
   async delete(id: string, orgId?: string | null): Promise<void> {
