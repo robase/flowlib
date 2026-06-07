@@ -50,6 +50,20 @@ export interface SessionContext {
   abortSignal: AbortSignal;
   /** Per-session model override. */
   defaultModel?: string;
+  /**
+   * Tools the session denies (from `agent_sessions.denyList`). The DO
+   * threads this onto `PromptInput.extraDenied` so the deny is actually
+   * enforced at the provider's tool filter — not merely mentioned in the
+   * composed prompt. (§6 will additionally enforce it kernel-side so it
+   * covers provider-native and MCP tools uniformly.)
+   */
+  denyList?: ReadonlyArray<string>;
+  /**
+   * Per-session tool allowlist (from `agent_sessions.enabledTools`). When
+   * non-empty, only these tools are exposed; threaded onto
+   * `PromptInput.enabledTools`.
+   */
+  enabledTools?: ReadonlyArray<string>;
 }
 
 /**

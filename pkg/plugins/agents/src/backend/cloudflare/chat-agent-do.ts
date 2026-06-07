@@ -413,6 +413,11 @@ export class AgentChatDO extends (AIChatAgent as unknown as new (
       // default (historically a hyphenated id that opencode/OpenRouter
       // don't recognise → silent 200/empty → chat hang).
       model: sessionContext.defaultModel,
+      // Enforce the session's tool deny/allow lists at the provider's
+      // tool filter (ai-sdk `filterTools`). Without this the deny is only
+      // a prompt suggestion.
+      ...(sessionContext.denyList ? { extraDenied: sessionContext.denyList } : {}),
+      ...(sessionContext.enabledTools ? { enabledTools: sessionContext.enabledTools } : {}),
     };
     // eslint-disable-next-line no-console
     console.log('[AgentChatDO] promptInput', {
@@ -619,6 +624,7 @@ export class AgentChatDO extends (AIChatAgent as unknown as new (
           // work respectively, landing in follow-up slices.
           systemPrompt?: string | null;
           denyList?: string[] | null;
+          enabledTools?: string[] | null;
           enabledMcpServerIds?: string[] | null;
           permissionMode?: string | null;
         }
@@ -780,6 +786,11 @@ export class AgentChatDO extends (AIChatAgent as unknown as new (
       // prompt with an unknown model and returns 200/empty, making the
       // whole chat hang. See failure mode #11 in AGENTS-DEBUGGING.md.
       defaultModel: sessionRow.model ?? undefined,
+      // Session tool config — threaded onto PromptInput below so the
+      // provider's tool filter actually enforces the deny/allow lists
+      // (the composed prompt already mentions the deny list).
+      ...(sessionRow.denyList ? { denyList: sessionRow.denyList } : {}),
+      ...(sessionRow.enabledTools ? { enabledTools: sessionRow.enabledTools } : {}),
     };
   }
 

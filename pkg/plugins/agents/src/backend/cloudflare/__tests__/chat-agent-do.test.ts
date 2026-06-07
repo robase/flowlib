@@ -431,6 +431,44 @@ describe('AgentChatDO.onChatMessage', () => {
     expect(composed).toContain('sandbox.run_shell');
   });
 
+  it('threads the session deny/allow lists onto PromptInput so they are enforced', async () => {
+    let capturedPrompt: { extraDenied?: string[]; enabledTools?: string[] } | null = null;
+    const runTurn = vi.fn(async (_ctx: SessionContext, prompt: unknown) => {
+      capturedPrompt = prompt as typeof capturedPrompt;
+      return {
+        reason: 'completed' as const,
+        messageCount: 0,
+        toolCallCount: 0,
+        inputTokensTotal: 0,
+        outputTokensTotal: 0,
+        durationMs: 1,
+      };
+    });
+    setAgentsRuntime(
+      makeRuntime({
+        agentService: { runTurn } as unknown as AgentService,
+        provider: fakeProvider('claude-code'),
+        sessionRow: {
+          providerId: 'claude-code',
+          providerSessionId: 'p-deny',
+          orgId: 'org-a',
+          denyList: ['sandbox.run_shell', 'github.create_issue'],
+          enabledTools: ['sandbox.read_file', 'sandbox.write_file'],
+        },
+      }),
+    );
+    const stub = makeStubDO({
+      name: 'org:org-a/kind:chat/sess-1',
+      messages: [{ role: 'user', content: 'hi' }],
+    });
+
+    await stub.onChatMessage(onFinish);
+
+    expect(capturedPrompt).not.toBeNull();
+    expect(capturedPrompt!.extraDenied).toEqual(['sandbox.run_shell', 'github.create_issue']);
+    expect(capturedPrompt!.enabledTools).toEqual(['sandbox.read_file', 'sandbox.write_file']);
+  });
+
   it('happy path: extracts text from structured `parts` arrays too', async () => {
     let capturedPrompt: { parts: ReadonlyArray<{ type: string; text: string }> } | null = null;
     const runTurn = vi.fn(async (_ctx: SessionContext, prompt: unknown) => {
