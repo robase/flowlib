@@ -84,6 +84,7 @@ import type { AgentService, PersistenceCallbacks, SessionContext } from '../serv
 import type { PromptInput } from '../providers/types';
 
 import { ensureAgentsRuntime, getAgentsDatabaseApi } from './runtime-singleton';
+import { composeSystemPrompt } from '../prompt/compose';
 
 /**
  * The minimum Worker env shape `AgentChatDO` requires. Consumer
@@ -182,6 +183,15 @@ export class AgentChatDO extends (AIChatAgent as unknown as new (
    * where the in-memory cache has been cleared.
    */
   private _resolved: ResolvedConnectionState | null = null;
+  /**
+   * The composed system prompt for this session, cached for the DO
+   * instance's lifetime. `composeSystemPrompt` is meant to run once at
+   * session start (per its own docs); `_buildSessionContext` runs every
+   * turn, so we memoise here keyed by sessionId. Recomputed on DO
+   * eviction/restart — acceptable for v1; a mid-session config edit
+   * (systemPrompt/denyList) takes effect on the next cold DO.
+   */
+  private _composedPrompt?: { sessionId: string; prompt: string };
 
   // ── Diagnostic overrides ─────────────────────────────────────────
   // These wrap the partyserver / AIChatAgent dispatch chain so we can
@@ -601,6 +611,16 @@ export class AgentChatDO extends (AIChatAgent as unknown as new (
           workspaceId?: string;
           credentialId?: string | null;
           model?: string | null;
+          // Session config the DO previously dropped (the §0 "shared
+          // root cause" narrowing). Read them here so they can be
+          // threaded to the provider / composer. `enabledMcpServerIds`
+          // + `permissionMode` are read for completeness; they're
+          // consumed by the MCP-resolution (§3) and permission-prompt
+          // work respectively, landing in follow-up slices.
+          systemPrompt?: string | null;
+          denyList?: string[] | null;
+          enabledMcpServerIds?: string[] | null;
+          permissionMode?: string | null;
         }
       | undefined;
 
@@ -686,6 +706,20 @@ export class AgentChatDO extends (AIChatAgent as unknown as new (
     // again with the existing `providerSessionId` is the rehydration
     // path — providers that recognise the field treat it as idempotent
     // and only populate state when missing.
+    // ── System-prompt composition ──
+    //
+    // Build the effective system prompt from the session's config. Until
+    // now the provider received the raw `agent_sessions.systemPrompt`
+    // string and the whole compose layer (operating directives, deny-list
+    // mention, and the slots for skills / memory / workspace context) was
+    // dormant — see plans/agents §0. We compose here and feed the result
+    // into `createSession`, which the provider stores as the session's
+    // system prompt.
+    const effectiveSystemPrompt = await this._composeEffectiveSystemPrompt(resolved.sessionId, {
+      systemPrompt: sessionRow.systemPrompt,
+      denyList: sessionRow.denyList,
+    });
+
     try {
       await provider.createSession({
         auth: resolved.auth,
@@ -693,6 +727,7 @@ export class AgentChatDO extends (AIChatAgent as unknown as new (
         workspace: workspaceHandle as never,
         credentialId: sessionRow.credentialId ?? undefined,
         providerSessionId: sessionRow.providerSessionId,
+        systemPrompt: effectiveSystemPrompt,
       } as never);
     } catch (err) {
       // eslint-disable-next-line no-console
@@ -746,6 +781,37 @@ export class AgentChatDO extends (AIChatAgent as unknown as new (
       // whole chat hang. See failure mode #11 in AGENTS-DEBUGGING.md.
       defaultModel: sessionRow.model ?? undefined,
     };
+  }
+
+  /**
+   * Compose the effective system prompt for the session, memoised for
+   * the DO instance's lifetime (see `_composedPrompt`).
+   *
+   * Today it feeds the base system prompt + deny-list mention +
+   * always-on operating directives. The skills, memory, available-tools,
+   * and workspace-context / CLAUDE.md sections are wired as empty slots
+   * and fill in as those subsystems land (plans/agents §1, §2, §4). The
+   * workspace/CLAUDE.md walk is deferred for sandbox workspaces: their
+   * handles expose no `rootPath` and the walk would add a per-turn
+   * container round-trip.
+   */
+  private async _composeEffectiveSystemPrompt(
+    sessionId: string,
+    row: { systemPrompt?: string | null; denyList?: string[] | null },
+  ): Promise<string> {
+    if (this._composedPrompt && this._composedPrompt.sessionId === sessionId) {
+      return this._composedPrompt.prompt;
+    }
+    const prompt = await composeSystemPrompt({
+      systemPrompt: row.systemPrompt ?? '',
+      skillSummaries: [],
+      denyList: row.denyList ?? [],
+      availableTools: [],
+      memory: [],
+      attachments: [],
+    });
+    this._composedPrompt = { sessionId, prompt };
+    return prompt;
   }
 
   /**

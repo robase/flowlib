@@ -382,6 +382,55 @@ describe('AgentChatDO.onChatMessage', () => {
     expect(finishArg.usage.outputTokens).toBe(34);
   });
 
+  it('composes the system prompt (directives + deny-list + base) and passes it to createSession', async () => {
+    const createSession = vi.fn(async (_input: { systemPrompt?: string }) => ({
+      providerSessionId: 'provider-sess-xyz',
+    }));
+    const provider = fakeProvider('claude-code');
+    (provider as unknown as { createSession: typeof createSession }).createSession = createSession;
+
+    const runTurn = vi.fn(async () => ({
+      reason: 'completed' as const,
+      messageCount: 0,
+      toolCallCount: 0,
+      inputTokensTotal: 0,
+      outputTokensTotal: 0,
+      durationMs: 1,
+    }));
+
+    setAgentsRuntime(
+      makeRuntime({
+        agentService: { runTurn } as unknown as AgentService,
+        provider,
+        sessionRow: {
+          providerId: 'claude-code',
+          providerSessionId: 'provider-sess-xyz',
+          orgId: 'org-a',
+          systemPrompt: 'You are a focused helper.',
+          denyList: ['sandbox.run_shell'],
+        },
+      }),
+    );
+    const stub = makeStubDO({
+      name: 'org:org-a/kind:chat/sess-1',
+      messages: [{ role: 'user', content: 'hi' }],
+    });
+
+    await stub.onChatMessage(onFinish);
+
+    expect(createSession).toHaveBeenCalledOnce();
+    const arg = createSession.mock.calls[0][0];
+    expect(arg.systemPrompt).toBeTypeOf('string');
+    const composed = arg.systemPrompt as string;
+    // Base prompt is preserved …
+    expect(composed).toContain('You are a focused helper.');
+    // … the always-on operating directives are appended …
+    expect(composed).toContain('## Operating directives');
+    // … and the deny-list is surfaced as a soft restriction.
+    expect(composed).toContain('## Tool restrictions');
+    expect(composed).toContain('sandbox.run_shell');
+  });
+
   it('happy path: extracts text from structured `parts` arrays too', async () => {
     let capturedPrompt: { parts: ReadonlyArray<{ type: string; text: string }> } | null = null;
     const runTurn = vi.fn(async (_ctx: SessionContext, prompt: unknown) => {
