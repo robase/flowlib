@@ -21,6 +21,8 @@
  */
 
 import type { PromptInput } from '../types';
+import type { WorkspaceHandle } from '../../workspaces/types';
+import type { ToolOutputStore, ToolOutputBudget } from '../../tools/tool-output-store';
 
 /**
  * The minimum tool shape we hand to `streamText`. We don't import
@@ -50,7 +52,7 @@ export interface AiSdkToolDescriptor {
    */
   execute: (
     input: Record<string, unknown>,
-    options: { abortSignal?: AbortSignal },
+    options: { abortSignal?: AbortSignal; toolCallId?: string },
   ) => Promise<unknown>;
 }
 
@@ -116,4 +118,61 @@ export function buildToolSet(input: PromptInput): AiSdkToolSet {
     filtered[name] = descriptor;
   }
   return filtered;
+}
+
+/** Monotonic fallback id for the rare case the AI SDK omits `toolCallId`. */
+let toolCallCounter = 0;
+function fallbackCallId(name: string): string {
+  const c = (globalThis as { crypto?: { randomUUID?: () => string } }).crypto;
+  return `${name}-${c?.randomUUID?.() ?? `${Date.now()}-${++toolCallCounter}`}`;
+}
+
+/**
+ * Wrap every tool's `execute` so its output passes through the
+ * {@link ToolOutputStore}. Large results (a `run_shell` dumping a whole
+ * file, a 10k-row action response) are truncated to the inline budget
+ * and the full text spilled to the session workspace
+ * (`.flowlib/tool-outputs/<id>.txt`), with a footer telling the model
+ * where the rest lives. Small results pass through unchanged — including
+ * their structured (object) shape, so the UI and model still get rich
+ * tool results when they're cheap.
+ *
+ * This is the ai-sdk path's equivalent of the truncation the claude-code
+ * MCP bridge already applies. Without it, one over-eager tool call floods
+ * the context window and burns tokens.
+ *
+ * Truncation must never break a tool call: if the store throws for any
+ * reason we fall back to the raw result.
+ */
+export function wrapToolsWithOutputStore(
+  tools: AiSdkToolSet,
+  store: ToolOutputStore,
+  opts: { workspace?: WorkspaceHandle; budget?: Partial<ToolOutputBudget> } = {},
+): AiSdkToolSet {
+  const wrapped: AiSdkToolSet = {};
+  for (const [name, descriptor] of Object.entries(tools)) {
+    wrapped[name] = {
+      description: descriptor.description,
+      parameters: descriptor.parameters,
+      execute: async (input, options) => {
+        const result = await descriptor.execute(input, options);
+        const toolCallId = options.toolCallId ?? fallbackCallId(name);
+        try {
+          const stored = await store.store({
+            toolCallId,
+            output: result,
+            ...(opts.workspace ? { workspace: opts.workspace } : {}),
+            ...(opts.budget ? { budget: opts.budget } : {}),
+          });
+          // Preserve the original (possibly structured) result when it
+          // fits — only coerce to the truncated string when we had to
+          // spill.
+          return stored.truncated ? stored.inline : result;
+        } catch {
+          return result;
+        }
+      },
+    };
+  }
+  return wrapped;
 }

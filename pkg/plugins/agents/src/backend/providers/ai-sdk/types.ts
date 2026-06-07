@@ -12,6 +12,7 @@ import type { CreateSessionInput } from '../types';
 import type { WorkspaceHandle } from '../../workspaces/types';
 import type { AgentsAuthContext } from '../../../shared/auth-context';
 import type { AiSdkToolSet } from './tools';
+import type { ToolOutputBudget } from '../../tools/tool-output-store';
 
 /**
  * Vendor identifier used inside a model id like `vendor/model-id`.
@@ -198,4 +199,17 @@ export interface AiSdkProviderOptions {
     auth: AgentsAuthContext;
     sessionId: string;
   }) => Promise<AiSdkToolSet> | AiSdkToolSet;
+
+  /**
+   * Inline budget for tool results before they're truncated + spilled
+   * to the session workspace (`.flowlib/tool-outputs/<id>.txt`).
+   * Defaults to 100 lines / 4 KB. Set `{ lines: 0, bytes: 0 }` to
+   * disable truncation entirely (not recommended — large outputs flood
+   * the context window).
+   *
+   * This is the provider-wide default; a per-session override
+   * (`agent_sessions.toolOutputBudget`) can be threaded in once the
+   * session row is read end-to-end.
+   */
+  toolOutputBudget?: Partial<ToolOutputBudget>;
 }

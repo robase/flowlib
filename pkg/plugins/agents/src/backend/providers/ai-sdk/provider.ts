@@ -40,7 +40,8 @@ import type { WorkspaceHandle } from '../../workspaces/types';
 import type { AiSdkCredential, AiSdkProviderOptions } from './types';
 import { randomBytes } from 'node:crypto';
 import { parseModelSpec, resolveModel } from './models';
-import { buildToolSet, type AiSdkToolSet } from './tools';
+import { buildToolSet, wrapToolsWithOutputStore, type AiSdkToolSet } from './tools';
+import { createToolOutputStore } from '../../tools/tool-output-store';
 
 /**
  * Per-session in-memory state. The provider keeps these keyed by the
@@ -115,6 +116,20 @@ export function aiSdkProvider(options: AiSdkProviderOptions): AgentProvider {
   const toolsFactory = options.tools;
   const streamText = options.streamText;
   const vendors = options.vendors;
+
+  // One store per provider isolate. Caps each tool result to the inline
+  // budget (default 100 lines / 4 KB) and spills the overflow to the
+  // session workspace so the model can read it back on demand. Without
+  // this, a single large tool output floods the context window.
+  const toolOutputStore = createToolOutputStore({
+    ...(options.toolOutputBudget ? { budget: options.toolOutputBudget } : {}),
+    logger: {
+      warn: (message: string, ...args: unknown[]) => {
+        // eslint-disable-next-line no-console
+        console.warn(message, ...args);
+      },
+    },
+  });
 
   if (typeof resolveCredential !== 'function') {
     throw new Error(
@@ -356,6 +371,14 @@ export function aiSdkProvider(options: AiSdkProviderOptions): AgentProvider {
             : null,
       });
 
+      // Route every tool's output through the truncation store. Big
+      // results spill to the workspace; small ones pass through intact.
+      const finalTools = wrapToolsWithOutputStore(
+        tools,
+        toolOutputStore,
+        session.workspace ? { workspace: session.workspace } : {},
+      );
+
       // eslint-disable-next-line no-console
       console.log('[agents/ai-sdk] firing streamText…', {
         providerSessionId: input.providerSessionId,
@@ -376,7 +399,7 @@ export function aiSdkProvider(options: AiSdkProviderOptions): AgentProvider {
         model,
         ...(session.systemPrompt ? { system: session.systemPrompt } : {}),
         messages: buildMessages(input),
-        tools,
+        tools: finalTools,
         maxSteps,
         abortSignal: input.abortSignal,
       }) as { fullStream: AsyncIterable<unknown> };
