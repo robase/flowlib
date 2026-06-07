@@ -40,7 +40,12 @@ import type { WorkspaceHandle } from '../../workspaces/types';
 import type { AiSdkCredential, AiSdkProviderOptions } from './types';
 import { randomBytes } from 'node:crypto';
 import { parseModelSpec, resolveModel } from './models';
-import { buildToolSet, wrapToolsWithOutputStore, type AiSdkToolSet } from './tools';
+import {
+  assembleToolSet,
+  buildToolSet,
+  wrapToolsWithOutputStore,
+  type AiSdkToolSet,
+} from './tools';
 import { createToolOutputStore } from '../../tools/tool-output-store';
 
 /**
@@ -349,26 +354,25 @@ export function aiSdkProvider(options: AiSdkProviderOptions): AgentProvider {
         ...input,
         extraDenied: [...defaultDenied, ...(input.extraDenied ?? [])],
       });
-      const merged: AiSdkToolSet = { ...stubTools };
-      for (const [name, descriptor] of Object.entries(hostTools)) {
-        if (merged[name]) {
-          // eslint-disable-next-line no-console
-          console.log('[agents/ai-sdk] tool name collision — host tool overrides stub', {
-            providerSessionId: input.providerSessionId,
-            name,
-          });
-        }
-        merged[name] = descriptor;
-      }
-      // Apply default-deny + per-session deny across the merged set,
-      // and per-session allowlist if present. `buildToolSet` already
-      // applied these to the stubs; we re-apply to host tools too.
-      const tools = filterTools(merged, {
+      // Merge stubs < host < plugin-injected tools (`skills.read`,
+      // `memory.*`, …, from `input.providerTools`), then apply the
+      // default-deny + per-session deny/allow filters uniformly.
+      const tools = assembleToolSet({
+        stubs: stubTools,
+        host: hostTools,
+        injected: input.providerTools as AiSdkToolSet | undefined,
         denied: new Set<string>([...defaultDenied, ...(input.extraDenied ?? [])]),
         allowlist:
           input.enabledTools && input.enabledTools.length > 0
             ? new Set<string>(input.enabledTools)
             : null,
+        onCollision: (name) => {
+          // eslint-disable-next-line no-console
+          console.log('[agents/ai-sdk] tool name collision — later source overrides earlier', {
+            providerSessionId: input.providerSessionId,
+            name,
+          });
+        },
       });
 
       // Route every tool's output through the truncation store. Big
@@ -615,28 +619,4 @@ export function aiSdkProvider(options: AiSdkProviderOptions): AgentProvider {
       sessionsById.delete(providerSessionId);
     },
   };
-}
-
-/**
- * Apply a deny set + optional allowlist to a tool catalogue.
- *
- * Order: deny wins (a name in `denied` is always removed), then
- * allowlist gates (when set, anything outside the allowlist is
- * removed). Returns a new object — does not mutate the input.
- */
-function filterTools(
-  tools: AiSdkToolSet,
-  filters: { denied: Set<string>; allowlist: Set<string> | null },
-): AiSdkToolSet {
-  const out: AiSdkToolSet = {};
-  for (const [name, descriptor] of Object.entries(tools)) {
-    if (filters.denied.has(name)) {
-      continue;
-    }
-    if (filters.allowlist && !filters.allowlist.has(name)) {
-      continue;
-    }
-    out[name] = descriptor;
-  }
-  return out;
 }

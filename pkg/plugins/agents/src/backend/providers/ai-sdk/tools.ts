@@ -120,6 +120,51 @@ export function buildToolSet(input: PromptInput): AiSdkToolSet {
   return filtered;
 }
 
+/**
+ * Merge the tool sources into the final per-turn catalogue and apply the
+ * deny / allow filters.
+ *
+ * Precedence on name collision: `stubs` < `host` < `injected`. So a
+ * plugin-injected tool (`skills.read`, `memory.*`) overrides a host tool
+ * of the same name, which overrides a stub — the more authoritative
+ * source wins. Deny removes a name outright; the allowlist (when set)
+ * keeps only listed names.
+ */
+export function assembleToolSet(args: {
+  stubs: AiSdkToolSet;
+  host: AiSdkToolSet;
+  injected?: AiSdkToolSet;
+  denied: ReadonlySet<string>;
+  allowlist: ReadonlySet<string> | null;
+  onCollision?: (name: string) => void;
+}): AiSdkToolSet {
+  const merged: AiSdkToolSet = { ...args.stubs };
+  const layer = (tools: AiSdkToolSet) => {
+    for (const [name, descriptor] of Object.entries(tools)) {
+      if (merged[name]) {
+        args.onCollision?.(name);
+      }
+      merged[name] = descriptor;
+    }
+  };
+  layer(args.host);
+  if (args.injected) {
+    layer(args.injected);
+  }
+
+  const out: AiSdkToolSet = {};
+  for (const [name, descriptor] of Object.entries(merged)) {
+    if (args.denied.has(name)) {
+      continue;
+    }
+    if (args.allowlist && !args.allowlist.has(name)) {
+      continue;
+    }
+    out[name] = descriptor;
+  }
+  return out;
+}
+
 /** Monotonic fallback id for the rare case the AI SDK omits `toolCallId`. */
 let toolCallCounter = 0;
 function fallbackCallId(name: string): string {

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { wrapToolsWithOutputStore, type AiSdkToolSet } from '../tools';
+import { assembleToolSet, wrapToolsWithOutputStore, type AiSdkToolSet } from '../tools';
 import { createToolOutputStore } from '../../../tools/tool-output-store';
 
 /**
@@ -11,6 +11,59 @@ import { createToolOutputStore } from '../../../tools/tool-output-store';
 function fixtureTool(execute: AiSdkToolSet[string]['execute']): AiSdkToolSet[string] {
   return { description: 'fixture', parameters: { type: 'object' }, execute };
 }
+
+describe('assembleToolSet', () => {
+  const tool = (tag: string): AiSdkToolSet[string] => fixtureTool(async () => ({ from: tag }));
+
+  it('merges stubs < host < injected, with later sources winning collisions', async () => {
+    const collisions: string[] = [];
+    const set = assembleToolSet({
+      stubs: { echo: tool('stub'), shared: tool('stub') },
+      host: { read_file: tool('host'), shared: tool('host') },
+      injected: { 'skills.read': tool('plugin'), shared: tool('plugin') },
+      denied: new Set(),
+      allowlist: null,
+      onCollision: (n) => collisions.push(n),
+    });
+
+    expect(Object.keys(set).sort()).toEqual(['echo', 'read_file', 'shared', 'skills.read']);
+    // injected wins the 3-way collision on `shared`.
+    expect(await set.shared.execute({}, {})).toEqual({ from: 'plugin' });
+    expect(collisions).toContain('shared');
+  });
+
+  it('applies the deny set across every source (including injected)', () => {
+    const set = assembleToolSet({
+      stubs: { echo: tool('stub') },
+      host: { read_file: tool('host') },
+      injected: { 'skills.read': tool('plugin') },
+      denied: new Set(['read_file', 'skills.read']),
+      allowlist: null,
+    });
+    expect(Object.keys(set)).toEqual(['echo']);
+  });
+
+  it('honours the allowlist across every source', () => {
+    const set = assembleToolSet({
+      stubs: { echo: tool('stub') },
+      host: { read_file: tool('host') },
+      injected: { 'skills.read': tool('plugin') },
+      denied: new Set(),
+      allowlist: new Set(['skills.read', 'read_file']),
+    });
+    expect(Object.keys(set).sort()).toEqual(['read_file', 'skills.read']);
+  });
+
+  it('works with no injected tools', () => {
+    const set = assembleToolSet({
+      stubs: { echo: tool('stub') },
+      host: {},
+      denied: new Set(),
+      allowlist: null,
+    });
+    expect(Object.keys(set)).toEqual(['echo']);
+  });
+});
 
 describe('wrapToolsWithOutputStore', () => {
   it('passes small structured output through unchanged (no stringify, no footer)', async () => {

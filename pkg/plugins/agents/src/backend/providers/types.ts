@@ -104,6 +104,27 @@ export interface CreateSessionInput {
   providerSessionId?: string;
 }
 
+/**
+ * A tool the *plugin* contributes to a turn (as opposed to the host's
+ * `tools` factory or the provider's own catalogue). Provider-agnostic:
+ * each provider adapts this shape to its native tool format. Used for
+ * plugin-internal tools that close over plugin resources the host can't
+ * reach — `skills.read` (skills repo), `memory.search` (memory adapter),
+ * `read_tool_output` (output store).
+ *
+ * The shape is intentionally identical to the ai-sdk tool descriptor so
+ * the ai-sdk provider can merge them with zero conversion.
+ */
+export interface ProviderToolDescriptor {
+  description: string;
+  /** JSON-Schema parameters object. */
+  parameters: Record<string, unknown>;
+  execute: (
+    input: Record<string, unknown>,
+    options: { abortSignal?: AbortSignal; toolCallId?: string },
+  ) => Promise<unknown>;
+}
+
 /** Input for one `prompt()` turn. */
 export interface PromptInput {
   /** Provider-side session id returned by `createSession`. */
@@ -118,6 +139,12 @@ export interface PromptInput {
   extraDenied?: ReadonlyArray<string>;
   /** Per-turn whitelist (if set, only listed tools are allowed). */
   enabledTools?: ReadonlyArray<string>;
+  /**
+   * Plugin-contributed tools for this turn, keyed by tool name. Merged
+   * on top of the provider's own catalogue (plugin tools win on name
+   * collision). Providers that don't support extra tools ignore this.
+   */
+  providerTools?: Record<string, ProviderToolDescriptor>;
   /** Cancel the iterator. Provider must honour `signal.aborted`. */
   abortSignal: AbortSignal;
   /** Provider-specific extras (e.g. Claude `permissionMode` override). */
