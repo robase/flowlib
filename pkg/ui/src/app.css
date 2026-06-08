@@ -9,6 +9,7 @@
 @source "../../plugins/auth/src/**/*.{ts,tsx}";
 @source "../../plugins/rbac/src/**/*.{ts,tsx}";
 @source "../../plugins/webhooks/src/**/*.{ts,tsx}";
+@source "../../plugins/agents/src/**/*.{ts,tsx}";
 
 /* Define layers for Tailwind v4 scoping */
 @layer theme, base, components, utilities;

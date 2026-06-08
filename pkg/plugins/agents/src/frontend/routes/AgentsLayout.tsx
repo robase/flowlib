@@ -1,55 +1,52 @@
 /**
- * AgentsLayout — the unified `/agents[/sessions/:sessionId]` surface.
+ * AgentsLayout — the unified `/agents[/sessions/:sessionId]` workspace.
  *
- * Layout: sessions sidebar (left) + chat area (right). The same
- * component handles both routes — sidebar always renders; the right
- * pane is either an empty placeholder or `<ChatThread session={...} />`
- * driven by the URL's `sessionId` param.
+ * Three columns plus a slide-out inspector:
  *
- * Runtime composition (since the ThreadList migration):
+ *   ┌────────────┬───────────────────────┬───────────┐
+ *   │ sessions   │ chat                  │ inspector │  ◀ icon rail
+ *   │ (flat list)│ (sticky header +      │ (slides   │    fixed
+ *   │            │  thread + composer)   │  in/out)  │    top-right
+ *   └────────────┴───────────────────────┴───────────┘
+ *
+ * The same component handles both routes — the sidebar always renders;
+ * the centre pane is either an empty placeholder or
+ * `<ChatThread session={...} />` driven by the URL's `sessionId`.
+ *
+ * Workspaces are hidden from the user. "+ New chat" creates a session
+ * with `workspaceId` omitted; the backend auto-provisions a fresh
+ * workspace + sandbox. There is no workspace picker or grouping anywhere
+ * in the UI — one chat, one (invisible) sandbox.
+ *
+ * Runtime composition (assistant-ui ThreadList migration):
  *
  *   AgentsLayout
  *     ├─ useRemoteThreadListRuntime — owns the thread list + per-thread runtimes
- *     │   ├─ adapter (REST against /sessions)
- *     │   ├─ runtimeHook = useAgentRuntime (called once per active thread)
- *     │   └─ threadId    = URL sessionId  (drives switching)
  *     ├─ <AssistantRuntimeProvider runtime={runtime}>
- *     │   ├─ <SessionsSidebar/>   — uses ThreadListItemPrimitive per row
- *     │   └─ <ChatThread/>        — reads session resources from ActiveSessionContext
- *     └─ <NewChatDialog/>
- *
- * Workspace cardinality (see `docs/sessions-and-sandboxes.md`):
- *
- *   - "+ New workspace" creates a session with `workspaceId` omitted;
- *     backend auto-provisions a fresh workspace + sandbox.
- *   - "+ New chat" creates a session with `workspaceId: <existing>`;
- *     backend reuses the workspace's sandbox.
- *
- * On `createSession.mutateAsync` success the URL is updated; the
- * `threadId` prop on `useRemoteThreadListRuntime` reacts to that and
- * switches the active thread.
+ *     │   ├─ <SessionsSidebar/>      — flat, searchable chat list
+ *     │   ├─ <ChatThread/>           — reads session resources from ActiveSessionContext
+ *     │   └─ <InspectorPane/>        — Memory / Skills / MCP / Tools / Hooks
+ *     └─ <NewChatDialog/>            — credential + model for a new chat
  */
 import * as React from 'react';
 import { useNavigate, useParams } from 'react-router';
 import { AssistantRuntimeProvider, useRemoteThreadListRuntime } from '@assistant-ui/react';
-import { Bot } from 'lucide-react';
+import { Bot, Plus } from 'lucide-react';
 import { ChatThread } from '../components/ChatThread';
 import { NewChatDialog } from '../components/NewChatDialog';
 import { SessionsSidebar } from '../components/SessionsSidebar';
+import { InspectorRail } from '../components/InspectorRail';
+import { InspectorPane, type TabId } from '../components/inspector/InspectorPane';
 import { useAgentRuntime } from '../hooks/useAgentRuntime';
 import { useAgentsThreadListAdapter } from '../hooks/useAgentsThreadListAdapter';
 import { useLlmCredentials } from '../hooks/useCredentials';
 import { useCreateSession, useSession, useSessions } from '../hooks/useSessions';
-import { useWorkspaces } from '../hooks/useWorkspaces';
+import { cn } from '../lib/cn';
 import type { AgentProviderId } from '../../shared/types';
 
 export interface AgentsLayoutProps {
   basePath: string;
 }
-
-type DialogTarget =
-  | { kind: 'new-workspace' }
-  | { kind: 'existing-workspace'; workspaceId: string; workspaceName: string };
 
 export function AgentsLayout({ basePath }: AgentsLayoutProps): React.ReactElement {
   const params = useParams<{ sessionId?: string }>();
@@ -57,7 +54,6 @@ export function AgentsLayout({ basePath }: AgentsLayoutProps): React.ReactElemen
 
   const navigate = useNavigate();
   const sessions = useSessions();
-  const workspaces = useWorkspaces();
   const credentials = useLlmCredentials();
   const activeSession = useSession(sessionId);
   const createSession = useCreateSession();
@@ -69,29 +65,34 @@ export function AgentsLayout({ basePath }: AgentsLayoutProps): React.ReactElemen
     threadId: sessionId ?? undefined,
   });
 
-  const [target, setTarget] = React.useState<DialogTarget | null>(null);
+  const [dialogOpen, setDialogOpen] = React.useState(false);
+  const [inspectorOpen, setInspectorOpen] = React.useState(false);
+  const [activeTab, setActiveTab] = React.useState<TabId>('memory');
 
-  const openNewWorkspace = React.useCallback(() => {
-    setTarget({ kind: 'new-workspace' });
-  }, []);
-
-  const openNewChat = React.useCallback(
-    (workspaceId: string) => {
-      const ws = workspaces.data?.find((w) => w.id === workspaceId);
-      setTarget({
-        kind: 'existing-workspace',
-        workspaceId,
-        workspaceName: ws?.name ?? 'Workspace',
+  const selectTab = React.useCallback(
+    (tab: TabId) => {
+      // Clicking the active tab while open closes the inspector;
+      // otherwise open + switch to it.
+      setInspectorOpen((open) => {
+        if (open && tab === activeTab) {
+          return false;
+        }
+        return true;
       });
+      setActiveTab(tab);
     },
-    [workspaces.data],
+    [activeTab],
   );
+
+  const openNewChat = React.useCallback(() => {
+    setDialogOpen(true);
+  }, []);
 
   const closeDialog = React.useCallback(() => {
     if (createSession.isPending) {
       return;
     }
-    setTarget(null);
+    setDialogOpen(false);
   }, [createSession.isPending]);
 
   const handleStart = React.useCallback(
@@ -104,46 +105,39 @@ export function AgentsLayout({ basePath }: AgentsLayoutProps): React.ReactElemen
       providerId?: AgentProviderId;
       model?: string;
     }) => {
-      if (!target) {
-        return;
-      }
-      const workspaceId = target.kind === 'existing-workspace' ? target.workspaceId : undefined;
-      const session = await createSession.mutateAsync({
-        credentialId,
-        workspaceId,
-        providerId,
-        model,
-      });
-      setTarget(null);
+      // `workspaceId` omitted → backend auto-provisions a fresh
+      // workspace + sandbox. The user never sees it.
+      const session = await createSession.mutateAsync({ credentialId, providerId, model });
+      setDialogOpen(false);
       navigate(`${stripTrailingSlash(basePath)}/agents/sessions/${encodeURIComponent(session.id)}`);
     },
-    [basePath, createSession, navigate, target],
+    [basePath, createSession, navigate],
   );
-
-  const targetLabel =
-    target?.kind === 'existing-workspace'
-      ? `Adding to workspace: ${target.workspaceName}`
-      : target?.kind === 'new-workspace'
-        ? 'Starting a new workspace (fresh sandbox)'
-        : undefined;
 
   return (
     <AssistantRuntimeProvider runtime={runtime}>
       <div
-        className="flex flex-row w-full h-full min-h-0 bg-fl-background text-fl-foreground"
+        className="relative flex h-full min-h-0 w-full overflow-hidden bg-fl-background text-fl-foreground"
         data-testid="agents-layout"
       >
-        <SessionsSidebar
-          basePath={basePath}
-          sessions={sessions.data ?? []}
-          workspaces={workspaces.data ?? []}
-          isLoading={sessions.isLoading || workspaces.isLoading}
-          activeSessionId={sessionId}
-          onNewWorkspace={openNewWorkspace}
-          onNewChat={openNewChat}
-        />
+        {/* Inspector rail — pinned to the top-right of the workspace */}
+        <div className="absolute right-4 top-4 z-50">
+          <InspectorRail open={inspectorOpen} activeTab={activeTab} onSelect={selectTab} />
+        </div>
 
-        <main className="flex-1 min-w-0 flex flex-col" data-testid="agents-main">
+        {/* LEFT — sessions */}
+        <aside className="flex w-72 shrink-0 flex-col border-r border-fl-border">
+          <SessionsSidebar
+            basePath={basePath}
+            sessions={sessions.data ?? []}
+            isLoading={sessions.isLoading}
+            activeSessionId={sessionId}
+            onNewChat={openNewChat}
+          />
+        </aside>
+
+        {/* CENTER — chat */}
+        <main className="flex min-w-0 flex-1 flex-col" data-testid="agents-main">
           {sessionId ? (
             activeSession.data ? (
               <ChatThread session={activeSession.data} />
@@ -159,41 +153,59 @@ export function AgentsLayout({ basePath }: AgentsLayoutProps): React.ReactElemen
               <CenteredMessage>Chat not found.</CenteredMessage>
             )
           ) : (
-            <NoChatSelected onNewWorkspace={openNewWorkspace} />
+            <NoChatSelected onNewChat={openNewChat} />
           )}
         </main>
 
+        {/* RIGHT — inspector, animates width + slide */}
+        <aside
+          aria-hidden={!inspectorOpen}
+          className={cn(
+            'shrink-0 overflow-hidden border-fl-border transition-[width] duration-300 ease-in-out',
+            inspectorOpen ? 'w-96 border-l' : 'w-0 border-l-0',
+          )}
+        >
+          <div
+            className={cn(
+              'h-full w-96 transition-transform duration-300 ease-in-out',
+              inspectorOpen ? 'translate-x-0' : 'translate-x-full',
+            )}
+          >
+            <InspectorPane tab={activeTab} session={activeSession.data ?? null} />
+          </div>
+        </aside>
+
         <NewChatDialog
-          open={target !== null}
+          open={dialogOpen}
           credentials={credentials.data ?? []}
           isLoading={credentials.isLoading}
           error={(credentials.error as Error | null) ?? null}
           isStarting={createSession.isPending}
           onCancel={closeDialog}
           onStart={handleStart}
-          targetLabel={targetLabel}
         />
       </div>
     </AssistantRuntimeProvider>
   );
 }
 
-function NoChatSelected({ onNewWorkspace }: { onNewWorkspace: () => void }): React.ReactElement {
+function NoChatSelected({ onNewChat }: { onNewChat: () => void }): React.ReactElement {
   return (
-    <div className="flex-1 flex items-center justify-center">
-      <div className="text-center max-w-sm">
-        <Bot className="size-10 mx-auto text-fl-muted-foreground/40" />
+    <div className="flex flex-1 items-center justify-center">
+      <div className="max-w-sm text-center">
+        <Bot className="mx-auto size-10 text-fl-muted-foreground/40" />
         <h2 className="mt-4 text-base font-semibold">No chat selected</h2>
         <p className="mt-1 text-sm text-fl-muted-foreground">
-          Pick a chat from the sidebar, or start a new workspace.
+          Pick a chat from the sidebar, or start a new one.
         </p>
         <button
           type="button"
-          onClick={onNewWorkspace}
-          className="mt-4 inline-flex items-center rounded-md bg-fl-primary px-4 py-2 text-sm font-medium text-fl-primary-foreground hover:opacity-90"
-          data-testid="agents-empty-new-workspace"
+          onClick={onNewChat}
+          className="mt-4 inline-flex items-center gap-1.5 rounded-md bg-fl-primary px-4 py-2 text-sm font-medium text-fl-primary-foreground hover:opacity-90"
+          data-testid="agents-empty-new-chat"
         >
-          + New workspace
+          <Plus className="size-4" />
+          New chat
         </button>
       </div>
     </div>
@@ -202,7 +214,7 @@ function NoChatSelected({ onNewWorkspace }: { onNewWorkspace: () => void }): Rea
 
 function CenteredMessage({ children }: { children: React.ReactNode }): React.ReactElement {
   return (
-    <div className="flex-1 flex items-center justify-center text-sm text-fl-muted-foreground">
+    <div className="flex flex-1 items-center justify-center text-sm text-fl-muted-foreground">
       {children}
     </div>
   );

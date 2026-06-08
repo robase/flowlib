@@ -31,6 +31,8 @@ export interface ModelSelectorProps {
   /** Visual variant: `header` is compact for the chat header; `block`
    *  is a wider trigger for dialogs / settings panels. */
   variant?: 'header' | 'block';
+  /** Which side the popover opens toward. Defaults to `bottom`. */
+  menuPlacement?: 'top' | 'bottom';
   className?: string;
   /** Optional id used to scope test selectors. */
   testIdPrefix?: string;
@@ -42,6 +44,7 @@ export function ModelSelector({
   onChange,
   disabled,
   variant = 'header',
+  menuPlacement = 'bottom',
   className,
   testIdPrefix = 'agents-model-selector',
 }: ModelSelectorProps): React.ReactElement {
@@ -109,7 +112,9 @@ export function ModelSelector({
 
       {open ? (
         <div
-          className="absolute right-0 z-40 mt-1 min-w-[240px] max-h-80 overflow-y-auto rounded-md border border-fl-border bg-fl-card text-fl-card-foreground shadow-lg"
+          className={`absolute right-0 z-40 min-w-[240px] max-h-80 overflow-y-auto rounded-md border border-fl-border bg-fl-card text-fl-card-foreground shadow-lg ${
+            menuPlacement === 'top' ? 'bottom-full mb-1' : 'mt-1'
+          }`}
           role="listbox"
           data-testid={`${testIdPrefix}-menu`}
         >

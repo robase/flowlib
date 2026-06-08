@@ -40,14 +40,15 @@ import {
   LoaderIcon,
   PencilIcon,
   RefreshCwIcon,
+  Sparkles,
   SquareIcon,
-  User,
 } from 'lucide-react';
 import { FLOWLIB_TOOL_NAMES } from '../hooks/useAgentRuntime';
 import { useUpdateSession } from '../hooks/useSessions';
 import { useActiveSession } from './ActiveSessionContext';
 import { useAgentStream } from './AgentStreamContext';
 import { ModelSelector, type ModelSelection } from './ModelSelector';
+import { StatusDot, streamStatusToDot } from './StatusDot';
 import { FileDiffViewer } from './FileDiffViewer';
 import { PermissionRequestPrompt } from './PermissionRequestPrompt';
 import { HumanInputCard } from './HumanInputCard';
@@ -82,17 +83,18 @@ export function ChatThread({ session }: ChatThreadProps): React.ReactElement {
   const isLoadingHistory = active?.messagesQuery.isLoading ?? true;
 
   return (
-    <div className="flex flex-col h-full min-h-0">
-      <ChatHeader session={session} status={status} error={error} />
+    <div className="flex h-full min-h-0 flex-col">
       <ThreadPrimitive.Root
         className="flex flex-1 flex-col bg-fl-background text-sm min-h-0"
         style={THREAD_STYLE}
       >
         <ThreadPrimitive.Viewport
           turnAnchor="top"
-          className="relative flex flex-1 flex-col overflow-y-auto scroll-smooth px-4 pt-4"
+          className="relative flex flex-1 flex-col overflow-y-auto scroll-smooth px-4"
           data-testid="agents-thread-viewport"
         >
+          <InlineHeader session={session} status={status} error={error} />
+
           {isLoadingHistory ? (
             <LoadingHistory />
           ) : (
@@ -111,7 +113,7 @@ export function ChatThread({ session }: ChatThreadProps): React.ReactElement {
 
           <ThreadPrimitive.ViewportFooter className="sticky bottom-0 mx-auto mt-auto flex w-full max-w-[var(--thread-max-width)] flex-col gap-3 overflow-visible rounded-t-3xl bg-fl-background pb-4">
             <ThreadScrollToBottom />
-            <Composer />
+            <Composer session={session} status={status} />
           </ThreadPrimitive.ViewportFooter>
         </ThreadPrimitive.Viewport>
       </ThreadPrimitive.Root>
@@ -121,7 +123,12 @@ export function ChatThread({ session }: ChatThreadProps): React.ReactElement {
 
 // ─── Header ─────────────────────────────────────────────────────────────
 
-function ChatHeader({
+/**
+ * Sticky inline header — pinned to the top of the message column,
+ * showing the session's live status dot and title. Mirrors the example
+ * UI's in-column header rather than a full-width top bar.
+ */
+function InlineHeader({
   session,
   status,
   error,
@@ -130,56 +137,17 @@ function ChatHeader({
   status: 'connecting' | 'streaming' | 'idle' | 'error';
   error?: string;
 }): React.ReactElement {
-  const updateSession = useUpdateSession();
-
-  const handleModelChange = React.useCallback(
-    (next: ModelSelection) => {
-      updateSession.mutate({
-        id: session.id,
-        input: { providerId: next.providerId, model: next.model },
-      });
-    },
-    [session.id, updateSession],
-  );
-
   return (
-    <header className="flex items-center justify-between px-4 py-2.5 border-b border-fl-border bg-fl-background gap-3">
-      <div className="flex items-center gap-2 min-w-0">
-        <Bot className="size-4 text-fl-primary shrink-0" />
-        <span className="text-sm font-semibold truncate">{session.title}</span>
-      </div>
-      <div className="flex items-center gap-2 shrink-0">
-        {status === 'error' && error ? (
-          <span className="text-xs text-fl-destructive" role="alert">
-            {error}
-          </span>
-        ) : (
-          <span className="text-xs text-fl-muted-foreground" data-testid="agents-connection-status">
-            {humanStatus(status)}
-          </span>
-        )}
-        <ModelSelector
-          providerId={session.providerId}
-          model={session.model}
-          onChange={handleModelChange}
-          disabled={updateSession.isPending || status === 'streaming'}
-        />
-      </div>
+    <header className="sticky top-0 z-10 mx-auto flex w-full max-w-[var(--thread-max-width)] items-center gap-2 bg-fl-background/90 px-2 py-3 backdrop-blur supports-[backdrop-filter]:bg-fl-background/75">
+      <StatusDot status={streamStatusToDot(status)} />
+      <h1 className="truncate text-sm font-semibold tracking-tight">{session.title}</h1>
+      {status === 'error' && error ? (
+        <span className="ml-auto truncate text-xs text-fl-destructive" role="alert">
+          {error}
+        </span>
+      ) : null}
     </header>
   );
-}
-
-function humanStatus(status: 'connecting' | 'streaming' | 'idle' | 'error'): string {
-  switch (status) {
-    case 'connecting':
-      return 'Connecting…';
-    case 'streaming':
-      return 'Streaming…';
-    case 'idle':
-      return 'Ready';
-    case 'error':
-      return 'Error';
-  }
 }
 
 // ─── Welcome / loading ──────────────────────────────────────────────────
@@ -255,7 +223,13 @@ function SuggestionCard({
 
 // ─── Composer ───────────────────────────────────────────────────────────
 
-function Composer(): React.ReactElement {
+function Composer({
+  session,
+  status,
+}: {
+  session: AgentSession;
+  status: 'connecting' | 'streaming' | 'idle' | 'error';
+}): React.ReactElement {
   return (
     <ComposerPrimitive.Root className="relative flex w-full flex-col" data-testid="agents-composer">
       <ComposerPrimitive.AttachmentDropzone className="flex w-full flex-col rounded-2xl border border-fl-border bg-fl-card px-1 pt-2 outline-none transition-shadow has-[textarea:focus-visible]:border-fl-primary/60 has-[textarea:focus-visible]:ring-2 has-[textarea:focus-visible]:ring-fl-primary/20 data-[dragging=true]:border-fl-primary data-[dragging=true]:border-dashed data-[dragging=true]:bg-fl-primary/5">
@@ -268,16 +242,44 @@ function Composer(): React.ReactElement {
           aria-label="Message input"
           data-testid="agents-composer-input"
         />
-        <ComposerAction />
+        <ComposerAction session={session} status={status} />
       </ComposerPrimitive.AttachmentDropzone>
     </ComposerPrimitive.Root>
   );
 }
 
-function ComposerAction(): React.ReactElement {
+function ComposerAction({
+  session,
+  status,
+}: {
+  session: AgentSession;
+  status: 'connecting' | 'streaming' | 'idle' | 'error';
+}): React.ReactElement {
+  const updateSession = useUpdateSession();
+
+  const handleModelChange = React.useCallback(
+    (next: ModelSelection) => {
+      updateSession.mutate({
+        id: session.id,
+        input: { providerId: next.providerId, model: next.model },
+      });
+    },
+    [session.id, updateSession],
+  );
+
   return (
-    <div className="relative mx-2 mb-2 flex items-center justify-between">
+    <div className="relative mx-2 mb-2 flex items-center gap-2">
       <ComposerAddAttachment />
+
+      <ModelSelector
+        providerId={session.providerId}
+        model={session.model}
+        onChange={handleModelChange}
+        menuPlacement="top"
+        disabled={updateSession.isPending || status === 'streaming'}
+      />
+
+      <div className="ml-auto" />
 
       <AuiIf condition={(s) => !s.thread.isRunning}>
         <ComposerPrimitive.Send asChild>
@@ -336,7 +338,7 @@ function UserMessage(): React.ReactElement {
       <UserMessageAttachments />
 
       <div className="relative col-start-2 min-w-0 flex items-start gap-2">
-        <div className="rounded-2xl bg-fl-primary/10 text-fl-foreground px-4 py-2.5 break-words text-sm whitespace-pre-wrap">
+        <div className="rounded-lg bg-fl-secondary text-fl-secondary-foreground px-4 py-2.5 break-words text-sm whitespace-pre-wrap">
           <MessagePrimitive.Parts />
         </div>
         <Avatar role="user" />
@@ -540,13 +542,14 @@ function Avatar({ role }: { role: 'user' | 'assistant' }): React.ReactElement {
   return (
     <div
       className={cn(
-        'size-8 rounded-full flex items-center justify-center shrink-0',
+        'flex size-7 shrink-0 items-center justify-center rounded-md text-xs font-medium',
         role === 'user'
-          ? 'bg-fl-primary/10 text-fl-primary'
-          : 'bg-fl-muted/40 text-fl-muted-foreground',
+          ? 'bg-fl-secondary text-fl-secondary-foreground'
+          : 'bg-fl-primary/15 text-fl-primary',
       )}
+      aria-hidden="true"
     >
-      {role === 'user' ? <User className="size-4" /> : <Bot className="size-4" />}
+      {role === 'user' ? 'You' : <Sparkles className="size-4" />}
     </div>
   );
 }

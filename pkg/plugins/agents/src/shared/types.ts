@@ -58,6 +58,27 @@ export interface AgentMcpServer {
   updatedAt: string;
 }
 
+/** Skill scope — `personal` is owner-visible, `global` is org-wide. */
+export type SkillScope = 'personal' | 'global';
+
+/**
+ * An authored skill — a Markdown body the agent's system prompt can pull
+ * in (progressive disclosure: summary in the prompt, body on demand via
+ * `skills.read`). Org + scope + owner scoped on every read.
+ */
+export interface AgentSkill {
+  id: string;
+  orgId: string | null;
+  name: string;
+  description: string;
+  body: string;
+  scope: SkillScope;
+  ownerId: string | null;
+  tags: string[];
+  createdAt: string;
+  updatedAt: string;
+}
+
 /** A workspace — provider-agnostic shape. */
 export interface AgentWorkspace {
   id: string;

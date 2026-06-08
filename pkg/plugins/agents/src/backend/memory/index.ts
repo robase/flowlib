@@ -14,4 +14,10 @@ export { scoreAndRank, SEMANTIC_THRESHOLD, type ScoringSignals } from './scoring
 export { extractFacts, buildExtractionPrompt, EXTRACTION_SYSTEM } from './extract';
 export { reconcileFact, buildUpdatePrompt, UPDATE_SYSTEM, type MemoryOp } from './reconcile';
 export { createInMemoryBackend } from './in-memory-backend';
+export {
+  createVectorizeBackend,
+  ftsEscape,
+  type VectorizeLike,
+  type VectorizeBackendDeps,
+} from './vectorize-backend';
 export { createMemoryAdapter, type MemoryAdapterDeps } from './create-memory-adapter';

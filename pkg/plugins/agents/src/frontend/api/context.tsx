@@ -21,12 +21,14 @@ import { McpServersApiClient } from './mcp-servers.api';
 import { SessionsApiClient } from './sessions.api';
 import { WorkspacesApiClient } from './workspaces.api';
 import { CredentialsApiClient } from './credentials.api';
+import { SkillsApiClient } from './skills.api';
 
 export interface AgentsApiClients {
   mcpServers: McpServersApiClient;
   sessions: SessionsApiClient;
   workspaces: WorkspacesApiClient;
   credentials: CredentialsApiClient;
+  skills: SkillsApiClient;
 }
 
 const AgentsApiContext = React.createContext<AgentsApiClients | undefined>(undefined);
@@ -65,6 +67,7 @@ export function AgentsApiProvider({
       sessions: new SessionsApiClient({ baseUrl: resolvedBase }),
       workspaces: new WorkspacesApiClient({ baseUrl: resolvedBase }),
       credentials: new CredentialsApiClient({ baseUrl: resolvedBase }),
+      skills: new SkillsApiClient({ baseUrl: resolvedBase }),
     };
   }, [value, resolvedBase]);
 
