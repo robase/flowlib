@@ -42,6 +42,7 @@ import { registerService as registerServiceImpl } from './service/register';
 import { registerTools as registerToolsImpl } from './tools/register';
 import { registerPermissions as registerPermissionsImpl } from './permissions/register';
 import { registerAudit as registerAuditImpl } from './audit/register';
+import { registerHooks as registerHooksImpl } from './hooks/register';
 import { registerPromptComposer as registerPromptComposerImpl } from './prompt/register';
 import { registerCloudflareDO as registerCloudflareDOImpl } from './cloudflare/register';
 import { registerRepositories as registerRepositoriesImpl } from './repositories/register';
@@ -77,6 +78,10 @@ function registerPermissions(ctx: PluginContext): void {
 
 function registerAudit(ctx: PluginContext): void {
   registerAuditImpl(ctx);
+}
+
+function registerHooks(ctx: PluginContext): void {
+  registerHooksImpl(ctx);
 }
 
 function registerPromptComposer(ctx: PluginContext): void {
@@ -361,6 +366,8 @@ export function agents(options: AgentsPluginOptions = {}): FlowlibPluginDefiniti
       registerRepositories(ctx);
       registerPermissions(ctx);
       registerAudit(ctx);
+      // Hooks depend on the audit writer (above) being on the registry.
+      registerHooks(ctx);
       registerProviders(ctx);
       registerWorkspaces(ctx);
       registerService(ctx);
