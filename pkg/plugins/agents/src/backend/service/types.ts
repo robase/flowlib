@@ -9,7 +9,7 @@
 
 import type { AgentEvent } from '../../shared/events';
 import type { AgentsAuthContext } from '../../shared/auth-context';
-import type { AgentProvider, PromptInput } from '../providers/types';
+import type { AgentProvider, PromptInput, ProviderToolDescriptor } from '../providers/types';
 import type { WorkspaceHandle } from '../workspaces/types';
 import type { HookPipeline } from '../hooks/types';
 import type { PermissionsResolver } from '../permissions/types';
@@ -64,6 +64,12 @@ export interface SessionContext {
    * `PromptInput.enabledTools`.
    */
   enabledTools?: ReadonlyArray<string>;
+  /**
+   * Plugin-contributed tools for the session (e.g. `skills.read`). The DO
+   * threads these onto `PromptInput.providerTools` so the provider merges
+   * them into the turn's catalogue.
+   */
+  providerTools?: Record<string, ProviderToolDescriptor>;
 }
 
 /**

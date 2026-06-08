@@ -112,6 +112,10 @@ function makeRuntime(opts: {
       userId?: string;
       limit?: number;
     }) => Promise<ReadonlyArray<{ name: string; description: string; body: string }>>;
+    findByName: (
+      name: string,
+      scope: { orgId: string | null; userId?: string },
+    ) => Promise<{ name: string; body: string } | null>;
   };
 }): AgentsRuntimeRegistries {
   const providers = new Map<string, AgentProvider>();
@@ -439,22 +443,32 @@ describe('AgentChatDO.onChatMessage', () => {
     expect(composed).toContain('sandbox.run_shell');
   });
 
-  it('inlines visible skill bodies into the composed system prompt', async () => {
+  it('summarises skills in the prompt and injects a working skills.read tool', async () => {
     const createSession = vi.fn(async (_input: { systemPrompt?: string }) => ({
       providerSessionId: 'p-skill',
     }));
     const provider = fakeProvider('claude-code');
     (provider as unknown as { createSession: typeof createSession }).createSession = createSession;
 
-    const runTurn = vi.fn(async () => ({
-      reason: 'completed' as const,
-      messageCount: 0,
-      toolCallCount: 0,
-      inputTokensTotal: 0,
-      outputTokensTotal: 0,
-      durationMs: 1,
-    }));
+    let capturedPrompt: {
+      providerTools?: Record<
+        string,
+        { execute: (i: Record<string, unknown>, o: object) => Promise<unknown> }
+      >;
+    } | null = null;
+    const runTurn = vi.fn(async (_ctx: SessionContext, prompt: unknown) => {
+      capturedPrompt = prompt as typeof capturedPrompt;
+      return {
+        reason: 'completed' as const,
+        messageCount: 0,
+        toolCallCount: 0,
+        inputTokensTotal: 0,
+        outputTokensTotal: 0,
+        durationMs: 1,
+      };
+    });
 
+    const body = '1. branch\n2. commit\n3. open PR';
     setAgentsRuntime(
       makeRuntime({
         agentService: { runTurn } as unknown as AgentService,
@@ -466,12 +480,11 @@ describe('AgentChatDO.onChatMessage', () => {
         },
         skills: {
           listForScope: vi.fn(async () => [
-            {
-              name: 'pr-flow',
-              description: 'How to open a pull request',
-              body: '1. branch\n2. commit\n3. open PR',
-            },
+            { name: 'pr-flow', description: 'How to open a pull request', body },
           ]),
+          findByName: vi.fn(async (name: string) =>
+            name === 'pr-flow' ? { name: 'pr-flow', body } : null,
+          ),
         },
       }),
     );
@@ -482,12 +495,19 @@ describe('AgentChatDO.onChatMessage', () => {
 
     await stub.onChatMessage(onFinish);
 
+    // Prompt lists the skill as a summary and promises the read tool —
+    // the body is NOT inlined (progressive disclosure).
     const composed = createSession.mock.calls[0][0].systemPrompt as string;
     expect(composed).toContain('## Available skills');
-    expect(composed).toContain('### pr-flow');
-    expect(composed).toContain('1. branch');
-    // Inline mode does not promise a (not-yet-existing) skills.read tool.
-    expect(composed).not.toContain('skills.read');
+    expect(composed).toContain('**pr-flow** — How to open a pull request');
+    expect(composed).toContain('skills.read');
+    expect(composed).not.toContain('1. branch');
+
+    // The skills.read tool is injected and actually resolves the body.
+    const tool = capturedPrompt!.providerTools?.['skills.read'];
+    expect(tool).toBeDefined();
+    expect(await tool!.execute({ name: 'pr-flow' }, {})).toEqual({ name: 'pr-flow', body });
+    expect(await tool!.execute({ name: 'nope' }, {})).toMatchObject({ error: expect.any(String) });
   });
 
   it('threads the session deny/allow lists onto PromptInput so they are enforced', async () => {

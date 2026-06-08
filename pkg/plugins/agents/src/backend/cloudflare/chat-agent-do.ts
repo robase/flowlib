@@ -81,7 +81,7 @@ import type {
 import type { AgentEvent } from '../../shared/events';
 import type { AgentsAuthContext } from '../../shared/auth-context';
 import type { AgentService, PersistenceCallbacks, SessionContext } from '../service/types';
-import type { PromptInput } from '../providers/types';
+import type { PromptInput, ProviderToolDescriptor } from '../providers/types';
 
 import { ensureAgentsRuntime, getAgentsDatabaseApi } from './runtime-singleton';
 import { composeSystemPrompt } from '../prompt/compose';
@@ -418,6 +418,8 @@ export class AgentChatDO extends (AIChatAgent as unknown as new (
       // a prompt suggestion.
       ...(sessionContext.denyList ? { extraDenied: sessionContext.denyList } : {}),
       ...(sessionContext.enabledTools ? { enabledTools: sessionContext.enabledTools } : {}),
+      // Plugin-contributed tools (skills.read, …) for this turn.
+      ...(sessionContext.providerTools ? { providerTools: sessionContext.providerTools } : {}),
     };
     // eslint-disable-next-line no-console
     console.log('[AgentChatDO] promptInput', {
@@ -595,6 +597,10 @@ export class AgentChatDO extends (AIChatAgent as unknown as new (
           userId?: string;
           limit?: number;
         }): Promise<ReadonlyArray<{ name: string; description: string; body: string }>>;
+        findByName(
+          name: string,
+          scope: { orgId: string | null; userId?: string },
+        ): Promise<{ name: string; body: string } | null>;
       };
     };
     const reposSlot = runtime.repositories as unknown;
@@ -737,6 +743,13 @@ export class AgentChatDO extends (AIChatAgent as unknown as new (
       },
       skillSummaries,
     );
+    // Plugin-contributed tools (e.g. skills.read) the provider merges
+    // into the turn — see PromptInput.providerTools.
+    const providerTools = this._buildProviderTools(
+      repositories,
+      resolved,
+      skillSummaries.length > 0,
+    );
 
     try {
       await provider.createSession({
@@ -803,6 +816,7 @@ export class AgentChatDO extends (AIChatAgent as unknown as new (
       // (the composed prompt already mentions the deny list).
       ...(sessionRow.denyList ? { denyList: sessionRow.denyList } : {}),
       ...(sessionRow.enabledTools ? { enabledTools: sessionRow.enabledTools } : {}),
+      ...(Object.keys(providerTools).length > 0 ? { providerTools } : {}),
     };
   }
 
@@ -840,12 +854,11 @@ export class AgentChatDO extends (AIChatAgent as unknown as new (
 
   /**
    * Load the skills visible to this session (org `global` + the user's
-   * `personal`) and inline their bodies into the prompt. Bounded by
-   * count and total bytes so a large skill library can't blow the
-   * context window — skills past the budget are dropped (the cap is
-   * logged). Best-effort: any repository error yields no skills rather
-   * than failing the turn. v1 has no `skills.read` tool, so bodies are
-   * inlined here rather than fetched on demand (plans/agents §2).
+   * `personal`) as **summaries** (name + description only) — the bodies
+   * are fetched on demand via the injected `skills.read` tool
+   * (progressive disclosure; see `_buildProviderTools`). Capped by count
+   * so a large library can't bloat the prompt. Best-effort: a repository
+   * error yields no skills rather than failing the turn.
    */
   private async _loadSkillSummaries(
     repositories: {
@@ -858,34 +871,18 @@ export class AgentChatDO extends (AIChatAgent as unknown as new (
       };
     },
     resolved: ResolvedConnectionState,
-  ): Promise<ReadonlyArray<{ name: string; description: string; body: string }>> {
+  ): Promise<ReadonlyArray<{ name: string; description: string }>> {
     if (!repositories.skills) {
       return [];
     }
-    const MAX_SKILLS = 20;
-    const MAX_TOTAL_BODY_BYTES = 16 * 1024;
+    const MAX_SKILLS = 30;
     try {
       const all = await repositories.skills.listForScope({
         orgId: resolved.orgId,
         userId: resolved.auth.userId,
         limit: MAX_SKILLS,
       });
-      const out: Array<{ name: string; description: string; body: string }> = [];
-      let bytes = 0;
-      for (const s of all) {
-        bytes += new TextEncoder().encode(s.body).length;
-        if (bytes > MAX_TOTAL_BODY_BYTES && out.length > 0) {
-          // eslint-disable-next-line no-console
-          console.warn('[AgentChatDO] skill budget exceeded — dropping remaining skills', {
-            sessionId: resolved.sessionId,
-            included: out.length,
-            dropped: all.length - out.length,
-          });
-          break;
-        }
-        out.push({ name: s.name, description: s.description, body: s.body });
-      }
-      return out;
+      return all.map((s) => ({ name: s.name, description: s.description }));
     } catch (err) {
       // eslint-disable-next-line no-console
       console.warn('[AgentChatDO] skill load failed — proceeding without skills', {
@@ -894,6 +891,56 @@ export class AgentChatDO extends (AIChatAgent as unknown as new (
       });
       return [];
     }
+  }
+
+  /**
+   * Build the plugin-contributed tools for the session. Today that's
+   * `skills.read` (resolve a skill body by name) — injected only when the
+   * session actually has visible skills, so the prompt's "fetchable via
+   * skills.read" promise always has a backing tool. Threaded onto
+   * `PromptInput.providerTools` by the prompt builder.
+   */
+  private _buildProviderTools(
+    repositories: {
+      skills?: {
+        findByName(
+          name: string,
+          scope: { orgId: string | null; userId?: string },
+        ): Promise<{ name: string; body: string } | null>;
+      };
+    },
+    resolved: ResolvedConnectionState,
+    hasSkills: boolean,
+  ): Record<string, ProviderToolDescriptor> {
+    const tools: Record<string, ProviderToolDescriptor> = {};
+    const skillsRepo = repositories.skills;
+    if (skillsRepo && hasSkills) {
+      tools['skills.read'] = {
+        description:
+          'Read the full body of an available skill by name. Call this when a skill ' +
+          'listed under "Available skills" applies to the task before you start.',
+        parameters: {
+          type: 'object',
+          properties: {
+            name: { type: 'string', description: 'The skill name, exactly as listed.' },
+          },
+          required: ['name'],
+          additionalProperties: false,
+        },
+        execute: async (input) => {
+          const name = typeof input.name === 'string' ? input.name : '';
+          const skill = await skillsRepo.findByName(name, {
+            orgId: resolved.orgId,
+            userId: resolved.auth.userId,
+          });
+          if (!skill) {
+            return { error: `No skill named "${name}" is available to this session.` };
+          }
+          return { name: skill.name, body: skill.body };
+        },
+      };
+    }
+    return tools;
   }
 
   /**
