@@ -99,26 +99,26 @@ export function NewChatDialog({
       data-testid="new-chat-dialog"
     >
       <div
-        className="w-full max-w-md rounded-lg border border-fl-border bg-fl-card text-fl-card-foreground shadow-xl"
+        className="w-full max-w-md rounded-lg border border-border bg-card text-card-foreground shadow-xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="px-5 py-4 border-b border-fl-border">
+        <div className="px-5 py-4 border-b border-border">
           <h2 id="new-chat-dialog-title" className="text-lg font-semibold">
             Start a new chat
           </h2>
-          <p className="text-sm text-fl-muted-foreground mt-1">
+          <p className="text-sm text-muted-foreground mt-1">
             Pick the LLM credential this chat should use. You can change it later from the chat
             settings.
           </p>
           {targetLabel ? (
-            <p className="text-xs text-fl-muted-foreground mt-2" data-testid="new-chat-target">
+            <p className="text-xs text-muted-foreground mt-2" data-testid="new-chat-target">
               {targetLabel}
             </p>
           ) : null}
         </div>
 
-        <div className="px-5 py-3 border-b border-fl-border">
-          <div className="text-xs font-medium uppercase tracking-wide text-fl-muted-foreground mb-1.5">
+        <div className="px-5 py-3 border-b border-border">
+          <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground mb-1.5">
             Model
           </div>
           <ModelSelector
@@ -132,9 +132,9 @@ export function NewChatDialog({
 
         <div className="px-5 py-4 max-h-[420px] overflow-y-auto">
           {isLoading ? (
-            <div className="text-sm text-fl-muted-foreground">Loading credentials…</div>
+            <div className="text-sm text-muted-foreground">Loading credentials…</div>
           ) : error ? (
-            <div className="rounded-md border border-fl-destructive/40 bg-fl-destructive/10 px-3 py-2 text-sm text-fl-destructive">
+            <div className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
               Failed to load credentials: {error.message}
             </div>
           ) : credentials.length === 0 ? (
@@ -143,7 +143,7 @@ export function NewChatDialog({
             <ul className="space-y-3" data-testid="credential-list">
               {Object.entries(grouped).map(([provider, items]) => (
                 <li key={provider}>
-                  <div className="text-xs font-medium uppercase tracking-wide text-fl-muted-foreground mb-1">
+                  <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground mb-1">
                     {provider}
                   </div>
                   <ul className="space-y-1">
@@ -152,8 +152,8 @@ export function NewChatDialog({
                         <label
                           className={`flex items-center gap-3 rounded-md border px-3 py-2 cursor-pointer transition-colors ${
                             selectedId === c.id
-                              ? 'border-fl-primary bg-fl-primary/5'
-                              : 'border-fl-border hover:bg-fl-muted/30'
+                              ? 'border-primary bg-primary/5'
+                              : 'border-border hover:bg-muted/30'
                           } ${c.isActive ? '' : 'opacity-60 cursor-not-allowed'}`}
                           data-testid={`credential-option-${c.id}`}
                         >
@@ -164,18 +164,18 @@ export function NewChatDialog({
                             checked={selectedId === c.id}
                             disabled={!c.isActive}
                             onChange={() => setSelectedId(c.id)}
-                            className="accent-fl-primary"
+                            className="accent-primary"
                           />
                           <div className="min-w-0 flex-1">
                             <div className="font-medium truncate">{c.name}</div>
                             {c.description ? (
-                              <div className="text-xs text-fl-muted-foreground truncate">
+                              <div className="text-xs text-muted-foreground truncate">
                                 {c.description}
                               </div>
                             ) : null}
                           </div>
                           {!c.isActive ? (
-                            <span className="text-xs text-fl-muted-foreground">inactive</span>
+                            <span className="text-xs text-muted-foreground">inactive</span>
                           ) : null}
                         </label>
                       </li>
@@ -187,11 +187,11 @@ export function NewChatDialog({
           )}
         </div>
 
-        <div className="px-5 py-3 border-t border-fl-border flex items-center justify-between gap-3">
+        <div className="px-5 py-3 border-t border-border flex items-center justify-between gap-3">
           <button
             type="button"
             onClick={() => setSelectedId(null)}
-            className="text-xs text-fl-muted-foreground hover:underline disabled:opacity-50"
+            className="text-xs text-muted-foreground hover:underline disabled:opacity-50"
             disabled={selectedId === null || isStarting}
             data-testid="new-chat-clear-credential"
           >
@@ -202,7 +202,7 @@ export function NewChatDialog({
               type="button"
               onClick={onCancel}
               disabled={isStarting}
-              className="rounded-md px-3 py-1.5 text-sm font-medium hover:bg-fl-muted/30 disabled:opacity-50"
+              className="rounded-md px-3 py-1.5 text-sm font-medium hover:bg-muted/30 disabled:opacity-50"
               data-testid="new-chat-cancel"
             >
               Cancel
@@ -211,7 +211,7 @@ export function NewChatDialog({
               type="button"
               onClick={handleStart}
               disabled={isStarting}
-              className="rounded-md bg-fl-primary px-3 py-1.5 text-sm font-medium text-fl-primary-foreground hover:opacity-90 disabled:opacity-50"
+              className="rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:opacity-90 disabled:opacity-50"
               data-testid="new-chat-start"
             >
               {isStarting ? 'Starting…' : 'Start chat'}
@@ -225,7 +225,7 @@ export function NewChatDialog({
 
 function EmptyHint(): React.ReactElement {
   return (
-    <div className="rounded-md border border-dashed border-fl-border px-4 py-6 text-center text-sm text-fl-muted-foreground">
+    <div className="rounded-md border border-dashed border-border px-4 py-6 text-center text-sm text-muted-foreground">
       <p>No LLM credentials yet.</p>
       <p className="mt-1">
         Add one from the Credentials page (type: <span className="font-mono">llm</span>) and the

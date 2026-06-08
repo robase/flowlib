@@ -15,9 +15,9 @@ export function ToolsPanel({ session }: { session: AgentSession | null }): React
   if (!session) {
     return (
       <div className="flex h-full flex-col items-center justify-center px-8 text-center">
-        <Wrench className="h-8 w-8 text-fl-muted-foreground/40" />
-        <p className="mt-3 text-sm font-medium text-fl-foreground">No chat open</p>
-        <p className="mt-1 text-xs leading-relaxed text-fl-muted-foreground">
+        <Wrench className="h-8 w-8 text-muted-foreground/40" />
+        <p className="mt-3 text-sm font-medium text-foreground">No chat open</p>
+        <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
           Open a chat to inspect its tool permissions.
         </p>
       </div>
@@ -46,7 +46,7 @@ export function ToolsPanel({ session }: { session: AgentSession | null }): React
       {/* Allow / deny entries */}
       <div className="min-h-0 flex-1 space-y-0.5 overflow-y-auto p-3">
         {enabled.length === 0 && denied.length === 0 ? (
-          <p className="py-10 text-center text-xs text-fl-muted-foreground">
+          <p className="py-10 text-center text-xs text-muted-foreground">
             No explicit allow/deny rules — all tools available to this session are allowed.
           </p>
         ) : (
@@ -67,15 +67,15 @@ export function ToolsPanel({ session }: { session: AgentSession | null }): React
 function ToolRow({ name, kind }: { name: string; kind: 'allow' | 'deny' }): React.ReactElement {
   const Icon = kind === 'allow' ? Check : Ban;
   return (
-    <div className="flex items-center gap-2.5 rounded-md px-3 py-2 hover:bg-fl-muted/40">
+    <div className="flex items-center gap-2.5 rounded-md px-3 py-2 hover:bg-muted/40">
       <Icon
-        className={`h-4 w-4 shrink-0 ${kind === 'allow' ? 'text-fl-success' : 'text-fl-destructive'}`}
+        className={`h-4 w-4 shrink-0 ${kind === 'allow' ? 'text-success' : 'text-destructive'}`}
       />
-      <code className="min-w-0 flex-1 truncate font-mono text-xs font-medium text-fl-foreground">
+      <code className="min-w-0 flex-1 truncate font-mono text-xs font-medium text-foreground">
         {name}
       </code>
       <span
-        className={`shrink-0 text-[11px] ${kind === 'allow' ? 'text-fl-success' : 'text-fl-destructive'}`}
+        className={`shrink-0 text-[11px] ${kind === 'allow' ? 'text-success' : 'text-destructive'}`}
       >
         {kind === 'allow' ? 'Allowed' : 'Denied'}
       </span>
@@ -86,8 +86,8 @@ function ToolRow({ name, kind }: { name: string; kind: 'allow' | 'deny' }): Reac
 function PolicyStat({ label, value }: { label: string; value: string }): React.ReactElement {
   return (
     <div className="flex items-baseline justify-between gap-2">
-      <dt className="text-[11px] text-fl-muted-foreground">{label}</dt>
-      <dd className="truncate font-mono text-[11px] capitalize text-fl-foreground">{value}</dd>
+      <dt className="text-[11px] text-muted-foreground">{label}</dt>
+      <dd className="truncate font-mono text-[11px] capitalize text-foreground">{value}</dd>
     </div>
   );
 }

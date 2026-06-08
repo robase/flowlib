@@ -40,7 +40,7 @@ export function InspectorPane({ tab, session }: InspectorPaneProps): React.React
   const active = INSPECTOR_TABS.find((t) => t.id === tab) ?? INSPECTOR_TABS[0];
 
   return (
-    <div className="flex h-full flex-col bg-fl-card pr-10">
+    <div className="flex h-full flex-col bg-card pr-10">
       <div className="flex items-center gap-2 px-4 pt-4 pb-2">
         <h2 className="text-sm font-semibold">{active.label}</h2>
       </div>

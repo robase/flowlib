@@ -37,16 +37,16 @@ export function McpPanel({ session }: { session: AgentSession | null }): React.R
     <div className="flex h-full flex-col">
       <div className="min-h-0 flex-1 space-y-1 overflow-y-auto p-3">
         {isLoading ? (
-          <div className="flex items-center justify-center gap-2 py-12 text-sm text-fl-muted-foreground">
+          <div className="flex items-center justify-center gap-2 py-12 text-sm text-muted-foreground">
             <Loader2 className="h-4 w-4 animate-spin" />
             Loading servers…
           </div>
         ) : error ? (
-          <p className="py-12 text-center text-sm text-fl-destructive">
+          <p className="py-12 text-center text-sm text-destructive">
             Failed to load MCP servers: {(error as Error).message}
           </p>
         ) : !servers || servers.length === 0 ? (
-          <p className="py-12 text-center text-sm text-fl-muted-foreground">
+          <p className="py-12 text-center text-sm text-muted-foreground">
             No MCP servers configured yet.
           </p>
         ) : (
@@ -62,7 +62,7 @@ export function McpPanel({ session }: { session: AgentSession | null }): React.R
         )}
       </div>
       {!session ? (
-        <p className="border-t border-fl-border px-4 py-2 text-[11px] text-fl-muted-foreground">
+        <p className="border-t border-border px-4 py-2 text-[11px] text-muted-foreground">
           Open a chat to enable servers for it.
         </p>
       ) : null}
@@ -94,10 +94,10 @@ function McpRow({
   onToggle: (next: boolean) => void;
 }): React.ReactElement {
   return (
-    <div className="rounded-lg px-3 py-2.5 hover:bg-fl-muted/40">
+    <div className="rounded-lg px-3 py-2.5 hover:bg-muted/40">
       <div className="flex items-center gap-2">
-        <span className="truncate text-sm font-medium text-fl-foreground">{server.name}</span>
-        <span className="shrink-0 text-[11px] uppercase text-fl-muted-foreground">
+        <span className="truncate text-sm font-medium text-foreground">{server.name}</span>
+        <span className="shrink-0 text-[11px] uppercase text-muted-foreground">
           {server.transport}
         </span>
         <Switch
@@ -108,7 +108,7 @@ function McpRow({
           aria-label={`Toggle ${server.name}`}
         />
       </div>
-      <code className="mt-1.5 block truncate font-mono text-[11px] text-fl-muted-foreground">
+      <code className="mt-1.5 block truncate font-mono text-[11px] text-muted-foreground">
         {endpointLabel(server)}
       </code>
     </div>

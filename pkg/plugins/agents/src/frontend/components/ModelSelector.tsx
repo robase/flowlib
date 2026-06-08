@@ -87,8 +87,8 @@ export function ModelSelector({
 
   const triggerClass =
     variant === 'header'
-      ? 'inline-flex items-center gap-1.5 rounded-md border border-fl-border bg-fl-card px-2 py-1 text-xs font-medium hover:bg-fl-muted/40 disabled:opacity-50 disabled:cursor-not-allowed'
-      : 'flex w-full items-center justify-between gap-2 rounded-md border border-fl-border bg-fl-card px-3 py-2 text-sm hover:bg-fl-muted/40 disabled:opacity-50 disabled:cursor-not-allowed';
+      ? 'inline-flex items-center gap-1.5 rounded-md border border-border bg-card px-2 py-1 text-xs font-medium hover:bg-muted/40 disabled:opacity-50 disabled:cursor-not-allowed'
+      : 'flex w-full items-center justify-between gap-2 rounded-md border border-border bg-card px-3 py-2 text-sm hover:bg-muted/40 disabled:opacity-50 disabled:cursor-not-allowed';
 
   return (
     <div ref={rootRef} className={`relative ${className ?? ''}`}>
@@ -103,7 +103,7 @@ export function ModelSelector({
       >
         <span className="truncate">
           {activeProviderLabel ? (
-            <span className="text-fl-muted-foreground">{activeProviderLabel} · </span>
+            <span className="text-muted-foreground">{activeProviderLabel} · </span>
           ) : null}
           {activeLabel}
         </span>
@@ -112,7 +112,7 @@ export function ModelSelector({
 
       {open ? (
         <div
-          className={`absolute right-0 z-40 min-w-[240px] max-h-80 overflow-y-auto rounded-md border border-fl-border bg-fl-card text-fl-card-foreground shadow-lg ${
+          className={`absolute right-0 z-40 min-w-[240px] max-h-80 overflow-y-auto rounded-md border border-border bg-card text-card-foreground shadow-lg ${
             menuPlacement === 'top' ? 'bottom-full mb-1' : 'mt-1'
           }`}
           role="listbox"
@@ -120,7 +120,7 @@ export function ModelSelector({
         >
           {PROVIDER_CATALOGUE.map((provider) => (
             <div key={provider.id} className="py-1">
-              <div className="px-3 pt-1.5 pb-1 text-[10px] font-semibold uppercase tracking-wide text-fl-muted-foreground">
+              <div className="px-3 pt-1.5 pb-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
                 {provider.label}
               </div>
               {provider.models.map((m) => {
@@ -130,8 +130,8 @@ export function ModelSelector({
                     key={`${provider.id}:${m.id}`}
                     type="button"
                     onClick={() => handlePick(provider.id, m)}
-                    className={`flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs hover:bg-fl-muted/40 ${
-                      isActive ? 'bg-fl-muted/30' : ''
+                    className={`flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs hover:bg-muted/40 ${
+                      isActive ? 'bg-muted/30' : ''
                     }`}
                     role="option"
                     aria-selected={isActive}
@@ -143,7 +143,7 @@ export function ModelSelector({
                     <div className="min-w-0 flex-1">
                       <div className="truncate font-medium">{m.label}</div>
                       {m.description ? (
-                        <div className="truncate text-[10px] text-fl-muted-foreground">
+                        <div className="truncate text-[10px] text-muted-foreground">
                           {m.description}
                         </div>
                       ) : null}

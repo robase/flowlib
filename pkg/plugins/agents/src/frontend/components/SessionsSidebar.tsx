@@ -47,13 +47,13 @@ export function SessionsSidebar({
 
   return (
     <div
-      className="flex h-full min-h-0 w-full flex-col bg-fl-sidebar"
+      className="flex h-full min-h-0 w-full flex-col bg-sidebar"
       data-testid="agents-sessions-sidebar"
     >
       {/* Brand + new chat */}
-      <div className="flex items-center justify-between gap-2 border-b border-fl-sidebar-border px-4 py-3">
+      <div className="flex items-center justify-between gap-2 border-b border-sidebar-border px-4 py-3">
         <div className="flex items-center gap-2 min-w-0">
-          <span className="flex h-7 w-7 items-center justify-center rounded-md bg-fl-primary/15 text-fl-primary">
+          <span className="flex h-7 w-7 items-center justify-center rounded-md bg-primary/15 text-primary">
             <Sparkles className="h-4 w-4" />
           </span>
           <span className="truncate text-sm font-semibold tracking-tight">Agents</span>
@@ -63,7 +63,7 @@ export function SessionsSidebar({
           onClick={onNewChat}
           title="New chat"
           aria-label="New chat"
-          className="flex h-7 w-7 items-center justify-center rounded-md text-fl-muted-foreground hover:bg-fl-accent hover:text-fl-foreground"
+          className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground"
           data-testid="agents-new-chat-button"
         >
           <Plus className="h-4 w-4" />
@@ -73,14 +73,14 @@ export function SessionsSidebar({
       {/* Search */}
       <div className="px-3 py-3">
         <div className="relative">
-          <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-fl-muted-foreground" />
+          <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
           <input
             type="search"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search chats…"
             aria-label="Search chats"
-            className="h-8 w-full rounded-md border border-fl-border bg-fl-background pl-8 pr-2 text-sm outline-none placeholder:text-fl-muted-foreground focus-visible:ring-1 focus-visible:ring-fl-ring"
+            className="h-8 w-full rounded-md border border-border bg-background pl-8 pr-2 text-sm outline-none placeholder:text-muted-foreground focus-visible:ring-1 focus-visible:ring-ring"
           />
         </div>
       </div>
@@ -89,7 +89,7 @@ export function SessionsSidebar({
       <div className="min-h-0 flex-1 overflow-y-auto">
         <div className="space-y-0.5 px-2 pb-4">
           {isLoading ? (
-            <p className="px-2 py-6 text-center text-xs text-fl-muted-foreground">Loading…</p>
+            <p className="px-2 py-6 text-center text-xs text-muted-foreground">Loading…</p>
           ) : filtered.length === 0 ? (
             <EmptyState query={query} onNewChat={onNewChat} />
           ) : (
@@ -106,10 +106,10 @@ export function SessionsSidebar({
       </div>
 
       {/* Footer */}
-      <div className="border-t border-fl-sidebar-border p-2">
+      <div className="border-t border-sidebar-border p-2">
         <Link
           to={`${stripTrailingSlash(basePath)}/agents/mcp-servers`}
-          className="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-fl-muted-foreground transition-colors hover:bg-fl-accent/60 hover:text-fl-foreground"
+          className="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-accent/60 hover:text-foreground"
         >
           <Server className="h-4 w-4" />
           MCP servers
@@ -151,7 +151,7 @@ function SessionRow({
       aria-current={isActive ? 'true' : undefined}
       className={cn(
         'group flex w-full items-center gap-2 rounded-md px-3 py-2 text-left transition-colors',
-        isActive ? 'bg-fl-sidebar-accent' : 'hover:bg-fl-accent/60',
+        isActive ? 'bg-sidebar-accent' : 'hover:bg-accent/60',
       )}
       data-testid={`agents-session-row-${session.id}`}
     >
@@ -159,7 +159,7 @@ function SessionRow({
       <span
         className={cn(
           'min-w-0 flex-1 truncate text-sm',
-          isActive ? 'font-medium text-fl-sidebar-accent-foreground' : 'text-fl-foreground',
+          isActive ? 'font-medium text-sidebar-accent-foreground' : 'text-foreground',
         )}
       >
         {session.title}
@@ -170,7 +170,7 @@ function SessionRow({
         disabled={deleteSession.isPending}
         title="Delete chat"
         aria-label="Delete chat"
-        className="shrink-0 rounded p-0.5 text-fl-muted-foreground opacity-0 transition-opacity hover:text-fl-destructive group-hover:opacity-100 focus:opacity-100 disabled:opacity-50"
+        className="shrink-0 rounded p-0.5 text-muted-foreground opacity-0 transition-opacity hover:text-destructive group-hover:opacity-100 focus:opacity-100 disabled:opacity-50"
         data-testid={`agents-session-delete-${session.id}`}
       >
         <Trash2 className="h-3.5 w-3.5" />
@@ -187,15 +187,15 @@ function EmptyState({
   onNewChat: () => void;
 }): React.ReactElement {
   if (query.trim()) {
-    return <p className="px-2 py-6 text-center text-xs text-fl-muted-foreground">No chats match.</p>;
+    return <p className="px-2 py-6 text-center text-xs text-muted-foreground">No chats match.</p>;
   }
   return (
     <div className="px-2 py-6 text-center">
-      <p className="text-sm text-fl-muted-foreground">No chats yet.</p>
+      <p className="text-sm text-muted-foreground">No chats yet.</p>
       <button
         type="button"
         onClick={onNewChat}
-        className="mt-3 inline-flex items-center gap-1.5 rounded-md bg-fl-primary px-3 py-1.5 text-xs font-medium text-fl-primary-foreground hover:opacity-90"
+        className="mt-3 inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:opacity-90"
       >
         <Plus className="h-3.5 w-3.5" />
         New chat

@@ -86,15 +86,15 @@ export const FileDiffViewer: React.FC<FileDiffViewerProps> = ({ event, layout = 
 
   return (
     <div
-      className="rounded border border-fl-border bg-fl-card my-2"
+      className="rounded border border-border bg-card my-2"
       data-testid="file-diff"
       data-path={event.path}
     >
-      <div className="flex items-center justify-between px-3 py-1.5 border-b border-fl-border">
-        <span className="font-mono text-xs truncate text-fl-foreground">{event.path}</span>
-        <span className="text-xs text-fl-muted-foreground shrink-0 ml-2">
+      <div className="flex items-center justify-between px-3 py-1.5 border-b border-border">
+        <span className="font-mono text-xs truncate text-foreground">{event.path}</span>
+        <span className="text-xs text-muted-foreground shrink-0 ml-2">
           <span className="text-emerald-600 dark:text-emerald-400">+{added}</span>{' '}
-          <span className="text-fl-destructive">-{removed}</span>
+          <span className="text-destructive">-{removed}</span>
         </span>
       </div>
       {layout === 'split' ? <SplitView lines={lines} /> : <UnifiedView lines={lines} />}
@@ -133,7 +133,7 @@ const SplitView: React.FC<{ lines: DiffLine[] }> = ({ lines }) => {
     }
   }
   return (
-    <div className="grid grid-cols-2 divide-x divide-fl-border">
+    <div className="grid grid-cols-2 divide-x divide-border">
       <pre className="text-xs font-mono m-0 p-2 overflow-x-auto whitespace-pre">
         {left.map((line, idx) => (
           <div key={idx} className={lineClass(line.kind)}>
@@ -157,9 +157,9 @@ function lineClass(kind: DiffLine['kind']): string {
     case 'added':
       return 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300';
     case 'removed':
-      return 'bg-fl-destructive/10 text-fl-destructive';
+      return 'bg-destructive/10 text-destructive';
     default:
-      return 'text-fl-muted-foreground';
+      return 'text-muted-foreground';
   }
 }
 

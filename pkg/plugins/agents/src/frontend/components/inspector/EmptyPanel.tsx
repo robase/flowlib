@@ -16,9 +16,9 @@ export function EmptyPanel({
 }): React.ReactElement {
   return (
     <div className="flex h-full flex-col items-center justify-center px-8 text-center">
-      <Icon className="h-8 w-8 text-fl-muted-foreground/40" />
-      <p className="mt-3 text-sm font-medium text-fl-foreground">{title}</p>
-      <p className="mt-1 text-xs leading-relaxed text-fl-muted-foreground">{description}</p>
+      <Icon className="h-8 w-8 text-muted-foreground/40" />
+      <p className="mt-3 text-sm font-medium text-foreground">{title}</p>
+      <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{description}</p>
     </div>
   );
 }

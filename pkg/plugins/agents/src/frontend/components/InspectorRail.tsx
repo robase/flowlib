@@ -36,7 +36,7 @@ export function InspectorRail({
             onClick={() => onSelect(t.id)}
             className={cn(
               'flex h-7 w-7 items-center justify-center transition-colors',
-              isActive ? 'text-fl-primary' : 'text-fl-muted-foreground hover:text-fl-foreground',
+              isActive ? 'text-primary' : 'text-muted-foreground hover:text-foreground',
             )}
             data-testid={`agents-inspector-tab-${t.id}`}
           >

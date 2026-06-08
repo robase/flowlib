@@ -20,12 +20,12 @@ function AttachmentChip({ removable }: { removable: boolean }): React.ReactEleme
   return (
     <AttachmentPrimitive.Root
       className={cn(
-        'group relative flex items-center gap-2 rounded-md border border-fl-border bg-fl-card px-2 py-1 text-xs',
+        'group relative flex items-center gap-2 rounded-md border border-border bg-card px-2 py-1 text-xs',
         'max-w-[12rem] min-w-0',
       )}
     >
-      <PaperclipIcon className="size-3.5 shrink-0 text-fl-muted-foreground" />
-      <span className="truncate text-fl-foreground">
+      <PaperclipIcon className="size-3.5 shrink-0 text-muted-foreground" />
+      <span className="truncate text-foreground">
         <AttachmentPrimitive.Name />
       </span>
       {removable ? (
@@ -33,7 +33,7 @@ function AttachmentChip({ removable }: { removable: boolean }): React.ReactEleme
           <button
             type="button"
             aria-label="Remove attachment"
-            className="shrink-0 text-fl-muted-foreground hover:text-fl-foreground"
+            className="shrink-0 text-muted-foreground hover:text-foreground"
           >
             <XIcon className="size-3.5" />
           </button>

@@ -60,6 +60,6 @@ describe('ToolCallCard', () => {
     };
     const html = renderToString(<ToolCallCard call={baseCall} result={result} defaultOpen />);
     expect(html).toContain('error');
-    expect(html).toContain('border-fl-destructive');
+    expect(html).toContain('border-destructive');
   });
 });

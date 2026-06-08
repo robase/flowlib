@@ -85,7 +85,7 @@ export function ChatThread({ session }: ChatThreadProps): React.ReactElement {
   return (
     <div className="flex h-full min-h-0 flex-col">
       <ThreadPrimitive.Root
-        className="flex flex-1 flex-col bg-fl-background text-sm min-h-0"
+        className="flex flex-1 flex-col bg-background text-sm min-h-0"
         style={THREAD_STYLE}
       >
         <ThreadPrimitive.Viewport
@@ -111,7 +111,7 @@ export function ChatThread({ session }: ChatThreadProps): React.ReactElement {
             }}
           />
 
-          <ThreadPrimitive.ViewportFooter className="sticky bottom-0 mx-auto mt-auto flex w-full max-w-[var(--thread-max-width)] flex-col gap-3 overflow-visible rounded-t-3xl bg-fl-background pb-4">
+          <ThreadPrimitive.ViewportFooter className="sticky bottom-0 mx-auto mt-auto flex w-full max-w-[var(--thread-max-width)] flex-col gap-3 overflow-visible rounded-t-3xl bg-background pb-4">
             <ThreadScrollToBottom />
             <Composer session={session} status={status} />
           </ThreadPrimitive.ViewportFooter>
@@ -138,11 +138,11 @@ function InlineHeader({
   error?: string;
 }): React.ReactElement {
   return (
-    <header className="sticky top-0 z-10 mx-auto flex w-full max-w-[var(--thread-max-width)] items-center gap-2 bg-fl-background/90 px-2 py-3 backdrop-blur supports-[backdrop-filter]:bg-fl-background/75">
+    <header className="sticky top-0 z-10 mx-auto flex w-full max-w-[var(--thread-max-width)] items-center gap-2 bg-background/90 px-2 py-3 backdrop-blur supports-[backdrop-filter]:bg-background/75">
       <StatusDot status={streamStatusToDot(status)} />
       <h1 className="truncate text-sm font-semibold tracking-tight">{session.title}</h1>
       {status === 'error' && error ? (
-        <span className="ml-auto truncate text-xs text-fl-destructive" role="alert">
+        <span className="ml-auto truncate text-xs text-destructive" role="alert">
           {error}
         </span>
       ) : null}
@@ -154,7 +154,7 @@ function InlineHeader({
 
 function LoadingHistory(): React.ReactElement {
   return (
-    <div className="flex items-center justify-center py-12 text-sm text-fl-muted-foreground">
+    <div className="flex items-center justify-center py-12 text-sm text-muted-foreground">
       <LoaderIcon className="size-4 animate-spin mr-2" />
       Loading history…
     </div>
@@ -167,10 +167,10 @@ function ThreadWelcome({ session }: { session: AgentSession }): React.ReactEleme
       <div className="flex w-full flex-grow flex-col items-center justify-center">
         <div className="flex size-full flex-col justify-center px-2">
           <div className="flex items-center gap-2">
-            <Bot className="size-5 text-fl-primary" />
-            <span className="text-2xl font-semibold text-fl-foreground">{session.title}</span>
+            <Bot className="size-5 text-primary" />
+            <span className="text-2xl font-semibold text-foreground">{session.title}</span>
           </div>
-          <div className="text-2xl text-fl-muted-foreground/70 mt-1">What should we work on?</div>
+          <div className="text-2xl text-muted-foreground/70 mt-1">What should we work on?</div>
         </div>
       </div>
       <div className="grid w-full gap-2 pb-4 md:grid-cols-2">
@@ -212,10 +212,10 @@ function SuggestionCard({
     <ThreadPrimitive.Suggestion prompt={prompt} method="replace" autoSend asChild>
       <button
         type="button"
-        className="flex h-auto w-full flex-col items-start justify-start gap-1 rounded-2xl border border-fl-border bg-fl-card px-5 py-4 text-left text-sm transition-colors hover:bg-fl-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fl-primary/50"
+        className="flex h-auto w-full flex-col items-start justify-start gap-1 rounded-2xl border border-border bg-card px-5 py-4 text-left text-sm transition-colors hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
       >
-        <span className="font-medium text-fl-foreground">{title}</span>
-        <span className="text-fl-muted-foreground">{subtitle}</span>
+        <span className="font-medium text-foreground">{title}</span>
+        <span className="text-muted-foreground">{subtitle}</span>
       </button>
     </ThreadPrimitive.Suggestion>
   );
@@ -232,11 +232,11 @@ function Composer({
 }): React.ReactElement {
   return (
     <ComposerPrimitive.Root className="relative flex w-full flex-col" data-testid="agents-composer">
-      <ComposerPrimitive.AttachmentDropzone className="flex w-full flex-col rounded-2xl border border-fl-border bg-fl-card px-1 pt-2 outline-none transition-shadow has-[textarea:focus-visible]:border-fl-primary/60 has-[textarea:focus-visible]:ring-2 has-[textarea:focus-visible]:ring-fl-primary/20 data-[dragging=true]:border-fl-primary data-[dragging=true]:border-dashed data-[dragging=true]:bg-fl-primary/5">
+      <ComposerPrimitive.AttachmentDropzone className="flex w-full flex-col rounded-2xl border border-border bg-card px-1 pt-2 outline-none transition-shadow has-[textarea:focus-visible]:border-primary/60 has-[textarea:focus-visible]:ring-2 has-[textarea:focus-visible]:ring-primary/20 data-[dragging=true]:border-primary data-[dragging=true]:border-dashed data-[dragging=true]:bg-primary/5">
         <ComposerAttachments />
         <ComposerPrimitive.Input
           placeholder="Send a message…"
-          className="mb-1 max-h-40 min-h-14 w-full resize-none bg-transparent px-4 pt-2 pb-3 text-sm outline-none placeholder:text-fl-muted-foreground focus-visible:ring-0"
+          className="mb-1 max-h-40 min-h-14 w-full resize-none bg-transparent px-4 pt-2 pb-3 text-sm outline-none placeholder:text-muted-foreground focus-visible:ring-0"
           rows={1}
           autoFocus
           aria-label="Message input"
@@ -301,7 +301,7 @@ function ComposerAction({
             tooltip="Stop generating"
             variant="default"
             size="icon"
-            className="size-8 rounded-full bg-fl-destructive text-fl-destructive-foreground"
+            className="size-8 rounded-full bg-destructive text-destructive-foreground"
             data-testid="agents-composer-cancel"
           >
             <SquareIcon className="size-3 fill-current" />
@@ -338,7 +338,7 @@ function UserMessage(): React.ReactElement {
       <UserMessageAttachments />
 
       <div className="relative col-start-2 min-w-0 flex items-start gap-2">
-        <div className="rounded-lg bg-fl-secondary text-fl-secondary-foreground px-4 py-2.5 break-words text-sm whitespace-pre-wrap">
+        <div className="rounded-lg bg-secondary text-secondary-foreground px-4 py-2.5 break-words text-sm whitespace-pre-wrap">
           <MessagePrimitive.Parts />
         </div>
         <Avatar role="user" />
@@ -371,16 +371,16 @@ function UserActionBar(): React.ReactElement {
 function EditComposer(): React.ReactElement {
   return (
     <MessagePrimitive.Root className="mx-auto flex w-full max-w-[var(--thread-max-width)] flex-col px-2 py-3">
-      <ComposerPrimitive.Root className="ml-auto flex w-full max-w-[85%] flex-col rounded-2xl bg-fl-muted/40 border border-fl-border">
+      <ComposerPrimitive.Root className="ml-auto flex w-full max-w-[85%] flex-col rounded-2xl bg-muted/40 border border-border">
         <ComposerPrimitive.Input
-          className="min-h-14 w-full resize-none bg-transparent p-4 text-fl-foreground text-sm outline-none"
+          className="min-h-14 w-full resize-none bg-transparent p-4 text-foreground text-sm outline-none"
           autoFocus
         />
         <div className="mx-3 mb-3 flex items-center gap-2 self-end">
           <ComposerPrimitive.Cancel asChild>
             <button
               type="button"
-              className="rounded-md px-3 py-1.5 text-xs text-fl-muted-foreground hover:bg-fl-muted/60"
+              className="rounded-md px-3 py-1.5 text-xs text-muted-foreground hover:bg-muted/60"
             >
               Cancel
             </button>
@@ -388,7 +388,7 @@ function EditComposer(): React.ReactElement {
           <ComposerPrimitive.Send asChild>
             <button
               type="button"
-              className="rounded-md bg-fl-primary px-3 py-1.5 text-xs font-medium text-fl-primary-foreground hover:opacity-90"
+              className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:opacity-90"
             >
               Update
             </button>
@@ -418,7 +418,7 @@ function AssistantMessage(): React.ReactElement {
     >
       <div className="flex gap-3 px-2">
         <Avatar role="assistant" />
-        <div className="min-w-0 flex-1 break-words leading-relaxed text-fl-foreground space-y-2">
+        <div className="min-w-0 flex-1 break-words leading-relaxed text-foreground space-y-2">
           <MessagePrimitive.Parts
             components={{
               Text: MarkdownText,
@@ -427,7 +427,7 @@ function AssistantMessage(): React.ReactElement {
           />
           <MessageError />
           <AuiIf condition={(s) => s.thread.isRunning && s.message.content.length === 0}>
-            <div className="flex items-center gap-2 text-fl-muted-foreground">
+            <div className="flex items-center gap-2 text-muted-foreground">
               <LoaderIcon className="size-4 animate-spin" />
               <span className="text-sm">Thinking…</span>
             </div>
@@ -446,7 +446,7 @@ function AssistantMessage(): React.ReactElement {
 function MessageError(): React.ReactElement {
   return (
     <MessagePrimitive.Error>
-      <ErrorPrimitive.Root className="mt-2 rounded-md border border-fl-destructive bg-fl-destructive/10 p-3 text-sm text-fl-destructive">
+      <ErrorPrimitive.Root className="mt-2 rounded-md border border-destructive bg-destructive/10 p-3 text-sm text-destructive">
         <ErrorPrimitive.Message className="line-clamp-2" />
       </ErrorPrimitive.Root>
     </MessagePrimitive.Error>
@@ -458,7 +458,7 @@ function AssistantActionBar(): React.ReactElement {
     <ActionBarPrimitive.Root
       hideWhenRunning
       autohide="not-last"
-      className="-ml-1 flex gap-1 text-fl-muted-foreground"
+      className="-ml-1 flex gap-1 text-muted-foreground"
     >
       <ActionBarPrimitive.Copy asChild>
         <TooltipIconButton tooltip="Copy" size="sm">
@@ -489,7 +489,7 @@ function BranchPicker({ className }: { className?: string }): React.ReactElement
     <BranchPickerPrimitive.Root
       hideWhenSingleBranch
       className={cn(
-        'mr-2 -ml-2 inline-flex items-center text-xs text-fl-muted-foreground',
+        'mr-2 -ml-2 inline-flex items-center text-xs text-muted-foreground',
         className,
       )}
     >
@@ -544,8 +544,8 @@ function Avatar({ role }: { role: 'user' | 'assistant' }): React.ReactElement {
       className={cn(
         'flex size-7 shrink-0 items-center justify-center rounded-md text-xs font-medium',
         role === 'user'
-          ? 'bg-fl-secondary text-fl-secondary-foreground'
-          : 'bg-fl-primary/15 text-fl-primary',
+          ? 'bg-secondary text-secondary-foreground'
+          : 'bg-primary/15 text-primary',
       )}
       aria-hidden="true"
     >

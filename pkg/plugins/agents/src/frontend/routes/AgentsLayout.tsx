@@ -117,7 +117,7 @@ export function AgentsLayout({ basePath }: AgentsLayoutProps): React.ReactElemen
   return (
     <AssistantRuntimeProvider runtime={runtime}>
       <div
-        className="relative flex h-full min-h-0 w-full overflow-hidden bg-fl-background text-fl-foreground"
+        className="relative flex h-full min-h-0 w-full overflow-hidden bg-background text-foreground"
         data-testid="agents-layout"
       >
         {/* Inspector rail — pinned to the top-right of the workspace */}
@@ -126,7 +126,7 @@ export function AgentsLayout({ basePath }: AgentsLayoutProps): React.ReactElemen
         </div>
 
         {/* LEFT — sessions */}
-        <aside className="flex w-72 shrink-0 flex-col border-r border-fl-border">
+        <aside className="flex w-72 shrink-0 flex-col border-r border-border">
           <SessionsSidebar
             basePath={basePath}
             sessions={sessions.data ?? []}
@@ -145,7 +145,7 @@ export function AgentsLayout({ basePath }: AgentsLayoutProps): React.ReactElemen
               <CenteredMessage>Loading chat…</CenteredMessage>
             ) : activeSession.error ? (
               <CenteredMessage>
-                <span className="text-fl-destructive">
+                <span className="text-destructive">
                   {(activeSession.error as Error).message}
                 </span>
               </CenteredMessage>
@@ -161,7 +161,7 @@ export function AgentsLayout({ basePath }: AgentsLayoutProps): React.ReactElemen
         <aside
           aria-hidden={!inspectorOpen}
           className={cn(
-            'shrink-0 overflow-hidden border-fl-border transition-[width] duration-300 ease-in-out',
+            'shrink-0 overflow-hidden border-border transition-[width] duration-300 ease-in-out',
             inspectorOpen ? 'w-96 border-l' : 'w-0 border-l-0',
           )}
         >
@@ -193,15 +193,15 @@ function NoChatSelected({ onNewChat }: { onNewChat: () => void }): React.ReactEl
   return (
     <div className="flex flex-1 items-center justify-center">
       <div className="max-w-sm text-center">
-        <Bot className="mx-auto size-10 text-fl-muted-foreground/40" />
+        <Bot className="mx-auto size-10 text-muted-foreground/40" />
         <h2 className="mt-4 text-base font-semibold">No chat selected</h2>
-        <p className="mt-1 text-sm text-fl-muted-foreground">
+        <p className="mt-1 text-sm text-muted-foreground">
           Pick a chat from the sidebar, or start a new one.
         </p>
         <button
           type="button"
           onClick={onNewChat}
-          className="mt-4 inline-flex items-center gap-1.5 rounded-md bg-fl-primary px-4 py-2 text-sm font-medium text-fl-primary-foreground hover:opacity-90"
+          className="mt-4 inline-flex items-center gap-1.5 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90"
           data-testid="agents-empty-new-chat"
         >
           <Plus className="size-4" />
@@ -214,7 +214,7 @@ function NoChatSelected({ onNewChat }: { onNewChat: () => void }): React.ReactEl
 
 function CenteredMessage({ children }: { children: React.ReactNode }): React.ReactElement {
   return (
-    <div className="flex flex-1 items-center justify-center text-sm text-fl-muted-foreground">
+    <div className="flex flex-1 items-center justify-center text-sm text-muted-foreground">
       {children}
     </div>
   );
