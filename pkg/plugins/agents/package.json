@@ -36,6 +36,16 @@
       "import": "./dist/backend/index.mjs",
       "require": "./dist/backend/index.cjs"
     },
+    "./providers": {
+      "types": "./dist/backend/providers.d.mts",
+      "import": "./dist/backend/providers.mjs",
+      "require": "./dist/backend/providers.cjs"
+    },
+    "./cloudflare": {
+      "types": "./dist/backend/cloudflare.d.mts",
+      "import": "./dist/backend/cloudflare.mjs",
+      "require": "./dist/backend/cloudflare.cjs"
+    },
     "./ui": {
       "types": "./dist/frontend/index.d.mts",
       "import": "./dist/frontend/index.mjs",

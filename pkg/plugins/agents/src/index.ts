@@ -61,31 +61,23 @@ export { runTurn } from './backend/service/run-turn';
 export { ProviderRegistry, createProviderRegistry } from './backend/providers/registry';
 export { registerProviders } from './backend/providers/register';
 
-// Provider factories — consumers import these to wire `agents({ providers: [...] })`.
-export { claudeCodeProvider } from './backend/providers/claude-code/provider';
+// Provider factories live at `@flowlib/agents/providers` — they pull in
+// the vendor SDKs (`@anthropic-ai/claude-agent-sdk`, `@opencode-ai/sdk`,
+// `ai`/`@ai-sdk/*`), so they're kept off this core entry to let the
+// plugin boot on Express/Node hosts that don't install them. Only the
+// option *types* are re-exported here (erased at build → no SDK dragged).
 export type { ClaudeCodeProviderOptions } from './backend/providers/claude-code/provider';
-export { openCodeProvider } from './backend/providers/opencode/provider';
 export type { OpenCodeProviderOptions } from './backend/providers/opencode/provider';
 export { buildOpencodeLlmProviderLoader } from './backend/providers/opencode/llm-provider-loader';
 
-// AI SDK provider — the new path. Agent loop runs in the DO via
-// Vercel's `ai` package's `streamText`. See
-// `pkg/plugins/agents/docs/migration-plan-ai-sdk.md`. Phase 1 ships
-// the provider scaffold + stub tools; Phases 2/3 wire sandbox-backed
-// filesystem tools and flowlib actions as the real tool catalogue.
-export { aiSdkProvider } from './backend/providers/ai-sdk';
+// AI SDK provider — see `@flowlib/agents/providers` for the runtime
+// `aiSdkProvider` + tool builders. Types only here (erased at build).
 export type {
   AiSdkCredential,
   AiSdkProviderOptions,
   AiSdkVendor,
   CredentialResolver as AiSdkCredentialResolver,
   ParsedModelSpec as AiSdkModelSpec,
-} from './backend/providers/ai-sdk';
-export {
-  parseModelSpec as parseAiSdkModelSpec,
-  resolveModel as resolveAiSdkModel,
-  buildSandboxTools as buildAiSdkSandboxTools,
-  buildFlowlibActionTools as buildAiSdkFlowlibActionTools,
 } from './backend/providers/ai-sdk';
 export type {
   AiSdkToolDescriptor,
@@ -106,13 +98,10 @@ export type {
 export { inferOpencodeProvider } from './backend/endpoints/credentials.endpoint';
 export type { AgentCredentialOption } from './backend/endpoints/credentials.endpoint';
 
-// Workspace provider factories.
-export {
-  cloudflareSandbox,
-  buildSandboxName,
-} from './backend/workspaces/cloudflare-sandbox/provider';
+// Workspace provider factories (`cloudflareSandbox`, `cloudflareSandboxClaude`,
+// `buildSandboxName`) live at `@flowlib/agents/cloudflare` — they import the
+// `@cloudflare/sandbox` SDK. Types only here (erased at build).
 export type { CloudflareSandboxOptions } from './backend/workspaces/cloudflare-sandbox/provider';
-export { cloudflareSandboxClaude } from './backend/workspaces/cloudflare-sandbox-claude/provider';
 export type {
   CloudflareSandboxClaudeOptions,
   CloudflareSandboxClaudeProvider,
@@ -165,10 +154,11 @@ export type {
   AgentsRuntimeRegistries,
 } from './backend/plugin-context';
 
-// Stream H — Cloudflare Durable Object surface. Re-exported here so
-// the consumer Worker can forward the DO class:
-//   export { AgentChatDO } from '@flowlib/agents';
-export { AgentChatDO } from './backend/cloudflare/chat-agent-do';
+// Cloudflare Durable Object surface (`AgentChatDO`) lives at
+// `@flowlib/agents/cloudflare` — it imports the Agents SDK
+// (`agents/ai-chat-agent`). Consumer Workers forward it from there:
+//   export { AgentChatDO } from '@flowlib/agents/cloudflare';
+// and inject it into the plugin: `agents({ cloudflareDoClass: AgentChatDO })`.
 
 // Per-isolate runtime bootstrap. The Worker fetch isolate and each DO
 // isolate are separate; the host calls `setAgentsRuntimeBootstrapper`

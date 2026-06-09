@@ -232,7 +232,7 @@ function Composer({
 }): React.ReactElement {
   return (
     <ComposerPrimitive.Root className="relative flex w-full flex-col" data-testid="agents-composer">
-      <ComposerPrimitive.AttachmentDropzone className="flex w-full flex-col rounded-2xl border border-border bg-card px-1 pt-2 outline-none transition-shadow has-[textarea:focus-visible]:border-primary/60 has-[textarea:focus-visible]:ring-2 has-[textarea:focus-visible]:ring-primary/20 data-[dragging=true]:border-primary data-[dragging=true]:border-dashed data-[dragging=true]:bg-primary/5">
+      <ComposerPrimitive.AttachmentDropzone className="flex w-full flex-col rounded-2xl border border-border bg-card px-1 pt-2 outline-none transition-shadow has-[textarea:focus-visible]:border-primary/60 data-[dragging=true]:border-primary data-[dragging=true]:border-dashed data-[dragging=true]:bg-primary/5">
         <ComposerAttachments />
         <ComposerPrimitive.Input
           placeholder="Send a message…"

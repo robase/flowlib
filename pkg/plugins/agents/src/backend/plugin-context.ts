@@ -69,6 +69,12 @@ export interface ResolvedAgentsOptions extends AgentsPluginPublicOptions {
   /** Tool ids hard-denied for every agent in this deployment (e.g. `['Bash']`). */
   defaultDenyList: ReadonlyArray<string>;
   /**
+   * Cloudflare `AgentChatDO` class, injected by Cloudflare hosts via
+   * `agents({ cloudflareDoClass })`. Stashed onto
+   * `registries.cloudflareDoClass`. Undefined on Express/Node hosts.
+   */
+  cloudflareDoClass?: unknown;
+  /**
    * Provider id used when `POST /sessions` omits `providerId`. Must
    * match one of the registered providers' ids. Defaults to
    * `'claude-code'`.

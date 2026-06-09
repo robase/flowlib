@@ -44,7 +44,7 @@ import { registerPermissions as registerPermissionsImpl } from './permissions/re
 import { registerAudit as registerAuditImpl } from './audit/register';
 import { registerHooks as registerHooksImpl } from './hooks/register';
 import { registerPromptComposer as registerPromptComposerImpl } from './prompt/register';
-import { registerCloudflareDO as registerCloudflareDOImpl } from './cloudflare/register';
+import { registerCloudflareRuntime as registerCloudflareRuntimeImpl } from './cloudflare/register-runtime';
 import { registerRepositories as registerRepositoriesImpl } from './repositories/register';
 import { registerEndpoints as registerEndpointsImpl } from './endpoints/register';
 
@@ -89,7 +89,14 @@ function registerPromptComposer(ctx: PluginContext): void {
 }
 
 function registerCloudflareDO(ctx: PluginContext): void {
-  registerCloudflareDOImpl(ctx);
+  // Light: wire the per-isolate runtime bridge (no Agents SDK import).
+  registerCloudflareRuntimeImpl(ctx);
+  // The DO class is injected via `agents({ cloudflareDoClass })` on
+  // Cloudflare hosts; on Express/Node it stays undefined and the chat
+  // endpoint has no DO to dispatch to (REST + UI still work).
+  if (ctx.options.cloudflareDoClass !== undefined) {
+    ctx.registries.cloudflareDoClass = ctx.options.cloudflareDoClass;
+  }
 }
 
 // ─── Options + context plumbing ────────────────────────────────────────
@@ -134,6 +141,17 @@ export interface AgentsPluginOptions extends AgentsPluginPublicOptions {
    * The backend extracts `.backend`; `<Flowlib>` extracts `.frontend`.
    */
   frontend?: unknown;
+  /**
+   * The Cloudflare `AgentChatDO` Durable Object class, injected by
+   * Cloudflare hosts: `agents({ cloudflareDoClass: AgentChatDO })` where
+   * `AgentChatDO` is imported from `@flowlib/agents/cloudflare`. Stashed
+   * on the runtime registry so the chat endpoint can dispatch to the DO.
+   *
+   * Left unset on Express/Node hosts — the plugin then serves its REST +
+   * UI surface but cannot stream chat (which requires the DO runtime).
+   * Typed `unknown` so the core entry stays free of the Agents SDK.
+   */
+  cloudflareDoClass?: unknown;
 }
 
 function resolveOptions(opts: AgentsPluginOptions = {}): ResolvedAgentsOptions {
@@ -148,6 +166,7 @@ function resolveOptions(opts: AgentsPluginOptions = {}): ResolvedAgentsOptions {
     workspaceProviders,
     exposeFlowlibActions: opts.exposeFlowlibActions ?? false,
     defaultDenyList: opts.defaultDenyList ?? [],
+    cloudflareDoClass: opts.cloudflareDoClass,
     // opencode is the chat-first default — it talks to an opencode server
     // running inside the workspace sandbox and doesn't require an API key
     // at session-create time, so a fresh org can start chatting without

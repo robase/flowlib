@@ -3,6 +3,10 @@ import { defineConfig } from 'tsdown';
 export default defineConfig({
   entry: {
     'backend/index': 'src/index.ts',
+    // Heavy provider factories (vendor SDKs) — `@flowlib/agents/providers`.
+    'backend/providers': 'src/providers.ts',
+    // Cloudflare-only runtime surface (DO + sandbox) — `@flowlib/agents/cloudflare`.
+    'backend/cloudflare': 'src/cloudflare.ts',
     'browser/index': 'src/browser.ts',
     'frontend/index': 'src/frontend/types.ts',
     'shared/types': 'src/shared/types.ts',
