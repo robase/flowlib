@@ -145,9 +145,7 @@ export function AgentsLayout({ basePath }: AgentsLayoutProps): React.ReactElemen
               <CenteredMessage>Loading chat…</CenteredMessage>
             ) : activeSession.error ? (
               <CenteredMessage>
-                <span className="text-destructive">
-                  {(activeSession.error as Error).message}
-                </span>
+                <span className="text-destructive">{(activeSession.error as Error).message}</span>
               </CenteredMessage>
             ) : (
               <CenteredMessage>Chat not found.</CenteredMessage>

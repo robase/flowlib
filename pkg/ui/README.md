@@ -74,17 +74,19 @@ plugin package's `browser` export, so no server code is bundled):
 import { auth } from '@flowlib/user-auth';
 import { rbac } from '@flowlib/rbac';
 
-<Flowlib config={{ apiPath: '/api/flowlib', frontendPath: '/flowlib', plugins: [auth(), rbac()] }} />;
+<Flowlib
+  config={{ apiPath: '/api/flowlib', frontendPath: '/flowlib', plugins: [auth(), rbac()] }}
+/>;
 ```
 
 ## Props
 
-| Prop               | Type            | Default | Description                                                                |
-| ------------------ | --------------- | ------- | -------------------------------------------------------------------------- |
+| Prop               | Type            | Default | Description                                                                           |
+| ------------------ | --------------- | ------- | ------------------------------------------------------------------------------------- |
 | `config`           | `FlowlibConfig` | —       | Required. Shared config object — reads `apiPath`, `frontendPath`, `theme`, `plugins`. |
-| `reactQueryClient` | `QueryClient`   | —       | Bring your own React Query client.                                         |
-| `useMemoryRouter`  | `boolean`       | `false` | Use `MemoryRouter` instead of `BrowserRouter` (useful for testing).        |
-| `apiClient`        | `ApiClient`     | —       | Pre-configured API client (e.g. demo mode). Overrides `config.apiPath`.    |
+| `reactQueryClient` | `QueryClient`   | —       | Bring your own React Query client.                                                    |
+| `useMemoryRouter`  | `boolean`       | `false` | Use `MemoryRouter` instead of `BrowserRouter` (useful for testing).                   |
+| `apiClient`        | `ApiClient`     | —       | Pre-configured API client (e.g. demo mode). Overrides `config.apiPath`.               |
 
 ## CSS Scoping
 

@@ -46,10 +46,7 @@ export const PermissionRequestPrompt: React.FC<PermissionRequestPromptProps> = (
       data-testid="permission-prompt"
       data-resolved={pendingDecision ?? undefined}
     >
-      <div
-        id={`permission-${event.id}-title`}
-        className="text-sm font-medium text-foreground mb-1"
-      >
+      <div id={`permission-${event.id}-title`} className="text-sm font-medium text-foreground mb-1">
         Approve <span className="font-mono">{event.tool}</span>?
       </div>
       <pre className="text-xs font-mono whitespace-pre-wrap break-words bg-muted text-muted-foreground p-2 rounded my-2">

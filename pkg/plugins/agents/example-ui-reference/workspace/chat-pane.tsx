@@ -1,49 +1,51 @@
-"use client"
+'use client';
 
-import { useEffect, useRef, useState } from "react"
-import { ArrowUp, Loader2, Sparkles, Plug, ChevronsUpDown, Check } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { ScrollArea } from "@/components/ui/scroll-area"
+import { useEffect, useRef, useState } from 'react';
+import { ArrowUp, Loader2, Sparkles, Plug, ChevronsUpDown, Check } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import type { AgentSession, ChatMessage } from "@/lib/workspace/types"
-import { StatusDot } from "./status-dot"
-import { MessageBubble } from "./message-bubble"
+} from '@/components/ui/dropdown-menu';
+import type { AgentSession, ChatMessage } from '@/lib/workspace/types';
+import { StatusDot } from './status-dot';
+import { MessageBubble } from './message-bubble';
 
-const MODELS = ["Default model", "claude-opus-4.6", "gpt-5-mini", "gemini-3-flash"]
-const PROVIDERS = ["openrouter", "anthropic", "openai", "ai-gateway"]
+const MODELS = ['Default model', 'claude-opus-4.6', 'gpt-5-mini', 'gemini-3-flash'];
+const PROVIDERS = ['openrouter', 'anthropic', 'openai', 'ai-gateway'];
 
 interface ChatPaneProps {
-  session: AgentSession
-  messages: ChatMessage[]
-  sending: boolean
-  onSend: (text: string) => void
+  session: AgentSession;
+  messages: ChatMessage[];
+  sending: boolean;
+  onSend: (text: string) => void;
 }
 
 export function ChatPane({ session, messages, sending, onSend }: ChatPaneProps) {
-  const [draft, setDraft] = useState("")
-  const [model, setModel] = useState(MODELS[0])
-  const [provider, setProvider] = useState(PROVIDERS[0])
-  const bottomRef = useRef<HTMLDivElement>(null)
+  const [draft, setDraft] = useState('');
+  const [model, setModel] = useState(MODELS[0]);
+  const [provider, setProvider] = useState(PROVIDERS[0]);
+  const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" })
-  }, [messages.length, sending])
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages.length, sending]);
 
   function submit() {
-    if (!draft.trim() || sending) return
-    onSend(draft)
-    setDraft("")
+    if (!draft.trim() || sending) {
+      return;
+    }
+    onSend(draft);
+    setDraft('');
   }
 
   function onKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault()
-      submit()
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      submit();
     }
   }
 
@@ -112,23 +114,27 @@ export function ChatPane({ session, messages, sending, onSend }: ChatPaneProps) 
                 disabled={!draft.trim() || sending}
                 aria-label="Send message"
               >
-                {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowUp className="h-4 w-4" />}
+                {sending ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <ArrowUp className="h-4 w-4" />
+                )}
               </Button>
             </div>
           </div>
         </div>
       </div>
     </div>
-  )
+  );
 }
 
 interface ComposerSelectProps {
-  icon: React.ReactNode
-  label: string
-  options: string[]
-  value: string
-  onSelect: (value: string) => void
-  ariaLabel: string
+  icon: React.ReactNode;
+  label: string;
+  options: string[];
+  value: string;
+  onSelect: (value: string) => void;
+  ariaLabel: string;
 }
 
 function ComposerSelect({ icon, label, options, value, onSelect, ariaLabel }: ComposerSelectProps) {
@@ -151,5 +157,5 @@ function ComposerSelect({ icon, label, options, value, onSelect, ariaLabel }: Co
         ))}
       </DropdownMenuContent>
     </DropdownMenu>
-  )
+  );
 }

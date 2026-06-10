@@ -35,9 +35,7 @@ export function SkillsPanel(): React.ReactElement {
             Failed to load skills: {(error as Error).message}
           </p>
         ) : !skills || skills.length === 0 ? (
-          <p className="py-12 text-center text-sm text-muted-foreground">
-            No skills authored yet.
-          </p>
+          <p className="py-12 text-center text-sm text-muted-foreground">No skills authored yet.</p>
         ) : (
           skills.map((skill) => (
             <button

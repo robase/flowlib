@@ -488,10 +488,7 @@ function BranchPicker({ className }: { className?: string }): React.ReactElement
   return (
     <BranchPickerPrimitive.Root
       hideWhenSingleBranch
-      className={cn(
-        'mr-2 -ml-2 inline-flex items-center text-xs text-muted-foreground',
-        className,
-      )}
+      className={cn('mr-2 -ml-2 inline-flex items-center text-xs text-muted-foreground', className)}
     >
       <BranchPickerPrimitive.Previous asChild>
         <TooltipIconButton tooltip="Previous" size="sm">
@@ -543,9 +540,7 @@ function Avatar({ role }: { role: 'user' | 'assistant' }): React.ReactElement {
     <div
       className={cn(
         'flex size-7 shrink-0 items-center justify-center rounded-md text-xs font-medium',
-        role === 'user'
-          ? 'bg-secondary text-secondary-foreground'
-          : 'bg-primary/15 text-primary',
+        role === 'user' ? 'bg-secondary text-secondary-foreground' : 'bg-primary/15 text-primary',
       )}
       aria-hidden="true"
     >

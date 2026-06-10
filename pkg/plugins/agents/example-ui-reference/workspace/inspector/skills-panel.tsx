@@ -1,24 +1,24 @@
-"use client"
+'use client';
 
-import { useState } from "react"
-import { ArrowLeft } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Switch } from "@/components/ui/switch"
-import { cn } from "@/lib/utils"
-import type { Skill } from "@/lib/workspace/types"
+import { useState } from 'react';
+import { ArrowLeft } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
+import { cn } from '@/lib/utils';
+import type { Skill } from '@/lib/workspace/types';
 
 export function SkillsPanel({
   skills,
   onToggle,
 }: {
-  skills: Skill[]
-  onToggle: (id: string) => void
+  skills: Skill[];
+  onToggle: (id: string) => void;
 }) {
-  const [selectedId, setSelectedId] = useState<string | null>(null)
-  const selected = skills.find((s) => s.id === selectedId) ?? null
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const selected = skills.find((s) => s.id === selectedId) ?? null;
 
   if (selected) {
-    return <SkillDetail skill={selected} onBack={() => setSelectedId(null)} onToggle={onToggle} />
+    return <SkillDetail skill={selected} onBack={() => setSelectedId(null)} onToggle={onToggle} />;
   }
 
   return (
@@ -34,19 +34,23 @@ export function SkillsPanel({
             <div className="flex items-center gap-2">
               <span
                 className={cn(
-                  "h-1.5 w-1.5 shrink-0 rounded-full",
-                  skill.enabled ? "bg-success" : "bg-muted-foreground/40",
+                  'h-1.5 w-1.5 shrink-0 rounded-full',
+                  skill.enabled ? 'bg-success' : 'bg-muted-foreground/40',
                 )}
-                aria-label={skill.enabled ? "Enabled" : "Disabled"}
+                aria-label={skill.enabled ? 'Enabled' : 'Disabled'}
               />
-              <code className="truncate font-mono text-sm font-medium text-foreground">{skill.name}</code>
+              <code className="truncate font-mono text-sm font-medium text-foreground">
+                {skill.name}
+              </code>
             </div>
-            <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-muted-foreground">{skill.description}</p>
+            <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-muted-foreground">
+              {skill.description}
+            </p>
           </button>
         ))}
       </div>
     </div>
-  )
+  );
 }
 
 function SkillDetail({
@@ -54,18 +58,28 @@ function SkillDetail({
   onBack,
   onToggle,
 }: {
-  skill: Skill
-  onBack: () => void
-  onToggle: (id: string) => void
+  skill: Skill;
+  onBack: () => void;
+  onToggle: (id: string) => void;
 }) {
   return (
     <div className="flex h-full flex-col">
       <div className="flex items-center gap-2 px-3 pt-2 pb-2">
-        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onBack} aria-label="Back to skills">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-7 w-7"
+          onClick={onBack}
+          aria-label="Back to skills"
+        >
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <code className="min-w-0 flex-1 truncate font-mono text-sm font-medium">{skill.name}</code>
-        <Switch checked={skill.enabled} onCheckedChange={() => onToggle(skill.id)} aria-label="Toggle skill" />
+        <Switch
+          checked={skill.enabled}
+          onCheckedChange={() => onToggle(skill.id)}
+          aria-label="Toggle skill"
+        />
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto p-4 pt-2">
@@ -82,5 +96,5 @@ function SkillDetail({
         </pre>
       </div>
     </div>
-  )
+  );
 }

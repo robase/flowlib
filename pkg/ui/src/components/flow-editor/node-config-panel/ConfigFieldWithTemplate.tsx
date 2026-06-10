@@ -191,6 +191,7 @@ export const ConfigFieldWithTemplate = ({
             placeholder={field.placeholder || '{{ nodeId.data.variables.output.value }}'}
             onChange={(newValue) => onChange(newValue)}
             disabled={field.disabled}
+            inputData={inputData}
           />
           {adornment}
         </div>
@@ -348,6 +349,7 @@ export const ConfigFieldWithTemplate = ({
               onChange={(newValue) => onChange(newValue)}
               disabled={field.disabled}
               className="font-mono text-xs flex-1"
+              inputData={inputData}
             />
             {adornment}
           </div>

@@ -46,9 +46,7 @@ export const HumanInputCard: React.FC<HumanInputCardProps> = ({
       <div className="flex items-center justify-between mb-1">
         <span className="text-sm font-medium text-foreground">Agent needs input</span>
         <span
-          className={`text-xs ${
-            event.blocking ? 'text-destructive' : 'text-muted-foreground'
-          }`}
+          className={`text-xs ${event.blocking ? 'text-destructive' : 'text-muted-foreground'}`}
         >
           {event.blocking ? 'blocking' : 'optional'}
         </span>

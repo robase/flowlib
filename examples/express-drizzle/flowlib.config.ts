@@ -9,6 +9,7 @@ import { auth } from '@flowlib/user-auth';
 import { rbac } from '@flowlib/rbac';
 import { webhooks } from '@flowlib/webhooks';
 import { mcp } from '@flowlib/mcp';
+import { agents } from '@flowlib/agents';
 import { vercelWorkflowsPlugin } from '@flowlib/vercel-workflows';
 import { versionControl } from '@flowlib/version-control';
 import { githubProvider } from '@flowlib/version-control/providers/github';
@@ -127,5 +128,11 @@ export const flowlibConfig = defineConfig({
     vercelWorkflowsPlugin({
       deploymentUrl: process.env.VERCEL_DEPLOYMENT_URL,
     }),
+    // Code-editing agents. On Express/SQLite this serves the plugin's
+    // REST surface + UI (sessions, skills, MCP servers, tool policy).
+    // Live chat streaming needs the Cloudflare Durable Object host
+    // (`agents({ cloudflareDoClass })` + a sandbox workspace provider),
+    // which isn't available on this Node/SQLite path.
+    agents(),
   ],
 });

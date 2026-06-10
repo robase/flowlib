@@ -25,13 +25,13 @@ export default flowlibConfig;
 
 ## `database` (required)
 
-| Field              | Type                                  | Default       | Description                                                                                                                        |
-| ------------------ | ------------------------------------- | ------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| Field              | Type                                  | Default       | Description                                                                                                                                                               |
+| ------------------ | ------------------------------------- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `connectionString` | `string`                              | —             | Database URL. SQLite: `file:./dev.db`. PostgreSQL: `postgresql://user:pass@host:port/db`. MySQL: `mysql://user:pass@host:port/db`. Required for every driver except `d1`. |
-| `type`             | `'sqlite' \| 'postgresql' \| 'mysql'` | —             | Database dialect.                                                                                                                  |
-| `name`             | `string`                              | —             | Optional human-readable name.                                                                                                      |
-| `driver`           | see below                             | auto-detected | Database driver.                                                                                                                   |
-| `binding`          | `D1Database`                          | —             | Cloudflare D1 binding. Required (instead of `connectionString`) when `driver` is `d1`. Pass the `env.DB` your Worker received.     |
+| `type`             | `'sqlite' \| 'postgresql' \| 'mysql'` | —             | Database dialect.                                                                                                                                                         |
+| `name`             | `string`                              | —             | Optional human-readable name.                                                                                                                                             |
+| `driver`           | see below                             | auto-detected | Database driver.                                                                                                                                                          |
+| `binding`          | `D1Database`                          | —             | Cloudflare D1 binding. Required (instead of `connectionString`) when `driver` is `d1`. Pass the `env.DB` your Worker received.                                            |
 
 ### Supported drivers
 
@@ -73,19 +73,19 @@ logging: {
 
 ## `execution` (optional)
 
-| Field                     | Type                        | Default   | Description                                                                                              |
-| ------------------------- | --------------------------- | --------- | ------------------------------------------------------------------------------------------------------- |
-| `defaultTimeout`          | `number`                    | `60000`   | Node execution timeout (ms).                                                                            |
-| `maxConcurrentExecutions` | `number`                    | `10`      | Maximum parallel flow runs.                                                                             |
-| `enableTracing`           | `boolean`                   | `true`    | Store node-level execution traces.                                                                     |
-| `flowTimeoutMs`           | `number`                    | `600000`  | Stale-run heartbeat threshold (10 min). A run is failed only if heartbeats stop, not on wall-clock.    |
-| `modelNodeTimeoutMs`      | `number`                    | `300000`  | Per-node timeout for `core.model` (5 min) unless the node sets its own `timeoutMs`.                    |
-| `agentNodeTimeoutMs`      | `number`                    | `900000`  | Per-node timeout for the `core.agent` loop (15 min) unless the node sets its own `timeoutMs`.          |
-| `heartbeatIntervalMs`     | `number`                    | `30000`   | Heartbeat write interval during a run (ms).                                                            |
-| `staleRunCheckIntervalMs` | `number`                    | `60000`   | Stale-run detector poll interval (ms).                                                                 |
-| `sseHeartbeatIntervalMs`  | `number`                    | `15000`   | SSE keep-alive frame interval for the run event stream (ms). Lower it behind aggressive proxies.       |
-| `disableNativeEval`       | `boolean`                   | `false`   | Force-disable the `new Function` fast path in `DirectEvaluator` (edge-runtime hosts only).             |
-| `persistence`             | `'per-node' \| 'per-run'`   | `'per-node'` | Node-execution write strategy. `'per-run'` buffers in memory and flushes one blob on completion (~30× fewer writes) at the cost of in-flight node visibility. |
+| Field                     | Type                      | Default      | Description                                                                                                                                                   |
+| ------------------------- | ------------------------- | ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `defaultTimeout`          | `number`                  | `60000`      | Node execution timeout (ms).                                                                                                                                  |
+| `maxConcurrentExecutions` | `number`                  | `10`         | Maximum parallel flow runs.                                                                                                                                   |
+| `enableTracing`           | `boolean`                 | `true`       | Store node-level execution traces.                                                                                                                            |
+| `flowTimeoutMs`           | `number`                  | `600000`     | Stale-run heartbeat threshold (10 min). A run is failed only if heartbeats stop, not on wall-clock.                                                           |
+| `modelNodeTimeoutMs`      | `number`                  | `300000`     | Per-node timeout for `core.model` (5 min) unless the node sets its own `timeoutMs`.                                                                           |
+| `agentNodeTimeoutMs`      | `number`                  | `900000`     | Per-node timeout for the `core.agent` loop (15 min) unless the node sets its own `timeoutMs`.                                                                 |
+| `heartbeatIntervalMs`     | `number`                  | `30000`      | Heartbeat write interval during a run (ms).                                                                                                                   |
+| `staleRunCheckIntervalMs` | `number`                  | `60000`      | Stale-run detector poll interval (ms).                                                                                                                        |
+| `sseHeartbeatIntervalMs`  | `number`                  | `15000`      | SSE keep-alive frame interval for the run event stream (ms). Lower it behind aggressive proxies.                                                              |
+| `disableNativeEval`       | `boolean`                 | `false`      | Force-disable the `new Function` fast path in `DirectEvaluator` (edge-runtime hosts only).                                                                    |
+| `persistence`             | `'per-node' \| 'per-run'` | `'per-node'` | Node-execution write strategy. `'per-run'` buffers in memory and flushes one blob on completion (~30× fewer writes) at the cost of in-flight node visibility. |
 
 ## `triggers` (optional)
 
@@ -142,12 +142,12 @@ Custom logger instance. Must implement `info`, `debug`, `warn`, `error` methods.
 
 These matter only on cold-start-per-request runtimes (Cloudflare Workers, Vercel, etc.). Self-hosted long-running servers can ignore them.
 
-| Field               | Type      | Default | Description                                                                                                                       |
-| ------------------- | --------- | ------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| `skipDatabaseInit`  | `boolean` | `false` | Throw before connecting to the database — used by build steps. The Next.js adapter sets this automatically during a production build. |
-| `skipStartupChecks` | `boolean` | `false` | Skip the per-startup connectivity probe and table/schema checks. Use only when the deploy pipeline already ran `generate` + `push`; saves ~4 DB round-trips per cold start. |
+| Field               | Type      | Default | Description                                                                                                                                                                                               |
+| ------------------- | --------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `skipDatabaseInit`  | `boolean` | `false` | Throw before connecting to the database — used by build steps. The Next.js adapter sets this automatically during a production build.                                                                     |
+| `skipStartupChecks` | `boolean` | `false` | Skip the per-startup connectivity probe and table/schema checks. Use only when the deploy pipeline already ran `generate` + `push`; saves ~4 DB round-trips per cold start.                               |
 | `services`          | `object`  | —       | Adapter overrides for cross-cutting infrastructure (`encryption`, `eventBus`, `chatSessionStore`, `cronScheduler`, `batchPoller`, `jobRunner`). Edge runtimes inject runtime-native implementations here. |
-| `auth`              | `object`  | —       | Authorization config for the RBAC layer (`customAuthorize` callback, etc.). Consumed by plugin `onAuthorize` hooks.              |
+| `auth`              | `object`  | —       | Authorization config for the RBAC layer (`customAuthorize` callback, etc.). Consumed by plugin `onAuthorize` hooks.                                                                                       |
 
 ## Full example
 

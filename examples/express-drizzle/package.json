@@ -29,6 +29,7 @@
   },
   "dependencies": {
     "@flowlib/action-kit": "workspace:*",
+    "@flowlib/agents": "workspace:*",
     "@flowlib/core": "workspace:*",
     "@flowlib/express": "workspace:*",
     "@flowlib/mcp": "workspace:*",

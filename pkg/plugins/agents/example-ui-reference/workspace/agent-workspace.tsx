@@ -1,26 +1,26 @@
-"use client"
+'use client';
 
-import { useState } from "react"
-import { useWorkspace } from "@/lib/workspace/use-workspace"
-import { SessionList } from "./session-list"
-import { ChatPane } from "./chat-pane"
-import { InspectorPane, type TabId } from "./inspector/inspector-pane"
-import { InspectorRail } from "./inspector-rail"
-import { cn } from "@/lib/utils"
+import { useState } from 'react';
+import { useWorkspace } from '@/lib/workspace/use-workspace';
+import { SessionList } from './session-list';
+import { ChatPane } from './chat-pane';
+import { InspectorPane, type TabId } from './inspector/inspector-pane';
+import { InspectorRail } from './inspector-rail';
+import { cn } from '@/lib/utils';
 
 export function AgentWorkspace() {
-  const store = useWorkspace()
-  const [inspectorOpen, setInspectorOpen] = useState(false)
-  const [activeTab, setActiveTab] = useState<TabId>("memory")
+  const store = useWorkspace();
+  const [inspectorOpen, setInspectorOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<TabId>('memory');
 
   function selectTab(tab: TabId) {
     // Clicking the active tab while open closes the inspector; otherwise open + switch.
     if (inspectorOpen && tab === activeTab) {
-      setInspectorOpen(false)
-      return
+      setInspectorOpen(false);
+      return;
     }
-    setActiveTab(tab)
-    setInspectorOpen(true)
+    setActiveTab(tab);
+    setInspectorOpen(true);
   }
 
   return (
@@ -52,19 +52,19 @@ export function AgentWorkspace() {
       <aside
         aria-hidden={!inspectorOpen}
         className={cn(
-          "shrink-0 overflow-hidden border-l border-border transition-[width] duration-300 ease-in-out",
-          inspectorOpen ? "w-96 border-l" : "w-0 border-l-0",
+          'shrink-0 overflow-hidden border-l border-border transition-[width] duration-300 ease-in-out',
+          inspectorOpen ? 'w-96 border-l' : 'w-0 border-l-0',
         )}
       >
         <div
           className={cn(
-            "h-full w-96 transition-transform duration-300 ease-in-out",
-            inspectorOpen ? "translate-x-0" : "translate-x-full",
+            'h-full w-96 transition-transform duration-300 ease-in-out',
+            inspectorOpen ? 'translate-x-0' : 'translate-x-full',
           )}
         >
           <InspectorPane store={store} tab={activeTab} />
         </div>
       </aside>
     </div>
-  )
+  );
 }

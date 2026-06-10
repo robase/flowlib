@@ -159,10 +159,7 @@ function CreateForm({
   };
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="border-b border-border bg-card/40 px-6 py-4 space-y-3"
-    >
+    <form onSubmit={handleSubmit} className="border-b border-border bg-card/40 px-6 py-4 space-y-3">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         <label className="block">
           <span className="text-xs font-medium text-muted-foreground">Name</span>

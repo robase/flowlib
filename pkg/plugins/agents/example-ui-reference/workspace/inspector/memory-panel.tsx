@@ -1,36 +1,40 @@
-"use client"
+'use client';
 
-import { useState } from "react"
-import { Search, Trash2 } from "lucide-react"
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
-import { cn } from "@/lib/utils"
-import type { MemoryRecord, MemoryScope } from "@/lib/workspace/types"
+import { useState } from 'react';
+import { Search, Trash2 } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
+import type { MemoryRecord, MemoryScope } from '@/lib/workspace/types';
 
 const SCOPE_STYLE: Record<MemoryScope, string> = {
-  personal: "border-info/40 text-info",
-  project: "border-primary/40 text-primary",
-  global: "border-warning/40 text-warning",
-}
+  personal: 'border-info/40 text-info',
+  project: 'border-primary/40 text-primary',
+  global: 'border-warning/40 text-warning',
+};
 
 export function MemoryPanel({
   memories,
   onDelete,
 }: {
-  memories: MemoryRecord[]
-  onDelete: (id: string) => void
+  memories: MemoryRecord[];
+  onDelete: (id: string) => void;
 }) {
-  const [query, setQuery] = useState("")
-  const [scope, setScope] = useState<MemoryScope | "all">("all")
-  const q = query.trim().toLowerCase()
+  const [query, setQuery] = useState('');
+  const [scope, setScope] = useState<MemoryScope | 'all'>('all');
+  const q = query.trim().toLowerCase();
 
   const filtered = memories.filter((m) => {
-    if (scope !== "all" && m.scope !== scope) return false
-    if (q && !m.content.toLowerCase().includes(q) && !m.tags.some((t) => t.includes(q))) return false
-    return true
-  })
+    if (scope !== 'all' && m.scope !== scope) {
+      return false;
+    }
+    if (q && !m.content.toLowerCase().includes(q) && !m.tags.some((t) => t.includes(q))) {
+      return false;
+    }
+    return true;
+  });
 
-  const scopes: (MemoryScope | "all")[] = ["all", "personal", "project", "global"]
+  const scopes: (MemoryScope | 'all')[] = ['all', 'personal', 'project', 'global'];
 
   return (
     <div className="flex h-full flex-col">
@@ -52,10 +56,10 @@ export function MemoryPanel({
               type="button"
               onClick={() => setScope(s)}
               className={cn(
-                "rounded-full border px-2.5 py-0.5 text-xs capitalize transition-colors",
+                'rounded-full border px-2.5 py-0.5 text-xs capitalize transition-colors',
                 scope === s
-                  ? "border-primary bg-primary/10 text-primary"
-                  : "border-border text-muted-foreground hover:text-foreground",
+                  ? 'border-primary bg-primary/10 text-primary'
+                  : 'border-border text-muted-foreground hover:text-foreground',
               )}
             >
               {s}
@@ -72,7 +76,9 @@ export function MemoryPanel({
             <div key={m.id} className="group rounded-lg px-3 py-2.5 hover:bg-muted/40">
               <p className="text-sm leading-relaxed text-foreground">{m.content}</p>
               <div className="mt-2 flex flex-wrap items-center gap-1.5">
-                <span className={cn("text-[11px] capitalize", SCOPE_STYLE[m.scope])}>{m.scope}</span>
+                <span className={cn('text-[11px] capitalize', SCOPE_STYLE[m.scope])}>
+                  {m.scope}
+                </span>
                 {m.tags.map((t) => (
                   <span key={t} className="text-[11px] text-muted-foreground">
                     #{t}
@@ -93,5 +99,5 @@ export function MemoryPanel({
         )}
       </div>
     </div>
-  )
+  );
 }
