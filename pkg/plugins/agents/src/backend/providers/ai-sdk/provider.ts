@@ -36,7 +36,7 @@ import type {
   AgentProviderMessage,
   PromptInput,
 } from '../types';
-import type { WorkspaceHandle } from '../../workspaces/types';
+import type { WorkspaceHandle, WorkspaceAccessor } from '../../workspaces/types';
 import type { AiSdkCredential, AiSdkProviderOptions } from './types';
 import { randomBytes } from 'node:crypto';
 import { parseModelSpec, resolveModel } from './models';
@@ -64,13 +64,20 @@ interface SessionState {
   /** Composed system prompt (may be empty). */
   systemPrompt?: string;
   /**
-   * Workspace handle bound to this session, when one was provided at
-   * `createSession`. The host's `tools` factory receives this so it
-   * can build sandbox-backed tools that close over the handle.
-   * Sessions without a workspace (pure-Q&A chats) leave this
-   * undefined.
+   * Workspace handle bound to this session, once one has been
+   * provisioned. Populated either eagerly at `createSession` (rare for
+   * this provider) or lazily the first time `ensureWorkspace` runs.
+   * Sessions that never touch a `sandbox.*` tool (pure-chat) leave this
+   * undefined and never boot a container.
    */
   workspace?: WorkspaceHandle;
+  /**
+   * Host-supplied lazy provisioner. Called the first time a tool needs
+   * the sandbox; creates the workspace row if missing, resolves the
+   * handle, persists the workspace id onto the session, and returns the
+   * handle. The provider caches the result in {@link SessionState.workspace}.
+   */
+  ensureWorkspace?: WorkspaceAccessor;
   /**
    * Last resolved credential — cached for the lifetime of this
    * isolate. The orchestrator may call `prompt()` many times against
@@ -95,12 +102,14 @@ const CAPABILITIES: AgentCapabilities = {
   fileEdits: true,
   // Streams resume via AIChatAgent's WS buffer, same as opencode.
   resumableStream: false,
-  // Required so the session-create endpoint auto-provisions a sandbox
-  // workspace per chat. The sandbox.* tools (read_file, write_file,
-  // run_shell, git, …) close over this workspace handle — without it,
-  // the agent has no filesystem/shell access. Pure-Q&A sessions still
-  // work; they just carry an unused workspace handle.
-  workspaceRequired: true,
+  // The loop runs in the DO, not a container, so we DON'T need a sandbox
+  // up front. Setting this false stops the session-create endpoint from
+  // eager-provisioning a container per chat. The sandbox is instead
+  // booted on demand by the `sandbox.*` tools (explicitly via
+  // `sandbox.start`, or implicitly on first file/shell use) through the
+  // host-supplied `ensureWorkspace` accessor. Pure-chat turns — including
+  // ones that only call remote HTTP tools — never pay the cold-start.
+  workspaceRequired: false,
   permissionPrompts: true,
   preferredWorkspaceProviderId: 'cloudflare-sandbox',
 };
@@ -233,6 +242,7 @@ export function aiSdkProvider(options: AiSdkProviderOptions): AgentProvider {
         defaultModel: (input.config?.defaultModel as string | undefined) ?? defaultModel,
         systemPrompt: input.systemPrompt,
         ...(input.workspace ? { workspace: input.workspace } : {}),
+        ...(input.ensureWorkspace ? { ensureWorkspace: input.ensureWorkspace } : {}),
         extras: input.extras,
       });
       // eslint-disable-next-line no-console
@@ -329,6 +339,30 @@ export function aiSdkProvider(options: AiSdkProviderOptions): AgentProvider {
         return;
       }
 
+      // Lazy workspace accessor handed to the tools factory. Returns the
+      // cached handle if the sandbox is already up; otherwise calls the
+      // host's `ensureWorkspace` (provision + persist + resolve) once and
+      // caches the result on the session so a sandbox booted mid-turn
+      // (by `sandbox.start` or the first `sandbox.*` call) is reused by
+      // every later tool in the same turn — and by later turns, via the
+      // workspace id the host persisted onto the session row.
+      const ensureWorkspace: WorkspaceAccessor = async () => {
+        if (session.workspace) {
+          return session.workspace;
+        }
+        if (!session.ensureWorkspace) {
+          throw new Error(
+            '[agents/ai-sdk] a tool requested the sandbox but no workspace ' +
+              'provisioner is wired for this session. The host must pass ' +
+              '`ensureWorkspace` into createSession (or provide an eager ' +
+              '`workspace`) for sandbox.* tools to work.',
+          );
+        }
+        const handle = await session.ensureWorkspace();
+        session.workspace = handle;
+        return handle;
+      };
+
       // Build the tool catalogue: built-in stubs (echo/now) plus
       // whatever the host's tools factory returns (sandbox tools,
       // flowlib actions, …). Names collide → host-supplied wins;
@@ -339,6 +373,7 @@ export function aiSdkProvider(options: AiSdkProviderOptions): AgentProvider {
           hostTools = await toolsFactory({
             auth: session.auth,
             sessionId: input.providerSessionId,
+            ensureWorkspace,
             ...(session.workspace ? { workspace: session.workspace } : {}),
           });
         } catch (err) {
@@ -377,11 +412,12 @@ export function aiSdkProvider(options: AiSdkProviderOptions): AgentProvider {
 
       // Route every tool's output through the truncation store. Big
       // results spill to the workspace; small ones pass through intact.
-      const finalTools = wrapToolsWithOutputStore(
-        tools,
-        toolOutputStore,
-        session.workspace ? { workspace: session.workspace } : {},
-      );
+      // Read the workspace lazily (`getWorkspace`) so spill targets a
+      // sandbox booted mid-turn, without forcing one to boot just to
+      // spill — pre-sandbox turns keep large outputs inline.
+      const finalTools = wrapToolsWithOutputStore(tools, toolOutputStore, {
+        getWorkspace: () => session.workspace,
+      });
 
       // eslint-disable-next-line no-console
       console.log('[agents/ai-sdk] firing streamText…', {

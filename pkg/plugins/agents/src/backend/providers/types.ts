@@ -74,6 +74,17 @@ export interface CreateSessionInput {
   config: AgentProviderConfig;
   /** Workspace handle, present iff `capabilities.workspaceRequired`. */
   workspace?: import('../workspaces/types').WorkspaceHandle;
+  /**
+   * Lazy workspace provisioner. Providers whose
+   * `capabilities.workspaceRequired` is `false` receive this *instead of*
+   * an eager `workspace` and call it the first time a tool actually needs
+   * the sandbox — deferring (and for pure-chat turns, skipping) the
+   * container cold-start. The host implementation creates the workspace
+   * row if missing, persists the workspace id onto the session, resolves
+   * the handle, and caches it. Providers that require a workspace up
+   * front (`workspaceRequired: true`) can ignore this and use `workspace`.
+   */
+  ensureWorkspace?: import('../workspaces/types').WorkspaceAccessor;
   /** Initial system prompt (composed by Stream K). */
   systemPrompt?: string;
   /**

@@ -9,7 +9,7 @@
  */
 
 import type { CreateSessionInput } from '../types';
-import type { WorkspaceHandle } from '../../workspaces/types';
+import type { WorkspaceHandle, WorkspaceAccessor } from '../../workspaces/types';
 import type { AgentsAuthContext } from '../../../shared/auth-context';
 import type { AiSdkToolSet } from './tools';
 import type { ToolOutputBudget } from '../../tools/tool-output-store';
@@ -181,8 +181,9 @@ export interface AiSdkProviderOptions {
 
   /**
    * Per-turn factory for additional tools beyond the built-in stubs.
-   * Hosts typically pass `({ workspace }) => workspace ?
-   * buildSandboxTools(workspace) : {}` from the sandbox-tools module.
+   * Hosts typically pass `({ ensureWorkspace }) =>
+   * buildSandboxTools(ensureWorkspace)` from the sandbox-tools module so
+   * the sandbox boots lazily on first use.
    *
    * Called on each `prompt()` so tool sets can react to session
    * state (workspace presence, per-session permissions, etc.).
@@ -190,12 +191,21 @@ export interface AiSdkProviderOptions {
    * any name collision replaces the stub.
    *
    * The factory receives:
-   *   - `workspace`: handle for the session's workspace, if any
+   *   - `ensureWorkspace`: lazy accessor that provisions-or-resolves the
+   *     session's sandbox on first call. Tools should close over this
+   *     rather than the eager `workspace` so a sandbox spun up mid-turn
+   *     (explicitly via `sandbox.start`, or implicitly by the first
+   *     `sandbox.*` call) is immediately usable.
+   *   - `workspace`: handle for the session's workspace if one was
+   *     already provisioned at session-create time (e.g. providers with
+   *     `workspaceRequired: true`); `undefined` for lazy sessions until
+   *     `ensureWorkspace()` runs.
    *   - `auth`: resolved auth context (org/user/role)
    *   - `sessionId`: the provider session id (placeholder format)
    */
   tools?: (input: {
     workspace?: WorkspaceHandle;
+    ensureWorkspace: WorkspaceAccessor;
     auth: AgentsAuthContext;
     sessionId: string;
   }) => Promise<AiSdkToolSet> | AiSdkToolSet;

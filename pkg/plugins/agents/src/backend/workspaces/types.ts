@@ -92,6 +92,20 @@ export interface WorkspaceHandle {
   metadata: Record<string, unknown>;
 }
 
+/**
+ * Lazily provision-or-resolve a session's workspace, returning a live
+ * handle. The first call may boot a sandbox (cold-start cost); subsequent
+ * calls return the same handle.
+ *
+ * Hosts supply this so providers whose `capabilities.workspaceRequired`
+ * is `false` can defer — and for pure-chat turns, skip entirely — the
+ * container provisioning until a tool actually needs the filesystem or
+ * shell. The host implementation is expected to create the workspace row
+ * if missing, persist the workspace id onto the session, resolve the
+ * handle, and cache the result.
+ */
+export type WorkspaceAccessor = () => Promise<WorkspaceHandle>;
+
 /** Input to `WorkspaceProvider.create`. */
 export interface CreateWorkspaceInput {
   /** Pre-allocated workspace id (the row's PK). */

@@ -588,8 +588,24 @@ export class AgentChatDO extends (AIChatAgent as unknown as new (
     // stash it directly via `setAgentsRuntime` can still pass — we
     // detect that shape by checking for `typeof === 'function'`.
     type RepositoriesBag = {
-      sessions: { findById(id: string): Promise<unknown> };
-      workspaces?: { findById(id: string, orgId: string): Promise<unknown> };
+      sessions: {
+        findById(id: string): Promise<unknown>;
+        update?(
+          id: string,
+          patch: { workspaceId?: string },
+          orgId?: string | null,
+        ): Promise<unknown>;
+      };
+      workspaces?: {
+        findById(id: string, orgId: string): Promise<unknown>;
+        create?(input: {
+          orgId: string | null;
+          name: string;
+          workspaceProviderId: string;
+          createdBy: string;
+          visibility?: string;
+        }): Promise<unknown>;
+      };
       messages?: { append?: (input: unknown) => Promise<void> };
       skills?: {
         listForScope(scope: {
@@ -679,37 +695,91 @@ export class AgentChatDO extends (AIChatAgent as unknown as new (
       return null;
     }
 
-    // ── Workspace rehydration ──
+    // ── Workspace provisioning (lazy + on-demand) ──
     //
-    // The original `POST /sessions` call resolved the workspace handle
-    // in the fetch isolate; that resolution stayed there as part of
-    // the provider's per-session state. This DO is a separate isolate
-    // (DO instances do not share an isolate with the Worker fetch
-    // handler), so we have to re-resolve here so the provider can
-    // be rehydrated below.
-    let workspaceHandle: { metadata?: Record<string, unknown> } | undefined;
-    if (sessionRow.workspaceId && repositories.workspaces) {
-      try {
-        const wsRow = (await repositories.workspaces.findById(
-          sessionRow.workspaceId,
-          resolved.orgId,
-        )) as { workspaceProviderId?: string } | undefined;
-        if (wsRow?.workspaceProviderId) {
-          const wsProvider = runtime.workspaces?.get(wsRow.workspaceProviderId);
-          if (wsProvider) {
-            workspaceHandle = (await wsProvider.resolve(sessionRow.workspaceId, resolved.auth)) as {
-              metadata?: Record<string, unknown>;
-            };
-          } else {
-            // eslint-disable-next-line no-console
-            console.warn('[AgentChatDO] workspace provider not registered in this isolate', {
-              workspaceProviderId: wsRow.workspaceProviderId,
-            });
-          }
+    // `ensureWorkspace()` resolves the session's sandbox handle,
+    // provisioning a fresh workspace row the first time if the session
+    // has none. It's the single seam both eager and lazy providers go
+    // through:
+    //
+    //   - Providers that require a workspace up front
+    //     (`workspaceRequired: true`, e.g. claude-code) call it eagerly
+    //     below so the handle is ready at `createSession`.
+    //   - Providers that boot on demand (`workspaceRequired: false`,
+    //     e.g. ai-sdk) receive it as the `ensureWorkspace` accessor and
+    //     call it the first time a `sandbox.*` tool runs — so pure-chat
+    //     sessions never provision a container.
+    //
+    // The result is cached for this turn; the newly-created workspace id
+    // is persisted onto the session row, so later turns/isolates resolve
+    // the same sandbox.
+    let cachedWorkspace: { metadata?: Record<string, unknown> } | undefined;
+    const ensureWorkspace = async (): Promise<{ metadata?: Record<string, unknown> }> => {
+      if (cachedWorkspace) {
+        return cachedWorkspace;
+      }
+      let workspaceId = sessionRow.workspaceId;
+      let workspaceProviderId: string | undefined;
+      if (workspaceId && repositories.workspaces) {
+        const wsRow = (await repositories.workspaces.findById(workspaceId, resolved.orgId)) as
+          | { workspaceProviderId?: string }
+          | undefined;
+        workspaceProviderId = wsRow?.workspaceProviderId;
+      }
+      if (!workspaceId) {
+        // No workspace yet — provision one now and persist the link.
+        workspaceProviderId =
+          provider.capabilities.preferredWorkspaceProviderId ??
+          (runtime.workspaces ? runtime.workspaces.keys().next().value : undefined);
+        if (!workspaceProviderId) {
+          throw new Error('No workspace provider registered to provision a sandbox.');
         }
+        if (!repositories.workspaces?.create) {
+          throw new Error('Workspaces repository unavailable — cannot provision a sandbox.');
+        }
+        const created = (await repositories.workspaces.create({
+          orgId: resolved.orgId,
+          name: 'Chat workspace',
+          workspaceProviderId,
+          createdBy: resolved.auth.userId,
+          visibility: 'private',
+        })) as { id: string };
+        workspaceId = created.id;
+        if (repositories.sessions.update) {
+          await repositories.sessions.update(resolved.sessionId, { workspaceId }, resolved.orgId);
+        }
+        // eslint-disable-next-line no-console
+        console.log('[AgentChatDO] provisioned workspace on demand', {
+          sessionId: resolved.sessionId,
+          workspaceId,
+          workspaceProviderId,
+        });
+      }
+      if (!workspaceProviderId) {
+        throw new Error(`Workspace ${workspaceId} has no provider id on its row.`);
+      }
+      const wsProvider = runtime.workspaces?.get(workspaceProviderId);
+      if (!wsProvider) {
+        throw new Error(
+          `Workspace provider "${workspaceProviderId}" not registered in this isolate.`,
+        );
+      }
+      cachedWorkspace = (await wsProvider.resolve(workspaceId, resolved.auth)) as {
+        metadata?: Record<string, unknown>;
+      };
+      return cachedWorkspace;
+    };
+
+    // Eager resolve only when the provider needs a workspace at
+    // session-create time. Lazy providers leave `workspaceHandle`
+    // undefined and rely on the accessor passed into `createSession`.
+    let workspaceHandle: { metadata?: Record<string, unknown> } | undefined;
+    if (provider.capabilities.workspaceRequired) {
+      try {
+        workspaceHandle = await ensureWorkspace();
       } catch (err) {
         // eslint-disable-next-line no-console
-        console.warn('[AgentChatDO] workspace rehydrate failed', {
+        console.warn('[AgentChatDO] eager workspace provisioning failed', {
           workspaceId: sessionRow.workspaceId,
           message: err instanceof Error ? err.message : String(err),
         });
@@ -756,6 +826,9 @@ export class AgentChatDO extends (AIChatAgent as unknown as new (
         auth: resolved.auth,
         config: {},
         workspace: workspaceHandle as never,
+        // Lazy provisioner for on-demand providers (ai-sdk). Eager
+        // providers ignore it and use `workspace` above.
+        ensureWorkspace: ensureWorkspace as never,
         credentialId: sessionRow.credentialId ?? undefined,
         providerSessionId: sessionRow.providerSessionId,
         systemPrompt: effectiveSystemPrompt,

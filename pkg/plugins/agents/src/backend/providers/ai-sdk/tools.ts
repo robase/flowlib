@@ -192,7 +192,19 @@ function fallbackCallId(name: string): string {
 export function wrapToolsWithOutputStore(
   tools: AiSdkToolSet,
   store: ToolOutputStore,
-  opts: { workspace?: WorkspaceHandle; budget?: Partial<ToolOutputBudget> } = {},
+  opts: {
+    workspace?: WorkspaceHandle;
+    /**
+     * Lazy workspace getter, read at execute-time. Preferred over the
+     * eager `workspace` so a sandbox provisioned mid-turn (e.g. by an
+     * earlier `sandbox.*` tool call) becomes the spill target for later
+     * tool results — without forcing a container to boot just to spill.
+     * When it returns `undefined`, large outputs stay inline until a
+     * workspace exists.
+     */
+    getWorkspace?: () => WorkspaceHandle | undefined;
+    budget?: Partial<ToolOutputBudget>;
+  } = {},
 ): AiSdkToolSet {
   const wrapped: AiSdkToolSet = {};
   for (const [name, descriptor] of Object.entries(tools)) {
@@ -202,11 +214,12 @@ export function wrapToolsWithOutputStore(
       execute: async (input, options) => {
         const result = await descriptor.execute(input, options);
         const toolCallId = options.toolCallId ?? fallbackCallId(name);
+        const workspace = opts.getWorkspace?.() ?? opts.workspace;
         try {
           const stored = await store.store({
             toolCallId,
             output: result,
-            ...(opts.workspace ? { workspace: opts.workspace } : {}),
+            ...(workspace ? { workspace } : {}),
             ...(opts.budget ? { budget: opts.budget } : {}),
           });
           // Preserve the original (possibly structured) result when it

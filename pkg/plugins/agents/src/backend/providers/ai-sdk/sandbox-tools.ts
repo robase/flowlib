@@ -7,13 +7,30 @@
  * tool invocation fits inside `containerFetch`'s ~10-15s request
  * lifetime budget; we never hold a long-lived response open.
  *
- * Hosts opt in by passing `tools: ({ workspace }) =>
- * buildSandboxTools(workspace)` to `aiSdkProvider({ ... })`.
+ * Hosts opt in by passing `tools: ({ ensureWorkspace }) =>
+ * buildSandboxTools(ensureWorkspace)` to `aiSdkProvider({ ... })`.
+ *
+ * # Lazy provisioning
+ *
+ * Tools close over a {@link WorkspaceAccessor}, not a concrete handle.
+ * Every tool awaits `ensure()` before touching the filesystem/shell, so
+ * the sandbox container is provisioned on first use rather than at
+ * session start. Two ways it boots:
+ *
+ *   - **Explicit** — the model calls `sandbox.start`, which provisions
+ *     the container and reports it ready.
+ *   - **Implicit** — any other `sandbox.*` tool provisions transparently
+ *     on its first call.
+ *
+ * Either way the first call eats the cold-start; subsequent calls reuse
+ * the cached handle. Pure-chat turns that never touch a `sandbox.*` tool
+ * never provision a container at all.
  *
  * # Tool surface
  *
  * | Tool name             | Purpose                                                  |
  * | --------------------- | -------------------------------------------------------- |
+ * | `sandbox.start`       | Provision (or attach to) the sandbox container           |
  * | `sandbox.read_file`   | Read a workspace-relative file as UTF-8                  |
  * | `sandbox.write_file`  | Create or overwrite a workspace file                     |
  * | `sandbox.edit_file`   | Find-and-replace within a file (single literal match)    |
@@ -25,7 +42,7 @@
  * flowlib action catalogue.
  */
 
-import type { WorkspaceHandle } from '../../workspaces/types';
+import type { WorkspaceAccessor } from '../../workspaces/types';
 import type { AiSdkToolDescriptor, AiSdkToolSet } from './tools';
 
 /**
@@ -45,11 +62,35 @@ const DEFAULT_SHELL_TIMEOUT_MS = 8_000;
 const MAX_WRITE_BYTES = 5 * 1024 * 1024; // 5 MB
 
 /**
- * Build the sandbox tool catalogue bound to a specific workspace
- * handle. Returned tools close over `workspace`; calls flow through
- * its methods.
+ * Build the sandbox tool catalogue bound to a lazy workspace accessor.
+ * Returned tools close over `ensure`; each call provisions-or-resolves
+ * the sandbox on first use and then flows through the handle's methods.
  */
-export function buildSandboxTools(workspace: WorkspaceHandle): AiSdkToolSet {
+export function buildSandboxTools(ensure: WorkspaceAccessor): AiSdkToolSet {
+  const start: AiSdkToolDescriptor = {
+    description:
+      'Provision (or attach to) the agent sandbox — a Linux container with ' +
+      'a filesystem, shell, and git. Call this first if you want to boot ' +
+      'the sandbox explicitly before doing file or shell work; otherwise ' +
+      'the first sandbox.* tool call boots it automatically. Booting can ' +
+      'take a few seconds the first time. Returns the workspace id once ' +
+      'the sandbox is ready.',
+    parameters: {
+      type: 'object',
+      properties: {},
+      additionalProperties: false,
+    },
+    execute: async (_raw, options) => {
+      options.abortSignal?.throwIfAborted?.();
+      const workspace = await ensure();
+      return {
+        ready: true,
+        workspaceId: workspace.id,
+        ...(workspace.rootPath ? { rootPath: workspace.rootPath } : {}),
+      };
+    },
+  };
+
   const readFile: AiSdkToolDescriptor = {
     description:
       'Read the contents of a file from the agent workspace. Path is ' +
@@ -70,6 +111,7 @@ export function buildSandboxTools(workspace: WorkspaceHandle): AiSdkToolSet {
       const path = String(raw.path ?? '');
       assertSafePath(path);
       options.abortSignal?.throwIfAborted?.();
+      const workspace = await ensure();
       const content = await workspace.readFile(path);
       return { path, content };
     },
@@ -100,6 +142,7 @@ export function buildSandboxTools(workspace: WorkspaceHandle): AiSdkToolSet {
         );
       }
       options.abortSignal?.throwIfAborted?.();
+      const workspace = await ensure();
       await workspace.writeFile(path, content);
       return { path, bytesWritten: byteLength };
     },
@@ -136,6 +179,7 @@ export function buildSandboxTools(workspace: WorkspaceHandle): AiSdkToolSet {
         throw new Error('sandbox.edit_file: `find` must be a non-empty string.');
       }
       options.abortSignal?.throwIfAborted?.();
+      const workspace = await ensure();
       const before = await workspace.readFile(path);
       const first = before.indexOf(find);
       if (first < 0) {
@@ -180,6 +224,7 @@ export function buildSandboxTools(workspace: WorkspaceHandle): AiSdkToolSet {
     execute: async (raw, options) => {
       const glob = String(raw.glob ?? '**/*');
       options.abortSignal?.throwIfAborted?.();
+      const workspace = await ensure();
       const files = await workspace.listFiles(glob);
       return { glob, files };
     },
@@ -222,6 +267,7 @@ export function buildSandboxTools(workspace: WorkspaceHandle): AiSdkToolSet {
           ? raw.timeoutMs
           : DEFAULT_SHELL_TIMEOUT_MS;
       options.abortSignal?.throwIfAborted?.();
+      const workspace = await ensure();
       const result = await workspace.exec(command, {
         ...(cwd ? { cwd } : {}),
         timeoutMs,
@@ -270,6 +316,7 @@ export function buildSandboxTools(workspace: WorkspaceHandle): AiSdkToolSet {
           ? raw.timeoutMs
           : DEFAULT_SHELL_TIMEOUT_MS;
       options.abortSignal?.throwIfAborted?.();
+      const workspace = await ensure();
       const result = await workspace.exec(`git ${args}`, {
         ...(cwd ? { cwd } : {}),
         timeoutMs,
@@ -284,6 +331,7 @@ export function buildSandboxTools(workspace: WorkspaceHandle): AiSdkToolSet {
   };
 
   return {
+    'sandbox.start': start,
     'sandbox.read_file': readFile,
     'sandbox.write_file': writeFile,
     'sandbox.edit_file': editFile,
