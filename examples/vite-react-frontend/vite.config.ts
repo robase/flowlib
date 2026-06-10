@@ -28,6 +28,7 @@ export default defineConfig({
         find: /^@flowlib\/vercel-workflows$/,
         replacement: pkg('plugins/vercel-workflows/src/browser.ts'),
       },
+      { find: /^@flowlib\/agents$/, replacement: pkg('plugins/agents/src/browser.ts') },
       { find: /^@flowlib\/layouts$/, replacement: pkg('layouts/src/index.ts') },
       { find: /^@flowlib\/ui$/, replacement: pkg('ui/src/index.ts') },
       { find: /^@flowlib\/action-kit$/, replacement: pkg('action-kit/src/index.ts') },
