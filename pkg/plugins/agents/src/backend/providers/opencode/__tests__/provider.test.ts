@@ -12,24 +12,28 @@ import type { AgentEvent } from '../../../../shared/events';
 // ─── Stateful mock SDK ──────────────────────────────────────────────────
 
 interface FakeClient {
-  __sentPrompts: Array<{ id: string; body: unknown }>;
+  /** Bodies passed to `session.promptAsync` (the live turn-fire path). */
+  __promptAsync: Array<{ id: string; body: unknown }>;
   __aborted: string[];
   __deleted: string[];
+  /** Swap the assistant-message snapshot the poll loop reads next. */
+  __setMessages: (list: unknown[]) => void;
+  // Legacy SSE seams — retained so the not-yet-migrated tests that push
+  // events still compile. The provider no longer subscribes to the
+  // stream (it polls `session.messages`), so these are inert.
   __pushEvent: (e: unknown) => void;
   __closeStream: () => void;
   session: {
-    create: (opts: {
-      body?: { title?: string };
-      query?: { directory?: string };
-    }) => Promise<{ id: string }>;
-    prompt: (opts: {
-      path: { id: string };
-      body: unknown;
-      query?: { directory?: string };
+    create: (opts: { title?: string; directory?: string }) => Promise<{ id: string }>;
+    promptAsync: (opts: {
+      sessionID: string;
+      parts: unknown;
+      model?: { providerID: string; modelID: string };
+      directory?: string;
     }) => Promise<unknown>;
-    abort: (opts: { path: { id: string } }) => Promise<unknown>;
-    delete: (opts: { path: { id: string } }) => Promise<unknown>;
-    messages: (opts: { path: { id: string } }) => Promise<unknown>;
+    abort: (opts: { sessionID: string; directory?: string }) => Promise<unknown>;
+    delete: (opts: { sessionID: string; directory?: string }) => Promise<unknown>;
+    messages: (opts: { sessionID: string; directory?: string }) => Promise<unknown>;
   };
   event: {
     subscribe: () => Promise<{ stream: AsyncGenerator<unknown, unknown, unknown> }>;
@@ -39,9 +43,12 @@ interface FakeClient {
 
 function createFakeClient(): FakeClient {
   let nextId = 1;
-  const sentPrompts: Array<{ id: string; body: unknown }> = [];
+  const promptAsync: Array<{ id: string; body: unknown }> = [];
   const aborted: string[] = [];
   const deleted: string[] = [];
+  // The assistant-message snapshot the poll loop reads. Tests mutate it
+  // via `__setMessages` to simulate opencode streaming the turn out.
+  let messageSnapshot: unknown[] = [];
 
   // Async event queue powering the SSE iterator.
   const queue: unknown[] = [];
@@ -84,35 +91,31 @@ function createFakeClient(): FakeClient {
   }
 
   return {
-    __sentPrompts: sentPrompts,
+    __promptAsync: promptAsync,
     __aborted: aborted,
     __deleted: deleted,
+    __setMessages: (list) => {
+      messageSnapshot = list;
+    },
     __pushEvent: push,
     __closeStream: close,
     session: {
       create: async () => ({ id: `session-${nextId++}` }),
-      prompt: async (opts) => {
-        sentPrompts.push({ id: opts.path.id, body: opts.body });
-        // Resolve later — the prompt promise is fired-and-forgotten by
-        // the provider, so timing doesn't matter for the iterator path.
-        return { info: { id: 'msg' }, parts: [] };
+      promptAsync: async (opts) => {
+        // `promptAsync` acks immediately; opencode runs the turn in the
+        // background and the provider polls `session.messages` for it.
+        promptAsync.push({ id: opts.sessionID, body: opts });
+        return { info: { id: 'msg' } };
       },
       abort: async (opts) => {
-        aborted.push(opts.path.id);
+        aborted.push(opts.sessionID);
         return {};
       },
       delete: async (opts) => {
-        deleted.push(opts.path.id);
+        deleted.push(opts.sessionID);
         return {};
       },
-      messages: async () => ({
-        data: [
-          {
-            info: { id: 'm1', role: 'user', sessionID: 's', time: { created: 1700000000000 } },
-            parts: [{ type: 'text', text: 'hi' }],
-          },
-        ],
-      }),
+      messages: async () => ({ data: messageSnapshot }),
     },
     event: {
       subscribe: async () => ({ stream: stream() }),
@@ -234,36 +237,92 @@ describe('openCodeProvider.validateConfig', () => {
 // ─── createSession ─────────────────────────────────────────────────────
 
 /**
- * Drive the lazy-boot path by starting a prompt iterator. Yields back
- * once the upstream `session.create` has fired, then closes the stream
- * so the iterator drains. This mirrors how the runtime works: the
- * upstream session is provisioned on the first prompt, not at create
- * time.
+ * Build one polled assistant-message snapshot. The provider's poll loop
+ * reads `session.messages` and diffs the assistant message's parts to
+ * synthesise streaming deltas. `created` is far in the future so it
+ * always clears the "message from a prior turn" filter; `completed`
+ * stamps `time.completed` so the loop terminates.
+ */
+function assistantSnapshot(opts: {
+  id?: string;
+  parts?: unknown[];
+  completed?: boolean;
+  error?: unknown;
+}): unknown {
+  return {
+    info: {
+      id: opts.id ?? 'm1',
+      role: 'assistant',
+      time: {
+        created: 10_000_000_000_000,
+        ...(opts.completed ? { completed: 10_000_000_000_001 } : {}),
+      },
+      error: opts.error ?? null,
+    },
+    parts: opts.parts ?? [],
+  };
+}
+
+/**
+ * Drive a prompt turn through the provider's `promptAsync` + poll loop
+ * under fake timers. The loop sleeps `POLL_INTERVAL_MS` (1500ms) between
+ * polls; we advance the clock in 1.6s steps, flushing microtasks each
+ * step, until the iterator drains (the turn completed / errored / was
+ * aborted) or `maxPolls` is hit. Self-contained: toggles fake timers on
+ * entry and restores real timers on exit.
+ */
+async function drivePollingPrompt(
+  provider: ReturnType<typeof openCodeProvider>,
+  input: Parameters<ReturnType<typeof openCodeProvider>['prompt']>[0],
+  opts: { maxPolls?: number; beforePoll?: (poll: number) => void } = {},
+): Promise<AgentEvent[]> {
+  vi.useFakeTimers();
+  try {
+    const collected: AgentEvent[] = [];
+    let done = false;
+    const iter = (async () => {
+      for await (const e of provider.prompt(input)) {
+        collected.push(e);
+      }
+      done = true;
+    })();
+    // Settle the lazy boot (SDK import + session.create + promptAsync),
+    // which happens before the first poll's timer.
+    await vi.advanceTimersByTimeAsync(0);
+    const maxPolls = opts.maxPolls ?? 10;
+    for (let poll = 0; poll < maxPolls && !done; poll++) {
+      opts.beforePoll?.(poll);
+      await vi.advanceTimersByTimeAsync(1600);
+    }
+    await iter;
+    return collected;
+  } finally {
+    vi.useRealTimers();
+  }
+}
+
+/**
+ * Drive the lazy-boot path: fire a prompt whose turn completes on the
+ * first poll, so the upstream `session.create` has run and the iterator
+ * drains cleanly. Used by tests that only care that the upstream session
+ * was provisioned (closeSession / shutdown).
  */
 async function triggerLazyBoot(
   provider: ReturnType<typeof openCodeProvider>,
   providerSessionId: string,
 ): Promise<AgentEvent[]> {
-  const ac = new AbortController();
-  const collected: AgentEvent[] = [];
-  const iterPromise = (async () => {
-    for await (const e of provider.prompt({
-      providerSessionId,
-      parts: [{ type: 'text', text: 'hi' }],
-      abortSignal: ac.signal,
-    })) {
-      collected.push(e);
-    }
-  })();
-  await flushMicrotasks();
-  activeClient.__closeStream();
-  await iterPromise;
-  return collected;
+  activeClient.__setMessages([assistantSnapshot({ completed: true })]);
+  return drivePollingPrompt(provider, {
+    providerSessionId,
+    parts: [{ type: 'text', text: 'hi' }],
+    abortSignal: new AbortController().signal,
+  });
 }
 
 /**
  * Yield enough microtasks for the lazy-boot chain to settle: SDK
- * dynamic-import, `client.session.create`, then `client.event.subscribe`.
+ * dynamic-import then `client.session.create`. Retained for the tests
+ * that still drive the iterator by hand.
  */
 async function flushMicrotasks(): Promise<void> {
   for (let i = 0; i < 8; i++) {
@@ -419,7 +478,7 @@ describe('openCodeProvider.prompt', () => {
     expect(events[0]).toMatchObject({ type: 'session-end', reason: 'error' });
   });
 
-  it('translates SSE events into AgentEvents and terminates on session.idle', async () => {
+  it('translates polled message snapshots into AgentEvents and terminates on completion', async () => {
     const provider = openCodeProvider({ defaultModel: 'anthropic/claude-sonnet-4-7' });
     const session = await provider.createSession({
       auth: {} as never,
@@ -427,60 +486,40 @@ describe('openCodeProvider.prompt', () => {
       extras: { baseUrl: 'http://local' },
     });
 
-    const ac = new AbortController();
-
-    const collected: AgentEvent[] = [];
-    const iterPromise = (async () => {
-      for await (const e of provider.prompt({
+    // The turn streams a single text part, then completes: the poll loop
+    // diffs the accumulated text into a delta and ends on `time.completed`.
+    let poll = 0;
+    const collected = await drivePollingPrompt(
+      provider,
+      {
         providerSessionId: session.providerSessionId,
         parts: [{ type: 'text', text: 'do thing' }],
-        abortSignal: ac.signal,
-      })) {
-        collected.push(e);
-      }
-    })();
-
-    // Wait for lazy boot (SDK import + session.create + event.subscribe).
-    await flushMicrotasks();
-
-    activeClient.__pushEvent({
-      type: 'message.part.updated',
-      properties: {
-        delta: 'Hello',
-        part: {
-          id: 'p',
-          sessionID: FAKE_UPSTREAM_ID,
-          messageID: 'm1',
-          type: 'text',
-          text: '',
+        abortSignal: new AbortController().signal,
+      },
+      {
+        beforePoll: (p) => {
+          poll = p;
+          activeClient.__setMessages([
+            assistantSnapshot({
+              parts: [{ type: 'text', id: 'p', text: 'Hello' }],
+              completed: poll >= 1,
+            }),
+          ]);
         },
       },
-    });
-    activeClient.__pushEvent({
-      type: 'message.updated',
-      properties: {
-        info: {
-          id: 'm1',
-          role: 'assistant',
-          sessionID: FAKE_UPSTREAM_ID,
-          time: { created: 1, completed: 2 },
-          tokens: { input: 1, output: 1, reasoning: 0, cache: { read: 0, write: 0 } },
-        },
-      },
-    });
-    activeClient.__pushEvent({
-      type: 'session.idle',
-      properties: { sessionID: FAKE_UPSTREAM_ID },
-    });
-    activeClient.__closeStream();
+    );
 
-    await iterPromise;
-
-    expect(collected.find((e) => e.type === 'text-delta')).toBeTruthy();
+    const delta = collected.find((e) => e.type === 'text-delta');
+    expect(delta).toBeTruthy();
+    expect(delta).toMatchObject({ text: 'Hello' });
     expect(collected.find((e) => e.type === 'message-complete')).toBeTruthy();
-    // Prompt was actually issued against the upstream session id.
-    expect(activeClient.__sentPrompts).toHaveLength(1);
-    expect(activeClient.__sentPrompts[0].id).toBe(FAKE_UPSTREAM_ID);
+    expect(
+      collected.find((e) => e.type === 'session-end' && e.reason === 'completed'),
+    ).toBeTruthy();
+    // The turn was actually fired against the upstream session id via
+    // promptAsync (not the legacy synchronous prompt).
+    expect(activeClient.__promptAsync).toHaveLength(1);
+    expect(activeClient.__promptAsync[0].id).toBe(FAKE_UPSTREAM_ID);
   });
 
   it('drops events from a different session id', async () => {
@@ -573,23 +612,17 @@ describe('openCodeProvider.prompt', () => {
       extras: { baseUrl: 'http://local' },
     });
 
-    const ac = new AbortController();
-    const iterPromise = (async () => {
-      for await (const _ of provider.prompt({
-        providerSessionId: session.providerSessionId,
-        parts: [{ type: 'text', text: 'go' }],
-        abortSignal: ac.signal,
-        model: 'openai/gpt-5',
-      })) {
-        // drain
-      }
-    })();
+    // A turn that completes immediately so the iterator drains; we only
+    // care about the model that was sent to promptAsync.
+    activeClient.__setMessages([assistantSnapshot({ completed: true })]);
+    await drivePollingPrompt(provider, {
+      providerSessionId: session.providerSessionId,
+      parts: [{ type: 'text', text: 'go' }],
+      abortSignal: new AbortController().signal,
+      model: 'openai/gpt-5',
+    });
 
-    await flushMicrotasks();
-    activeClient.__closeStream();
-    await iterPromise;
-
-    const sent = activeClient.__sentPrompts[0]?.body as {
+    const sent = activeClient.__promptAsync[0]?.body as {
       model?: { providerID: string; modelID: string };
     };
     expect(sent.model).toEqual({ providerID: 'openai', modelID: 'gpt-5' });
@@ -603,36 +636,28 @@ describe('openCodeProvider.prompt', () => {
       extras: { baseUrl: 'http://local' },
     });
 
-    const ac = new AbortController();
-    const collected: AgentEvent[] = [];
-    const iterPromise = (async () => {
-      for await (const e of provider.prompt({
-        providerSessionId: session.providerSessionId,
-        parts: [{ type: 'text', text: 'go' }],
-        abortSignal: ac.signal,
-      })) {
-        collected.push(e);
-      }
-    })();
+    // The polled snapshot surfaces a running `bash` tool part — denied for
+    // this session. The provider must abort upstream + yield an is-error
+    // tool-result + end the turn as stopped.
+    activeClient.__setMessages([
+      assistantSnapshot({
+        parts: [
+          {
+            type: 'tool',
+            id: 'tool-c1',
+            callID: 'c1',
+            tool: 'bash',
+            state: { status: 'running', input: { command: 'echo ok' } },
+          },
+        ],
+      }),
+    ]);
 
-    await flushMicrotasks();
-
-    activeClient.__pushEvent({
-      type: 'message.part.updated',
-      properties: {
-        part: {
-          id: 'tool-c1',
-          sessionID: FAKE_UPSTREAM_ID,
-          messageID: 'm1',
-          type: 'tool',
-          callID: 'c1',
-          tool: 'bash',
-          state: { status: 'running', input: { command: 'echo ok' } },
-        },
-      },
+    const collected = await drivePollingPrompt(provider, {
+      providerSessionId: session.providerSessionId,
+      parts: [{ type: 'text', text: 'go' }],
+      abortSignal: new AbortController().signal,
     });
-    activeClient.__closeStream();
-    await iterPromise;
 
     expect(activeClient.__aborted).toContain(FAKE_UPSTREAM_ID);
     expect(collected.find((e) => e.type === 'tool-result' && e.isError === true)).toBeTruthy();
