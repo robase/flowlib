@@ -253,7 +253,7 @@ function sqliteColumn(
 
   // Default value
   if (field.defaultValue !== undefined) {
-    col += sqliteDefault(field.defaultValue, field.type);
+    col += sqliteDefault(field.defaultValue, field.type, field.typeAnnotation);
   }
 
   // Foreign key
@@ -274,6 +274,7 @@ function sqliteColumn(
 function sqliteDefault(
   value: string | number | boolean | 'uuid()' | 'now()',
   _type: PluginFieldType,
+  typeAnnotation?: string,
 ): string {
   if (value === 'uuid()') {
     return `.$defaultFn(() => randomUUID())`;
@@ -293,7 +294,14 @@ function sqliteDefault(
     // `text`, so `.default('PENDING')` is equivalent to
     // `.default(FlowRunStatus.PENDING)` and avoids a runtime import the
     // consumer's bundler would otherwise need to resolve.
-    return `.default('${value}')`;
+    //
+    // When the column carries a `.$type<T>()` annotation, a bare string
+    // literal isn't assignable to the narrowed type (a nominal enum or a
+    // JSON object/array shape). Emit the default as a first-class drizzle
+    // `sql` raw default instead — `.default()` accepts `SQL<unknown>` for
+    // any column type, so no cast or enum-member lookup is needed, and the
+    // generated DDL is identical (`DEFAULT '<value>'`).
+    return typeAnnotation ? `.default(sql\`'${value}'\`)` : `.default('${value}')`;
   }
   return '';
 }
@@ -495,7 +503,7 @@ function postgresColumn(
 
   // Default value
   if (field.defaultValue !== undefined) {
-    col += postgresDefault(field.defaultValue, field.type);
+    col += postgresDefault(field.defaultValue, field.type, field.typeAnnotation);
   }
 
   // Foreign key
@@ -516,6 +524,7 @@ function postgresColumn(
 function postgresDefault(
   value: string | number | boolean | 'uuid()' | 'now()',
   _type: PluginFieldType,
+  typeAnnotation?: string,
 ): string {
   if (value === 'uuid()') {
     return `.$default(() => randomUUID())`;
@@ -530,7 +539,10 @@ function postgresDefault(
     return `.default(${value})`;
   }
   if (typeof value === 'string') {
-    return `.default('${value}')`;
+    // `sql` raw default for `.$type<T>()` columns (enum / JSON shape) — it
+    // satisfies `.default()`'s `SQL<unknown>` overload without a cast; see
+    // `sqliteDefault`.
+    return typeAnnotation ? `.default(sql\`'${value}'\`)` : `.default('${value}')`;
   }
   return '';
 }
@@ -715,7 +727,7 @@ function mysqlColumn(
 
   // Default value
   if (field.defaultValue !== undefined) {
-    col += mysqlDefault(field.defaultValue, field.type);
+    col += mysqlDefault(field.defaultValue, field.type, field.typeAnnotation);
   }
 
   // Foreign key
@@ -736,6 +748,7 @@ function mysqlColumn(
 function mysqlDefault(
   value: string | number | boolean | 'uuid()' | 'now()',
   _type: PluginFieldType,
+  typeAnnotation?: string,
 ): string {
   if (value === 'uuid()') {
     return `.$defaultFn(() => randomUUID())`;
@@ -750,7 +763,10 @@ function mysqlDefault(
     return `.default(${value})`;
   }
   if (typeof value === 'string') {
-    return `.default('${value}')`;
+    // `sql` raw default for `.$type<T>()` columns (enum / JSON shape) — it
+    // satisfies `.default()`'s `SQL<unknown>` overload without a cast; see
+    // `sqliteDefault`.
+    return typeAnnotation ? `.default(sql\`'${value}'\`)` : `.default('${value}')`;
   }
   return '';
 }

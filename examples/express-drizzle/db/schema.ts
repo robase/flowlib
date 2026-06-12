@@ -347,7 +347,10 @@ export const flowRuns = sqliteTable('flowlib_flow_executions', {
     .notNull()
     .references(() => flows.id, { onDelete: 'cascade' }),
   flowVersion: integer('flow_version').notNull(),
-  status: text('status').$type<FlowRunStatus>().notNull().default('PENDING'),
+  status: text('status')
+    .$type<FlowRunStatus>()
+    .notNull()
+    .default(sql`'PENDING'`),
   inputs: text('inputs', { mode: 'json' }).$type<JSONValue>().notNull(),
   outputs: text('outputs', { mode: 'json' }).$type<JSONValue>(),
   error: text('error'),
@@ -403,7 +406,10 @@ export const actionTraces = sqliteTable('flowlib_action_traces', {
   toolId: text('tool_id'),
   toolName: text('tool_name'),
   iteration: integer('iteration'),
-  status: text('status').$type<NodeExecutionStatus>().notNull().default('PENDING'),
+  status: text('status')
+    .$type<NodeExecutionStatus>()
+    .notNull()
+    .default(sql`'PENDING'`),
   inputs: text('inputs', { mode: 'json' }).$type<JSONValue>().notNull(),
   outputs: text('outputs', { mode: 'json' }).$type<JSONValue>(),
   error: text('error', { mode: 'json' }).$type<NodeErrorDetails>(),
@@ -462,7 +468,10 @@ export const agent_mcp_servers = sqliteTable('agent_mcp_servers', {
   name: text('name').notNull(),
   description: text('description'),
   transport: text('transport').notNull(),
-  config: text('config', { mode: 'json' }).$type<Record<string, unknown>>().notNull().default('{}'),
+  config: text('config', { mode: 'json' })
+    .$type<Record<string, unknown>>()
+    .notNull()
+    .default(sql`'{}'`),
   createdBy: text('created_by').notNull(),
   createdAt: text('created_at')
     .notNull()
@@ -483,7 +492,10 @@ export const batchJobs = sqliteTable('flowlib_batch_jobs', {
   nodeId: text('node_id').notNull(),
   provider: text('provider').$type<BatchProvider>().notNull(),
   batchId: text('batch_id'),
-  status: text('status').$type<BatchStatus>().notNull().default('SUBMITTED'),
+  status: text('status')
+    .$type<BatchStatus>()
+    .notNull()
+    .default(sql`'SUBMITTED'`),
   requestData: text('request_data', { mode: 'json' }).notNull(),
   responseData: text('response_data', { mode: 'json' }),
   error: text('error'),
@@ -542,7 +554,7 @@ export const agent_sessions = sqliteTable('agent_sessions', {
   providerConfig: text('provider_config', { mode: 'json' })
     .$type<Record<string, unknown>>()
     .notNull()
-    .default('{}'),
+    .default(sql`'{}'`),
   credentialId: text('credential_id'),
   model: text('model'),
   permissionMode: text('permission_mode'),
@@ -553,7 +565,7 @@ export const agent_sessions = sqliteTable('agent_sessions', {
   enabledMcpServerIds: text('enabled_mcp_server_ids', { mode: 'json' })
     .$type<string[]>()
     .notNull()
-    .default('[]'),
+    .default(sql`'[]'`),
   enabledTools: text('enabled_tools', { mode: 'json' }).$type<string[]>(),
   denyList: text('deny_list', { mode: 'json' }).$type<string[]>(),
   exposeFlowlibActions: integer('expose_flowlib_actions', { mode: 'boolean' })
@@ -562,7 +574,7 @@ export const agent_sessions = sqliteTable('agent_sessions', {
   toolOutputBudget: text('tool_output_budget', { mode: 'json' })
     .$type<{ lines: number; bytes: number }>()
     .notNull()
-    .default('{"lines":100,"bytes":4096}'),
+    .default(sql`'{"lines":100,"bytes":4096}'`),
   createdBy: text('created_by').notNull(),
   visibility: text('visibility').notNull().default('private'),
   status: text('status').notNull().default('active'),
@@ -608,7 +620,10 @@ export const agent_messages = sqliteTable('agent_messages', {
   sequence: integer('sequence').notNull(),
   parentMessageId: text('parent_message_id'),
   role: text('role').notNull(),
-  parts: text('parts', { mode: 'json' }).$type<unknown[]>().notNull().default('[]'),
+  parts: text('parts', { mode: 'json' })
+    .$type<unknown[]>()
+    .notNull()
+    .default(sql`'[]'`),
   usage: text('usage', { mode: 'json' }).$type<Record<string, number>>(),
   costUsd: text('cost_usd').notNull().default('0'),
   createdAt: text('created_at')
@@ -645,7 +660,10 @@ export const rbac_scope_access = sqliteTable('flowlib_rbac_scope_access', {
     .references(() => rbac_teams.id, { onDelete: 'cascade' }),
   user_id: text('user_id'),
   team_id: text('team_id'),
-  permission: text('permission').$type<FlowAccessPermission>().notNull().default('viewer'),
+  permission: text('permission')
+    .$type<FlowAccessPermission>()
+    .notNull()
+    .default(sql`'viewer'`),
   granted_by: text('granted_by'),
   granted_at: text('granted_at')
     .notNull()
@@ -748,7 +766,7 @@ export const agent_session_plans = sqliteTable('agent_session_plans', {
   checkpoints: text('checkpoints', { mode: 'json' })
     .$type<Array<{ id: string; label: string; status: string }>>()
     .notNull()
-    .default('[]'),
+    .default(sql`'[]'`),
   updatedAt: text('updated_at')
     .notNull()
     .default(sql`CURRENT_TIMESTAMP`),
@@ -827,7 +845,7 @@ export const agent_audit_events = sqliteTable('agent_audit_events', {
   payload: text('payload', { mode: 'json' })
     .$type<Record<string, unknown>>()
     .notNull()
-    .default('{}'),
+    .default(sql`'{}'`),
   createdAt: text('created_at')
     .notNull()
     .default(sql`CURRENT_TIMESTAMP`),
