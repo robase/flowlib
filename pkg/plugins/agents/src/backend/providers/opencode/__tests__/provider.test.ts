@@ -320,17 +320,6 @@ async function triggerLazyBoot(
 }
 
 /**
- * Yield enough microtasks for the lazy-boot chain to settle: SDK
- * dynamic-import then `client.session.create`. Retained for the tests
- * that still drive the iterator by hand.
- */
-async function flushMicrotasks(): Promise<void> {
-  for (let i = 0; i < 8; i++) {
-    await Promise.resolve();
-  }
-}
-
-/**
  * The fake `session.create` returns `session-N` ids starting at 1 and
  * resets on every test. The first session created in a test always gets
  * `session-1` — that's the upstream id our SSE filter compares against.
@@ -522,7 +511,12 @@ describe('openCodeProvider.prompt', () => {
     expect(activeClient.__promptAsync[0].id).toBe(FAKE_UPSTREAM_ID);
   });
 
-  it('drops events from a different session id', async () => {
+  it('ignores assistant messages from a prior turn (stale created timestamp)', async () => {
+    // Polling scopes to the session id (`session.messages({ sessionID })`),
+    // so cross-session leakage isn't possible by construction. What the
+    // loop still must filter is a *prior turn's* assistant message in the
+    // same session — identified by a `created` timestamp older than this
+    // turn's poll-loop start. Its text must never surface as a delta.
     const provider = openCodeProvider();
     const session = await provider.createSession({
       auth: {} as never,
@@ -530,56 +524,34 @@ describe('openCodeProvider.prompt', () => {
       extras: { baseUrl: 'http://local' },
     });
 
-    const ac = new AbortController();
-    const collected: AgentEvent[] = [];
-    const iterPromise = (async () => {
-      for await (const e of provider.prompt({
+    const collected = await drivePollingPrompt(
+      provider,
+      {
         providerSessionId: session.providerSessionId,
         parts: [{ type: 'text', text: 'go' }],
-        abortSignal: ac.signal,
-      })) {
-        collected.push(e);
-      }
-    })();
-
-    await flushMicrotasks();
-
-    // Belongs to *another* session — must be filtered out.
-    activeClient.__pushEvent({
-      type: 'message.part.updated',
-      properties: {
-        delta: 'leak',
-        part: {
-          id: 'p',
-          sessionID: 'session-OTHER',
-          messageID: 'mX',
-          type: 'text',
-          text: '',
+        abortSignal: new AbortController().signal,
+      },
+      {
+        beforePoll: (p) => {
+          activeClient.__setMessages([
+            // Stale message from a previous turn — `created` in the past.
+            {
+              info: { id: 'old', role: 'assistant', time: { created: 1, completed: 2 } },
+              parts: [{ type: 'text', id: 'leak', text: 'leak' }],
+            },
+            // This turn's fresh message.
+            assistantSnapshot({
+              id: 'fresh',
+              parts: [{ type: 'text', id: 'mine', text: 'mine' }],
+              completed: p >= 1,
+            }),
+          ]);
         },
       },
-    });
-    activeClient.__pushEvent({
-      type: 'session.idle',
-      properties: { sessionID: FAKE_UPSTREAM_ID },
-    });
-    activeClient.__closeStream();
-    // Synthesise a lastMessageId so session.idle has something to terminate on.
-    activeClient.__pushEvent({
-      type: 'message.part.updated',
-      properties: {
-        delta: 'mine',
-        part: {
-          id: 'p2',
-          sessionID: FAKE_UPSTREAM_ID,
-          messageID: 'mY',
-          type: 'text',
-          text: '',
-        },
-      },
-    });
+    );
 
-    await iterPromise;
     expect(collected.find((e) => e.type === 'text-delta' && e.text === 'leak')).toBeUndefined();
+    expect(collected.find((e) => e.type === 'text-delta' && e.text === 'mine')).toBeTruthy();
   });
 
   it('emits session-end:stopped when abortSignal is already aborted', async () => {
