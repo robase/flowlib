@@ -15,7 +15,7 @@
  */
 import * as React from 'react';
 import { Check, ChevronDown } from 'lucide-react';
-import { PROVIDER_CATALOGUE, findModel, type ModelOption } from '../lib/provider-models';
+import { PROVIDER_CATALOGUE, type ModelOption, type ProviderEntry } from '../lib/provider-models';
 import type { AgentProviderId } from '../../shared/types';
 
 export interface ModelSelection {
@@ -36,6 +36,13 @@ export interface ModelSelectorProps {
   className?: string;
   /** Optional id used to scope test selectors. */
   testIdPrefix?: string;
+  /**
+   * Provider/model catalogue to render. Defaults to the built-in
+   * `PROVIDER_CATALOGUE`; callers pass the backend-driven catalogue from
+   * `useProviderCatalogue()` so the picker matches the deployment's
+   * registered providers + credentials.
+   */
+  catalogue?: ProviderEntry[];
 }
 
 export function ModelSelector({
@@ -47,6 +54,7 @@ export function ModelSelector({
   menuPlacement = 'bottom',
   className,
   testIdPrefix = 'agents-model-selector',
+  catalogue = PROVIDER_CATALOGUE,
 }: ModelSelectorProps): React.ReactElement {
   const [open, setOpen] = React.useState(false);
   const rootRef = React.useRef<HTMLDivElement>(null);
@@ -73,9 +81,10 @@ export function ModelSelector({
     };
   }, [open]);
 
-  const activeModel = findModel(providerId, model);
+  const activeProvider = catalogue.find((p) => p.id === providerId);
+  const activeModel = activeProvider?.models.find((m) => m.id === model);
   const activeLabel = activeModel?.label ?? model ?? 'Select a model';
-  const activeProviderLabel = PROVIDER_CATALOGUE.find((p) => p.id === providerId)?.label;
+  const activeProviderLabel = activeProvider?.label;
 
   const handlePick = (pickedProvider: AgentProviderId, pickedModel: ModelOption) => {
     setOpen(false);
@@ -118,7 +127,7 @@ export function ModelSelector({
           role="listbox"
           data-testid={`${testIdPrefix}-menu`}
         >
-          {PROVIDER_CATALOGUE.map((provider) => (
+          {catalogue.map((provider) => (
             <div key={provider.id} className="py-1">
               <div className="px-3 pt-1.5 pb-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
                 {provider.label}

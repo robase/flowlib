@@ -44,7 +44,7 @@ import {
   SquareIcon,
 } from 'lucide-react';
 import { FLOWLIB_TOOL_NAMES } from '../hooks/useAgentRuntime';
-import { useUpdateSession } from '../hooks/useSessions';
+import { useProviderCatalogue, useUpdateSession } from '../hooks/useSessions';
 import { useActiveSession } from './ActiveSessionContext';
 import { useAgentStream } from './AgentStreamContext';
 import { ModelSelector, type ModelSelection } from './ModelSelector';
@@ -259,6 +259,7 @@ function ComposerAction({
   status: 'connecting' | 'streaming' | 'idle' | 'error';
 }): React.ReactElement {
   const updateSession = useUpdateSession();
+  const { catalogue } = useProviderCatalogue();
 
   const handleModelChange = React.useCallback(
     (next: ModelSelection) => {
@@ -280,6 +281,7 @@ function ComposerAction({
         onChange={handleModelChange}
         menuPlacement="top"
         disabled={updateSession.isPending || status === 'streaming'}
+        catalogue={catalogue}
       />
 
       <div className="ml-auto" />

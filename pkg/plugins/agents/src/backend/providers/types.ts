@@ -244,6 +244,12 @@ export interface AgentProvider {
   readonly name: string;
   /** Optional Lucide icon name. */
   readonly icon?: string;
+  /**
+   * Default model id used when a session omits `model`. Surfaced to the
+   * UI picker (via `GET /agents/providers`) so the frontend pre-selects a
+   * model that matches this provider's credential/gateway setup.
+   */
+  readonly defaultModel?: string;
   /** Static capability flags — see {@link AgentCapabilities}. */
   readonly capabilities: AgentCapabilities;
 

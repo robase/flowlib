@@ -119,6 +119,17 @@ export interface AiSdkProviderOptions {
   defaultModel?: string;
 
   /**
+   * Curated model list surfaced to the chat picker via
+   * `GET /agents/providers`. Each `id` is the exact `'vendor/model'` spec
+   * the backend stores and the vendor factory receives — so a host using
+   * an OpenRouter credential should list `'openrouter/...'` specs (vendor
+   * `openrouter`), not bare `'anthropic/...'`, to avoid a vendor/credential
+   * mismatch. When omitted, the frontend falls back to its built-in
+   * catalogue.
+   */
+  models?: Array<{ id: string; label: string; description?: string }>;
+
+  /**
    * Resolve credentials for an LLM call. **Optional** — when omitted, the
    * provider resolves the chat's *attached* credential internally via the
    * plugin-threaded credentials accessor (`registries.credentials`), which

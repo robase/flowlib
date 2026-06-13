@@ -18,7 +18,7 @@ import * as React from 'react';
 import type { AgentCredentialOption } from '../api/credentials.api';
 import type { AgentProviderId } from '../../shared/types';
 import { ModelSelector, type ModelSelection } from './ModelSelector';
-import { PROVIDER_CATALOGUE } from '../lib/provider-models';
+import { useProviderCatalogue } from '../hooks/useSessions';
 
 export interface NewChatDialogProps {
   open: boolean;
@@ -51,15 +51,33 @@ export function NewChatDialog({
   onStart,
   targetLabel,
 }: NewChatDialogProps): React.ReactElement | null {
+  const { catalogue, defaultProviderId } = useProviderCatalogue();
   const [selectedId, setSelectedId] = React.useState<string | null>(null);
-  const [selectedModel, setSelectedModel] = React.useState<ModelSelection>(() => {
-    const fallback = PROVIDER_CATALOGUE[0];
-    const fallbackModel = fallback?.models[0];
-    if (!fallback || !fallbackModel) {
-      throw new Error('NewChatDialog: PROVIDER_CATALOGUE is empty');
+  // `null` until the (possibly async) catalogue resolves a default — the
+  // effect below picks the deployment's default provider + its first model.
+  const [selectedModel, setSelectedModel] = React.useState<ModelSelection | null>(null);
+
+  // Pick a sensible default once the catalogue is available, and keep the
+  // user's choice if it's still valid. Re-runs when the dialog opens or the
+  // catalogue loads.
+  React.useEffect(() => {
+    if (!open) {
+      return;
     }
-    return { providerId: fallback.id, model: fallbackModel.id };
-  });
+    setSelectedModel((prev) => {
+      const stillValid =
+        prev &&
+        catalogue.some(
+          (p) => p.id === prev.providerId && p.models.some((m) => m.id === prev.model),
+        );
+      if (stillValid) {
+        return prev;
+      }
+      const provider = catalogue.find((p) => p.id === defaultProviderId) ?? catalogue[0];
+      const firstModel = provider?.models[0];
+      return provider && firstModel ? { providerId: provider.id, model: firstModel.id } : prev;
+    });
+  }, [open, catalogue, defaultProviderId]);
 
   // Auto-select the first active credential when the dialog opens so
   // the user can usually press Enter without picking from a list.
@@ -82,8 +100,8 @@ export function NewChatDialog({
   const handleStart = () => {
     onStart({
       credentialId: selectedId,
-      providerId: selectedModel.providerId,
-      model: selectedModel.model,
+      providerId: selectedModel?.providerId,
+      model: selectedModel?.model,
     });
   };
 
@@ -122,11 +140,12 @@ export function NewChatDialog({
             Model
           </div>
           <ModelSelector
-            providerId={selectedModel.providerId}
-            model={selectedModel.model}
+            providerId={selectedModel?.providerId}
+            model={selectedModel?.model}
             onChange={setSelectedModel}
             variant="block"
             testIdPrefix="new-chat-model-selector"
+            catalogue={catalogue}
           />
         </div>
 

@@ -250,6 +250,7 @@ export function aiSdkProvider(options: AiSdkProviderOptions): AgentProvider {
     id: providerId,
     name: providerName,
     ...(providerIcon ? { icon: providerIcon } : {}),
+    defaultModel,
     capabilities: CAPABILITIES,
 
     validateConfig(config: unknown): AgentProviderConfig {
@@ -674,11 +675,17 @@ export function aiSdkProvider(options: AiSdkProviderOptions): AgentProvider {
     },
 
     async listModels() {
-      // Phase 1 doesn't enumerate models — the UI surfaces a static
-      // model picker keyed by the user's credentials. Implementing
-      // this requires per-vendor `models.list` calls which are
-      // out-of-scope for the migration.
-      return [];
+      // Surface the host-declared model list to the picker (via
+      // `GET /agents/providers`). Hosts curate this in `aiSdkProvider({
+      // models })` so the catalogue matches their credential/gateway
+      // setup (e.g. `openrouter/...` specs for an OpenRouter key). We
+      // don't call per-vendor `models.list` — the curated list is the
+      // source of truth.
+      return (options.models ?? []).map((m) => ({
+        id: m.id,
+        name: m.label,
+        ...(m.description ? { metadata: { description: m.description } } : {}),
+      }));
     },
 
     async closeSession(providerSessionId: string): Promise<void> {
