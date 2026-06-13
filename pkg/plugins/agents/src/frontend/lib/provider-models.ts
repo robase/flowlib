@@ -29,14 +29,23 @@ export interface ProviderEntry {
   models: ModelOption[];
 }
 
+/**
+ * **Fallback only.** The picker is backend-driven — `useProviderCatalogue()`
+ * fetches `GET /agents/providers`, which returns the deployment's actual
+ * registered providers + the model specs each declares (e.g. hosted's
+ * `openrouter/*` specs). This constant is used only when that endpoint is
+ * unavailable, so it lists the single `ai-sdk` provider the in-process
+ * (Express/Node) example registers, with **direct-vendor** specs
+ * (`<vendor>/<model>`) matching that example's direct credentials.
+ *
+ * Do NOT add deployment-specific models here (opencode/claude-code/openrouter
+ * variants used to live here and caused picker/credential mismatches) —
+ * declare them on the provider via `aiSdkProvider({ models })` instead, so
+ * they flow through the backend-driven path and match that deployment's
+ * credentials.
+ */
 export const PROVIDER_CATALOGUE: ProviderEntry[] = [
   {
-    // `ai-sdk` = the ai-sdk provider (our own prompt→tool loop). It's the
-    // default for the in-process (Express/Node) path. Model ids are
-    // `<vendor>/<model>` — `parseModelSpec` reads the leading segment as
-    // the vendor (`anthropic` | `openai` | `google`), which selects the
-    // host's vendor factory; the credential supplies the key (direct, no
-    // gateway markup). Anthropic-native versions use a hyphen (`4-5`).
     id: 'ai-sdk',
     label: 'Chat',
     models: [
@@ -49,55 +58,6 @@ export const PROVIDER_CATALOGUE: ProviderEntry[] = [
         label: 'Gemini 2.0 Flash',
         description: 'Google',
       },
-    ],
-  },
-  {
-    id: 'opencode',
-    label: 'opencode',
-    models: [
-      // IMPORTANT: model ids here go to opencode → OpenRouter (or whichever
-      // upstream provider the credential resolves to). Opencode looks up the
-      // model id in its provider catalogue; OpenRouter publishes Anthropic
-      // models with a **dot** in the version (`claude-sonnet-4.5`), NOT a
-      // hyphen. Sending the hyphenated form makes opencode silently accept
-      // the prompt, return HTTP 200 with empty body, and never make the
-      // upstream LLM call — the chat appears to hang forever.
-      //
-      // Mismatch was confirmed via the local CF Sandbox SDK opencode
-      // example: `anthropic/claude-haiku-4.5` returned a real `PONG`,
-      // `anthropic/claude-haiku-4-5` silently dropped the prompt.
-      {
-        id: 'anthropic/claude-sonnet-4.5',
-        label: 'Claude Sonnet 4.5',
-        description: 'Anthropic',
-      },
-      {
-        id: 'anthropic/claude-opus-4.1',
-        label: 'Claude Opus 4.1',
-        description: 'Anthropic',
-      },
-      {
-        id: 'anthropic/claude-haiku-4.5',
-        label: 'Claude Haiku 4.5',
-        description: 'Anthropic',
-      },
-      { id: 'openai/gpt-4o', label: 'GPT-4o', description: 'OpenAI' },
-      { id: 'openai/gpt-4o-mini', label: 'GPT-4o mini', description: 'OpenAI' },
-      { id: 'openai/o3-mini', label: 'o3 mini', description: 'OpenAI' },
-      {
-        id: 'google/gemini-2.0-flash-exp',
-        label: 'Gemini 2.0 Flash',
-        description: 'Google',
-      },
-    ],
-  },
-  {
-    id: 'claude-code',
-    label: 'Claude Code',
-    models: [
-      { id: 'claude-sonnet-4-5', label: 'Claude Sonnet 4.5' },
-      { id: 'claude-opus-4-1', label: 'Claude Opus 4.1' },
-      { id: 'claude-haiku-4-5', label: 'Claude Haiku 4.5' },
     ],
   },
 ];

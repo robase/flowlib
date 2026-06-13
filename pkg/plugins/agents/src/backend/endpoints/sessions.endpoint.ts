@@ -256,37 +256,11 @@ async function createSession(deps: EndpointDeps): Promise<PluginEndpointResponse
   // and the call would fail 401. The normaliser turns
   // "anthropic/claude-..." into "openrouter/anthropic/claude-..." so
   // opencode dispatches via openrouter's provider config.
-  const requestedModel = body.model ?? opts.defaultModel ?? null;
-  let resolvedModel: string | null = requestedModel ?? null;
-  if (requestedModel && credentialId) {
-    try {
-      const credForVendor = await flowlibCreds(deps).getDecryptedWithRefresh(credentialId);
-      const credentialVendor = inferOpencodeProvider({
-        name: credForVendor.name,
-        authType: credForVendor.authType,
-        config: (credForVendor.config as Record<string, unknown>) ?? null,
-        metadata: credForVendor.metadata ?? null,
-      });
-      const result = normaliseModelForCredential({
-        model: requestedModel,
-        credentialVendor,
-      });
-      resolvedModel = result.model;
-      if (result.rewritten) {
-        // eslint-disable-next-line no-console
-        console.warn('[agents/sessions] rewrote session.model to match credential vendor', {
-          requestedModel,
-          resolvedModel,
-          credentialVendor,
-          credentialId,
-          reason: result.reason,
-        });
-      }
-    } catch {
-      // Leave the model untouched on lookup failure — the assert
-      // above will already have rejected unusable credentials.
-    }
-  }
+  const resolvedModel = await resolveModelForCredential(
+    deps,
+    body.model ?? opts.defaultModel ?? null,
+    credentialId,
+  );
 
   const created = await deps.repos.sessions.create({
     orgId: deps.auth.orgId,
@@ -463,6 +437,52 @@ function flowlibCreds(deps: EndpointDeps) {
   return deps.pluginCtx.flowlib.getFlowlib().credentials;
 }
 
+/**
+ * Coerce a requested model id to match the session's effective credential
+ * vendor when that vendor is a multi-tier router (openrouter,
+ * cloudflare-ai-gateway). Shared by create + update so a model set via
+ * either path is normalised the same way — e.g. `openai/gpt-4o-mini`
+ * with an OpenRouter credential becomes `openrouter/openai/gpt-4o-mini`,
+ * avoiding the `vendor/credential mismatch` that otherwise kills the turn.
+ *
+ * Returns the model unchanged on lookup failure or when no credential is
+ * bound (the create handler's `assertCredentialUsable` already rejected
+ * unusable credentials before this runs).
+ */
+async function resolveModelForCredential(
+  deps: EndpointDeps,
+  requestedModel: string | null | undefined,
+  credentialId: string | null | undefined,
+): Promise<string | null> {
+  const model = requestedModel ?? null;
+  if (!model || !credentialId) {
+    return model;
+  }
+  try {
+    const cred = await flowlibCreds(deps).getDecryptedWithRefresh(credentialId);
+    const credentialVendor = inferOpencodeProvider({
+      name: cred.name,
+      authType: cred.authType,
+      config: (cred.config as Record<string, unknown>) ?? null,
+      metadata: cred.metadata ?? null,
+    });
+    const result = normaliseModelForCredential({ model, credentialVendor });
+    if (result.rewritten) {
+      // eslint-disable-next-line no-console
+      console.warn('[agents/sessions] rewrote session.model to match credential vendor', {
+        requestedModel: model,
+        resolvedModel: result.model,
+        credentialVendor,
+        credentialId,
+        reason: result.reason,
+      });
+    }
+    return result.model;
+  } catch {
+    return model;
+  }
+}
+
 async function updateSession(deps: EndpointDeps): Promise<PluginEndpointResponse> {
   const id = deps.endpointCtx.params.id;
   const existing = await deps.repos.sessions.findById(id, deps.auth.orgId);
@@ -477,6 +497,20 @@ async function updateSession(deps: EndpointDeps): Promise<PluginEndpointResponse
       return credentialError;
     }
   }
+  // Normalise the model the same way create does — a model set via the
+  // composer's switcher (PATCH) must match the credential's vendor too,
+  // or the next turn dies with a vendor/credential mismatch. Only when a
+  // model is actually being set; resolve against the effective credential
+  // (the incoming one if changing, else the session's current one).
+  const model =
+    body.model !== undefined && body.model !== null
+      ? await resolveModelForCredential(
+          deps,
+          body.model,
+          body.credentialId !== undefined ? body.credentialId : existing.credentialId,
+        )
+      : body.model;
+
   const updated = await deps.repos.sessions.update(
     id,
     {
@@ -484,7 +518,7 @@ async function updateSession(deps: EndpointDeps): Promise<PluginEndpointResponse
       providerId: body.providerId,
       providerConfig: body.providerConfig,
       credentialId: body.credentialId,
-      model: body.model,
+      model,
       permissionMode: body.permissionMode,
       systemPrompt: body.systemPrompt,
       workspaceId: body.workspaceId,

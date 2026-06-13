@@ -123,6 +123,47 @@ const CAPABILITIES: AgentCapabilities = {
 };
 
 /**
+ * Sanitise tool names to the `^[a-zA-Z0-9_-]{1,128}$` pattern that strict
+ * providers enforce (Google/Gemini, and some OpenRouter routes reject the
+ * dot). Our action-backed tools are dotted — `sandbox.start`,
+ * `github.create_issue`, `flowlib.list_flows` — which the LLM API rejects
+ * with `tools.N.custom.name: String should match pattern …`.
+ *
+ * We rewrite `.` (and any other invalid char) to `_` for the wire, and
+ * return a reverse map so the emitted `tool-call` events carry the
+ * original dotted id (the frontend + tool renderers key off it). The AI
+ * SDK calls the executor by the sanitised key it sent, so execution is
+ * unaffected.
+ */
+function sanitiseToolSet(tools: AiSdkToolSet): {
+  tools: AiSdkToolSet;
+  restore: Map<string, string>;
+} {
+  const out: AiSdkToolSet = {};
+  const restore = new Map<string, string>();
+  const used = new Set<string>();
+  for (const [name, tool] of Object.entries(tools)) {
+    let safe = name.replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 128);
+    if (safe.length === 0) {
+      safe = '_';
+    }
+    // Deterministically dedupe the rare case where two names sanitise to
+    // the same string.
+    let candidate = safe;
+    let n = 1;
+    while (used.has(candidate)) {
+      candidate = `${safe}_${n++}`.slice(0, 128);
+    }
+    used.add(candidate);
+    out[candidate] = tool;
+    if (candidate !== name) {
+      restore.set(candidate, name);
+    }
+  }
+  return { tools: out, restore };
+}
+
+/**
  * Construct the provider singleton. Called once at plugin init by
  * `registerProviders`. All SDK imports are lazy — none happens
  * inside this factory, only on first `prompt()` call.
@@ -450,12 +491,16 @@ export function aiSdkProvider(options: AiSdkProviderOptions): AgentProvider {
         getWorkspace: () => session.workspace,
       });
 
+      // Rewrite dotted tool names to the provider-safe pattern, keeping a
+      // reverse map to restore the original id on emitted events.
+      const { tools: wireTools, restore: toolNameRestore } = sanitiseToolSet(finalTools);
+
       // eslint-disable-next-line no-console
       console.log('[agents/ai-sdk] firing streamText…', {
         providerSessionId: input.providerSessionId,
         modelVendor: modelSpec.vendor,
         modelId: modelSpec.modelId,
-        toolNames: Object.keys(tools),
+        toolNames: Object.keys(wireTools),
         partsCount: input.parts.length,
         maxSteps,
         hasSystemPrompt: Boolean(session.systemPrompt),
@@ -470,8 +515,16 @@ export function aiSdkProvider(options: AiSdkProviderOptions): AgentProvider {
         model,
         ...(session.systemPrompt ? { system: session.systemPrompt } : {}),
         messages: buildMessages(input),
-        tools: finalTools,
+        tools: wireTools,
+        // Multi-step agentic loop. AI SDK v5/v6 default `streamText` to a
+        // SINGLE step (`stepCountIs(1)`) — it runs one tool call but never
+        // feeds the result back, so the agent stalls after the first tool
+        // (e.g. starts a sandbox, then stops instead of cloning). The v4
+        // `maxSteps` option is ignored in v5+. `stopWhen` is the v5/v6 API;
+        // we stop once the step count reaches `maxSteps`. Passed inline so
+        // the host needn't also wire `stepCountIs`.
         maxSteps,
+        stopWhen: ({ steps }: { steps: unknown[] }) => steps.length >= maxSteps,
         abortSignal: input.abortSignal,
       }) as { fullStream: AsyncIterable<unknown> };
 
@@ -531,7 +584,11 @@ export function aiSdkProvider(options: AiSdkProviderOptions): AgentProvider {
             }
             case 'tool-call': {
               const callId = chunk.toolCallId ?? `${messageId}-call-${forwardedChunks}`;
-              const name = chunk.toolName ?? '<unknown>';
+              const wireName = chunk.toolName ?? '<unknown>';
+              // Restore the original dotted id (e.g. `sandbox_start` →
+              // `sandbox.start`) so downstream renderers + tool matching
+              // see the canonical name.
+              const name = toolNameRestore.get(wireName) ?? wireName;
               yield {
                 type: 'tool-call',
                 messageId,
@@ -549,6 +606,35 @@ export function aiSdkProvider(options: AiSdkProviderOptions): AgentProvider {
                 id: callId,
                 output: chunk.result ?? chunk.output ?? null,
                 isError: false,
+              };
+              break;
+            }
+            case 'tool-error': {
+              // A tool's `execute` threw (bad input, missing credential,
+              // sandbox failure, …). AI SDK v5 emits this as a distinct
+              // chunk; without mapping it the UI's pending tool-call never
+              // resolves and shows "Awaiting tool result…" forever. Emit a
+              // tool-result flagged as an error so the call closes out.
+              const callId = chunk.toolCallId ?? `${messageId}-result-${forwardedChunks}`;
+              const err = chunk.error;
+              const errorText =
+                typeof err === 'string'
+                  ? err
+                  : err instanceof Error
+                    ? err.message
+                    : JSON.stringify(err);
+              // eslint-disable-next-line no-console
+              console.error('[agents/ai-sdk] tool-error chunk', {
+                providerSessionId: input.providerSessionId,
+                toolCallId: callId,
+                errorText,
+              });
+              yield {
+                type: 'tool-result',
+                messageId,
+                id: callId,
+                output: errorText,
+                isError: true,
               };
               break;
             }
@@ -572,7 +658,8 @@ export function aiSdkProvider(options: AiSdkProviderOptions): AgentProvider {
               return;
             }
             case 'finish':
-            case 'step-finish': {
+            case 'step-finish':
+            case 'finish-step': {
               // Read both naming schemes (v5 vs older). step-finish
               // fires per-step in a multi-step turn; finish fires once
               // at the end. We keep the latest seen value — by the

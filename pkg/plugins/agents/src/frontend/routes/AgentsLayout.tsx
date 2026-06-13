@@ -41,9 +41,13 @@ import { InspectorRail } from '../components/InspectorRail';
 import { InspectorPane, type TabId } from '../components/inspector/InspectorPane';
 import { useAgentRuntime } from '../hooks/useAgentRuntime';
 import { useAgentsThreadListAdapter } from '../hooks/useAgentsThreadListAdapter';
-import { useCreateSession, useSession, useSessions } from '../hooks/useSessions';
+import {
+  useCreateSession,
+  useProviderCatalogue,
+  useSession,
+  useSessions,
+} from '../hooks/useSessions';
 import { useLlmCredentials } from '../hooks/useCredentials';
-import { PROVIDER_CATALOGUE } from '../lib/provider-models';
 import { cn } from '../lib/cn';
 
 export interface AgentsLayoutProps {
@@ -59,6 +63,7 @@ export function AgentsLayout({ basePath }: AgentsLayoutProps): React.ReactElemen
   const credentials = useLlmCredentials();
   const activeSession = useSession(sessionId);
   const createSession = useCreateSession();
+  const { catalogue, defaultProviderId } = useProviderCatalogue();
 
   // Auto-pick the first active LLM credential so a new chat is usable
   // immediately without a picker. Falls back to `null` (deployment
@@ -102,12 +107,15 @@ export function AgentsLayout({ basePath }: AgentsLayoutProps): React.ReactElemen
       if (createSession.isPending) {
         return;
       }
-      const fallback = PROVIDER_CATALOGUE[0];
+      // Use the deployment's default provider + its first declared model
+      // (backend-driven), so the auto-created chat gets a valid model spec
+      // for this deployment's credentials (e.g. hosted's `openrouter/*`).
+      const provider = catalogue.find((p) => p.id === defaultProviderId) ?? catalogue[0];
       createSession
         .mutateAsync({
           credentialId,
-          providerId: fallback?.id,
-          model: fallback?.models[0]?.id,
+          providerId: provider?.id,
+          model: provider?.models[0]?.id,
         })
         .then((session) => {
           navigate(
@@ -118,7 +126,7 @@ export function AgentsLayout({ basePath }: AgentsLayoutProps): React.ReactElemen
           // Surfaced via `createSession.error` in the center pane below.
         });
     },
-    [basePath, createSession, navigate],
+    [basePath, createSession, navigate, catalogue, defaultProviderId],
   );
 
   const openNewChat = React.useCallback(() => {
