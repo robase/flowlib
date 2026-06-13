@@ -20,6 +20,7 @@ import type { PluginDatabaseApi } from '@flowlib/core';
 import type { PluginContext } from '../plugin-context';
 import { AuditRepository } from './audit.repository';
 import { McpServersRepository } from './mcp-servers.repository';
+import { MemoriesRepository } from './memories.repository';
 import { MessagesRepository } from './messages.repository';
 import { ProjectsRepository } from './projects.repository';
 import { RolePermissionsRepository } from './role-permissions.repository';
@@ -35,6 +36,7 @@ export interface Repositories {
   messages: MessagesRepository;
   projects: ProjectsRepository;
   skills: SkillsRepository;
+  memories: MemoriesRepository;
   audit: AuditRepository;
   rolePermissions: RolePermissionsRepository;
 }
@@ -48,6 +50,7 @@ export function buildRepositories(database: PluginDatabaseApi): Repositories {
     messages: new MessagesRepository(database),
     projects: new ProjectsRepository(database),
     skills: new SkillsRepository(database),
+    memories: new MemoriesRepository(database),
     audit: new AuditRepository(database),
     rolePermissions: new RolePermissionsRepository(database),
   };

@@ -92,6 +92,13 @@ import {
 } from '../service/chat-session-host';
 
 import { ensureAgentsRuntime, getAgentsDatabaseApi } from './runtime-singleton';
+import { createDefaultMcpClientFactory, type McpClientFactory } from '../mcp/client';
+
+/** Lazily-built singleton MCP client factory (SDK import deferred to first use). */
+let _mcpFactory: McpClientFactory | undefined;
+function mcpClientFactory(): McpClientFactory {
+  return (_mcpFactory ??= createDefaultMcpClientFactory());
+}
 
 /**
  * The minimum Worker env shape `AgentChatDO` requires. Consumer
@@ -457,6 +464,7 @@ export class AgentChatDO extends (AIChatAgent as unknown as new (
       hookPipeline: (runtime as { hookPipeline?: ChatHostDeps['hookPipeline'] }).hookPipeline,
       permissions: runtime.permissions as ChatHostDeps['permissions'],
       credentials: (runtime as { credentials?: ChatHostDeps['credentials'] }).credentials,
+      mcpClientFactory: mcpClientFactory(),
       repositories,
       emit,
       logger: log,

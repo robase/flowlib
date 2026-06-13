@@ -30,6 +30,7 @@ import type {
   PromptInput,
   ProviderToolDescriptor,
 } from '../providers/types';
+import type { McpClientFactory } from '../mcp/client';
 import type { WorkspaceProvider } from '../workspaces/types';
 import type { HookPipeline } from '../hooks/types';
 import { noopHookPipeline } from '../hooks/types';
@@ -70,6 +71,35 @@ export interface RepositoriesBag {
       name: string,
       scope: { orgId: string | null; userId?: string },
     ): Promise<{ name: string; body: string } | null>;
+  };
+  memories?: {
+    listForScope(scope: {
+      orgId: string | null;
+      userId?: string;
+      limit?: number;
+    }): Promise<ReadonlyArray<{ scope: string; content: string }>>;
+    search(
+      query: string,
+      scope: { orgId: string | null; userId?: string; limit?: number },
+    ): Promise<ReadonlyArray<{ id: string; scope: string; content: string }>>;
+    create(input: {
+      orgId: string | null;
+      scope: 'personal' | 'project' | 'global';
+      userId?: string | null;
+      content: string;
+      tags?: string[];
+      createdBy: string;
+    }): Promise<{ id: string; content: string }>;
+  };
+  mcpServers?: {
+    findById(
+      id: string,
+      orgId?: string | null,
+    ): Promise<{
+      name: string;
+      transport: 'stdio' | 'http' | 'sse';
+      config: Record<string, unknown>;
+    } | null>;
   };
 }
 
@@ -141,6 +171,14 @@ export interface ChatHostDeps {
   decisionGate?: DecisionGate;
   /** Override the prompt composer (tests); defaults to `composeSystemPrompt`. */
   composeSystemPrompt?: typeof composeSystemPrompt;
+  /**
+   * Factory that connects to an external MCP server and returns a client.
+   * When set (and the session has `enabledMcpServerIds`), each enabled
+   * server's tools are loaded and exposed to the agent as provider tools.
+   * Defaults to undefined (no MCP tools) — the transport wires the real
+   * SDK-backed factory; tests inject a fake.
+   */
+  mcpClientFactory?: McpClientFactory;
 }
 
 /** A host error to surface to the client (the transport decides how). */
@@ -222,15 +260,25 @@ export async function buildSessionContext(
     }
   }
 
-  // System-prompt composition (memoised) + progressive-disclosure skills.
+  // System-prompt composition (memoised) + progressive-disclosure skills
+  // + relevant memories.
   const skillSummaries = await loadSkillSummaries(deps, sessionId);
+  const relevantMemories = await loadRelevantMemories(deps, sessionId);
   const effectiveSystemPrompt = await composeEffectiveSystemPrompt(
     deps,
     sessionId,
     { systemPrompt: sessionRow.systemPrompt, denyList: sessionRow.denyList },
     skillSummaries,
+    relevantMemories,
   );
   const providerTools = buildProviderTools(deps, sessionId, skillSummaries.length > 0);
+  // Merge in tools from the session's enabled external MCP servers.
+  const mcpTools = await loadMcpProviderTools(
+    deps,
+    sessionRow.enabledMcpServerIds ?? [],
+    sessionId,
+  );
+  Object.assign(providerTools, mcpTools);
 
   // Provider rehydration — idempotent for providers that recognise the
   // existing providerSessionId; best-effort otherwise.
@@ -383,6 +431,7 @@ async function composeEffectiveSystemPrompt(
   sessionId: string,
   row: { systemPrompt?: string | null; denyList?: string[] | null },
   skillSummaries: ReadonlyArray<{ name: string; description: string; body?: string }>,
+  memory: ReadonlyArray<{ scope: string; content: string }>,
 ): Promise<string> {
   const cached = deps.promptCache.get(sessionId);
   if (cached !== undefined) {
@@ -394,11 +443,43 @@ async function composeEffectiveSystemPrompt(
     skillSummaries,
     denyList: row.denyList ?? [],
     availableTools: [],
-    memory: [],
+    memory,
     attachments: [],
   });
   deps.promptCache.set(sessionId, prompt);
   return prompt;
+}
+
+/**
+ * Load the memories visible to this session for the prompt's "Relevant
+ * memories" section. Most-recent-first, capped. Best-effort — a missing
+ * repo or a query error yields no memories (the `memory.search` tool
+ * still gives the agent on-demand recall). Memoised indirectly via the
+ * prompt cache, so this runs once per session lifetime.
+ */
+async function loadRelevantMemories(
+  deps: ChatHostDeps,
+  sessionId: string,
+): Promise<ReadonlyArray<{ scope: string; content: string }>> {
+  const memories = deps.repositories.memories;
+  if (!memories) {
+    return [];
+  }
+  const MAX_MEMORIES = 20;
+  try {
+    const all = await memories.listForScope({
+      orgId: deps.orgId,
+      userId: deps.auth.userId,
+      limit: MAX_MEMORIES,
+    });
+    return all.map((m) => ({ scope: m.scope, content: m.content }));
+  } catch (err) {
+    deps.logger.warn('memory load failed — proceeding without memories', {
+      sessionId,
+      message: err instanceof Error ? err.message : String(err),
+    });
+    return [];
+  }
 }
 
 /**
@@ -469,7 +550,121 @@ function buildProviderTools(
       },
     };
   }
+
+  // Memory tools — available whenever the memories repo is wired. `search`
+  // recalls relevant memories on demand; `write` persists a durable note.
+  const memoriesRepo = deps.repositories.memories;
+  if (memoriesRepo) {
+    tools['memory.search'] = {
+      description:
+        'Search durable memories (facts the user told you, preferences, project ' +
+        'context) by keyword. Call this when prior context would help answer.',
+      parameters: {
+        type: 'object',
+        properties: {
+          query: { type: 'string', description: 'What to recall, in a few words.' },
+        },
+        required: ['query'],
+        additionalProperties: false,
+      },
+      execute: async (input) => {
+        const query = typeof input.query === 'string' ? input.query : '';
+        const results = await memoriesRepo.search(query, {
+          orgId: deps.orgId,
+          userId: deps.auth.userId,
+          limit: 5,
+        });
+        return { results: results.map((m) => ({ scope: m.scope, content: m.content })) };
+      },
+    };
+
+    tools['memory.write'] = {
+      description:
+        'Save a durable memory so it is available in future sessions — a stable ' +
+        'fact, preference, or decision worth remembering. Keep it concise.',
+      parameters: {
+        type: 'object',
+        properties: {
+          content: { type: 'string', description: 'The fact to remember, one sentence.' },
+          scope: {
+            type: 'string',
+            enum: ['personal', 'global'],
+            description: 'personal = just this user (default); global = the whole org.',
+          },
+        },
+        required: ['content'],
+        additionalProperties: false,
+      },
+      execute: async (input) => {
+        const content = typeof input.content === 'string' ? input.content.trim() : '';
+        if (!content) {
+          return { error: 'content is required to write a memory.' };
+        }
+        const scope = input.scope === 'global' ? 'global' : 'personal';
+        const created = await memoriesRepo.create({
+          orgId: deps.orgId,
+          scope,
+          userId: scope === 'personal' ? deps.auth.userId : null,
+          content,
+          createdBy: deps.auth.userId,
+        });
+        return { id: created.id, saved: true };
+      },
+    };
+  }
   return tools;
+}
+
+/**
+ * Connect the session's enabled MCP servers and expose their tools as
+ * provider tools (`mcp.<server>.<tool>`). Best-effort per server — a
+ * connection or list failure logs + skips that server rather than
+ * failing the turn. Requires `deps.mcpClientFactory` (the transport
+ * wires the real SDK-backed factory; absent → no MCP tools).
+ */
+async function loadMcpProviderTools(
+  deps: ChatHostDeps,
+  enabledIds: ReadonlyArray<string>,
+  sessionId: string,
+): Promise<Record<string, ProviderToolDescriptor>> {
+  const out: Record<string, ProviderToolDescriptor> = {};
+  const factory = deps.mcpClientFactory;
+  const repo = deps.repositories.mcpServers;
+  if (!factory || !repo || enabledIds.length === 0) {
+    return out;
+  }
+  for (const id of enabledIds) {
+    try {
+      const server = await repo.findById(id, deps.orgId);
+      if (!server) {
+        deps.logger.warn('enabled MCP server not found — skipping', { sessionId, mcpServerId: id });
+        continue;
+      }
+      const client = await factory({ transport: server.transport, config: server.config });
+      const tools = await client.listTools();
+      for (const tool of tools) {
+        // Namespace by server so two servers exposing the same tool name
+        // don't collide. The ai-sdk provider sanitises the dotted id for
+        // the wire and restores it on emitted events.
+        const key = `mcp.${server.name}.${tool.name}`;
+        out[key] = {
+          description: tool.description ?? `MCP tool "${tool.name}" from ${server.name}`,
+          parameters:
+            tool.inputSchema && typeof tool.inputSchema === 'object'
+              ? tool.inputSchema
+              : { type: 'object', properties: {}, additionalProperties: true },
+          execute: async (input) => client.callTool(tool.name, input),
+        };
+      }
+    } catch (err) {
+      deps.logger.warn('MCP server connect/list failed — skipping', {
+        sessionId,
+        mcpServerId: id,
+        message: err instanceof Error ? err.message : String(err),
+      });
+    }
+  }
+  return out;
 }
 
 /**

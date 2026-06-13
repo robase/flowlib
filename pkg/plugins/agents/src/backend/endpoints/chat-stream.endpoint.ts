@@ -34,6 +34,13 @@ import {
   runChatTurn,
 } from '../service/chat-session-host';
 import { type EndpointDeps, badRequest, bodyString, safeHandler } from './helpers';
+import { createDefaultMcpClientFactory, type McpClientFactory } from '../mcp/client';
+
+/** Lazily-built singleton MCP client factory shared across stream requests. */
+let _mcpFactory: McpClientFactory | undefined;
+function mcpClientFactory(): McpClientFactory {
+  return (_mcpFactory ??= createDefaultMcpClientFactory());
+}
 
 /** A live turn the control endpoint can reach. */
 interface ActiveTurn {
@@ -97,6 +104,7 @@ async function streamSession(deps: EndpointDeps): Promise<PluginEndpointResponse
     hookPipeline: (registries as { hookPipeline?: ChatHostDeps['hookPipeline'] }).hookPipeline,
     permissions: registries.permissions as ChatHostDeps['permissions'],
     credentials: registries.credentials as ChatHostDeps['credentials'],
+    mcpClientFactory: mcpClientFactory(),
     repositories: deps.repos as unknown as ChatHostDeps['repositories'],
     emit,
     logger,

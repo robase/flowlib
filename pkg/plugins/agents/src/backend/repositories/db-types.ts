@@ -135,6 +135,24 @@ export interface AgentSkillsTable {
   updated_at: TimestampColumn;
 }
 
+// ─── agent_memories ────────────────────────────────────────────────────
+
+export interface AgentMemoriesTable {
+  id: string;
+  org_id: string | null;
+  scope: string;
+  user_id: string | null;
+  project_id: string | null;
+  content: string;
+  /** Serialized embedding vector (dialect-specific); unused by keyword search. */
+  embedding: string | null;
+  /** JSON-encoded `string[]`. */
+  tags: string | string[] | null;
+  created_by: string;
+  created_at: TimestampColumn;
+  last_used_at: TimestampColumn | null;
+}
+
 // ─── agent_audit_events ────────────────────────────────────────────────
 
 export interface AgentAuditEventsTable {
@@ -168,6 +186,7 @@ export interface AgentsDB {
   agent_messages: AgentMessagesTable;
   agent_projects: AgentProjectsTable;
   agent_skills: AgentSkillsTable;
+  agent_memories: AgentMemoriesTable;
   agent_audit_events: AgentAuditEventsTable;
   agent_role_permissions: AgentRolePermissionsTable;
 }
