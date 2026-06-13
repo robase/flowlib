@@ -23,6 +23,20 @@ export { openCodeProvider } from './backend/providers/opencode/provider';
 export type { OpenCodeProviderOptions } from './backend/providers/opencode/provider';
 
 export { aiSdkProvider } from './backend/providers/ai-sdk';
+// Host-side wiring helpers — collapse the `vendors` map + credential
+// resolution boilerplate (see `host-helpers.ts`).
+export {
+  standardAiSdkVendors,
+  flowlibCredentialResolver,
+  vendorForProviderSlug,
+  DEFAULT_OPENAI_COMPATIBLE_BASE_URLS,
+} from './backend/providers/ai-sdk/host-helpers';
+export type {
+  AiSdkProviderFactory,
+  CredentialsAccessor,
+  ResolvedCredentialRow,
+  FlowlibCredentialResolverOptions,
+} from './backend/providers/ai-sdk/host-helpers';
 export {
   parseModelSpec as parseAiSdkModelSpec,
   resolveModel as resolveAiSdkModel,

@@ -29,6 +29,7 @@
 import type { AgentEvent } from '../../../shared/events';
 import type {
   AgentCapabilities,
+  AgentCredentialsAccessor,
   AgentProvider,
   AgentProviderConfig,
   CreateSessionInput,
@@ -40,6 +41,7 @@ import type { WorkspaceHandle, WorkspaceAccessor } from '../../workspaces/types'
 import type { AiSdkCredential, AiSdkProviderOptions } from './types';
 import { randomBytes } from 'node:crypto';
 import { parseModelSpec, resolveModel } from './models';
+import { resolveCredentialFromAccessor } from './host-helpers';
 import {
   assembleToolSet,
   buildToolSet,
@@ -84,6 +86,12 @@ interface SessionState {
    * the same session; we resolve once and reuse.
    */
   credential?: AiSdkCredential;
+  /**
+   * Credentials accessor threaded in by the host (the agents plugin sets
+   * it from `flowlib.credentials`). Used by the built-in default resolver
+   * when no `resolveCredential` option is wired.
+   */
+  credentials?: AgentCredentialsAccessor;
   /** Whether `createSession` extras opted into specific features. */
   extras?: Record<string, unknown>;
 }
@@ -145,13 +153,11 @@ export function aiSdkProvider(options: AiSdkProviderOptions): AgentProvider {
     },
   });
 
-  if (typeof resolveCredential !== 'function') {
-    throw new Error(
-      `aiSdkProvider({ id: ${providerId} }): resolveCredential is required ` +
-        '— pass an async function that returns an AiSdkCredential for the ' +
-        'requested (auth, credentialId, vendor) triple.',
-    );
-  }
+  // `resolveCredential` is optional: when omitted, the provider resolves
+  // the session's attached credential via the host-threaded credentials
+  // accessor (`CreateSessionInput.credentials`, set by the agents plugin
+  // from `flowlib.credentials`). Supply `resolveCredential` only for
+  // custom logic (e.g. a dev env-key fallback).
   if (typeof streamText !== 'function') {
     throw new Error(
       `aiSdkProvider({ id: ${providerId} }): streamText is required. ` +
@@ -186,11 +192,33 @@ export function aiSdkProvider(options: AiSdkProviderOptions): AgentProvider {
       return session.credential;
     }
     const spec = parseModelSpec(session.defaultModel);
-    const credential = await resolveCredential({
-      auth: session.auth,
-      credentialId: session.credentialId,
-      vendor: spec.vendor,
-    });
+    let credential: AiSdkCredential | null = null;
+    // 1. Built-in default: resolve the chat's attached credential via the
+    //    host-threaded credentials accessor. The plugin wires
+    //    `registries.credentials` automatically, so no host config is
+    //    needed for "bring-your-own-key" chats.
+    if (session.credentials && session.credentialId) {
+      credential = await resolveCredentialFromAccessor(session.credentials, {
+        credentialId: session.credentialId,
+        vendor: spec.vendor,
+      });
+    }
+    // 2. Host-supplied resolver — an explicit override or a dev fallback
+    //    (e.g. an env key when no credential is attached to the chat).
+    if (!credential && resolveCredential) {
+      credential = await resolveCredential({
+        auth: session.auth,
+        credentialId: session.credentialId,
+        vendor: spec.vendor,
+      });
+    }
+    if (!credential) {
+      throw new Error(
+        `aiSdkProvider({ id: ${providerId} }): could not resolve a credential for vendor ` +
+          `"${spec.vendor}" (credentialId=${session.credentialId ?? 'none'}). Attach an LLM ` +
+          'credential to the chat, or pass a `resolveCredential` option.',
+      );
+    }
     session.credential = credential;
     return credential;
   }
@@ -241,6 +269,7 @@ export function aiSdkProvider(options: AiSdkProviderOptions): AgentProvider {
         credentialId: input.credentialId,
         defaultModel: (input.config?.defaultModel as string | undefined) ?? defaultModel,
         systemPrompt: input.systemPrompt,
+        ...(input.credentials ? { credentials: input.credentials } : {}),
         ...(input.workspace ? { workspace: input.workspace } : {}),
         ...(input.ensureWorkspace ? { ensureWorkspace: input.ensureWorkspace } : {}),
         extras: input.extras,

@@ -119,11 +119,16 @@ export interface AiSdkProviderOptions {
   defaultModel?: string;
 
   /**
-   * Resolve credentials for an LLM call. The orchestrator calls this
-   * once per session (the result is cached on the session) — pulled
-   * fresh on each `prompt()` so OAuth refresh stays current.
+   * Resolve credentials for an LLM call. **Optional** — by default the
+   * provider resolves the chat's *attached* credential internally via the
+   * plugin-threaded credentials accessor (`registries.credentials`).
+   * Supply this only as an override or a fallback for chats with no
+   * attached credential (e.g. a dev env-key path). When provided, it runs
+   * after the built-in accessor fails to resolve a credential.
+   *
+   * Pulled fresh on each `prompt()` so OAuth refresh stays current.
    */
-  resolveCredential: CredentialResolver;
+  resolveCredential?: CredentialResolver;
 
   /**
    * Vercel AI SDK's `streamText` function. The host imports this

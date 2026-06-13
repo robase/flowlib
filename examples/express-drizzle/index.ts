@@ -30,7 +30,7 @@ app.use(
   }),
 );
 
-// Mount Flowlib routes under /flowlib (or a path of your choice)
+// Mount Flowlib routes under /flowlib (or a path of your choice).
 app.use('/flowlib', await createFlowlibRouter(flowlibConfig));
 
 // Root endpoint

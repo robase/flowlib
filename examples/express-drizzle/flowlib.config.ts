@@ -5,38 +5,41 @@
  * whenever plugins are added or removed.
  */
 
-import { auth } from '@flowlib/user-auth';
-import { rbac } from '@flowlib/rbac';
-import { webhooks } from '@flowlib/webhooks';
-import { mcp } from '@flowlib/mcp';
-import { agents } from '@flowlib/agents';
-import { vercelWorkflowsPlugin } from '@flowlib/vercel-workflows';
-import { versionControl } from '@flowlib/version-control';
-import { githubProvider } from '@flowlib/version-control/providers/github';
-import { defineConfig } from '@flowlib/core';
+import { auth } from "@flowlib/user-auth";
+import { rbac } from "@flowlib/rbac";
+import { webhooks } from "@flowlib/webhooks";
+import { mcp } from "@flowlib/mcp";
+import { agents } from "@flowlib/agents";
+import { aiSdkProvider, standardAiSdkVendors } from "@flowlib/agents/providers";
+import { streamText } from "ai";
+import { createAnthropic } from "@ai-sdk/anthropic";
+import { createOpenAI } from "@ai-sdk/openai";
+import { createGoogleGenerativeAI } from "@ai-sdk/google";
+import { versionControl } from "@flowlib/version-control";
+import { githubProvider } from "@flowlib/version-control/providers/github";
+import { defineConfig } from "@flowlib/core";
 
 export const flowlibConfig = defineConfig({
-  encryptionKey: process.env.FLOWLIB_ENCRYPTION_KEY || 'change-me-in-production',
+  encryptionKey: process.env.FLOWLIB_ENCRYPTION_KEY || "change-me-in-production",
   database: {
-    type: 'sqlite',
-    connectionString: 'file:./dev.db',
+    type: "sqlite",
+    connectionString: "file:./dev.db",
   },
-  apiPath: 'http://localhost:3000/flowlib',
-  frontendPath: '/flowlib',
-  theme: 'dark',
+  apiPath: "http://localhost:3000/flowlib",
+  frontendPath: "/flowlib",
   logging: {
-    level: 'info',
+    level: "info",
   },
   defaultCredentials: [
     ...(process.env.SEED_ANTHROPIC_API_KEY
       ? [
           {
-            name: 'Anthropic API Key',
-            type: 'llm' as const,
-            provider: 'anthropic',
-            authType: 'apiKey' as const,
+            name: "Anthropic API Key",
+            type: "llm" as const,
+            provider: "anthropic",
+            authType: "apiKey" as const,
             config: { apiKey: process.env.SEED_ANTHROPIC_API_KEY },
-            description: 'Anthropic Claude API credential for AI model nodes',
+            description: "Anthropic Claude API credential for AI model nodes",
             isShared: true,
           },
         ]
@@ -44,12 +47,12 @@ export const flowlibConfig = defineConfig({
     ...(process.env.SEED_OPENROUTER_API_KEY
       ? [
           {
-            name: 'OpenRouter API Key',
-            type: 'llm' as const,
-            provider: 'openrouter',
-            authType: 'apiKey' as const,
+            name: "OpenRouter API Key",
+            type: "llm" as const,
+            provider: "openrouter",
+            authType: "apiKey" as const,
             config: { apiKey: process.env.SEED_OPENROUTER_API_KEY },
-            description: 'OpenRouter API credential for AI model nodes',
+            description: "OpenRouter API credential for AI model nodes",
             isShared: true,
           },
         ]
@@ -57,16 +60,16 @@ export const flowlibConfig = defineConfig({
     ...(process.env.SEED_LINEAR_CLIENT_ID && process.env.SEED_LINEAR_CLIENT_SECRET
       ? [
           {
-            name: 'Linear OAuth2',
-            type: 'http-api' as const,
-            provider: 'linear',
-            authType: 'oauth2' as const,
+            name: "Linear OAuth2",
+            type: "http-api" as const,
+            provider: "linear",
+            authType: "oauth2" as const,
             config: {
               clientId: process.env.SEED_LINEAR_CLIENT_ID,
               clientSecret: process.env.SEED_LINEAR_CLIENT_SECRET,
-              oauth2Provider: 'linear',
+              oauth2Provider: "linear",
             },
-            description: 'Linear OAuth2 credential for issue tracking',
+            description: "Linear OAuth2 credential for issue tracking",
             isShared: true,
           },
         ]
@@ -74,16 +77,16 @@ export const flowlibConfig = defineConfig({
     ...(process.env.SEED_GMAIL_CLIENT_ID && process.env.SEED_GMAIL_CLIENT_SECRET
       ? [
           {
-            name: 'Gmail OAuth2',
-            type: 'http-api' as const,
-            provider: 'google',
-            authType: 'oauth2' as const,
+            name: "Gmail OAuth2",
+            type: "http-api" as const,
+            provider: "google",
+            authType: "oauth2" as const,
             config: {
               clientId: process.env.SEED_GMAIL_CLIENT_ID,
               clientSecret: process.env.SEED_GMAIL_CLIENT_SECRET,
-              oauth2Provider: 'google',
+              oauth2Provider: "google",
             },
-            description: 'Gmail OAuth2 credential',
+            description: "Gmail OAuth2 credential",
             isShared: true,
           },
         ]
@@ -91,9 +94,9 @@ export const flowlibConfig = defineConfig({
   ],
   plugins: [
     auth({
-      trustedOrigins: ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:3000'],
+      trustedOrigins: ["http://localhost:5173", "http://localhost:5174", "http://localhost:3000"],
       betterAuthOptions: {
-        secret: process.env.BETTER_AUTH_SECRET || 'flowlib-dev-secret-do-not-use-in-production',
+        secret: process.env.BETTER_AUTH_SECRET || "flowlib-dev-secret-do-not-use-in-production",
       },
       apiKey: true,
       globalAdmins:
@@ -102,37 +105,70 @@ export const flowlibConfig = defineConfig({
               {
                 email: process.env.FLOWLIB_ADMIN_EMAIL,
                 pw: process.env.FLOWLIB_ADMIN_PASSWORD,
-                name: 'Admin',
+                name: "Admin",
               },
             ]
           : [],
     }),
     rbac(),
     webhooks({
-      webhookBaseUrl: process.env.FLOWLIB_WEBHOOK_BASE_URL || 'http://localhost:3000/flowlib',
+      webhookBaseUrl: process.env.FLOWLIB_WEBHOOK_BASE_URL || "http://localhost:3000/flowlib",
     }),
     versionControl({
       provider: githubProvider({
         auth: {
-          type: 'token',
-          token: process.env.GITHUB_TOKEN || 'ghp_dummy_version_control_token_replace_me',
+          type: "token",
+          token: process.env.GITHUB_TOKEN || "ghp_dummy_version_control_token_replace_me",
         },
       }),
-      repo: process.env.FLOWLIB_VC_REPO || 'example/flowlib-flows',
-      defaultBranch: 'main',
-      path: 'flows/',
-      mode: 'direct-commit',
-      syncDirection: 'write',
+      repo: process.env.FLOWLIB_VC_REPO || "example/flowlib-flows",
+      defaultBranch: "main",
+      path: "flows/",
+      mode: "direct-commit",
+      syncDirection: "write",
     }),
     mcp(),
-    vercelWorkflowsPlugin({
-      deploymentUrl: process.env.VERCEL_DEPLOYMENT_URL,
+    // Code-editing agents. Chat runs **in-process** on Express via the
+    // runtime-portable agent loop (HTTP/SSE transport) — no Cloudflare
+    // Durable Object required. The `ai-sdk` provider drives our own
+    // prompt→tool loop through the Vercel AI SDK, with **direct** vendor
+    // connections (Anthropic / OpenAI / Google) so there's no gateway
+    // markup.
+    //
+    // Credential resolution is handled **internally**: the plugin threads
+    // `flowlib.credentials` to the provider, so the chat's own attached
+    // credential (decrypted) is resolved automatically — each user brings
+    // their own key; OpenRouter / Groq / etc. work via an OpenAI-compatible
+    // credential (`baseUrl`). No `resolveCredential` wiring needed.
+    agents({
+      defaultProviderId: "ai-sdk",
+      providers: [
+        aiSdkProvider({
+          // Statically wired (Workers can't dynamic-import); harmless on Node.
+          streamText,
+          // The host installs the `@ai-sdk/*` packages it wants and passes
+          // the `create*` fns; the helper wires the vendor map (with
+          // baseURL/headers passthrough, so `openai` also serves any
+          // OpenAI-compatible gateway).
+          vendors: standardAiSdkVendors({
+            createAnthropic,
+            createOpenAI,
+            createGoogleGenerativeAI,
+          }),
+        }),
+      ],
+      // Sandbox offload (opt-in). Pure chat needs no workspace. To let the
+      // agent run shell/filesystem tools in a real sandbox, install a
+      // ComputeSDK provider and uncomment — gated on an env key so the
+      // example still boots without sandbox credentials:
+      //
+      //   ...(process.env.SEED_E2B_API_KEY
+      //     ? {
+      //         workspaceProviders: [
+      //           computesdkWorkspace({ compute: e2b({ apiKey: process.env.SEED_E2B_API_KEY }) }),
+      //         ],
+      //       }
+      //     : {}),
     }),
-    // Code-editing agents. On Express/SQLite this serves the plugin's
-    // REST surface + UI (sessions, skills, MCP servers, tool policy).
-    // Live chat streaming needs the Cloudflare Durable Object host
-    // (`agents({ cloudflareDoClass })` + a sandbox workspace provider),
-    // which isn't available on this Node/SQLite path.
-    agents(),
   ],
 });

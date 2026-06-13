@@ -96,6 +96,7 @@ async function streamSession(deps: EndpointDeps): Promise<PluginEndpointResponse
     workspaces: registries.workspaces,
     hookPipeline: (registries as { hookPipeline?: ChatHostDeps['hookPipeline'] }).hookPipeline,
     permissions: registries.permissions as ChatHostDeps['permissions'],
+    credentials: registries.credentials as ChatHostDeps['credentials'],
     repositories: deps.repos as unknown as ChatHostDeps['repositories'],
     emit,
     logger,

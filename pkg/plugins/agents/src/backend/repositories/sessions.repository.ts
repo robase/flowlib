@@ -16,7 +16,15 @@ import type {
   ToolOutputBudget,
 } from '../../shared/types';
 import type { AgentsDB } from './db-types';
-import { encodeJsonOrNull, generateId, nowFor, parseJsonOrNull, toIso, toIsoOrNull } from './util';
+import {
+  boolFor,
+  encodeJsonOrNull,
+  generateId,
+  nowFor,
+  parseJsonOrNull,
+  toIso,
+  toIsoOrNull,
+} from './util';
 
 interface AgentSessionRow {
   id: string;
@@ -203,7 +211,7 @@ export class SessionsRepository {
         enabled_mcp_server_ids: encodeJsonOrNull(input.enabledMcpServerIds ?? []) ?? '[]',
         enabled_tools: encodeJsonOrNull(input.enabledTools ?? null),
         deny_list: encodeJsonOrNull(input.denyList ?? null),
-        expose_flowlib_actions: input.exposeFlowlibActions ?? false,
+        expose_flowlib_actions: boolFor(this.database, input.exposeFlowlibActions ?? false),
         tool_output_budget:
           encodeJsonOrNull(input.toolOutputBudget ?? DEFAULT_TOOL_OUTPUT_BUDGET) ??
           JSON.stringify(DEFAULT_TOOL_OUTPUT_BUDGET),
@@ -267,7 +275,7 @@ export class SessionsRepository {
       set.deny_list = encodeJsonOrNull(patch.denyList);
     }
     if (patch.exposeFlowlibActions !== undefined) {
-      set.expose_flowlib_actions = patch.exposeFlowlibActions;
+      set.expose_flowlib_actions = boolFor(this.database, patch.exposeFlowlibActions);
     }
     if (patch.toolOutputBudget !== undefined) {
       set.tool_output_budget = encodeJsonOrNull(patch.toolOutputBudget);

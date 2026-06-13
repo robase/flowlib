@@ -33,6 +33,12 @@ export interface AgentsRuntimeRegistries {
   repositories?: unknown;
   /** Permissions resolver — Stream J. */
   permissions?: unknown;
+  /**
+   * Credentials accessor (`flowlib.credentials`), threaded to providers so
+   * `aiSdkProvider` can resolve a chat's attached credential without the
+   * host hand-wiring `resolveCredential`. Set during `init()`.
+   */
+  credentials?: import('./providers/types').AgentCredentialsAccessor;
   /** Audit log writer — Stream J. */
   auditWriter?: unknown;
   /** System prompt composer — Stream K. */

@@ -67,6 +67,28 @@ export type AgentProviderConfig = Record<string, unknown>;
  * Input to `createSession`. Carries everything the provider needs to
  * stand up a new conversation thread.
  */
+/**
+ * Decrypted credential row a provider inspects to source an LLM key.
+ * Structural subset of Flowlib's credential record.
+ */
+export interface ResolvedCredentialRow {
+  name?: string;
+  authType?: string;
+  /** Decrypted config — `apiKey`, optional `baseUrl`, `oauth2Provider`, … */
+  config?: Record<string, unknown> | null;
+  metadata?: Record<string, unknown> | null;
+  provider?: string;
+}
+
+/**
+ * Minimal credentials accessor the host threads into providers (the
+ * agents plugin sets it from `flowlib.credentials`). Returns the
+ * **decrypted** credential so a provider can read its `apiKey`.
+ */
+export interface AgentCredentialsAccessor {
+  getDecryptedWithRefresh(id: string): Promise<ResolvedCredentialRow | null | undefined>;
+}
+
 export interface CreateSessionInput {
   /** Resolved auth context (org/user/role). */
   auth: AgentsAuthContext;
@@ -95,6 +117,14 @@ export interface CreateSessionInput {
    * credential (or fail if none is configured).
    */
   credentialId?: string;
+  /**
+   * Credentials accessor threaded in by the host runtime (the agents
+   * plugin sets it from `flowlib.credentials`). Lets a provider resolve
+   * the session's `credentialId` to an API key **without** the host
+   * hand-wiring a `resolveCredential` — the `aiSdkProvider` uses it as a
+   * built-in default. Per-request, so it stays correct multi-tenant.
+   */
+  credentials?: AgentCredentialsAccessor;
   /** Provider-specific extras (Claude Code: permissionMode, MCP, hooks). */
   extras?: Record<string, unknown>;
   /**

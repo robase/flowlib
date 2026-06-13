@@ -4,6 +4,7 @@ import {
   createFlowlib,
   FlowlibConfig,
   FlowlibIdentity,
+  type FlowlibInstance,
   createPluginDatabaseApi,
 } from '@flowlib/core';
 import {
@@ -28,8 +29,23 @@ declare module 'express' {
 /**
  * Create Flowlib Express Router
  */
-export async function createFlowlibRouter(config: FlowlibConfig): Promise<Router> {
+export interface CreateFlowlibRouterOptions {
+  /**
+   * Called with the constructed `FlowlibInstance` once it's ready (before
+   * the router is returned). Lets the host capture the instance for
+   * wiring that needs it at request time — e.g. an `aiSdkProvider`
+   * `resolveCredential` that looks up the session's credential via
+   * `flowlib.credentials.get(...)`.
+   */
+  onInstance?: (flowlib: FlowlibInstance) => void;
+}
+
+export async function createFlowlibRouter(
+  config: FlowlibConfig,
+  options: CreateFlowlibRouterOptions = {},
+): Promise<Router> {
   const flowlib = await createFlowlib(config);
+  options.onInstance?.(flowlib);
 
   // Start batch polling for automatic batch completion handling
   await flowlib.startBatchPolling();

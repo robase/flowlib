@@ -31,6 +31,27 @@ export interface ProviderEntry {
 
 export const PROVIDER_CATALOGUE: ProviderEntry[] = [
   {
+    // `ai-sdk` = the ai-sdk provider (our own prompt→tool loop). It's the
+    // default for the in-process (Express/Node) path. Model ids are
+    // `<vendor>/<model>` — `parseModelSpec` reads the leading segment as
+    // the vendor (`anthropic` | `openai` | `google`), which selects the
+    // host's vendor factory; the credential supplies the key (direct, no
+    // gateway markup). Anthropic-native versions use a hyphen (`4-5`).
+    id: 'ai-sdk',
+    label: 'Chat',
+    models: [
+      { id: 'anthropic/claude-sonnet-4-5', label: 'Claude Sonnet 4.5', description: 'Anthropic' },
+      { id: 'anthropic/claude-opus-4-1', label: 'Claude Opus 4.1', description: 'Anthropic' },
+      { id: 'openai/gpt-4o', label: 'GPT-4o', description: 'OpenAI' },
+      { id: 'openai/gpt-4o-mini', label: 'GPT-4o mini', description: 'OpenAI' },
+      {
+        id: 'google/gemini-2.0-flash-exp',
+        label: 'Gemini 2.0 Flash',
+        description: 'Google',
+      },
+    ],
+  },
+  {
     id: 'opencode',
     label: 'opencode',
     models: [
@@ -77,16 +98,6 @@ export const PROVIDER_CATALOGUE: ProviderEntry[] = [
       { id: 'claude-sonnet-4-5', label: 'Claude Sonnet 4.5' },
       { id: 'claude-opus-4-1', label: 'Claude Opus 4.1' },
       { id: 'claude-haiku-4-5', label: 'Claude Haiku 4.5' },
-    ],
-  },
-  {
-    id: 'raw-llm',
-    label: 'Raw LLM',
-    models: [
-      { id: 'anthropic/claude-sonnet-4.5', label: 'Claude Sonnet 4.5' },
-      { id: 'anthropic/claude-opus-4.1', label: 'Claude Opus 4.1' },
-      { id: 'openai/gpt-4o', label: 'GPT-4o' },
-      { id: 'openai/gpt-4o-mini', label: 'GPT-4o mini' },
     ],
   },
 ];

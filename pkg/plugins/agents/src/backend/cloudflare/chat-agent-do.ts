@@ -456,6 +456,7 @@ export class AgentChatDO extends (AIChatAgent as unknown as new (
       workspaces: runtime.workspaces,
       hookPipeline: (runtime as { hookPipeline?: ChatHostDeps['hookPipeline'] }).hookPipeline,
       permissions: runtime.permissions as ChatHostDeps['permissions'],
+      credentials: (runtime as { credentials?: ChatHostDeps['credentials'] }).credentials,
       repositories,
       emit,
       logger: log,

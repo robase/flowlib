@@ -24,7 +24,12 @@ import type {
   SessionContext,
   SessionLogger,
 } from './types';
-import type { AgentProvider, PromptInput, ProviderToolDescriptor } from '../providers/types';
+import type {
+  AgentCredentialsAccessor,
+  AgentProvider,
+  PromptInput,
+  ProviderToolDescriptor,
+} from '../providers/types';
 import type { WorkspaceProvider } from '../workspaces/types';
 import type { HookPipeline } from '../hooks/types';
 import { noopHookPipeline } from '../hooks/types';
@@ -116,6 +121,12 @@ export interface ChatHostDeps {
 
   /** Materialised repositories bag. */
   repositories: RepositoriesBag;
+  /**
+   * Credentials accessor (`flowlib.credentials`) threaded to the provider
+   * so it can resolve the chat's attached credential internally. Supplied
+   * by the transport from `registries.credentials`.
+   */
+  credentials?: AgentCredentialsAccessor;
 
   /** Event sink — DO WebSocket broadcast or SSE writer. */
   emit: (event: AgentEvent) => void | Promise<void>;
@@ -230,6 +241,7 @@ export async function buildSessionContext(
       workspace: workspaceHandle as never,
       ensureWorkspace: ensureWorkspace as never,
       credentialId: sessionRow.credentialId ?? undefined,
+      credentials: deps.credentials,
       providerSessionId: sessionRow.providerSessionId,
       systemPrompt: effectiveSystemPrompt,
     } as never);

@@ -383,6 +383,13 @@ export function agents(options: AgentsPluginOptions = {}): FlowlibPluginDefiniti
       //     populated with everything above).
       //  7. Endpoints register last, since they consume everything.
       registerRepositories(ctx);
+      // Thread the credentials accessor (lazy — `getFlowlib()` resolves at
+      // call time) so providers can resolve a chat's attached credential
+      // without the host hand-wiring `resolveCredential`.
+      ctx.registries.credentials = {
+        getDecryptedWithRefresh: (id: string) =>
+          ctx.flowlib.getFlowlib().credentials.getDecryptedWithRefresh(id),
+      };
       registerPermissions(ctx);
       registerAudit(ctx);
       // Hooks depend on the audit writer (above) being on the registry.
