@@ -181,7 +181,9 @@ export async function buildSessionContext(
   if (sessionRow.orgId !== orgId) {
     // Defence-in-depth: never surface cross-tenant data even if a
     // session somehow moved orgs.
-    return { error: { message: 'Session does not belong to this org.', code: 'CROSS_TENANT_DENIED' } };
+    return {
+      error: { message: 'Session does not belong to this org.', code: 'CROSS_TENANT_DENIED' },
+    };
   }
 
   const provider = deps.providers.get(sessionRow.providerId);
@@ -350,7 +352,9 @@ function makeEnsureWorkspace(
     }
     const wsProvider = workspaces?.get(workspaceProviderId);
     if (!wsProvider) {
-      throw new Error(`Workspace provider "${workspaceProviderId}" not registered in this isolate.`);
+      throw new Error(
+        `Workspace provider "${workspaceProviderId}" not registered in this isolate.`,
+      );
     }
     cached = (await wsProvider.resolve(workspaceId, auth)) as {
       metadata?: Record<string, unknown>;

@@ -1,7 +1,21 @@
-import { sqliteTable, text, integer, primaryKey, type AnySQLiteColumn } from 'drizzle-orm/sqlite-core';
+import {
+  sqliteTable,
+  text,
+  integer,
+  primaryKey,
+  type AnySQLiteColumn,
+} from 'drizzle-orm/sqlite-core';
 import { relations, sql } from 'drizzle-orm';
 import { randomUUID } from 'crypto';
-import type { BatchProvider, CredentialAuthType, CredentialConfig, CredentialType, FlowlibDefinitionRuntime, JSONValue, TriggerType } from '@flowlib/core/types';
+import type {
+  BatchProvider,
+  CredentialAuthType,
+  CredentialConfig,
+  CredentialType,
+  FlowlibDefinitionRuntime,
+  JSONValue,
+  TriggerType,
+} from '@flowlib/core/types';
 import type { BatchStatus, FlowRunStatus, NodeExecutionStatus } from '@flowlib/action-kit';
 
 // =============================================================================
@@ -23,15 +37,21 @@ export const user = sqliteTable('flowlib_user', {
   banReason: text('ban_reason'),
   banExpires: text('ban_expires'),
   twoFactorEnabled: integer('two_factor_enabled', { mode: 'boolean' }).default(false),
-  createdAt: text('created_at').notNull().default(sql`CURRENT_TIMESTAMP`),
-  updatedAt: text('updated_at').notNull().default(sql`CURRENT_TIMESTAMP`),
+  createdAt: text('created_at')
+    .notNull()
+    .default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: text('updated_at')
+    .notNull()
+    .default(sql`CURRENT_TIMESTAMP`),
 });
 
 export const account = sqliteTable('flowlib_account', {
   id: text('id').primaryKey().notNull(),
   accountId: text('account_id').notNull(),
   providerId: text('provider_id').notNull(),
-  userId: text('user_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
+  userId: text('user_id')
+    .notNull()
+    .references(() => user.id, { onDelete: 'cascade' }),
   accessToken: text('access_token'),
   refreshToken: text('refresh_token'),
   idToken: text('id_token'),
@@ -39,20 +59,30 @@ export const account = sqliteTable('flowlib_account', {
   refreshTokenExpiresAt: text('refresh_token_expires_at'),
   scope: text('scope'),
   password: text('password'),
-  createdAt: text('created_at').notNull().default(sql`CURRENT_TIMESTAMP`),
-  updatedAt: text('updated_at').notNull().default(sql`CURRENT_TIMESTAMP`),
+  createdAt: text('created_at')
+    .notNull()
+    .default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: text('updated_at')
+    .notNull()
+    .default(sql`CURRENT_TIMESTAMP`),
 });
 
 export const session = sqliteTable('flowlib_session', {
   id: text('id').primaryKey().notNull(),
   expiresAt: text('expires_at').notNull(),
   token: text('token').notNull().unique(),
-  createdAt: text('created_at').notNull().default(sql`CURRENT_TIMESTAMP`),
-  updatedAt: text('updated_at').notNull().default(sql`CURRENT_TIMESTAMP`),
+  createdAt: text('created_at')
+    .notNull()
+    .default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: text('updated_at')
+    .notNull()
+    .default(sql`CURRENT_TIMESTAMP`),
   ipAddress: text('ip_address'),
   userAgent: text('user_agent'),
   impersonatedBy: text('impersonated_by'),
-  userId: text('user_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
+  userId: text('user_id')
+    .notNull()
+    .references(() => user.id, { onDelete: 'cascade' }),
 });
 
 export const verification = sqliteTable('flowlib_verification', {
@@ -83,26 +113,39 @@ export const apikey = sqliteTable('flowlib_apikey', {
   remaining: integer('remaining'),
   lastRequest: text('last_request'),
   expiresAt: text('expires_at'),
-  createdAt: text('created_at').notNull().default(sql`CURRENT_TIMESTAMP`),
-  updatedAt: text('updated_at').notNull().default(sql`CURRENT_TIMESTAMP`),
+  createdAt: text('created_at')
+    .notNull()
+    .default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: text('updated_at')
+    .notNull()
+    .default(sql`CURRENT_TIMESTAMP`),
   permissions: text('permissions'),
   metadata: text('metadata'),
 });
 
 export const flowAccess = sqliteTable('flowlib_flow_access', {
-  id: text('id').primaryKey().notNull().$defaultFn(() => randomUUID()),
-  flowId: text('flow_id').notNull().references(() => flows.id, { onDelete: 'cascade' }),
+  id: text('id')
+    .primaryKey()
+    .notNull()
+    .$defaultFn(() => randomUUID()),
+  flowId: text('flow_id')
+    .notNull()
+    .references(() => flows.id, { onDelete: 'cascade' }),
   userId: text('user_id'),
   teamId: text('team_id'),
   permission: text('permission').notNull().default('viewer'),
   grantedBy: text('granted_by'),
-  grantedAt: text('granted_at').notNull().default(sql`CURRENT_TIMESTAMP`),
+  grantedAt: text('granted_at')
+    .notNull()
+    .default(sql`CURRENT_TIMESTAMP`),
   expiresAt: text('expires_at'),
 });
 
 export const twoFactor = sqliteTable('flowlib_two_factor', {
   id: text('id').primaryKey().notNull(),
-  userId: text('user_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
+  userId: text('user_id')
+    .notNull()
+    .references(() => user.id, { onDelete: 'cascade' }),
   secret: text('secret').notNull(),
   backupCodes: text('backup_codes').notNull(),
   verified: integer('verified', { mode: 'boolean' }).default(false),
@@ -113,12 +156,17 @@ export const settings = sqliteTable('flowlib_settings', {
   namespace: text('namespace').notNull(),
   value: text('value', { mode: 'json' }).$type<unknown>(),
   encrypted: integer('encrypted', { mode: 'boolean' }).notNull().default(false),
-  updatedAt: text('updated_at').notNull().default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: text('updated_at')
+    .notNull()
+    .default(sql`CURRENT_TIMESTAMP`),
   updatedBy: text('updated_by'),
 });
 
 export const credentials = sqliteTable('flowlib_credentials', {
-  id: text('id').primaryKey().notNull().$defaultFn(() => randomUUID()),
+  id: text('id')
+    .primaryKey()
+    .notNull()
+    .$defaultFn(() => randomUUID()),
   name: text('name').notNull(),
   type: text('type').$type<CredentialType>().notNull(),
   authType: text('auth_type').$type<CredentialAuthType>().notNull(),
@@ -130,8 +178,12 @@ export const credentials = sqliteTable('flowlib_credentials', {
   metadata: text('metadata', { mode: 'json' }).$type<Record<string, unknown>>(),
   lastUsedAt: text('last_used_at'),
   expiresAt: text('expires_at'),
-  createdAt: text('created_at').notNull().default(sql`CURRENT_TIMESTAMP`),
-  updatedAt: text('updated_at').notNull().default(sql`CURRENT_TIMESTAMP`),
+  createdAt: text('created_at')
+    .notNull()
+    .default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: text('updated_at')
+    .notNull()
+    .default(sql`CURRENT_TIMESTAMP`),
 });
 
 export const flows = sqliteTable('flowlib_flows', {
@@ -141,14 +193,21 @@ export const flows = sqliteTable('flowlib_flows', {
   tags: text('tags', { mode: 'json' }).$type<string[]>(),
   isActive: integer('is_active', { mode: 'boolean' }).notNull().default(true),
   liveVersionNumber: integer('live_version_number'),
-  createdAt: text('created_at').notNull().default(sql`CURRENT_TIMESTAMP`),
-  updatedAt: text('updated_at').notNull().default(sql`CURRENT_TIMESTAMP`),
+  createdAt: text('created_at')
+    .notNull()
+    .default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: text('updated_at')
+    .notNull()
+    .default(sql`CURRENT_TIMESTAMP`),
   scope_id: text('scope_id').references(() => rbac_teams.id, { onDelete: 'set null' }),
 });
 
 export const vc_sync_config = sqliteTable('flowlib_vc_sync_config', {
   id: text('id').primaryKey().notNull(),
-  flowId: text('flow_id').notNull().unique().references(() => flows.id, { onDelete: 'cascade' }),
+  flowId: text('flow_id')
+    .notNull()
+    .unique()
+    .references(() => flows.id, { onDelete: 'cascade' }),
   provider: text('provider').notNull(),
   repo: text('repo').notNull(),
   branch: text('branch').notNull(),
@@ -162,21 +221,36 @@ export const vc_sync_config = sqliteTable('flowlib_vc_sync_config', {
   activePrNumber: integer('active_pr_number'),
   activePrUrl: text('active_pr_url'),
   enabled: integer('enabled', { mode: 'boolean' }).notNull().default(true),
-  createdAt: text('created_at').notNull().default(sql`CURRENT_TIMESTAMP`),
-  updatedAt: text('updated_at').notNull().default(sql`CURRENT_TIMESTAMP`),
+  createdAt: text('created_at')
+    .notNull()
+    .default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: text('updated_at')
+    .notNull()
+    .default(sql`CURRENT_TIMESTAMP`),
 });
 
-export const agent_role_permissions = sqliteTable('agent_role_permissions', {
-  roleId: text('role_id').notNull(),
-  toolName: text('tool_name').notNull(),
-  enabled: integer('enabled', { mode: 'boolean' }).notNull().default(true),
-  reason: text('reason'),
-  updatedAt: text('updated_at').notNull().default(sql`CURRENT_TIMESTAMP`),
-}, (table) => [primaryKey({ columns: [table.roleId, table.toolName] })]);
+export const agent_role_permissions = sqliteTable(
+  'agent_role_permissions',
+  {
+    roleId: text('role_id').notNull(),
+    toolName: text('tool_name').notNull(),
+    enabled: integer('enabled', { mode: 'boolean' }).notNull().default(true),
+    reason: text('reason'),
+    updatedAt: text('updated_at')
+      .notNull()
+      .default(sql`CURRENT_TIMESTAMP`),
+  },
+  (table) => [primaryKey({ columns: [table.roleId, table.toolName] })],
+);
 
 export const flowTriggers = sqliteTable('flowlib_flow_triggers', {
-  id: text('id').primaryKey().notNull().$defaultFn(() => randomUUID()),
-  flowId: text('flow_id').notNull().references(() => flows.id, { onDelete: 'cascade' }),
+  id: text('id')
+    .primaryKey()
+    .notNull()
+    .$defaultFn(() => randomUUID()),
+  flowId: text('flow_id')
+    .notNull()
+    .references(() => flows.id, { onDelete: 'cascade' }),
   nodeId: text('node_id').notNull(),
   type: text('type').$type<TriggerType>().notNull(),
   isEnabled: integer('is_enabled', { mode: 'boolean' }).notNull().default(true),
@@ -185,59 +259,104 @@ export const flowTriggers = sqliteTable('flowlib_flow_triggers', {
   cronExpression: text('cron_expression'),
   cronTimezone: text('cron_timezone'),
   lastTriggeredAt: text('last_triggered_at'),
-  createdAt: text('created_at').notNull().default(sql`CURRENT_TIMESTAMP`),
-  updatedAt: text('updated_at').notNull().default(sql`CURRENT_TIMESTAMP`),
+  createdAt: text('created_at')
+    .notNull()
+    .default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: text('updated_at')
+    .notNull()
+    .default(sql`CURRENT_TIMESTAMP`),
 });
 
-export const flowVersions = sqliteTable('flowlib_flow_versions', {
-  flowId: text('flow_id').notNull().references(() => flows.id, { onDelete: 'cascade' }),
-  version: integer('version').notNull(),
-  flowlibDefinition: text('flowlib_definition', { mode: 'json' }).$type<FlowlibDefinitionRuntime>().notNull(),
-  createdAt: text('created_at').notNull().default(sql`CURRENT_TIMESTAMP`),
-  createdBy: text('created_by'),
-}, (table) => [primaryKey({ columns: [table.version, table.flowId] })]);
+export const flowVersions = sqliteTable(
+  'flowlib_flow_versions',
+  {
+    flowId: text('flow_id')
+      .notNull()
+      .references(() => flows.id, { onDelete: 'cascade' }),
+    version: integer('version').notNull(),
+    flowlibDefinition: text('flowlib_definition', { mode: 'json' })
+      .$type<FlowlibDefinitionRuntime>()
+      .notNull(),
+    createdAt: text('created_at')
+      .notNull()
+      .default(sql`CURRENT_TIMESTAMP`),
+    createdBy: text('created_by'),
+  },
+  (table) => [primaryKey({ columns: [table.version, table.flowId] })],
+);
 
 export const vc_sync_history = sqliteTable('flowlib_vc_sync_history', {
-  id: text('id').primaryKey().notNull().$defaultFn(() => randomUUID()),
-  flowId: text('flow_id').notNull().references(() => flows.id, { onDelete: 'cascade' }),
+  id: text('id')
+    .primaryKey()
+    .notNull()
+    .$defaultFn(() => randomUUID()),
+  flowId: text('flow_id')
+    .notNull()
+    .references(() => flows.id, { onDelete: 'cascade' }),
   action: text('action').notNull(),
   commitSha: text('commit_sha'),
   prNumber: integer('pr_number'),
   version: integer('version'),
   message: text('message'),
-  createdAt: text('created_at').notNull().default(sql`CURRENT_TIMESTAMP`),
+  createdAt: text('created_at')
+    .notNull()
+    .default(sql`CURRENT_TIMESTAMP`),
   createdBy: text('created_by'),
 });
 
 export const agent_projects = sqliteTable('agent_projects', {
-  id: text('id').primaryKey().notNull().$defaultFn(() => randomUUID()),
+  id: text('id')
+    .primaryKey()
+    .notNull()
+    .$defaultFn(() => randomUUID()),
   orgId: text('org_id'),
   name: text('name').notNull(),
   description: text('description'),
   gitRemote: text('git_remote'),
   createdBy: text('created_by').notNull(),
-  createdAt: text('created_at').notNull().default(sql`CURRENT_TIMESTAMP`),
-  updatedAt: text('updated_at').notNull().default(sql`CURRENT_TIMESTAMP`),
+  createdAt: text('created_at')
+    .notNull()
+    .default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: text('updated_at')
+    .notNull()
+    .default(sql`CURRENT_TIMESTAMP`),
 });
 
 export const chatMessages = sqliteTable('flowlib_chat_messages', {
-  id: text('id').primaryKey().notNull().$defaultFn(() => randomUUID()),
-  flowId: text('flow_id').notNull().references(() => flows.id, { onDelete: 'cascade' }),
+  id: text('id')
+    .primaryKey()
+    .notNull()
+    .$defaultFn(() => randomUUID()),
+  flowId: text('flow_id')
+    .notNull()
+    .references(() => flows.id, { onDelete: 'cascade' }),
   role: text('role').$type<'user' | 'assistant' | 'system' | 'tool'>().notNull(),
   content: text('content').notNull().default(''),
   toolMeta: text('tool_meta', { mode: 'json' }).$type<Record<string, unknown>>(),
-  createdAt: text('created_at').notNull().default(sql`CURRENT_TIMESTAMP`),
+  createdAt: text('created_at')
+    .notNull()
+    .default(sql`CURRENT_TIMESTAMP`),
 });
 
 export const flowRuns = sqliteTable('flowlib_flow_executions', {
-  id: text('id').primaryKey().notNull().$defaultFn(() => randomUUID()),
-  flowId: text('flow_id').notNull().references(() => flows.id, { onDelete: 'cascade' }),
+  id: text('id')
+    .primaryKey()
+    .notNull()
+    .$defaultFn(() => randomUUID()),
+  flowId: text('flow_id')
+    .notNull()
+    .references(() => flows.id, { onDelete: 'cascade' }),
   flowVersion: integer('flow_version').notNull(),
-  status: text('status').$type<FlowRunStatus>().notNull().default(sql`'PENDING'`),
+  status: text('status')
+    .$type<FlowRunStatus>()
+    .notNull()
+    .default(sql`'PENDING'`),
   inputs: text('inputs', { mode: 'json' }).$type<JSONValue>().notNull(),
   outputs: text('outputs', { mode: 'json' }).$type<JSONValue>(),
   error: text('error'),
-  startedAt: text('started_at').notNull().default(sql`CURRENT_TIMESTAMP`),
+  startedAt: text('started_at')
+    .notNull()
+    .default(sql`CURRENT_TIMESTAMP`),
   completedAt: text('completed_at'),
   duration: integer('duration'),
   createdBy: text('created_by'),
@@ -250,7 +369,10 @@ export const flowRuns = sqliteTable('flowlib_flow_executions', {
 });
 
 export const vc_instance_state = sqliteTable('flowlib_vc_instance_state', {
-  id: text('id').primaryKey().notNull().$defaultFn(() => randomUUID()),
+  id: text('id')
+    .primaryKey()
+    .notNull()
+    .$defaultFn(() => randomUUID()),
   repo: text('repo').notNull(),
   branch: text('branch').notNull(),
   lastInstanceCommitSha: text('last_instance_commit_sha'),
@@ -259,31 +381,51 @@ export const vc_instance_state = sqliteTable('flowlib_vc_instance_state', {
   breakGlassUntil: text('break_glass_until'),
   breakGlassActor: text('break_glass_actor'),
   breakGlassReason: text('break_glass_reason'),
-  createdAt: text('created_at').notNull().default(sql`CURRENT_TIMESTAMP`),
-  updatedAt: text('updated_at').notNull().default(sql`CURRENT_TIMESTAMP`),
+  createdAt: text('created_at')
+    .notNull()
+    .default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: text('updated_at')
+    .notNull()
+    .default(sql`CURRENT_TIMESTAMP`),
 });
 
 export const actionTraces = sqliteTable('flowlib_action_traces', {
-  id: text('id').primaryKey().notNull().$defaultFn(() => randomUUID()),
-  flowRunId: text('flow_run_id').notNull().references(() => flowRuns.id, { onDelete: 'cascade' }),
-  parentNodeExecutionId: text('parent_node_execution_id').references((): AnySQLiteColumn => actionTraces.id, { onDelete: 'cascade' }),
+  id: text('id')
+    .primaryKey()
+    .notNull()
+    .$defaultFn(() => randomUUID()),
+  flowRunId: text('flow_run_id')
+    .notNull()
+    .references(() => flowRuns.id, { onDelete: 'cascade' }),
+  parentNodeExecutionId: text('parent_node_execution_id').references(
+    (): AnySQLiteColumn => actionTraces.id,
+    { onDelete: 'cascade' },
+  ),
   nodeId: text('node_id'),
   nodeType: text('node_type'),
   toolId: text('tool_id'),
   toolName: text('tool_name'),
   iteration: integer('iteration'),
-  status: text('status').$type<NodeExecutionStatus>().notNull().default(sql`'PENDING'`),
+  status: text('status')
+    .$type<NodeExecutionStatus>()
+    .notNull()
+    .default(sql`'PENDING'`),
   inputs: text('inputs', { mode: 'json' }).$type<JSONValue>().notNull(),
   outputs: text('outputs', { mode: 'json' }).$type<JSONValue>(),
   error: text('error', { mode: 'json' }).$type<NodeErrorDetails>(),
-  startedAt: text('started_at').notNull().default(sql`CURRENT_TIMESTAMP`),
+  startedAt: text('started_at')
+    .notNull()
+    .default(sql`CURRENT_TIMESTAMP`),
   completedAt: text('completed_at'),
   duration: integer('duration'),
   retryCount: integer('retry_count').notNull().default(0),
 });
 
 export const agent_workspaces = sqliteTable('agent_workspaces', {
-  id: text('id').primaryKey().notNull().$defaultFn(() => randomUUID()),
+  id: text('id')
+    .primaryKey()
+    .notNull()
+    .$defaultFn(() => randomUUID()),
   orgId: text('org_id'),
   name: text('name').notNull(),
   workspaceProviderId: text('workspace_provider_id').notNull(),
@@ -294,80 +436,145 @@ export const agent_workspaces = sqliteTable('agent_workspaces', {
   projectId: text('project_id'),
   createdBy: text('created_by').notNull(),
   visibility: text('visibility').notNull().default('private'),
-  createdAt: text('created_at').notNull().default(sql`CURRENT_TIMESTAMP`),
-  updatedAt: text('updated_at').notNull().default(sql`CURRENT_TIMESTAMP`),
+  createdAt: text('created_at')
+    .notNull()
+    .default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: text('updated_at')
+    .notNull()
+    .default(sql`CURRENT_TIMESTAMP`),
 });
 
-export const vc_pull_commits = sqliteTable('flowlib_vc_pull_commits', {
-  flowId: text('flow_id').notNull().references(() => flows.id, { onDelete: 'cascade' }),
-  commitSha: text('commit_sha').notNull(),
-  versionInserted: integer('version_inserted'),
-  pulledAt: text('pulled_at').notNull().default(sql`CURRENT_TIMESTAMP`),
-}, (table) => [primaryKey({ columns: [table.flowId, table.commitSha] })]);
+export const vc_pull_commits = sqliteTable(
+  'flowlib_vc_pull_commits',
+  {
+    flowId: text('flow_id')
+      .notNull()
+      .references(() => flows.id, { onDelete: 'cascade' }),
+    commitSha: text('commit_sha').notNull(),
+    versionInserted: integer('version_inserted'),
+    pulledAt: text('pulled_at')
+      .notNull()
+      .default(sql`CURRENT_TIMESTAMP`),
+  },
+  (table) => [primaryKey({ columns: [table.flowId, table.commitSha] })],
+);
 
 export const agent_mcp_servers = sqliteTable('agent_mcp_servers', {
-  id: text('id').primaryKey().notNull().$defaultFn(() => randomUUID()),
+  id: text('id')
+    .primaryKey()
+    .notNull()
+    .$defaultFn(() => randomUUID()),
   orgId: text('org_id'),
   name: text('name').notNull(),
   description: text('description'),
   transport: text('transport').notNull(),
-  config: text('config', { mode: 'json' }).$type<Record<string, unknown>>().notNull().default(sql`'{}'`),
+  config: text('config', { mode: 'json' })
+    .$type<Record<string, unknown>>()
+    .notNull()
+    .default(sql`'{}'`),
   createdBy: text('created_by').notNull(),
-  createdAt: text('created_at').notNull().default(sql`CURRENT_TIMESTAMP`),
-  updatedAt: text('updated_at').notNull().default(sql`CURRENT_TIMESTAMP`),
+  createdAt: text('created_at')
+    .notNull()
+    .default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: text('updated_at')
+    .notNull()
+    .default(sql`CURRENT_TIMESTAMP`),
 });
 
 export const batchJobs = sqliteTable('flowlib_batch_jobs', {
-  id: text('id').primaryKey().notNull().$defaultFn(() => randomUUID()),
-  flowRunId: text('flow_run_id').notNull().references(() => flowRuns.id, { onDelete: 'cascade' }),
+  id: text('id')
+    .primaryKey()
+    .notNull()
+    .$defaultFn(() => randomUUID()),
+  flowRunId: text('flow_run_id')
+    .notNull()
+    .references(() => flowRuns.id, { onDelete: 'cascade' }),
   nodeId: text('node_id').notNull(),
   provider: text('provider').$type<BatchProvider>().notNull(),
   batchId: text('batch_id'),
-  status: text('status').$type<BatchStatus>().notNull().default(sql`'SUBMITTED'`),
+  status: text('status')
+    .$type<BatchStatus>()
+    .notNull()
+    .default(sql`'SUBMITTED'`),
   requestData: text('request_data', { mode: 'json' }).notNull(),
   responseData: text('response_data', { mode: 'json' }),
   error: text('error'),
-  submittedAt: text('submitted_at').notNull().default(sql`CURRENT_TIMESTAMP`),
+  submittedAt: text('submitted_at')
+    .notNull()
+    .default(sql`CURRENT_TIMESTAMP`),
   completedAt: text('completed_at'),
-  createdAt: text('created_at').notNull().default(sql`CURRENT_TIMESTAMP`),
-  updatedAt: text('updated_at').notNull().default(sql`CURRENT_TIMESTAMP`),
+  createdAt: text('created_at')
+    .notNull()
+    .default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: text('updated_at')
+    .notNull()
+    .default(sql`CURRENT_TIMESTAMP`),
 });
 
 export const vc_status_cache = sqliteTable('flowlib_vc_status_cache', {
-  flowId: text('flow_id').primaryKey().notNull().references(() => flows.id, { onDelete: 'cascade' }),
+  flowId: text('flow_id')
+    .primaryKey()
+    .notNull()
+    .references(() => flows.id, { onDelete: 'cascade' }),
   state: text('state').notNull(),
   chipLabel: text('chip_label').notNull(),
   actionLabel: text('action_label'),
   lastError: text('last_error'),
-  updatedAt: text('updated_at').notNull().default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: text('updated_at')
+    .notNull()
+    .default(sql`CURRENT_TIMESTAMP`),
 });
 
-export const agent_workspace_shares = sqliteTable('agent_workspace_shares', {
-  orgId: text('org_id'),
-  workspaceId: text('workspace_id').notNull().references(() => agent_workspaces.id, { onDelete: 'cascade' }),
-  userId: text('user_id').notNull(),
-  role: text('role').notNull(),
-  grantedBy: text('granted_by').notNull(),
-  createdAt: text('created_at').notNull().default(sql`CURRENT_TIMESTAMP`),
-}, (table) => [primaryKey({ columns: [table.workspaceId, table.userId] })]);
+export const agent_workspace_shares = sqliteTable(
+  'agent_workspace_shares',
+  {
+    orgId: text('org_id'),
+    workspaceId: text('workspace_id')
+      .notNull()
+      .references(() => agent_workspaces.id, { onDelete: 'cascade' }),
+    userId: text('user_id').notNull(),
+    role: text('role').notNull(),
+    grantedBy: text('granted_by').notNull(),
+    createdAt: text('created_at')
+      .notNull()
+      .default(sql`CURRENT_TIMESTAMP`),
+  },
+  (table) => [primaryKey({ columns: [table.workspaceId, table.userId] })],
+);
 
 export const agent_sessions = sqliteTable('agent_sessions', {
-  id: text('id').primaryKey().notNull().$defaultFn(() => randomUUID()),
+  id: text('id')
+    .primaryKey()
+    .notNull()
+    .$defaultFn(() => randomUUID()),
   orgId: text('org_id'),
   providerSessionId: text('provider_session_id').notNull(),
   title: text('title').notNull().default('New chat'),
   providerId: text('provider_id').notNull(),
-  providerConfig: text('provider_config', { mode: 'json' }).$type<Record<string, unknown>>().notNull().default(sql`'{}'`),
+  providerConfig: text('provider_config', { mode: 'json' })
+    .$type<Record<string, unknown>>()
+    .notNull()
+    .default(sql`'{}'`),
   credentialId: text('credential_id'),
   model: text('model'),
   permissionMode: text('permission_mode'),
   systemPrompt: text('system_prompt'),
-  workspaceId: text('workspace_id').references(() => agent_workspaces.id, { onDelete: 'no action' }),
-  enabledMcpServerIds: text('enabled_mcp_server_ids', { mode: 'json' }).$type<string[]>().notNull().default(sql`'[]'`),
+  workspaceId: text('workspace_id').references(() => agent_workspaces.id, {
+    onDelete: 'no action',
+  }),
+  enabledMcpServerIds: text('enabled_mcp_server_ids', { mode: 'json' })
+    .$type<string[]>()
+    .notNull()
+    .default(sql`'[]'`),
   enabledTools: text('enabled_tools', { mode: 'json' }).$type<string[]>(),
   denyList: text('deny_list', { mode: 'json' }).$type<string[]>(),
-  exposeFlowlibActions: integer('expose_flowlib_actions', { mode: 'boolean' }).notNull().default(false),
-  toolOutputBudget: text('tool_output_budget', { mode: 'json' }).$type<{ lines: number; bytes: number }>().notNull().default(sql`'{"lines":100,"bytes":4096}'`),
+  exposeFlowlibActions: integer('expose_flowlib_actions', { mode: 'boolean' })
+    .notNull()
+    .default(false),
+  toolOutputBudget: text('tool_output_budget', { mode: 'json' })
+    .$type<{ lines: number; bytes: number }>()
+    .notNull()
+    .default(sql`'{"lines":100,"bytes":4096}'`),
   createdBy: text('created_by').notNull(),
   visibility: text('visibility').notNull().default('private'),
   status: text('status').notNull().default('active'),
@@ -376,74 +583,125 @@ export const agent_sessions = sqliteTable('agent_sessions', {
   inputTokensTotal: integer('input_tokens_total').notNull().default(0),
   outputTokensTotal: integer('output_tokens_total').notNull().default(0),
   costUsd: text('cost_usd').notNull().default('0'),
-  createdAt: text('created_at').notNull().default(sql`CURRENT_TIMESTAMP`),
-  updatedAt: text('updated_at').notNull().default(sql`CURRENT_TIMESTAMP`),
+  createdAt: text('created_at')
+    .notNull()
+    .default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: text('updated_at')
+    .notNull()
+    .default(sql`CURRENT_TIMESTAMP`),
 });
 
-export const agent_session_shares = sqliteTable('agent_session_shares', {
-  orgId: text('org_id'),
-  sessionId: text('session_id').notNull().references(() => agent_sessions.id, { onDelete: 'cascade' }),
-  userId: text('user_id').notNull(),
-  role: text('role').notNull(),
-  grantedBy: text('granted_by').notNull(),
-  createdAt: text('created_at').notNull().default(sql`CURRENT_TIMESTAMP`),
-}, (table) => [primaryKey({ columns: [table.sessionId, table.userId] })]);
+export const agent_session_shares = sqliteTable(
+  'agent_session_shares',
+  {
+    orgId: text('org_id'),
+    sessionId: text('session_id')
+      .notNull()
+      .references(() => agent_sessions.id, { onDelete: 'cascade' }),
+    userId: text('user_id').notNull(),
+    role: text('role').notNull(),
+    grantedBy: text('granted_by').notNull(),
+    createdAt: text('created_at')
+      .notNull()
+      .default(sql`CURRENT_TIMESTAMP`),
+  },
+  (table) => [primaryKey({ columns: [table.sessionId, table.userId] })],
+);
 
 export const agent_messages = sqliteTable('agent_messages', {
-  id: text('id').primaryKey().notNull().$defaultFn(() => randomUUID()),
+  id: text('id')
+    .primaryKey()
+    .notNull()
+    .$defaultFn(() => randomUUID()),
   orgId: text('org_id'),
-  sessionId: text('session_id').notNull().references(() => agent_sessions.id, { onDelete: 'cascade' }),
+  sessionId: text('session_id')
+    .notNull()
+    .references(() => agent_sessions.id, { onDelete: 'cascade' }),
   sequence: integer('sequence').notNull(),
   parentMessageId: text('parent_message_id'),
   role: text('role').notNull(),
-  parts: text('parts', { mode: 'json' }).$type<unknown[]>().notNull().default(sql`'[]'`),
+  parts: text('parts', { mode: 'json' })
+    .$type<unknown[]>()
+    .notNull()
+    .default(sql`'[]'`),
   usage: text('usage', { mode: 'json' }).$type<Record<string, number>>(),
   costUsd: text('cost_usd').notNull().default('0'),
-  createdAt: text('created_at').notNull().default(sql`CURRENT_TIMESTAMP`),
+  createdAt: text('created_at')
+    .notNull()
+    .default(sql`CURRENT_TIMESTAMP`),
   userId: text('user_id'),
 });
 
 export const agent_attachments = sqliteTable('agent_attachments', {
-  id: text('id').primaryKey().notNull().$defaultFn(() => randomUUID()),
+  id: text('id')
+    .primaryKey()
+    .notNull()
+    .$defaultFn(() => randomUUID()),
   orgId: text('org_id'),
-  sessionId: text('session_id').notNull().references(() => agent_sessions.id, { onDelete: 'cascade' }),
-  messageId: text('message_id').notNull().references(() => agent_messages.id, { onDelete: 'cascade' }),
+  sessionId: text('session_id')
+    .notNull()
+    .references(() => agent_sessions.id, { onDelete: 'cascade' }),
+  messageId: text('message_id')
+    .notNull()
+    .references(() => agent_messages.id, { onDelete: 'cascade' }),
   name: text('name').notNull(),
   mediaType: text('media_type').notNull(),
   sizeBytes: integer('size_bytes').notNull(),
   storageKey: text('storage_key').notNull(),
-  createdAt: text('created_at').notNull().default(sql`CURRENT_TIMESTAMP`),
+  createdAt: text('created_at')
+    .notNull()
+    .default(sql`CURRENT_TIMESTAMP`),
 });
 
 export const rbac_scope_access = sqliteTable('flowlib_rbac_scope_access', {
   id: text('id').primaryKey().notNull(),
-  scope_id: text('scope_id').notNull().references(() => rbac_teams.id, { onDelete: 'cascade' }),
+  scope_id: text('scope_id')
+    .notNull()
+    .references(() => rbac_teams.id, { onDelete: 'cascade' }),
   user_id: text('user_id'),
   team_id: text('team_id'),
-  permission: text('permission').$type<FlowAccessPermission>().notNull().default(sql`'viewer'`),
+  permission: text('permission')
+    .$type<FlowAccessPermission>()
+    .notNull()
+    .default(sql`'viewer'`),
   granted_by: text('granted_by'),
-  granted_at: text('granted_at').notNull().default(sql`CURRENT_TIMESTAMP`),
+  granted_at: text('granted_at')
+    .notNull()
+    .default(sql`CURRENT_TIMESTAMP`),
 });
 
 export const rbac_team_members = sqliteTable('flowlib_rbac_team_members', {
   id: text('id').primaryKey().notNull(),
-  team_id: text('team_id').notNull().references(() => rbac_teams.id, { onDelete: 'cascade' }),
-  user_id: text('user_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
-  created_at: text('created_at').notNull().default(sql`CURRENT_TIMESTAMP`),
+  team_id: text('team_id')
+    .notNull()
+    .references(() => rbac_teams.id, { onDelete: 'cascade' }),
+  user_id: text('user_id')
+    .notNull()
+    .references(() => user.id, { onDelete: 'cascade' }),
+  created_at: text('created_at')
+    .notNull()
+    .default(sql`CURRENT_TIMESTAMP`),
 });
 
 export const rbac_teams = sqliteTable('flowlib_rbac_teams', {
   id: text('id').primaryKey().notNull(),
   name: text('name').notNull(),
   description: text('description'),
-  parent_id: text('parent_id').references((): AnySQLiteColumn => rbac_teams.id, { onDelete: 'set null' }),
+  parent_id: text('parent_id').references((): AnySQLiteColumn => rbac_teams.id, {
+    onDelete: 'set null',
+  }),
   created_by: text('created_by').references(() => user.id, { onDelete: 'no action' }),
-  created_at: text('created_at').notNull().default(sql`CURRENT_TIMESTAMP`),
+  created_at: text('created_at')
+    .notNull()
+    .default(sql`CURRENT_TIMESTAMP`),
   updated_at: text('updated_at'),
 });
 
 export const webhook_triggers = sqliteTable('flowlib_webhook_triggers', {
-  id: text('id').primaryKey().notNull().$defaultFn(() => randomUUID()),
+  id: text('id')
+    .primaryKey()
+    .notNull()
+    .$defaultFn(() => randomUUID()),
   name: text('name').notNull(),
   description: text('description'),
   webhookPath: text('webhook_path').notNull().unique(),
@@ -457,39 +715,68 @@ export const webhook_triggers = sqliteTable('flowlib_webhook_triggers', {
   flowId: text('flow_id').references(() => flows.id, { onDelete: 'no action' }),
   nodeId: text('node_id'),
   remoteWebhookId: text('remote_webhook_id'),
-  remoteCredentialId: text('remote_credential_id').references(() => credentials.id, { onDelete: 'set null' }),
+  remoteCredentialId: text('remote_credential_id').references(() => credentials.id, {
+    onDelete: 'set null',
+  }),
   remoteProvider: text('remote_provider'),
   remoteScope: text('remote_scope', { mode: 'json' }),
   remoteEvents: text('remote_events', { mode: 'json' }),
   lastTriggeredAt: text('last_triggered_at'),
   lastPayload: text('last_payload', { mode: 'json' }),
   triggerCount: integer('trigger_count').notNull().default(0),
-  createdAt: text('created_at').notNull().default(sql`CURRENT_TIMESTAMP`),
-  updatedAt: text('updated_at').notNull().default(sql`CURRENT_TIMESTAMP`),
+  createdAt: text('created_at')
+    .notNull()
+    .default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: text('updated_at')
+    .notNull()
+    .default(sql`CURRENT_TIMESTAMP`),
 });
 
 export const agent_file_edits = sqliteTable('agent_file_edits', {
-  id: text('id').primaryKey().notNull().$defaultFn(() => randomUUID()),
+  id: text('id')
+    .primaryKey()
+    .notNull()
+    .$defaultFn(() => randomUUID()),
   orgId: text('org_id'),
-  sessionId: text('session_id').notNull().references(() => agent_sessions.id, { onDelete: 'cascade' }),
-  messageId: text('message_id').notNull().references(() => agent_messages.id, { onDelete: 'cascade' }),
+  sessionId: text('session_id')
+    .notNull()
+    .references(() => agent_sessions.id, { onDelete: 'cascade' }),
+  messageId: text('message_id')
+    .notNull()
+    .references(() => agent_messages.id, { onDelete: 'cascade' }),
   path: text('path').notNull(),
   beforeSha: text('before_sha'),
   afterSha: text('after_sha'),
   kind: text('kind').notNull(),
-  createdAt: text('created_at').notNull().default(sql`CURRENT_TIMESTAMP`),
+  createdAt: text('created_at')
+    .notNull()
+    .default(sql`CURRENT_TIMESTAMP`),
 });
 
 export const agent_session_plans = sqliteTable('agent_session_plans', {
-  id: text('id').primaryKey().notNull().$defaultFn(() => randomUUID()),
+  id: text('id')
+    .primaryKey()
+    .notNull()
+    .$defaultFn(() => randomUUID()),
   orgId: text('org_id'),
-  sessionId: text('session_id').notNull().unique().references(() => agent_sessions.id, { onDelete: 'cascade' }),
-  checkpoints: text('checkpoints', { mode: 'json' }).$type<Array<{ id: string; label: string; status: string }>>().notNull().default(sql`'[]'`),
-  updatedAt: text('updated_at').notNull().default(sql`CURRENT_TIMESTAMP`),
+  sessionId: text('session_id')
+    .notNull()
+    .unique()
+    .references(() => agent_sessions.id, { onDelete: 'cascade' }),
+  checkpoints: text('checkpoints', { mode: 'json' })
+    .$type<Array<{ id: string; label: string; status: string }>>()
+    .notNull()
+    .default(sql`'[]'`),
+  updatedAt: text('updated_at')
+    .notNull()
+    .default(sql`CURRENT_TIMESTAMP`),
 });
 
 export const agent_skills = sqliteTable('agent_skills', {
-  id: text('id').primaryKey().notNull().$defaultFn(() => randomUUID()),
+  id: text('id')
+    .primaryKey()
+    .notNull()
+    .$defaultFn(() => randomUUID()),
   orgId: text('org_id'),
   name: text('name').notNull(),
   description: text('description').notNull(),
@@ -497,12 +784,19 @@ export const agent_skills = sqliteTable('agent_skills', {
   scope: text('scope').notNull().default('personal'),
   ownerId: text('owner_id'),
   tags: text('tags', { mode: 'json' }).$type<string[]>(),
-  createdAt: text('created_at').notNull().default(sql`CURRENT_TIMESTAMP`),
-  updatedAt: text('updated_at').notNull().default(sql`CURRENT_TIMESTAMP`),
+  createdAt: text('created_at')
+    .notNull()
+    .default(sql`CURRENT_TIMESTAMP`),
+  updatedAt: text('updated_at')
+    .notNull()
+    .default(sql`CURRENT_TIMESTAMP`),
 });
 
 export const agent_memories = sqliteTable('agent_memories', {
-  id: text('id').primaryKey().notNull().$defaultFn(() => randomUUID()),
+  id: text('id')
+    .primaryKey()
+    .notNull()
+    .$defaultFn(() => randomUUID()),
   orgId: text('org_id'),
   scope: text('scope').notNull(),
   userId: text('user_id'),
@@ -511,33 +805,50 @@ export const agent_memories = sqliteTable('agent_memories', {
   embedding: text('embedding'),
   tags: text('tags', { mode: 'json' }).$type<string[]>(),
   createdBy: text('created_by').notNull(),
-  createdAt: text('created_at').notNull().default(sql`CURRENT_TIMESTAMP`),
+  createdAt: text('created_at')
+    .notNull()
+    .default(sql`CURRENT_TIMESTAMP`),
   lastUsedAt: text('last_used_at'),
 });
 
 export const agent_pending_human_actions = sqliteTable('agent_pending_human_actions', {
-  id: text('id').primaryKey().notNull().$defaultFn(() => randomUUID()),
+  id: text('id')
+    .primaryKey()
+    .notNull()
+    .$defaultFn(() => randomUUID()),
   orgId: text('org_id'),
-  sessionId: text('session_id').notNull().references(() => agent_sessions.id, { onDelete: 'cascade' }),
+  sessionId: text('session_id')
+    .notNull()
+    .references(() => agent_sessions.id, { onDelete: 'cascade' }),
   description: text('description').notNull(),
   link: text('link'),
   pollerConfig: text('poller_config', { mode: 'json' }).$type<Record<string, unknown>>(),
   state: text('state').notNull().default('pending'),
   resolution: text('resolution', { mode: 'json' }).$type<Record<string, unknown>>(),
   timeoutAt: text('timeout_at'),
-  createdAt: text('created_at').notNull().default(sql`CURRENT_TIMESTAMP`),
+  createdAt: text('created_at')
+    .notNull()
+    .default(sql`CURRENT_TIMESTAMP`),
   resolvedAt: text('resolved_at'),
 });
 
 export const agent_audit_events = sqliteTable('agent_audit_events', {
-  id: text('id').primaryKey().notNull().$defaultFn(() => randomUUID()),
+  id: text('id')
+    .primaryKey()
+    .notNull()
+    .$defaultFn(() => randomUUID()),
   orgId: text('org_id'),
   sessionId: text('session_id').notNull(),
   userId: text('user_id').notNull(),
   eventType: text('event_type').notNull(),
   toolName: text('tool_name'),
-  payload: text('payload', { mode: 'json' }).$type<Record<string, unknown>>().notNull().default(sql`'{}'`),
-  createdAt: text('created_at').notNull().default(sql`CURRENT_TIMESTAMP`),
+  payload: text('payload', { mode: 'json' })
+    .$type<Record<string, unknown>>()
+    .notNull()
+    .default(sql`'{}'`),
+  createdAt: text('created_at')
+    .notNull()
+    .default(sql`CURRENT_TIMESTAMP`),
 });
 
 export const userRelations = relations(user, ({ many }) => ({
@@ -610,7 +921,10 @@ export const flowRunsRelations = relations(flowRuns, ({ one, many }) => ({
 
 export const actionTracesRelations = relations(actionTraces, ({ one, many }) => ({
   flowRun: one(flowRuns, { fields: [actionTraces.flowRunId], references: [flowRuns.id] }),
-  parentNodeExecution: one(actionTraces, { fields: [actionTraces.parentNodeExecutionId], references: [actionTraces.id] }),
+  parentNodeExecution: one(actionTraces, {
+    fields: [actionTraces.parentNodeExecutionId],
+    references: [actionTraces.id],
+  }),
   actionTraces: many(actionTraces),
 }));
 
@@ -632,11 +946,17 @@ export const vc_status_cacheRelations = relations(vc_status_cache, ({ one }) => 
 }));
 
 export const agent_workspace_sharesRelations = relations(agent_workspace_shares, ({ one }) => ({
-  workspace: one(agent_workspaces, { fields: [agent_workspace_shares.workspaceId], references: [agent_workspaces.id] }),
+  workspace: one(agent_workspaces, {
+    fields: [agent_workspace_shares.workspaceId],
+    references: [agent_workspaces.id],
+  }),
 }));
 
 export const agent_sessionsRelations = relations(agent_sessions, ({ one, many }) => ({
-  workspace: one(agent_workspaces, { fields: [agent_sessions.workspaceId], references: [agent_workspaces.id] }),
+  workspace: one(agent_workspaces, {
+    fields: [agent_sessions.workspaceId],
+    references: [agent_workspaces.id],
+  }),
   agent_session_shares: many(agent_session_shares),
   agent_messages: many(agent_messages),
   agent_attachments: many(agent_attachments),
@@ -646,18 +966,30 @@ export const agent_sessionsRelations = relations(agent_sessions, ({ one, many })
 }));
 
 export const agent_session_sharesRelations = relations(agent_session_shares, ({ one }) => ({
-  session: one(agent_sessions, { fields: [agent_session_shares.sessionId], references: [agent_sessions.id] }),
+  session: one(agent_sessions, {
+    fields: [agent_session_shares.sessionId],
+    references: [agent_sessions.id],
+  }),
 }));
 
 export const agent_messagesRelations = relations(agent_messages, ({ one, many }) => ({
-  session: one(agent_sessions, { fields: [agent_messages.sessionId], references: [agent_sessions.id] }),
+  session: one(agent_sessions, {
+    fields: [agent_messages.sessionId],
+    references: [agent_sessions.id],
+  }),
   agent_attachments: many(agent_attachments),
   agent_file_edits: many(agent_file_edits),
 }));
 
 export const agent_attachmentsRelations = relations(agent_attachments, ({ one }) => ({
-  session: one(agent_sessions, { fields: [agent_attachments.sessionId], references: [agent_sessions.id] }),
-  message: one(agent_messages, { fields: [agent_attachments.messageId], references: [agent_messages.id] }),
+  session: one(agent_sessions, {
+    fields: [agent_attachments.sessionId],
+    references: [agent_sessions.id],
+  }),
+  message: one(agent_messages, {
+    fields: [agent_attachments.messageId],
+    references: [agent_messages.id],
+  }),
 }));
 
 export const rbac_scope_accessRelations = relations(rbac_scope_access, ({ one }) => ({
@@ -680,22 +1012,39 @@ export const rbac_teamsRelations = relations(rbac_teams, ({ one, many }) => ({
 
 export const webhook_triggersRelations = relations(webhook_triggers, ({ one }) => ({
   flow: one(flows, { fields: [webhook_triggers.flowId], references: [flows.id] }),
-  remoteCredential: one(credentials, { fields: [webhook_triggers.remoteCredentialId], references: [credentials.id] }),
+  remoteCredential: one(credentials, {
+    fields: [webhook_triggers.remoteCredentialId],
+    references: [credentials.id],
+  }),
 }));
 
 export const agent_file_editsRelations = relations(agent_file_edits, ({ one }) => ({
-  session: one(agent_sessions, { fields: [agent_file_edits.sessionId], references: [agent_sessions.id] }),
-  message: one(agent_messages, { fields: [agent_file_edits.messageId], references: [agent_messages.id] }),
+  session: one(agent_sessions, {
+    fields: [agent_file_edits.sessionId],
+    references: [agent_sessions.id],
+  }),
+  message: one(agent_messages, {
+    fields: [agent_file_edits.messageId],
+    references: [agent_messages.id],
+  }),
 }));
 
 export const agent_session_plansRelations = relations(agent_session_plans, ({ one }) => ({
-  session: one(agent_sessions, { fields: [agent_session_plans.sessionId], references: [agent_sessions.id] }),
+  session: one(agent_sessions, {
+    fields: [agent_session_plans.sessionId],
+    references: [agent_sessions.id],
+  }),
 }));
 
-export const agent_pending_human_actionsRelations = relations(agent_pending_human_actions, ({ one }) => ({
-  session: one(agent_sessions, { fields: [agent_pending_human_actions.sessionId], references: [agent_sessions.id] }),
-}));
-
+export const agent_pending_human_actionsRelations = relations(
+  agent_pending_human_actions,
+  ({ one }) => ({
+    session: one(agent_sessions, {
+      fields: [agent_pending_human_actions.sessionId],
+      references: [agent_sessions.id],
+    }),
+  }),
+);
 
 export type User = typeof user.$inferSelect;
 export type NewUser = typeof user.$inferInsert;

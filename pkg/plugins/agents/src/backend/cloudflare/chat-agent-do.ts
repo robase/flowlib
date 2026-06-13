@@ -370,7 +370,10 @@ export class AgentChatDO extends (AIChatAgent as unknown as new (
 
     let runtime;
     try {
-      runtime = await ensureAgentsRuntime((this as unknown as { env: unknown }).env, resolved.orgId);
+      runtime = await ensureAgentsRuntime(
+        (this as unknown as { env: unknown }).env,
+        resolved.orgId,
+      );
     } catch (err) {
       log.error('ensureAgentsRuntime failed', {
         orgId: resolved.orgId,
@@ -671,4 +674,3 @@ function extractPromptText(message: unknown): string | null {
   }
   return null;
 }
-

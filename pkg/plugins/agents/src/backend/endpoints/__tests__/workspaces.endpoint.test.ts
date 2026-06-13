@@ -233,7 +233,11 @@ describe('workspaces endpoints', () => {
     const { provider } = fakeProvider();
     const { ctx, db } = makeFakePluginCtx({ workspaceProvider: provider });
     const post = findEndpoint(createWorkspacesEndpoints(ctx), 'POST', '/agents/workspaces');
-    const read = findEndpoint(createFilesEndpoints(ctx), 'GET', '/agents/workspaces/:id/files/read');
+    const read = findEndpoint(
+      createFilesEndpoints(ctx),
+      'GET',
+      '/agents/workspaces/:id/files/read',
+    );
 
     const created = await post.handler(
       makeEndpointCtx({

@@ -6,11 +6,7 @@
  *   writeFile  → sandbox.filesystem.writeFile
  *   listFiles  → `find` + glob filter (the SDK has no native glob)
  */
-import type {
-  WorkspaceExecOptions,
-  WorkspaceExecResult,
-  WorkspaceHandle,
-} from '../types';
+import type { WorkspaceExecOptions, WorkspaceExecResult, WorkspaceHandle } from '../types';
 import type { ComputeSandbox } from './types';
 
 /** Convert a simple `**`/`*` glob to a RegExp anchored to the full path. */
@@ -31,6 +27,8 @@ function globToRegExp(glob: string): RegExp {
       re += c;
     }
   }
+  // Glob is an internal, caller-controlled pattern (not user input).
+  // eslint-disable-next-line security/detect-non-literal-regexp
   return new RegExp(`^${re}$`);
 }
 
