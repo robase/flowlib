@@ -25,6 +25,7 @@ import { MessagesRepository } from './messages.repository';
 import { ProjectsRepository } from './projects.repository';
 import { RolePermissionsRepository } from './role-permissions.repository';
 import { SessionsRepository } from './sessions.repository';
+import { SessionPlansRepository } from './session-plans.repository';
 import { SkillsRepository } from './skills.repository';
 import { WorkspacesRepository } from './workspaces.repository';
 
@@ -37,6 +38,7 @@ export interface Repositories {
   projects: ProjectsRepository;
   skills: SkillsRepository;
   memories: MemoriesRepository;
+  sessionPlans: SessionPlansRepository;
   audit: AuditRepository;
   rolePermissions: RolePermissionsRepository;
 }
@@ -51,6 +53,7 @@ export function buildRepositories(database: PluginDatabaseApi): Repositories {
     projects: new ProjectsRepository(database),
     skills: new SkillsRepository(database),
     memories: new MemoriesRepository(database),
+    sessionPlans: new SessionPlansRepository(database),
     audit: new AuditRepository(database),
     rolePermissions: new RolePermissionsRepository(database),
   };

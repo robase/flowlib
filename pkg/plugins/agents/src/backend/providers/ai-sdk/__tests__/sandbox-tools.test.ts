@@ -64,7 +64,10 @@ describe('buildSandboxTools — lazy provisioning', () => {
         'sandbox.read_file',
         'sandbox.write_file',
         'sandbox.edit_file',
+        'sandbox.multi_edit',
         'sandbox.list_files',
+        'sandbox.glob',
+        'sandbox.grep',
         'sandbox.run_shell',
         'sandbox.git',
       ].sort(),
@@ -115,9 +118,18 @@ describe('buildSandboxTools — lazy provisioning', () => {
     const tools = buildSandboxTools(ensure);
 
     await tools['sandbox.write_file'].execute({ path: 'note.md', content: 'lazy' }, {});
-    const read = await tools['sandbox.read_file'].execute({ path: 'note.md' }, {});
+    const read = (await tools['sandbox.read_file'].execute({ path: 'note.md' }, {})) as {
+      path: string;
+      content: string;
+      totalLines: number;
+      truncated: boolean;
+    };
 
-    expect(read).toEqual({ path: 'note.md', content: 'lazy' });
+    // Content is now line-numbered ("     1\tlazy"); numbers are display-only.
+    expect(read.path).toBe('note.md');
+    expect(read.content).toMatch(/^\s*1\tlazy$/);
+    expect(read.totalLines).toBe(1);
+    expect(read.truncated).toBe(false);
   });
 
   it('propagates provisioning failures to the tool call', async () => {
@@ -145,5 +157,208 @@ describe('buildSandboxTools — lazy provisioning', () => {
     ).rejects.toThrow();
     // Aborted before ensure() — no sandbox booted.
     expect(bootCount()).toBe(0);
+  });
+});
+
+/**
+ * A workspace whose `exec` records the command and returns scripted output,
+ * so we can assert command construction (incl. shell-quoting) and parsing
+ * without a real container.
+ */
+function makeExecWorkspace(execImpl: (command: string) => { stdout: string; exitCode?: number }): {
+  workspace: WorkspaceHandle;
+  commands: string[];
+} {
+  const commands: string[] = [];
+  const files = new Map<string, string>();
+  const workspace: WorkspaceHandle = {
+    id: 'ws-exec',
+    metadata: {},
+    async readFile(path) {
+      const v = files.get(path);
+      if (v === undefined) {
+        throw new Error(`no such file: ${path}`);
+      }
+      return v;
+    },
+    async writeFile(path, content) {
+      files.set(path, content);
+    },
+    async listFiles() {
+      return [...files.keys()];
+    },
+    async exec(command) {
+      commands.push(command);
+      const r = execImpl(command);
+      return { stdout: r.stdout, stderr: '', exitCode: r.exitCode ?? 0 };
+    },
+  };
+  return { workspace, commands };
+}
+
+const passthroughAccessor = (h: WorkspaceHandle): WorkspaceAccessor => async () => h;
+
+describe('buildSandboxTools — grep', () => {
+  it('prefers rg, scopes by glob, and parses match lines', async () => {
+    const { workspace, commands } = makeExecWorkspace(() => ({
+      stdout: 'src/a.ts:12:const x = 1\nsrc/b.ts:3:const x = 2\n',
+    }));
+    const tools = buildSandboxTools(passthroughAccessor(workspace));
+
+    const res = (await tools['sandbox.grep'].execute(
+      { pattern: 'const x', glob: '*.ts' },
+      {},
+    )) as { count: number; output: string; truncated: boolean };
+
+    expect(res.count).toBe(2);
+    expect(res.output).toContain('src/a.ts:12');
+    const cmd = commands[0];
+    expect(cmd).toContain('command -v rg');
+    expect(cmd).toContain("-g '*.ts'");
+    expect(cmd).toContain("-- 'const x'");
+  });
+
+  it('shell-quotes an injection-y pattern (no command break-out)', async () => {
+    const { workspace, commands } = makeExecWorkspace(() => ({ stdout: '', exitCode: 1 }));
+    const tools = buildSandboxTools(passthroughAccessor(workspace));
+
+    await tools['sandbox.grep'].execute({ pattern: `'; rm -rf /` }, {});
+    const cmd = commands[0];
+    // The dangerous payload is fully single-quoted/escaped, never bare.
+    expect(cmd).toContain(`'\\''; rm -rf /'`);
+    expect(cmd).not.toMatch(/--\s+'?;? ?rm -rf \/(?!')/);
+  });
+
+  it('treats no-match (exit 1, empty stdout) as an empty result, not an error', async () => {
+    const { workspace } = makeExecWorkspace(() => ({ stdout: '', exitCode: 1 }));
+    const tools = buildSandboxTools(passthroughAccessor(workspace));
+
+    const res = (await tools['sandbox.grep'].execute({ pattern: 'nope' }, {})) as {
+      count: number;
+      output: string;
+    };
+    expect(res.count).toBe(0);
+    expect(res.output).toBe('');
+  });
+
+  it('passes -F for literal and -i for caseInsensitive', async () => {
+    const { workspace, commands } = makeExecWorkspace(() => ({ stdout: '' }));
+    const tools = buildSandboxTools(passthroughAccessor(workspace));
+    await tools['sandbox.grep'].execute(
+      { pattern: 'a.b(', literal: true, caseInsensitive: true },
+      {},
+    );
+    expect(commands[0]).toMatch(/rg .*-i .*-F|rg .*-F .*-i/);
+  });
+});
+
+describe('buildSandboxTools — glob', () => {
+  it('lists files via rg --files and strips ./ prefixes', async () => {
+    const { workspace, commands } = makeExecWorkspace(() => ({
+      stdout: './src/a.ts\nsrc/b.ts\n',
+    }));
+    const tools = buildSandboxTools(passthroughAccessor(workspace));
+
+    const res = (await tools['sandbox.glob'].execute({ glob: '**/*.ts' }, {})) as {
+      files: string[];
+      count: number;
+    };
+    expect(res.files).toEqual(['src/a.ts', 'src/b.ts']);
+    expect(res.count).toBe(2);
+    expect(commands[0]).toContain("-g '**/*.ts'");
+  });
+});
+
+describe('buildSandboxTools — ranged read_file', () => {
+  async function seed(content: string) {
+    const { workspace } = makeExecWorkspace(() => ({ stdout: '' }));
+    await workspace.writeFile('f.ts', content);
+    return buildSandboxTools(passthroughAccessor(workspace));
+  }
+
+  it('returns line-numbered content for a range', async () => {
+    const tools = await seed('a\nb\nc\nd\ne');
+    const res = (await tools['sandbox.read_file'].execute(
+      { path: 'f.ts', startLine: 2, endLine: 4 },
+      {},
+    )) as { content: string; startLine: number; endLine: number; totalLines: number };
+    expect(res.startLine).toBe(2);
+    expect(res.endLine).toBe(4);
+    expect(res.totalLines).toBe(5);
+    expect(res.content).toContain('2\tb');
+    expect(res.content).toContain('4\td');
+    expect(res.content).not.toContain('\ta\n'); // line 1 excluded
+  });
+
+  it('caps an unbounded read of a large file and flags truncated', async () => {
+    const big = Array.from({ length: 500 }, (_, i) => `line${i + 1}`).join('\n');
+    const tools = await seed(big);
+    const res = (await tools['sandbox.read_file'].execute({ path: 'f.ts' }, {})) as {
+      endLine: number;
+      totalLines: number;
+      truncated: boolean;
+    };
+    expect(res.totalLines).toBe(500);
+    expect(res.endLine).toBe(400);
+    expect(res.truncated).toBe(true);
+  });
+});
+
+describe('buildSandboxTools — edit_file replaceAll + multi_edit', () => {
+  async function seed(content: string) {
+    const { workspace } = makeExecWorkspace(() => ({ stdout: '' }));
+    await workspace.writeFile('f.ts', content);
+    return { tools: buildSandboxTools(passthroughAccessor(workspace)), workspace };
+  }
+
+  it('edit_file refuses an ambiguous match without replaceAll', async () => {
+    const { tools } = await seed('x x x');
+    await expect(
+      tools['sandbox.edit_file'].execute({ path: 'f.ts', find: 'x', replace: 'y' }, {}),
+    ).rejects.toThrow(/more than once/);
+  });
+
+  it('edit_file replaceAll replaces every occurrence', async () => {
+    const { tools, workspace } = await seed('x x x');
+    const res = (await tools['sandbox.edit_file'].execute(
+      { path: 'f.ts', find: 'x', replace: 'y', replaceAll: true },
+      {},
+    )) as { replacements: number };
+    expect(res.replacements).toBe(3);
+    expect(await workspace.readFile('f.ts')).toBe('y y y');
+  });
+
+  it('multi_edit applies edits in order, atomically', async () => {
+    const { tools, workspace } = await seed('const A = 1;\nconst B = 2;');
+    const res = (await tools['sandbox.multi_edit'].execute(
+      {
+        path: 'f.ts',
+        edits: [
+          { find: 'A', replace: 'ALPHA' },
+          { find: 'B', replace: 'BETA' },
+        ],
+      },
+      {},
+    )) as { edits: number; replacements: number };
+    expect(res.edits).toBe(2);
+    expect(await workspace.readFile('f.ts')).toBe('const ALPHA = 1;\nconst BETA = 2;');
+  });
+
+  it('multi_edit aborts the whole batch on a failing edit (no partial write)', async () => {
+    const { tools, workspace } = await seed('const A = 1;');
+    await expect(
+      tools['sandbox.multi_edit'].execute(
+        {
+          path: 'f.ts',
+          edits: [
+            { find: 'A', replace: 'ALPHA' },
+            { find: 'DOES_NOT_EXIST', replace: 'z' },
+          ],
+        },
+        {},
+      ),
+    ).rejects.toThrow(/edit #2 failed/);
+    // First edit must NOT have been written.
+    expect(await workspace.readFile('f.ts')).toBe('const A = 1;');
   });
 });

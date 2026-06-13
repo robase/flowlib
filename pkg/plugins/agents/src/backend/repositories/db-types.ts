@@ -153,6 +153,17 @@ export interface AgentMemoriesTable {
   last_used_at: TimestampColumn | null;
 }
 
+// ─── agent_session_plans ───────────────────────────────────────────────
+
+export interface AgentSessionPlansTable {
+  id: string;
+  org_id: string | null;
+  session_id: string;
+  /** JSON-encoded `Array<{ id: string; label: string; status: string }>`. */
+  checkpoints: string | unknown;
+  updated_at: TimestampColumn;
+}
+
 // ─── agent_audit_events ────────────────────────────────────────────────
 
 export interface AgentAuditEventsTable {
@@ -187,6 +198,7 @@ export interface AgentsDB {
   agent_projects: AgentProjectsTable;
   agent_skills: AgentSkillsTable;
   agent_memories: AgentMemoriesTable;
+  agent_session_plans: AgentSessionPlansTable;
   agent_audit_events: AgentAuditEventsTable;
   agent_role_permissions: AgentRolePermissionsTable;
 }

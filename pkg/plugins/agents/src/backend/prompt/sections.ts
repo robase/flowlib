@@ -267,8 +267,14 @@ export function renderOperatingDirectives(): string {
   return [
     '## Operating directives',
     '- Stop when the task is done. Do not gold-plate.',
-    '- Read files before editing them. Prefer focused edits over full rewrites.',
+    '- Orient before acting: list the tree and read package.json / README / CLAUDE.md to learn the structure and how to run tests.',
+    '- Find code with `grep` / `glob`, not by guessing paths. Read with `read_file` (use line ranges for large files); read a file before editing it.',
+    '- Before changing a symbol, grep its definition AND its usages to gauge the blast radius of the change.',
+    '- Prefer focused edits over full rewrites; use `multi_edit` for several edits to one file.',
+    '- Verify your work: after edits, run the project’s tests / typecheck / lint and fix what you broke.',
+    '- Use `git log` / `git blame` to understand why code is the way it is before changing it.',
     "- When committing, follow the repository's existing commit-message style.",
+    '- Record durable facts about the codebase with `memory.write`; recall them with `memory.search`.',
     '- Report back concisely when finished — what was done, what remains, what was found.',
   ].join('\n');
 }

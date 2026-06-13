@@ -138,6 +138,7 @@ export { SessionsRepository } from './backend/repositories/sessions.repository';
 export { MessagesRepository } from './backend/repositories/messages.repository';
 export { ProjectsRepository } from './backend/repositories/projects.repository';
 export { MemoriesRepository } from './backend/repositories/memories.repository';
+export { SessionPlansRepository } from './backend/repositories/session-plans.repository';
 export { AuditRepository } from './backend/repositories/audit.repository';
 export { RolePermissionsRepository } from './backend/repositories/role-permissions.repository';
 export type { Repositories, RepositoriesFactory } from './backend/repositories/register';

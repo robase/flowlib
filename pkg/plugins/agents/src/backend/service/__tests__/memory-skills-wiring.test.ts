@@ -136,6 +136,7 @@ describe('memory + skills turn wiring', () => {
       'memory.search',
       'memory.write',
       'skills.read',
+      'web.fetch',
     ]);
   });
 

@@ -31,6 +31,7 @@ import type {
   ProviderToolDescriptor,
 } from '../providers/types';
 import type { McpClientFactory } from '../mcp/client';
+import { buildWebFetchTool } from '../tools/web-fetch';
 import type { WorkspaceProvider } from '../workspaces/types';
 import type { HookPipeline } from '../hooks/types';
 import { noopHookPipeline } from '../hooks/types';
@@ -100,6 +101,17 @@ export interface RepositoriesBag {
       transport: 'stdio' | 'http' | 'sse';
       config: Record<string, unknown>;
     } | null>;
+  };
+  sessionPlans?: {
+    get(
+      sessionId: string,
+      orgId?: string | null,
+    ): Promise<{ checkpoints: ReadonlyArray<{ id: string; label: string; status: string }> } | null>;
+    upsert(
+      sessionId: string,
+      orgId: string | null,
+      checkpoints: ReadonlyArray<{ id?: string; label: string; status?: string }>,
+    ): Promise<{ checkpoints: ReadonlyArray<{ id: string; label: string; status: string }> }>;
   };
 }
 
@@ -264,12 +276,14 @@ export async function buildSessionContext(
   // + relevant memories.
   const skillSummaries = await loadSkillSummaries(deps, sessionId);
   const relevantMemories = await loadRelevantMemories(deps, sessionId);
+  const sessionPlan = await loadSessionPlan(deps, sessionId);
   const effectiveSystemPrompt = await composeEffectiveSystemPrompt(
     deps,
     sessionId,
     { systemPrompt: sessionRow.systemPrompt, denyList: sessionRow.denyList },
     skillSummaries,
     relevantMemories,
+    sessionPlan,
   );
   const providerTools = buildProviderTools(deps, sessionId, skillSummaries.length > 0);
   // Merge in tools from the session's enabled external MCP servers.
@@ -432,6 +446,7 @@ async function composeEffectiveSystemPrompt(
   row: { systemPrompt?: string | null; denyList?: string[] | null },
   skillSummaries: ReadonlyArray<{ name: string; description: string; body?: string }>,
   memory: ReadonlyArray<{ scope: string; content: string }>,
+  plan: { checkpoints: ReadonlyArray<{ id: string; label: string; status: string }> } | undefined,
 ): Promise<string> {
   const cached = deps.promptCache.get(sessionId);
   if (cached !== undefined) {
@@ -444,10 +459,35 @@ async function composeEffectiveSystemPrompt(
     denyList: row.denyList ?? [],
     availableTools: [],
     memory,
+    ...(plan ? { plan } : {}),
     attachments: [],
   });
   deps.promptCache.set(sessionId, prompt);
   return prompt;
+}
+
+/**
+ * Load the session's working plan (if any) for the "## Session plan" prompt
+ * section. Best-effort — a missing repo or error yields no plan.
+ */
+async function loadSessionPlan(
+  deps: ChatHostDeps,
+  sessionId: string,
+): Promise<{ checkpoints: ReadonlyArray<{ id: string; label: string; status: string }> } | undefined> {
+  const repo = deps.repositories.sessionPlans;
+  if (!repo) {
+    return undefined;
+  }
+  try {
+    const plan = await repo.get(sessionId, deps.orgId);
+    return plan && plan.checkpoints.length > 0 ? { checkpoints: plan.checkpoints } : undefined;
+  } catch (err) {
+    deps.logger.warn('session-plan load failed — proceeding without it', {
+      sessionId,
+      message: err instanceof Error ? err.message : String(err),
+    });
+    return undefined;
+  }
 }
 
 /**
@@ -519,10 +559,15 @@ async function loadSkillSummaries(
  */
 function buildProviderTools(
   deps: ChatHostDeps,
-  _sessionId: string,
+  sessionId: string,
   hasSkills: boolean,
 ): Record<string, ProviderToolDescriptor> {
   const tools: Record<string, ProviderToolDescriptor> = {};
+
+  // Always-on: fetch public URLs (docs/issues/specs). SSRF-guarded; a
+  // deployment can disable it per-session via the deny-list.
+  tools['web.fetch'] = buildWebFetchTool();
+
   const skillsRepo = deps.repositories.skills;
   if (skillsRepo && hasSkills) {
     tools['skills.read'] = {
@@ -609,6 +654,56 @@ function buildProviderTools(
           createdBy: deps.auth.userId,
         });
         return { id: created.id, saved: true };
+      },
+    };
+  }
+
+  // Working task list (TodoWrite-style). The agent keeps a checklist for
+  // multi-step work; it's rendered back into the prompt each turn and shown
+  // in the UI so progress is visible.
+  const plansRepo = deps.repositories.sessionPlans;
+  if (plansRepo) {
+    tools['update_plan'] = {
+      description:
+        'Maintain your task list for this multi-step job. Pass the FULL list of ' +
+        'steps each time (it replaces the previous list). Mark exactly one step ' +
+        '"doing" as you work; flip to "done" when finished. Use for non-trivial ' +
+        'tasks so progress stays visible — skip it for simple one-shot requests.',
+      parameters: {
+        type: 'object',
+        properties: {
+          checkpoints: {
+            type: 'array',
+            description: 'The full ordered list of steps.',
+            items: {
+              type: 'object',
+              properties: {
+                label: { type: 'string', description: 'Short description of the step.' },
+                status: {
+                  type: 'string',
+                  enum: ['todo', 'doing', 'done', 'blocked'],
+                  description: 'Step status (default todo).',
+                },
+              },
+              required: ['label'],
+              additionalProperties: false,
+            },
+          },
+        },
+        required: ['checkpoints'],
+        additionalProperties: false,
+      },
+      execute: async (input) => {
+        const rawList = Array.isArray(input.checkpoints) ? input.checkpoints : [];
+        const checkpoints = rawList
+          .filter((c): c is Record<string, unknown> => typeof c === 'object' && c !== null)
+          .map((c) => ({
+            label: typeof c.label === 'string' ? c.label : '',
+            status: typeof c.status === 'string' ? c.status : 'todo',
+          }))
+          .filter((c) => c.label.length > 0);
+        const saved = await plansRepo.upsert(sessionId, deps.orgId, checkpoints);
+        return { checkpoints: saved.checkpoints };
       },
     };
   }

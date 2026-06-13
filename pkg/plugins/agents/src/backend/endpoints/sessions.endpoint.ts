@@ -776,6 +776,17 @@ async function interruptSession(deps: EndpointDeps): Promise<PluginEndpointRespo
   };
 }
 
+/** `GET /sessions/:id/plan` — the agent's working task list, for the UI. */
+async function getSessionPlan(deps: EndpointDeps): Promise<PluginEndpointResponse> {
+  const id = deps.endpointCtx.params.id;
+  const session = await deps.repos.sessions.findById(id, deps.auth.orgId);
+  if (!session) {
+    return notFound('Session not found');
+  }
+  const plan = await deps.repos.sessionPlans.get(id, deps.auth.orgId);
+  return { body: { checkpoints: plan?.checkpoints ?? [] } };
+}
+
 export function createSessionsEndpoints(ctx: PluginContext): FlowlibPluginEndpoint[] {
   return [
     {
@@ -807,6 +818,11 @@ export function createSessionsEndpoints(ctx: PluginContext): FlowlibPluginEndpoi
       method: 'GET',
       path: '/agents/sessions/:id/messages',
       handler: safeHandler(ctx, listMessages),
+    },
+    {
+      method: 'GET',
+      path: '/agents/sessions/:id/plan',
+      handler: safeHandler(ctx, getSessionPlan),
     },
     {
       method: 'POST',

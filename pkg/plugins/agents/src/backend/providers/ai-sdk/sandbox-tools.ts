@@ -61,6 +61,17 @@ const DEFAULT_SHELL_TIMEOUT_MS = 8_000;
  */
 const MAX_WRITE_BYTES = 5 * 1024 * 1024; // 5 MB
 
+/** Max lines returned by an unbounded `read_file` (use a range for more). */
+const MAX_READ_LINES = 400;
+
+/** Default / hard caps for `grep` and `glob` result counts. */
+const GREP_DEFAULT_MAX = 100;
+const GREP_HARD_MAX = 300;
+const GLOB_DEFAULT_MAX = 200;
+const GLOB_HARD_MAX = 1000;
+/** Cap on `grep` context lines. */
+const GREP_MAX_CONTEXT = 5;
+
 /**
  * Build the sandbox tool catalogue bound to a lazy workspace accessor.
  * Returned tools close over `ensure`; each call provisions-or-resolves
@@ -93,15 +104,27 @@ export function buildSandboxTools(ensure: WorkspaceAccessor): AiSdkToolSet {
 
   const readFile: AiSdkToolDescriptor = {
     description:
-      'Read the contents of a file from the agent workspace. Path is ' +
-      'workspace-relative (no leading "/"). Returns the file contents as ' +
-      'UTF-8 text. Throws if the file does not exist.',
+      'Read a file from the agent workspace. Path is workspace-relative ' +
+      '(no leading "/"). Output is line-numbered ("  42\\tcode") for easy ' +
+      'reference — the numbers are DISPLAY ONLY; never include them in ' +
+      '`edit_file`/`multi_edit` find strings. Use `startLine`/`endLine` ' +
+      `(1-based, inclusive) to read a slice of a large file; without a range, ` +
+      `files longer than ${MAX_READ_LINES} lines are truncated (read again ` +
+      'with a range to see more).',
     parameters: {
       type: 'object',
       properties: {
         path: {
           type: 'string',
           description: 'Workspace-relative path (e.g. "src/index.ts").',
+        },
+        startLine: {
+          type: 'number',
+          description: '1-based first line to return (inclusive). Optional.',
+        },
+        endLine: {
+          type: 'number',
+          description: '1-based last line to return (inclusive). Optional.',
         },
       },
       required: ['path'],
@@ -110,10 +133,32 @@ export function buildSandboxTools(ensure: WorkspaceAccessor): AiSdkToolSet {
     execute: async (raw, options) => {
       const path = String(raw.path ?? '');
       assertSafePath(path);
+      const startLine = positiveInt(raw.startLine);
+      const endLine = positiveInt(raw.endLine);
       options.abortSignal?.throwIfAborted?.();
       const workspace = await ensure();
-      const content = await workspace.readFile(path);
-      return { path, content };
+      const text = await workspace.readFile(path);
+      const lines = text.split('\n');
+      const totalLines = lines.length;
+
+      let from = startLine ? Math.max(1, startLine) : 1;
+      let to = endLine ? Math.min(totalLines, endLine) : totalLines;
+      let truncated = false;
+      // Cap unbounded reads of large files to protect the context window.
+      if (!startLine && !endLine && totalLines > MAX_READ_LINES) {
+        to = MAX_READ_LINES;
+        truncated = true;
+      }
+      if (from > to) {
+        from = Math.min(from, totalLines);
+        to = from;
+      }
+      const numbered = lines
+        .slice(from - 1, to)
+        .map((line, i) => `${String(from + i).padStart(6)}\t${line}`)
+        .join('\n');
+
+      return { path, content: numbered, startLine: from, endLine: to, totalLines, truncated };
     },
   };
 
@@ -150,21 +195,26 @@ export function buildSandboxTools(ensure: WorkspaceAccessor): AiSdkToolSet {
 
   const editFile: AiSdkToolDescriptor = {
     description:
-      'Edit a file by replacing a single literal string. Reads the file, ' +
-      'replaces the first occurrence of `find` with `replace`, writes ' +
-      'the result. Fails if `find` does not appear exactly once in the ' +
-      'file (use `read_file` first to verify the target string is unique).',
+      'Edit a file by replacing a literal string. Reads the file, replaces ' +
+      '`find` with `replace`, writes the result. By default `find` must ' +
+      'appear exactly once (use `read_file` first to confirm uniqueness, ' +
+      'and include surrounding context to make it unique). Set ' +
+      '`replaceAll: true` to replace every occurrence instead.',
     parameters: {
       type: 'object',
       properties: {
         path: { type: 'string', description: 'Workspace-relative file path.' },
         find: {
           type: 'string',
-          description: 'The exact literal string to find (no regex). Must appear exactly once.',
+          description: 'The exact literal string to find (no regex).',
         },
         replace: {
           type: 'string',
           description: 'The literal replacement string.',
+        },
+        replaceAll: {
+          type: 'boolean',
+          description: 'Replace every occurrence instead of requiring a unique match.',
         },
       },
       required: ['path', 'find', 'replace'],
@@ -174,32 +224,93 @@ export function buildSandboxTools(ensure: WorkspaceAccessor): AiSdkToolSet {
       const path = String(raw.path ?? '');
       const find = String(raw.find ?? '');
       const replace = String(raw.replace ?? '');
+      const replaceAll = raw.replaceAll === true;
       assertSafePath(path);
-      if (find.length === 0) {
-        throw new Error('sandbox.edit_file: `find` must be a non-empty string.');
+      options.abortSignal?.throwIfAborted?.();
+      const workspace = await ensure();
+      const before = await workspace.readFile(path);
+      const { result, replacements } = applyLiteralEdit(before, find, replace, replaceAll, path);
+      options.abortSignal?.throwIfAborted?.();
+      await workspace.writeFile(path, result);
+      return {
+        path,
+        replacements,
+        bytesBefore: new TextEncoder().encode(before).length,
+        bytesAfter: new TextEncoder().encode(result).length,
+      };
+    },
+  };
+
+  const multiEdit: AiSdkToolDescriptor = {
+    description:
+      'Apply an ordered list of literal find/replace edits to ONE file, ' +
+      'atomically — the file is read once, all edits are applied in sequence ' +
+      'in memory, then written once. If any edit fails (no match, or an ' +
+      'ambiguous match without `replaceAll`), the whole batch aborts with no ' +
+      'changes written. Use for multi-site edits in a single file instead of ' +
+      'many edit_file calls. Edits apply in order, so a later edit sees the ' +
+      'result of earlier ones.',
+    parameters: {
+      type: 'object',
+      properties: {
+        path: { type: 'string', description: 'Workspace-relative file path.' },
+        edits: {
+          type: 'array',
+          description: 'Ordered edits to apply.',
+          items: {
+            type: 'object',
+            properties: {
+              find: { type: 'string', description: 'Exact literal string (no regex).' },
+              replace: { type: 'string', description: 'Literal replacement.' },
+              replaceAll: {
+                type: 'boolean',
+                description: 'Replace every occurrence instead of requiring a unique match.',
+              },
+            },
+            required: ['find', 'replace'],
+            additionalProperties: false,
+          },
+        },
+      },
+      required: ['path', 'edits'],
+      additionalProperties: false,
+    },
+    execute: async (raw, options) => {
+      const path = String(raw.path ?? '');
+      assertSafePath(path);
+      const edits = Array.isArray(raw.edits) ? (raw.edits as Array<Record<string, unknown>>) : [];
+      if (edits.length === 0) {
+        throw new Error('sandbox.multi_edit: `edits` must be a non-empty array.');
       }
       options.abortSignal?.throwIfAborted?.();
       const workspace = await ensure();
       const before = await workspace.readFile(path);
-      const first = before.indexOf(find);
-      if (first < 0) {
-        throw new Error(`sandbox.edit_file: \`find\` string not found in ${path}.`);
-      }
-      const second = before.indexOf(find, first + find.length);
-      if (second >= 0) {
-        throw new Error(
-          `sandbox.edit_file: \`find\` string appears more than once in ${path}. ` +
-            'Supply a more specific match — include enough surrounding context to ' +
-            'make it unique.',
-        );
-      }
-      const after = before.slice(0, first) + replace + before.slice(first + find.length);
+      // Apply all edits in memory first; any failure throws before we write.
+      let working = before;
+      let total = 0;
+      edits.forEach((e, i) => {
+        const find = String(e.find ?? '');
+        const replace = String(e.replace ?? '');
+        const replaceAll = e.replaceAll === true;
+        try {
+          const { result, replacements } = applyLiteralEdit(working, find, replace, replaceAll, path);
+          working = result;
+          total += replacements;
+        } catch (err) {
+          throw new Error(
+            `sandbox.multi_edit: edit #${i + 1} failed — ${err instanceof Error ? err.message : String(err)} ` +
+              '(no changes written).',
+          );
+        }
+      });
       options.abortSignal?.throwIfAborted?.();
-      await workspace.writeFile(path, after);
+      await workspace.writeFile(path, working);
       return {
         path,
+        edits: edits.length,
+        replacements: total,
         bytesBefore: new TextEncoder().encode(before).length,
-        bytesAfter: new TextEncoder().encode(after).length,
+        bytesAfter: new TextEncoder().encode(working).length,
       };
     },
   };
@@ -330,12 +441,101 @@ export function buildSandboxTools(ensure: WorkspaceAccessor): AiSdkToolSet {
     },
   };
 
+  const grep: AiSdkToolDescriptor = {
+    description:
+      'Search file contents across the workspace (ripgrep, falling back to ' +
+      'grep). Returns matching lines as "file:line:text". This is the primary ' +
+      'way to find code — prefer it over run_shell. `pattern` is a regex by ' +
+      'default (set `literal:true` for a fixed string). Scope with `path` ' +
+      '(a subdir) and/or `glob` (e.g. "*.ts"). Honours .gitignore (skips ' +
+      'node_modules etc.).',
+    parameters: {
+      type: 'object',
+      properties: {
+        pattern: { type: 'string', description: 'Search pattern (regex unless `literal`).' },
+        path: { type: 'string', description: 'Workspace-relative subdir to search. Optional.' },
+        glob: { type: 'string', description: 'File filter, e.g. "*.ts" or "**/*.test.ts".' },
+        literal: { type: 'boolean', description: 'Treat `pattern` as a fixed string.' },
+        caseInsensitive: { type: 'boolean', description: 'Case-insensitive search.' },
+        contextLines: {
+          type: 'number',
+          description: `Lines of context around each match (0–${GREP_MAX_CONTEXT}).`,
+        },
+        maxResults: {
+          type: 'number',
+          description: `Max matching lines (default ${GREP_DEFAULT_MAX}, hard cap ${GREP_HARD_MAX}).`,
+        },
+      },
+      required: ['pattern'],
+      additionalProperties: false,
+    },
+    execute: async (raw, options) => {
+      const pattern = String(raw.pattern ?? '');
+      if (pattern.length === 0) {
+        throw new Error('sandbox.grep: `pattern` must be a non-empty string.');
+      }
+      const path = typeof raw.path === 'string' && raw.path.length > 0 ? raw.path : '.';
+      if (path !== '.') {
+        assertSafePath(path);
+      }
+      const glob = typeof raw.glob === 'string' && raw.glob.length > 0 ? raw.glob : undefined;
+      const literal = raw.literal === true;
+      const ci = raw.caseInsensitive === true;
+      const ctx = clampInt(raw.contextLines, 0, GREP_MAX_CONTEXT, 0);
+      const max = clampInt(raw.maxResults, 1, GREP_HARD_MAX, GREP_DEFAULT_MAX);
+
+      const command = buildGrepCommand({ pattern, path, glob, literal, ci, ctx, max });
+      options.abortSignal?.throwIfAborted?.();
+      const workspace = await ensure();
+      const result = await workspace.exec(command, { timeoutMs: DEFAULT_SHELL_TIMEOUT_MS });
+      // grep/rg exit 1 on "no matches" — that's a normal empty result, not an error.
+      const output = result.stdout ?? '';
+      const count = countMatchLines(output);
+      return { pattern, output, count, truncated: count >= max };
+    },
+  };
+
+  const glob: AiSdkToolDescriptor = {
+    description:
+      'Find files by glob pattern (ripgrep --files, falling back to find). ' +
+      'Honours .gitignore. Use to locate where code lives (e.g. ' +
+      '"**/*.service.ts"). Returns workspace-relative paths.',
+    parameters: {
+      type: 'object',
+      properties: {
+        glob: { type: 'string', description: 'Glob pattern, e.g. "**/*.ts". Defaults to all files.' },
+        maxResults: {
+          type: 'number',
+          description: `Max paths (default ${GLOB_DEFAULT_MAX}, hard cap ${GLOB_HARD_MAX}).`,
+        },
+      },
+      required: [],
+      additionalProperties: false,
+    },
+    execute: async (raw, options) => {
+      const pattern = typeof raw.glob === 'string' && raw.glob.length > 0 ? raw.glob : undefined;
+      const max = clampInt(raw.maxResults, 1, GLOB_HARD_MAX, GLOB_DEFAULT_MAX);
+      const command = buildGlobCommand({ glob: pattern, max });
+      options.abortSignal?.throwIfAborted?.();
+      const workspace = await ensure();
+      const result = await workspace.exec(command, { timeoutMs: DEFAULT_SHELL_TIMEOUT_MS });
+      const files = (result.stdout ?? '')
+        .split('\n')
+        .map((l) => l.replace(/^\.\//, '').trim())
+        .filter((l) => l.length > 0);
+      return { glob: pattern ?? '**/*', files, count: files.length, truncated: files.length >= max };
+    },
+  };
+
   return {
     'sandbox.start': start,
     'sandbox.read_file': readFile,
     'sandbox.write_file': writeFile,
     'sandbox.edit_file': editFile,
+    'sandbox.multi_edit': multiEdit,
     'sandbox.list_files': listFiles,
+    'sandbox.glob': glob,
+    'sandbox.grep': grep,
     'sandbox.run_shell': runShell,
     'sandbox.git': git,
   };
@@ -360,4 +560,137 @@ function assertSafePath(path: string): void {
       throw new Error(`path "${path}" must not contain ".." segments.`);
     }
   }
+}
+
+/**
+ * POSIX single-quote a string for safe shell interpolation. Wraps in
+ * single quotes and escapes embedded single quotes as `'\''`. EVERY
+ * LLM-supplied value placed in an `exec` command MUST go through this —
+ * it's the guard against shell injection (e.g. a pattern like `'; rm -rf /`).
+ */
+function shQuote(value: string): string {
+  return `'${value.replace(/'/g, `'\\''`)}'`;
+}
+
+/** Coerce to a positive integer, or undefined. */
+function positiveInt(value: unknown): number | undefined {
+  return typeof value === 'number' && Number.isFinite(value) && value >= 1
+    ? Math.floor(value)
+    : undefined;
+}
+
+/** Clamp a numeric input to [min, max], falling back to `fallback`. */
+function clampInt(value: unknown, min: number, max: number, fallback: number): number {
+  if (typeof value !== 'number' || !Number.isFinite(value)) {
+    return fallback;
+  }
+  return Math.max(min, Math.min(max, Math.floor(value)));
+}
+
+/**
+ * Apply a single literal find/replace to `text`. Default requires a unique
+ * match (throws if missing or ambiguous); `replaceAll` replaces every
+ * occurrence. Returns the new text + replacement count. Shared by
+ * `edit_file` and `multi_edit`.
+ */
+function applyLiteralEdit(
+  text: string,
+  find: string,
+  replace: string,
+  replaceAll: boolean,
+  path: string,
+): { result: string; replacements: number } {
+  if (find.length === 0) {
+    throw new Error('`find` must be a non-empty string.');
+  }
+  const first = text.indexOf(find);
+  if (first < 0) {
+    throw new Error(`\`find\` string not found in ${path}.`);
+  }
+  if (!replaceAll) {
+    const second = text.indexOf(find, first + find.length);
+    if (second >= 0) {
+      throw new Error(
+        `\`find\` string appears more than once in ${path}. Include enough ` +
+          'surrounding context to make it unique, or set replaceAll.',
+      );
+    }
+    return {
+      result: text.slice(0, first) + replace + text.slice(first + find.length),
+      replacements: 1,
+    };
+  }
+  // replaceAll — literal, non-regex global replace.
+  const parts = text.split(find);
+  return { result: parts.join(replace), replacements: parts.length - 1 };
+}
+
+/** Build the rg-preferred / grep-fallback content-search command. */
+function buildGrepCommand(opts: {
+  pattern: string;
+  path: string;
+  glob?: string;
+  literal: boolean;
+  ci: boolean;
+  ctx: number;
+  max: number;
+}): string {
+  const rg = ['rg', '--line-number', '--no-heading', '--color', 'never'];
+  if (opts.ci) rg.push('-i');
+  if (opts.literal) rg.push('-F');
+  if (opts.ctx > 0) rg.push('-C', String(opts.ctx));
+  if (opts.glob) rg.push('-g', shQuote(opts.glob));
+  rg.push('-m', String(opts.max), '--', shQuote(opts.pattern), shQuote(opts.path));
+
+  const grep = ['grep', '-rnI'];
+  if (opts.ci) grep.push('-i');
+  if (opts.literal) grep.push('-F');
+  if (opts.ctx > 0) grep.push('-C', String(opts.ctx));
+  for (const dir of ['node_modules', '.git', 'dist', 'build', '.next']) {
+    grep.push(`--exclude-dir=${dir}`);
+  }
+  if (opts.glob) grep.push(`--include=${shQuote(opts.glob)}`);
+  grep.push('--', shQuote(opts.pattern), shQuote(opts.path));
+  const grepCmd = `${grep.join(' ')} | head -n ${opts.max}`;
+
+  return `if command -v rg >/dev/null 2>&1; then ${rg.join(' ')}; else ${grepCmd}; fi`;
+}
+
+/** Build the rg-preferred / find-fallback file-listing command. */
+function buildGlobCommand(opts: { glob?: string; max: number }): string {
+  const rg = ['rg', '--files'];
+  if (opts.glob) rg.push('-g', shQuote(opts.glob));
+  const rgCmd = `${rg.join(' ')} | head -n ${opts.max}`;
+
+  const find = [
+    'find',
+    '.',
+    '-type',
+    'f',
+    '-not',
+    '-path',
+    shQuote('./node_modules/*'),
+    '-not',
+    '-path',
+    shQuote('./.git/*'),
+  ];
+  // `find` has no glob filter as flexible as rg's; approximate with -name on
+  // the basename when the glob is a simple "*.ext" form.
+  if (opts.glob && /^\*\.[a-zA-Z0-9]+$/.test(opts.glob)) {
+    find.push('-name', shQuote(opts.glob));
+  }
+  const findCmd = `${find.join(' ')} | head -n ${opts.max}`;
+
+  return `if command -v rg >/dev/null 2>&1; then ${rgCmd}; else ${findCmd}; fi`;
+}
+
+/** Count lines that look like grep/rg matches (`path:line:…`). */
+function countMatchLines(output: string): number {
+  let n = 0;
+  for (const line of output.split('\n')) {
+    if (/:\d+:/.test(line)) {
+      n += 1;
+    }
+  }
+  return n;
 }
