@@ -1,5 +1,5 @@
 /**
- * InspectorRail — the vertical icon rail fixed to the top-right of the
+ * InspectorRail — the horizontal icon rail fixed to the top-right of the
  * workspace. Each icon toggles a section of the slide-out inspector;
  * clicking the active tab again closes the panel.
  */
@@ -21,7 +21,7 @@ export function InspectorRail({
   return (
     <nav
       aria-label="Workspace inspector sections"
-      className="flex flex-col items-center gap-3"
+      className="flex flex-row items-center gap-3"
       data-testid="agents-inspector-rail"
     >
       {INSPECTOR_TABS.map((t) => {

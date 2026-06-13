@@ -80,7 +80,11 @@ export function ChatThread({ session }: ChatThreadProps): React.ReactElement {
   const active = useActiveSession();
   const status = active?.stream.status ?? 'connecting';
   const error = active?.stream.error;
-  const isLoadingHistory = active?.messagesQuery.isLoading ?? true;
+  // Only show the history spinner while a real session's first fetch is
+  // genuinely in flight. Defaulting to `true` (no active session / no
+  // sessionId yet) left a brand-new empty chat stuck on "Loading history…".
+  const isLoadingHistory =
+    Boolean(active?.sessionId) && (active?.messagesQuery.isLoading ?? false);
 
   return (
     <div className="flex h-full min-h-0 flex-col">
@@ -236,7 +240,7 @@ function Composer({
         <ComposerAttachments />
         <ComposerPrimitive.Input
           placeholder="Send a message…"
-          className="mb-1 max-h-40 min-h-14 w-full resize-none bg-transparent px-4 pt-2 pb-3 text-sm outline-none placeholder:text-muted-foreground focus-visible:ring-0"
+          className="mb-1 max-h-40 min-h-14 w-full resize-none bg-transparent px-4 pt-2 pb-3 text-sm outline-none placeholder:text-muted-foreground focus:outline-none focus-visible:outline-none focus-visible:ring-0 ring-0"
           rows={1}
           autoFocus
           aria-label="Message input"
