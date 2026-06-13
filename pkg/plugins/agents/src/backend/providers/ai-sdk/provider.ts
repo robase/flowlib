@@ -193,21 +193,22 @@ export function aiSdkProvider(options: AiSdkProviderOptions): AgentProvider {
     }
     const spec = parseModelSpec(session.defaultModel);
     let credential: AiSdkCredential | null = null;
-    // 1. Built-in default: resolve the chat's attached credential via the
-    //    host-threaded credentials accessor. The plugin wires
-    //    `registries.credentials` automatically, so no host config is
-    //    needed for "bring-your-own-key" chats.
-    if (session.credentials && session.credentialId) {
-      credential = await resolveCredentialFromAccessor(session.credentials, {
+    // 1. Host-supplied resolver wins when provided — the host knows its
+    //    own vendor routing (e.g. a dedicated `openrouter` vendor rather
+    //    than the generic OpenAI-compatible mapping) and any env fallback.
+    if (resolveCredential) {
+      credential = await resolveCredential({
+        auth: session.auth,
         credentialId: session.credentialId,
         vendor: spec.vendor,
       });
     }
-    // 2. Host-supplied resolver — an explicit override or a dev fallback
-    //    (e.g. an env key when no credential is attached to the chat).
-    if (!credential && resolveCredential) {
-      credential = await resolveCredential({
-        auth: session.auth,
+    // 2. Built-in default: resolve the chat's attached credential via the
+    //    host-threaded credentials accessor (`registries.credentials`,
+    //    wired automatically by the plugin). This is the zero-config
+    //    "bring-your-own-key" path for hosts that pass no resolver.
+    if (!credential && session.credentials && session.credentialId) {
+      credential = await resolveCredentialFromAccessor(session.credentials, {
         credentialId: session.credentialId,
         vendor: spec.vendor,
       });

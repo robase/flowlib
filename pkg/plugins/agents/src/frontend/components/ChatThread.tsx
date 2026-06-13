@@ -83,8 +83,7 @@ export function ChatThread({ session }: ChatThreadProps): React.ReactElement {
   // Only show the history spinner while a real session's first fetch is
   // genuinely in flight. Defaulting to `true` (no active session / no
   // sessionId yet) left a brand-new empty chat stuck on "Loading history…".
-  const isLoadingHistory =
-    Boolean(active?.sessionId) && (active?.messagesQuery.isLoading ?? false);
+  const isLoadingHistory = Boolean(active?.sessionId) && (active?.messagesQuery.isLoading ?? false);
 
   return (
     <div className="flex h-full min-h-0 flex-col">

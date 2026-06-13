@@ -101,9 +101,10 @@ export const DEFAULT_OPENAI_COMPATIBLE_BASE_URLS: Record<string, string> = {
  * / google) talk to their own API; everything OpenAI-shaped maps to the
  * `openai` vendor + a base URL.
  */
-export function vendorForProviderSlug(
-  slug: string,
-): { vendor: AiSdkVendor | null; baseUrl?: string } {
+export function vendorForProviderSlug(slug: string): {
+  vendor: AiSdkVendor | null;
+  baseUrl?: string;
+} {
   switch (slug) {
     case 'anthropic':
       return { vendor: 'anthropic' };
@@ -208,9 +209,11 @@ export function flowlibCredentialResolver(
     const fl = getFlowlib();
     if (fl) {
       try {
-        const resolved = await resolveCredentialFromAccessor(fl.credentials, input, {
-          ...(options.compatibleBaseUrls ? { compatibleBaseUrls: options.compatibleBaseUrls } : {}),
-        });
+        const resolved = await resolveCredentialFromAccessor(
+          fl.credentials,
+          input,
+          options.compatibleBaseUrls ? { compatibleBaseUrls: options.compatibleBaseUrls } : {},
+        );
         if (resolved) {
           return resolved;
         }

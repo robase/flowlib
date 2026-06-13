@@ -119,12 +119,16 @@ export interface AiSdkProviderOptions {
   defaultModel?: string;
 
   /**
-   * Resolve credentials for an LLM call. **Optional** — by default the
+   * Resolve credentials for an LLM call. **Optional** — when omitted, the
    * provider resolves the chat's *attached* credential internally via the
-   * plugin-threaded credentials accessor (`registries.credentials`).
-   * Supply this only as an override or a fallback for chats with no
-   * attached credential (e.g. a dev env-key path). When provided, it runs
-   * after the built-in accessor fails to resolve a credential.
+   * plugin-threaded credentials accessor (`registries.credentials`), which
+   * is the zero-config "bring-your-own-key" path.
+   *
+   * When provided, this **takes precedence** over the built-in accessor:
+   * supply it when the host needs custom vendor routing (e.g. a dedicated
+   * `openrouter` vendor instead of the generic OpenAI-compatible mapping)
+   * or an env-key fallback. The built-in accessor only runs if this
+   * resolver is absent or returns `null`.
    *
    * Pulled fresh on each `prompt()` so OAuth refresh stays current.
    */
