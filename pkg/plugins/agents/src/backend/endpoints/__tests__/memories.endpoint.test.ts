@@ -95,10 +95,7 @@ describe('memories endpoints', () => {
     const post = findEndpoint(endpoints, 'POST', '/agents/memories');
     const list = findEndpoint(endpoints, 'GET', '/agents/memories');
 
-    for (const content of [
-      'Production DB is Postgres on Neon',
-      'User likes concise answers',
-    ]) {
+    for (const content of ['Production DB is Postgres on Neon', 'User likes concise answers']) {
       await post.handler(
         makeEndpointCtx({
           db,

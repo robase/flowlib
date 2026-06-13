@@ -132,18 +132,28 @@ describe('memory + skills turn wiring', () => {
     const { ctx } = await setup();
     const tools = ctx.providerTools as Record<string, ProviderToolDescriptor> | undefined;
     expect(tools).toBeDefined();
-    expect(Object.keys(tools ?? {}).sort()).toEqual(['memory.search', 'memory.write', 'skills.read']);
+    expect(Object.keys(tools ?? {}).sort()).toEqual([
+      'memory.search',
+      'memory.write',
+      'skills.read',
+    ]);
   });
 
   it('memory.write persists and memory.search recalls it', async () => {
     const { ctx } = await setup();
     const tools = ctx.providerTools as Record<string, ProviderToolDescriptor>;
 
-    const writeRes = (await tools['memory.write'].execute({ content: 'User prefers dark mode' }, {})) as { saved?: boolean; id?: string };
+    const writeRes = (await tools['memory.write'].execute(
+      { content: 'User prefers dark mode' },
+      {},
+    )) as { saved?: boolean; id?: string };
     expect(writeRes.saved).toBe(true);
     expect(typeof writeRes.id).toBe('string');
 
-    const searchRes = (await tools['memory.search'].execute({ query: 'what theme does the user prefer' }, {})) as { results: Array<{ content: string }> };
+    const searchRes = (await tools['memory.search'].execute(
+      { query: 'what theme does the user prefer' },
+      {},
+    )) as { results: Array<{ content: string }> };
     expect(searchRes.results.map((r) => r.content)).toContain('User prefers dark mode');
   });
 

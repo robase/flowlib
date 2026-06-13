@@ -53,7 +53,10 @@ function fakeProvider(): AgentProvider {
 
 interface SetupOpts {
   enabledMcpServerIds?: string[];
-  servers?: Record<string, { name: string; transport: 'http' | 'sse' | 'stdio'; config: Record<string, unknown> }>;
+  servers?: Record<
+    string,
+    { name: string; transport: 'http' | 'sse' | 'stdio'; config: Record<string, unknown> }
+  >;
   factory?: McpClientFactory;
 }
 

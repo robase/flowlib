@@ -143,10 +143,7 @@ export class MemoriesRepository {
    * tie-broken by recency. Returns the top `limit` (default 5). Pure JS
    * scoring — see the file header for why we don't use FTS / vectors yet.
    */
-  async search(
-    query: string,
-    scope: MemoryReadScope & { limit?: number },
-  ): Promise<AgentMemory[]> {
+  async search(query: string, scope: MemoryReadScope & { limit?: number }): Promise<AgentMemory[]> {
     const candidates = await this.listForScope({ ...scope, limit: undefined });
     const limit = scope.limit ?? 5;
     const q = new Set(tokens(query));
@@ -166,11 +163,7 @@ export class MemoriesRepository {
     return scored
       .filter((s) => s.overlap > 0)
       .sort((a, b) =>
-        b.overlap !== a.overlap
-          ? b.overlap - a.overlap
-          : a.m.createdAt < b.m.createdAt
-            ? 1
-            : -1,
+        b.overlap !== a.overlap ? b.overlap - a.overlap : a.m.createdAt < b.m.createdAt ? 1 : -1,
       )
       .slice(0, limit)
       .map((s) => s.m);
@@ -266,10 +259,7 @@ export class MemoriesRepository {
   }
 
   async delete(id: string, orgId?: string | null): Promise<void> {
-    let query = this.database
-      .kysely<AgentsDB>()
-      .deleteFrom('agent_memories')
-      .where('id', '=', id);
+    let query = this.database.kysely<AgentsDB>().deleteFrom('agent_memories').where('id', '=', id);
     if (orgId !== undefined) {
       query =
         orgId === null ? query.where('org_id', 'is', null) : query.where('org_id', '=', orgId);
