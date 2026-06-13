@@ -27,6 +27,7 @@ import type { PluginContext } from '../plugin-context';
 import { createMcpServersEndpoints } from './mcp-servers.endpoint';
 import { createWorkspacesEndpoints } from './workspaces.endpoint';
 import { createSessionsEndpoints } from './sessions.endpoint';
+import { createChatStreamEndpoints } from './chat-stream.endpoint';
 import { createProjectsEndpoints } from './projects.endpoint';
 import { createSkillsEndpoints } from './skills.endpoint';
 import { createFilesEndpoints } from './files.endpoint';
@@ -47,6 +48,7 @@ export function buildEndpoints(ctx: PluginContext): FlowlibPluginEndpoint[] {
     ...createMcpServersEndpoints(ctx),
     ...createWorkspacesEndpoints(ctx),
     ...createSessionsEndpoints(ctx),
+    ...createChatStreamEndpoints(ctx),
     ...createProjectsEndpoints(ctx),
     ...createSkillsEndpoints(ctx),
     ...createFilesEndpoints(ctx),

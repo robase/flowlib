@@ -70,6 +70,38 @@ export interface SessionContext {
    * them into the turn's catalogue.
    */
   providerTools?: Record<string, ProviderToolDescriptor>;
+  /**
+   * Human-in-the-loop decision gate. When present, a provider (or the
+   * kernel) can **block** the turn awaiting a user decision for a
+   * permission-request / human-input-request, instead of merely emitting
+   * the event and continuing (the legacy pass-through). The transport
+   * resolves the pending promise when the matching control frame arrives
+   * (DO `onMessage` for `flowlib.permission-response` / `flowlib.hil-response`;
+   * the Express `POST /sessions/:id/control` endpoint). Optional — a
+   * provider that doesn't consult it keeps the pass-through behaviour, so
+   * pure-chat is unaffected.
+   */
+  decisionGate?: DecisionGate;
+}
+
+/**
+ * Human-in-the-loop decision gate (see `SessionContext.decisionGate`).
+ *
+ * `await*` opens a pending promise keyed by the request's `id`; the
+ * transport calls the matching `resolve*` when the client responds. If
+ * the turn aborts, in-flight awaits reject so the provider unwinds.
+ */
+export interface DecisionGate {
+  /** Block until the user responds to a permission request. */
+  awaitPermission(request: { id: string; [k: string]: unknown }): Promise<unknown>;
+  /** Block until the user responds to a human-input request. */
+  awaitHumanInput(request: { id: string; [k: string]: unknown }): Promise<unknown>;
+  /** Resolve a pending permission await (called by the transport). */
+  resolvePermission(id: string, decision: unknown): void;
+  /** Resolve a pending human-input await (called by the transport). */
+  resolveHumanInput(id: string, response: unknown): void;
+  /** Reject all pending awaits (e.g. on turn abort / disconnect). */
+  rejectAll(reason?: unknown): void;
 }
 
 /**

@@ -7,6 +7,8 @@ export default defineConfig({
     'backend/providers': 'src/providers.ts',
     // Cloudflare-only runtime surface (DO + sandbox) — `@flowlib/agents/cloudflare`.
     'backend/cloudflare': 'src/cloudflare.ts',
+    // Pluggable workspace providers (ComputeSDK) — `@flowlib/agents/workspaces`.
+    'backend/workspaces': 'src/workspaces.ts',
     'browser/index': 'src/browser.ts',
     'frontend/index': 'src/frontend/types.ts',
     'shared/types': 'src/shared/types.ts',
@@ -33,6 +35,7 @@ export default defineConfig({
       '@flowlib/ui',
       '@anthropic-ai/claude-agent-sdk',
       '@cloudflare/sandbox',
+      'computesdk',
       '@cloudflare/workers-types',
       '@opencode-ai/sdk',
       'agents',

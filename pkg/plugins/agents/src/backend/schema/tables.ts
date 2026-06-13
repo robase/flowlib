@@ -39,6 +39,8 @@ const WORKSPACE_PROVIDER_VALUES = [
   'local-fs',
   'git-clone',
   'cloudflare-sandbox',
+  'cloudflare-sandbox-claude',
+  'computesdk',
   'remote-sandbox',
   'none',
 ] as const;

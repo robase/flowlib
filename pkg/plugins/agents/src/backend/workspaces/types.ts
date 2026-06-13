@@ -16,6 +16,7 @@ export type WorkspaceProviderId =
   | 'git-clone'
   | 'cloudflare-sandbox'
   | 'cloudflare-sandbox-claude'
+  | 'computesdk'
   | 'remote-sandbox'
   | 'none';
 

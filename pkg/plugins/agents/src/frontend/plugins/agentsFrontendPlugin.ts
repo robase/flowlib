@@ -42,6 +42,7 @@ type FlowlibFrontendPluginShape = {
     path: string;
     badge?: string | (() => string | undefined);
     position?: 'top' | 'bottom';
+    order?: number;
     permission?: string;
   }>;
   providers?: Array<ComponentType<{ children: ReactNode }>>;
@@ -58,10 +59,11 @@ export const agentsFrontendPlugin: FlowlibFrontendPluginShape = {
 
   sidebar: [
     {
-      label: 'Chats',
+      label: 'Agents',
       icon: MessageSquare,
       path: '/agents',
       position: 'top',
+      order: 30,
     },
   ],
 

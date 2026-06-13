@@ -80,11 +80,18 @@ import type {
 
 import type { AgentEvent } from '../../shared/events';
 import type { AgentsAuthContext } from '../../shared/auth-context';
-import type { AgentService, PersistenceCallbacks, SessionContext } from '../service/types';
-import type { PromptInput, ProviderToolDescriptor } from '../providers/types';
+import type { AgentService, DecisionGate } from '../service/types';
+import {
+  type ChatHostDeps,
+  type PromptCache,
+  type RepositoriesBag,
+  createConsoleSessionLogger,
+  createDecisionGate,
+  createInMemoryPromptCache,
+  runChatTurn,
+} from '../service/chat-session-host';
 
 import { ensureAgentsRuntime, getAgentsDatabaseApi } from './runtime-singleton';
-import { composeSystemPrompt } from '../prompt/compose';
 
 /**
  * The minimum Worker env shape `AgentChatDO` requires. Consumer
@@ -184,14 +191,22 @@ export class AgentChatDO extends (AIChatAgent as unknown as new (
    */
   private _resolved: ResolvedConnectionState | null = null;
   /**
-   * The composed system prompt for this session, cached for the DO
-   * instance's lifetime. `composeSystemPrompt` is meant to run once at
-   * session start (per its own docs); `_buildSessionContext` runs every
-   * turn, so we memoise here keyed by sessionId. Recomputed on DO
-   * eviction/restart — acceptable for v1; a mid-session config edit
-   * (systemPrompt/denyList) takes effect on the next cold DO.
+   * Composed-prompt cache for this DO instance's lifetime (the host
+   * memoises against it). Recomputed on DO eviction/restart — a
+   * mid-session systemPrompt/denyList edit takes effect on the next cold
+   * DO. Lazily initialised (field initializers don't run when the SDK
+   * base constructs us, and tests build via `Object.create`).
    */
-  private _composedPrompt?: { sessionId: string; prompt: string };
+  private _promptCache?: PromptCache;
+  /**
+   * Human-in-the-loop decision gate. `onMessage` resolves it when a
+   * `flowlib.permission-response` / `flowlib.hil-response` control frame
+   * arrives; the provider (when it consults `ctx.decisionGate`) awaits it.
+   * Lazily initialised (see `_promptCache`).
+   */
+  private _decisionGate?: DecisionGate;
+  /** AbortController for the in-flight turn — wired to `flowlib.interrupt`. */
+  private _activeAbort: AbortController | null = null;
 
   // ── Diagnostic overrides ─────────────────────────────────────────
   // These wrap the partyserver / AIChatAgent dispatch chain so we can
@@ -243,6 +258,14 @@ export class AgentChatDO extends (AIChatAgent as unknown as new (
       const TYPE_REGEX = /"type"\s*:\s*"([^"]+)"/;
       const m = TYPE_REGEX.exec(message.slice(0, 200));
       envelopeType = m?.[1];
+    }
+    // Intercept our control frames before the SDK sees them (it doesn't
+    // understand `flowlib.*`). Interrupt aborts the in-flight turn;
+    // permission/HIL responses resolve the decision gate the provider awaits.
+    if (typeof message === 'string' && envelopeType?.startsWith('flowlib.')) {
+      if (this._handleControlFrame(message)) {
+        return;
+      }
     }
     // eslint-disable-next-line no-console
     console.log('[AgentChatDO] onMessage in', {
@@ -329,18 +352,11 @@ export class AgentChatDO extends (AIChatAgent as unknown as new (
     options?: OnChatMessageOptions,
   ): Promise<Response | undefined> {
     const self = this as unknown as AgentChatDOSelf;
-    const doName = (this as unknown as { name?: string }).name ?? '<unnamed>';
-    // eslint-disable-next-line no-console
-    console.log('[AgentChatDO] onChatMessage in', {
-      doName,
-      messageCount: self.messages?.length ?? 0,
-    });
+    const log = createConsoleSessionLogger('[AgentChatDO]');
+    log.info('onChatMessage in', { messageCount: self.messages?.length ?? 0 });
 
-    // Parse the DO name first so we have an orgId to hand to the
-    // bootstrap. The Worker fetch isolate and each DO isolate are
-    // separate, so the host's `createFlowlib({ plugins: [agents(...)] })`
-    // call has *not* populated the runtime singleton in this isolate
-    // unless the host registered a bootstrapper at module load time.
+    // Parse the DO name → orgId/sessionId (the runtime singleton is keyed
+    // per isolate; the Worker fetch isolate is separate from this DO).
     let resolved: ResolvedConnectionState;
     try {
       resolved = this._ensureResolved();
@@ -354,14 +370,9 @@ export class AgentChatDO extends (AIChatAgent as unknown as new (
 
     let runtime;
     try {
-      runtime = await ensureAgentsRuntime(
-        (this as unknown as { env: unknown }).env,
-        resolved.orgId,
-      );
+      runtime = await ensureAgentsRuntime((this as unknown as { env: unknown }).env, resolved.orgId);
     } catch (err) {
-      // eslint-disable-next-line no-console
-      console.error('[AgentChatDO] ensureAgentsRuntime failed', {
-        doName,
+      log.error('ensureAgentsRuntime failed', {
         orgId: resolved.orgId,
         message: err instanceof Error ? err.message : String(err),
       });
@@ -373,21 +384,24 @@ export class AgentChatDO extends (AIChatAgent as unknown as new (
     }
     const agentService = runtime.agentService as AgentService | undefined;
     if (!agentService) {
-      // eslint-disable-next-line no-console
-      console.error('[AgentChatDO] agentService missing on runtime singleton', {
-        doName,
-        runtimeKeys: Object.keys(runtime ?? {}),
-      });
       this._emitError({
         message:
-          'AgentService not registered on the agents runtime — Stream A ' +
-          'must register before any chat connection lands.',
+          'AgentService not registered on the agents runtime — it must register before ' +
+          'any chat connection lands.',
         code: 'AGENT_SERVICE_MISSING',
       });
       return undefined;
     }
 
-    // Pull the just-arrived user message off `this.messages`.
+    const repositories = this._materializeRepositories(runtime);
+    if (!repositories) {
+      this._emitError({
+        message: 'Repositories not registered on the agents runtime.',
+        code: 'REPOSITORIES_MISSING',
+      });
+      return undefined;
+    }
+
     const lastMessage = self.messages[self.messages.length - 1];
     const promptText = extractPromptText(lastMessage);
     if (!promptText) {
@@ -398,132 +412,160 @@ export class AgentChatDO extends (AIChatAgent as unknown as new (
       return undefined;
     }
 
-    const sessionContext = await this._buildSessionContext(resolved, options);
-    if (!sessionContext) {
-      // _buildSessionContext emitted the error already.
-      return undefined;
+    // Abort source: the SDK's `options.abortSignal` OR our
+    // `flowlib.interrupt` control frame (see `_handleControlFrame`).
+    const abortController = new AbortController();
+    this._activeAbort = abortController;
+    if (options?.abortSignal) {
+      const sig = options.abortSignal;
+      if (sig.aborted) {
+        abortController.abort();
+      } else {
+        sig.addEventListener('abort', () => abortController.abort());
+      }
     }
 
-    const promptInput: PromptInput = {
-      providerSessionId: sessionContext.providerSessionId,
-      parts: [{ type: 'text', text: promptText }],
-      abortSignal: sessionContext.abortSignal,
-      // Plumb the session row's stored model id through to the provider.
-      // Without this, the opencode provider falls back to its factory
-      // default (historically a hyphenated id that opencode/OpenRouter
-      // don't recognise → silent 200/empty → chat hang).
-      model: sessionContext.defaultModel,
-      // Enforce the session's tool deny/allow lists at the provider's
-      // tool filter (ai-sdk `filterTools`). Without this the deny is only
-      // a prompt suggestion.
-      ...(sessionContext.denyList ? { extraDenied: sessionContext.denyList } : {}),
-      ...(sessionContext.enabledTools ? { enabledTools: sessionContext.enabledTools } : {}),
-      // Plugin-contributed tools (skills.read, …) for this turn.
-      ...(sessionContext.providerTools ? { providerTools: sessionContext.providerTools } : {}),
-    };
-    // eslint-disable-next-line no-console
-    console.log('[AgentChatDO] promptInput', {
-      providerSessionId: promptInput.providerSessionId,
-      model: promptInput.model,
-      partsCount: promptInput.parts.length,
-    });
-
-    // Counter so we can log "runTurn finished with N events emitted" —
-    // a `result.reason: 'stop'` with `events: 0` is the silent-failure
-    // signature. Also collect a summary of event types so the
-    // canonical "1 event emitted, reason='error'" pattern (which is
-    // the kernel's session-end-with-error path) carries enough info
-    // to debug from the log alone.
+    // Wrap `emit` with the silent-failure diagnostics the DO has always
+    // logged (zero-events / session-end-with-error signatures).
     let emittedEvents = 0;
     const eventTypes: string[] = [];
     let lastSessionEnd: { type: 'session-end'; reason: string; error?: string } | undefined;
-    const originalEmit = sessionContext.emit;
-    sessionContext.emit = (event) => {
+    const emit = (event: AgentEvent): void => {
       emittedEvents += 1;
       const evtType = (event as { type?: string }).type ?? 'unknown';
       eventTypes.push(evtType);
       if (evtType === 'session-end') {
         lastSessionEnd = event as typeof lastSessionEnd;
       }
-      originalEmit(event);
+      this._emitAgentEvent(event);
     };
 
-    // eslint-disable-next-line no-console
-    console.log('[AgentChatDO] runTurn start', {
+    // Lazy-init the per-instance cache + gate (field initializers don't
+    // run under the SDK base constructor / `Object.create`).
+    this._promptCache ??= createInMemoryPromptCache();
+    this._decisionGate ??= createDecisionGate();
+
+    const deps: ChatHostDeps & { agentService: AgentService } = {
       sessionId: resolved.sessionId,
-      providerSessionId: sessionContext.providerSessionId,
+      orgId: resolved.orgId,
+      auth: resolved.auth,
+      providers: runtime.providers,
+      workspaces: runtime.workspaces,
+      hookPipeline: (runtime as { hookPipeline?: ChatHostDeps['hookPipeline'] }).hookPipeline,
+      permissions: runtime.permissions as ChatHostDeps['permissions'],
+      repositories,
+      emit,
+      logger: log,
+      abortSignal: abortController.signal,
+      promptCache: this._promptCache,
+      decisionGate: this._decisionGate,
+      agentService,
+    };
+
+    log.info('runTurn start', {
+      sessionId: resolved.sessionId,
       promptLen: promptText.length,
     });
     const runTurnStart = Date.now();
-
     try {
-      const result = await agentService.runTurn(sessionContext, promptInput);
-      // eslint-disable-next-line no-console
-      console.log('[AgentChatDO] runTurn done', {
+      const outcome = await runChatTurn(deps, promptText);
+      if ('error' in outcome) {
+        this._emitError(outcome.error);
+        return undefined;
+      }
+      const result = outcome.result;
+      log.info('runTurn done', {
         sessionId: resolved.sessionId,
         reason: result.reason,
         events: emittedEvents,
         eventTypes,
-        // `result.error` is the kernel's `endError` — populated when
-        // the provider stream threw, the iterator's first event was
-        // an error, a hook short-circuited, etc. Logging it here is
-        // the *only* way to surface the underlying message: the kernel
-        // packs it into the `session-end` event but we'd otherwise
-        // need to reach into our event accumulator to find it.
         error: result.error ?? lastSessionEnd?.error ?? null,
         inputTokens: result.inputTokensTotal,
         outputTokens: result.outputTokensTotal,
         durationMs: Date.now() - runTurnStart,
       });
-      // A turn that completed "normally" but produced zero events is
-      // the canonical silent-failure case. Surface it explicitly so
-      // the WS client (and `wrangler tail`) gets a signal instead of
-      // the SDK's `[AIChatAgent] onChatMessage returned no response`
-      // warning being the only clue.
+      // A "normal" turn that produced zero events is the canonical
+      // silent-failure case — surface it explicitly.
       if (emittedEvents === 0) {
-        // eslint-disable-next-line no-console
-        console.warn(
-          '[AgentChatDO] runTurn produced zero AgentEvents — provider likely failed before streaming. ' +
-            'Check the workspace sandbox process logs and the opencode provider config (e.g. loadProviderConfig).',
-          {
-            sessionId: resolved.sessionId,
-            providerSessionId: sessionContext.providerSessionId,
-          },
-        );
+        log.warn('runTurn produced zero AgentEvents — provider likely failed before streaming.', {
+          sessionId: resolved.sessionId,
+        });
         this._emitError({
           message:
-            'Agent turn completed without producing any output. The LLM provider ' +
-            'inside the workspace sandbox likely failed before streaming (missing or ' +
-            'unmapped API key). Check the credentials for this org and the workspace ' +
-            'sandbox process logs.',
+            'Agent turn completed without producing any output. The LLM provider likely ' +
+            'failed before streaming (missing or unmapped API key). Check the credentials ' +
+            'for this org and the workspace sandbox process logs.',
           code: 'RUN_TURN_NO_EVENTS',
         });
       }
-      // Hand control back to the SDK so it can persist the
-      // assistant message it has been streaming. The result we pass
-      // through is best-effort — the SDK only inspects `usage`.
       await onFinish({
         finishReason: result.reason,
-        usage: {
-          inputTokens: result.inputTokensTotal,
-          outputTokens: result.outputTokensTotal,
-        },
+        usage: { inputTokens: result.inputTokensTotal, outputTokens: result.outputTokensTotal },
       });
     } catch (err) {
-      // eslint-disable-next-line no-console
-      console.error('[AgentChatDO] runTurn threw', {
+      log.error('runTurn threw', {
         sessionId: resolved.sessionId,
         durationMs: Date.now() - runTurnStart,
         message: err instanceof Error ? err.message : String(err),
-        stack: err instanceof Error ? err.stack : undefined,
       });
       this._emitError({
         message: err instanceof Error ? err.message : String(err),
         code: 'RUN_TURN_FAILED',
       });
+    } finally {
+      this._activeAbort = null;
+      // Unblock any provider awaits left dangling on the gate.
+      this._decisionGate?.rejectAll(new Error('turn ended'));
     }
-
     return undefined;
+  }
+
+  /**
+   * Materialise the repositories bag from the runtime singleton. The
+   * slot is normally a *factory* (installed by `registerRepositories`)
+   * keyed by a `PluginDatabaseApi`; tests may stash a ready bag directly.
+   */
+  private _materializeRepositories(runtime: { repositories?: unknown }): RepositoriesBag | null {
+    const slot = runtime.repositories as unknown;
+    if (typeof slot === 'function') {
+      const factory = slot as (db: ReturnType<typeof getAgentsDatabaseApi>) => RepositoriesBag;
+      return factory(getAgentsDatabaseApi());
+    }
+    if (slot && typeof slot === 'object') {
+      return slot as RepositoriesBag;
+    }
+    return null;
+  }
+
+  /**
+   * Route an inbound `flowlib.*` control frame the Agents SDK doesn't
+   * understand. Returns `true` when handled (so `onMessage` short-circuits
+   * before `super.onMessage`).
+   */
+  private _handleControlFrame(raw: string): boolean {
+    let frame: { type?: string; id?: string; decision?: unknown; response?: unknown };
+    try {
+      frame = JSON.parse(raw) as typeof frame;
+    } catch {
+      return false;
+    }
+    switch (frame.type) {
+      case 'flowlib.interrupt':
+        this._activeAbort?.abort();
+        return true;
+      case 'flowlib.permission-response':
+        if (typeof frame.id === 'string') {
+          this._decisionGate?.resolvePermission(frame.id, frame.decision);
+        }
+        return true;
+      case 'flowlib.hil-response':
+        if (typeof frame.id === 'string') {
+          this._decisionGate?.resolveHumanInput(frame.id, frame.response);
+        }
+        return true;
+      default:
+        return false;
+    }
   }
 
   // ─── Private helpers ───────────────────────────────────────────────
@@ -572,454 +614,6 @@ export class AgentChatDO extends (AIChatAgent as unknown as new (
    * Returns `null` (and emits an error envelope) when a required
    * subsystem isn't registered — the DO degrades gracefully so the
    * client gets a useful error instead of a connection drop.
-   */
-  private async _buildSessionContext(
-    resolved: ResolvedConnectionState,
-    options?: OnChatMessageOptions,
-  ): Promise<SessionContext | null> {
-    const runtime = await ensureAgentsRuntime(
-      (this as unknown as { env: unknown }).env,
-      resolved.orgId,
-    );
-    // `runtime.repositories` is normally the *factory* installed by
-    // `registerRepositories(ctx)`. Materialise the bag by calling the
-    // factory with a `PluginDatabaseApi` bound to this isolate's
-    // Flowlib instance. Tests that pre-build a repositories bag and
-    // stash it directly via `setAgentsRuntime` can still pass — we
-    // detect that shape by checking for `typeof === 'function'`.
-    type RepositoriesBag = {
-      sessions: {
-        findById(id: string): Promise<unknown>;
-        update?(
-          id: string,
-          patch: { workspaceId?: string },
-          orgId?: string | null,
-        ): Promise<unknown>;
-      };
-      workspaces?: {
-        findById(id: string, orgId: string): Promise<unknown>;
-        create?(input: {
-          orgId: string | null;
-          name: string;
-          workspaceProviderId: string;
-          createdBy: string;
-          visibility?: string;
-        }): Promise<unknown>;
-      };
-      messages?: { append?: (input: unknown) => Promise<void> };
-      skills?: {
-        listForScope(scope: {
-          orgId: string | null;
-          userId?: string;
-          limit?: number;
-        }): Promise<ReadonlyArray<{ name: string; description: string; body: string }>>;
-        findByName(
-          name: string,
-          scope: { orgId: string | null; userId?: string },
-        ): Promise<{ name: string; body: string } | null>;
-      };
-    };
-    const reposSlot = runtime.repositories as unknown;
-    let repositories: RepositoriesBag;
-    if (typeof reposSlot === 'function') {
-      const factory = reposSlot as (db: ReturnType<typeof getAgentsDatabaseApi>) => RepositoriesBag;
-      repositories = factory(getAgentsDatabaseApi());
-    } else if (reposSlot && typeof reposSlot === 'object') {
-      repositories = reposSlot as RepositoriesBag;
-    } else {
-      this._emitError({
-        message: 'Repositories not registered on the agents runtime.',
-        code: 'REPOSITORIES_MISSING',
-      });
-      return null;
-    }
-
-    // Stream F's SessionsRepository returns a row including the
-    // provider id and providerSessionId. We narrow loosely here so the
-    // DO doesn't depend on the repository's concrete row type.
-    const sessionRow = (await repositories.sessions.findById(resolved.sessionId)) as
-      | {
-          providerId: string;
-          providerSessionId: string;
-          orgId: string;
-          workspaceId?: string;
-          credentialId?: string | null;
-          model?: string | null;
-          // Session config the DO previously dropped (the §0 "shared
-          // root cause" narrowing). Read them here so they can be
-          // threaded to the provider / composer. `enabledMcpServerIds`
-          // + `permissionMode` are read for completeness; they're
-          // consumed by the MCP-resolution (§3) and permission-prompt
-          // work respectively, landing in follow-up slices.
-          systemPrompt?: string | null;
-          denyList?: string[] | null;
-          enabledTools?: string[] | null;
-          enabledMcpServerIds?: string[] | null;
-          permissionMode?: string | null;
-        }
-      | undefined;
-
-    if (!sessionRow) {
-      this._emitError({
-        message: `Session ${resolved.sessionId} not found`,
-        code: 'SESSION_NOT_FOUND',
-      });
-      return null;
-    }
-    // eslint-disable-next-line no-console
-    console.log('[AgentChatDO] sessionRow', {
-      sessionId: resolved.sessionId,
-      providerId: sessionRow.providerId,
-      providerSessionId: sessionRow.providerSessionId,
-      workspaceId: sessionRow.workspaceId,
-      credentialId: sessionRow.credentialId,
-      model: sessionRow.model,
-    });
-    if (sessionRow.orgId !== resolved.orgId) {
-      // Defence-in-depth: the DO name already encodes orgId, but if a
-      // session moved orgs (shouldn't happen) we never want to surface
-      // the cross-tenant data.
-      this._emitError({
-        message: 'Session does not belong to this org.',
-        code: 'CROSS_TENANT_DENIED',
-      });
-      return null;
-    }
-
-    const provider = runtime.providers.get(sessionRow.providerId);
-    if (!provider) {
-      this._emitError({
-        message: `Provider ${sessionRow.providerId} not registered`,
-        code: 'PROVIDER_NOT_FOUND',
-      });
-      return null;
-    }
-
-    // ── Workspace provisioning (lazy + on-demand) ──
-    //
-    // `ensureWorkspace()` resolves the session's sandbox handle,
-    // provisioning a fresh workspace row the first time if the session
-    // has none. It's the single seam both eager and lazy providers go
-    // through:
-    //
-    //   - Providers that require a workspace up front
-    //     (`workspaceRequired: true`, e.g. claude-code) call it eagerly
-    //     below so the handle is ready at `createSession`.
-    //   - Providers that boot on demand (`workspaceRequired: false`,
-    //     e.g. ai-sdk) receive it as the `ensureWorkspace` accessor and
-    //     call it the first time a `sandbox.*` tool runs — so pure-chat
-    //     sessions never provision a container.
-    //
-    // The result is cached for this turn; the newly-created workspace id
-    // is persisted onto the session row, so later turns/isolates resolve
-    // the same sandbox.
-    let cachedWorkspace: { metadata?: Record<string, unknown> } | undefined;
-    const ensureWorkspace = async (): Promise<{ metadata?: Record<string, unknown> }> => {
-      if (cachedWorkspace) {
-        return cachedWorkspace;
-      }
-      let workspaceId = sessionRow.workspaceId;
-      let workspaceProviderId: string | undefined;
-      if (workspaceId && repositories.workspaces) {
-        const wsRow = (await repositories.workspaces.findById(workspaceId, resolved.orgId)) as
-          | { workspaceProviderId?: string }
-          | undefined;
-        workspaceProviderId = wsRow?.workspaceProviderId;
-      }
-      if (!workspaceId) {
-        // No workspace yet — provision one now and persist the link.
-        workspaceProviderId =
-          provider.capabilities.preferredWorkspaceProviderId ??
-          (runtime.workspaces ? runtime.workspaces.keys().next().value : undefined);
-        if (!workspaceProviderId) {
-          throw new Error('No workspace provider registered to provision a sandbox.');
-        }
-        if (!repositories.workspaces?.create) {
-          throw new Error('Workspaces repository unavailable — cannot provision a sandbox.');
-        }
-        const created = (await repositories.workspaces.create({
-          orgId: resolved.orgId,
-          name: 'Chat workspace',
-          workspaceProviderId,
-          createdBy: resolved.auth.userId,
-          visibility: 'private',
-        })) as { id: string };
-        workspaceId = created.id;
-        if (repositories.sessions.update) {
-          await repositories.sessions.update(resolved.sessionId, { workspaceId }, resolved.orgId);
-        }
-        // eslint-disable-next-line no-console
-        console.log('[AgentChatDO] provisioned workspace on demand', {
-          sessionId: resolved.sessionId,
-          workspaceId,
-          workspaceProviderId,
-        });
-      }
-      if (!workspaceProviderId) {
-        throw new Error(`Workspace ${workspaceId} has no provider id on its row.`);
-      }
-      const wsProvider = runtime.workspaces?.get(workspaceProviderId);
-      if (!wsProvider) {
-        throw new Error(
-          `Workspace provider "${workspaceProviderId}" not registered in this isolate.`,
-        );
-      }
-      cachedWorkspace = (await wsProvider.resolve(workspaceId, resolved.auth)) as {
-        metadata?: Record<string, unknown>;
-      };
-      return cachedWorkspace;
-    };
-
-    // Eager resolve only when the provider needs a workspace at
-    // session-create time. Lazy providers leave `workspaceHandle`
-    // undefined and rely on the accessor passed into `createSession`.
-    let workspaceHandle: { metadata?: Record<string, unknown> } | undefined;
-    if (provider.capabilities.workspaceRequired) {
-      try {
-        workspaceHandle = await ensureWorkspace();
-      } catch (err) {
-        // eslint-disable-next-line no-console
-        console.warn('[AgentChatDO] eager workspace provisioning failed', {
-          workspaceId: sessionRow.workspaceId,
-          message: err instanceof Error ? err.message : String(err),
-        });
-      }
-    }
-
-    // ── Provider rehydration ──
-    //
-    // Providers keep per-session state in module-scoped Maps that are
-    // populated during `createSession` (e.g. opencode's `sessionsById`).
-    // Those Maps are per-isolate; they're empty in a fresh DO isolate
-    // even when the row exists in D1. Calling `provider.createSession`
-    // again with the existing `providerSessionId` is the rehydration
-    // path — providers that recognise the field treat it as idempotent
-    // and only populate state when missing.
-    // ── System-prompt composition ──
-    //
-    // Build the effective system prompt from the session's config. Until
-    // now the provider received the raw `agent_sessions.systemPrompt`
-    // string and the whole compose layer (operating directives, deny-list
-    // mention, and the slots for skills / memory / workspace context) was
-    // dormant — see plans/agents §0. We compose here and feed the result
-    // into `createSession`, which the provider stores as the session's
-    // system prompt.
-    const skillSummaries = await this._loadSkillSummaries(repositories, resolved);
-    const effectiveSystemPrompt = await this._composeEffectiveSystemPrompt(
-      resolved.sessionId,
-      {
-        systemPrompt: sessionRow.systemPrompt,
-        denyList: sessionRow.denyList,
-      },
-      skillSummaries,
-    );
-    // Plugin-contributed tools (e.g. skills.read) the provider merges
-    // into the turn — see PromptInput.providerTools.
-    const providerTools = this._buildProviderTools(
-      repositories,
-      resolved,
-      skillSummaries.length > 0,
-    );
-
-    try {
-      await provider.createSession({
-        auth: resolved.auth,
-        config: {},
-        workspace: workspaceHandle as never,
-        // Lazy provisioner for on-demand providers (ai-sdk). Eager
-        // providers ignore it and use `workspace` above.
-        ensureWorkspace: ensureWorkspace as never,
-        credentialId: sessionRow.credentialId ?? undefined,
-        providerSessionId: sessionRow.providerSessionId,
-        systemPrompt: effectiveSystemPrompt,
-      } as never);
-    } catch (err) {
-      // eslint-disable-next-line no-console
-      console.warn('[AgentChatDO] provider rehydrate failed', {
-        providerId: sessionRow.providerId,
-        providerSessionId: sessionRow.providerSessionId,
-        message: err instanceof Error ? err.message : String(err),
-      });
-      // Fall through — if the provider truly doesn't have the session
-      // state, `prompt()` will yield an "unknown session id" event and
-      // the kernel will surface it as `RUN_TURN_NO_EVENTS` / a session
-      // -end-with-error event the existing logging captures.
-    }
-
-    const hooks =
-      (runtime.hookPipeline as SessionContext['hooks'] | undefined) ?? noopHookPipeline();
-    const permissions =
-      (runtime.permissions as SessionContext['permissions'] | undefined) ?? allowAllPermissions();
-    const callbacks = buildPersistenceCallbacks(repositories);
-    const abortController = new AbortController();
-    if (options?.abortSignal) {
-      const sig = options.abortSignal;
-      if (sig.aborted) {
-        abortController.abort();
-      } else {
-        sig.addEventListener('abort', () => abortController.abort());
-      }
-    }
-
-    return {
-      sessionId: resolved.sessionId,
-      providerSessionId: sessionRow.providerSessionId,
-      auth: resolved.auth,
-      provider,
-      workspace: workspaceHandle as never,
-      hooks,
-      permissions,
-      logger: createSessionLogger(this),
-      callbacks,
-      emit: (event: AgentEvent) => {
-        this._emitAgentEvent(event);
-      },
-      abortSignal: abortController.signal,
-      // Pull the per-session model off the D1 row so the provider's
-      // prompt() sees the **user's choice** (e.g.
-      // `openrouter/anthropic/claude-sonnet-4.5`). Without this, the
-      // provider falls back to its factory `defaultModel` which is
-      // hardcoded and was historically a hyphenated Anthropic-native id
-      // (`anthropic/claude-sonnet-4-5`) — opencode silently accepts a
-      // prompt with an unknown model and returns 200/empty, making the
-      // whole chat hang. See failure mode #11 in AGENTS-DEBUGGING.md.
-      defaultModel: sessionRow.model ?? undefined,
-      // Session tool config — threaded onto PromptInput below so the
-      // provider's tool filter actually enforces the deny/allow lists
-      // (the composed prompt already mentions the deny list).
-      ...(sessionRow.denyList ? { denyList: sessionRow.denyList } : {}),
-      ...(sessionRow.enabledTools ? { enabledTools: sessionRow.enabledTools } : {}),
-      ...(Object.keys(providerTools).length > 0 ? { providerTools } : {}),
-    };
-  }
-
-  /**
-   * Compose the effective system prompt for the session, memoised for
-   * the DO instance's lifetime (see `_composedPrompt`).
-   *
-   * Today it feeds the base system prompt + deny-list mention +
-   * always-on operating directives. The skills, memory, available-tools,
-   * and workspace-context / CLAUDE.md sections are wired as empty slots
-   * and fill in as those subsystems land (plans/agents §1, §2, §4). The
-   * workspace/CLAUDE.md walk is deferred for sandbox workspaces: their
-   * handles expose no `rootPath` and the walk would add a per-turn
-   * container round-trip.
-   */
-  private async _composeEffectiveSystemPrompt(
-    sessionId: string,
-    row: { systemPrompt?: string | null; denyList?: string[] | null },
-    skillSummaries: ReadonlyArray<{ name: string; description: string; body?: string }>,
-  ): Promise<string> {
-    if (this._composedPrompt && this._composedPrompt.sessionId === sessionId) {
-      return this._composedPrompt.prompt;
-    }
-    const prompt = await composeSystemPrompt({
-      systemPrompt: row.systemPrompt ?? '',
-      skillSummaries,
-      denyList: row.denyList ?? [],
-      availableTools: [],
-      memory: [],
-      attachments: [],
-    });
-    this._composedPrompt = { sessionId, prompt };
-    return prompt;
-  }
-
-  /**
-   * Load the skills visible to this session (org `global` + the user's
-   * `personal`) as **summaries** (name + description only) — the bodies
-   * are fetched on demand via the injected `skills.read` tool
-   * (progressive disclosure; see `_buildProviderTools`). Capped by count
-   * so a large library can't bloat the prompt. Best-effort: a repository
-   * error yields no skills rather than failing the turn.
-   */
-  private async _loadSkillSummaries(
-    repositories: {
-      skills?: {
-        listForScope(scope: {
-          orgId: string | null;
-          userId?: string;
-          limit?: number;
-        }): Promise<ReadonlyArray<{ name: string; description: string; body: string }>>;
-      };
-    },
-    resolved: ResolvedConnectionState,
-  ): Promise<ReadonlyArray<{ name: string; description: string }>> {
-    if (!repositories.skills) {
-      return [];
-    }
-    const MAX_SKILLS = 30;
-    try {
-      const all = await repositories.skills.listForScope({
-        orgId: resolved.orgId,
-        userId: resolved.auth.userId,
-        limit: MAX_SKILLS,
-      });
-      return all.map((s) => ({ name: s.name, description: s.description }));
-    } catch (err) {
-      // eslint-disable-next-line no-console
-      console.warn('[AgentChatDO] skill load failed — proceeding without skills', {
-        sessionId: resolved.sessionId,
-        message: err instanceof Error ? err.message : String(err),
-      });
-      return [];
-    }
-  }
-
-  /**
-   * Build the plugin-contributed tools for the session. Today that's
-   * `skills.read` (resolve a skill body by name) — injected only when the
-   * session actually has visible skills, so the prompt's "fetchable via
-   * skills.read" promise always has a backing tool. Threaded onto
-   * `PromptInput.providerTools` by the prompt builder.
-   */
-  private _buildProviderTools(
-    repositories: {
-      skills?: {
-        findByName(
-          name: string,
-          scope: { orgId: string | null; userId?: string },
-        ): Promise<{ name: string; body: string } | null>;
-      };
-    },
-    resolved: ResolvedConnectionState,
-    hasSkills: boolean,
-  ): Record<string, ProviderToolDescriptor> {
-    const tools: Record<string, ProviderToolDescriptor> = {};
-    const skillsRepo = repositories.skills;
-    if (skillsRepo && hasSkills) {
-      tools['skills.read'] = {
-        description:
-          'Read the full body of an available skill by name. Call this when a skill ' +
-          'listed under "Available skills" applies to the task before you start.',
-        parameters: {
-          type: 'object',
-          properties: {
-            name: { type: 'string', description: 'The skill name, exactly as listed.' },
-          },
-          required: ['name'],
-          additionalProperties: false,
-        },
-        execute: async (input) => {
-          const name = typeof input.name === 'string' ? input.name : '';
-          const skill = await skillsRepo.findByName(name, {
-            orgId: resolved.orgId,
-            userId: resolved.auth.userId,
-          });
-          if (!skill) {
-            return { error: `No skill named "${name}" is available to this session.` };
-          }
-          return { name: skill.name, body: skill.body };
-        },
-      };
-    }
-    return tools;
-  }
-
-  /**
-   * Push an `AgentEvent` over every connected WebSocket. Wrapping the
-   * payload in a `flowlib.agent-event` envelope distinguishes our
-   * events from the SDK's own protocol traffic.
    */
   private _emitAgentEvent(event: AgentEvent): void {
     const envelope: AgentEventEnvelope = {
@@ -1078,77 +672,3 @@ function extractPromptText(message: unknown): string | null {
   return null;
 }
 
-/**
- * Build the `PersistenceCallbacks` object the kernel calls. v1 is a
- * pass-through that delegates to the runtime's repositories bag if it
- * is present and exposes a compatible `messages` repo, otherwise no-ops
- * so the DO can still run end-to-end during stream-by-stream wiring.
- *
- * Stream I will own the real persistence layer — this scaffold matches
- * the interface and is replaced when the wiring lands.
- */
-function buildPersistenceCallbacks(repositories: {
-  messages?: { append?: (input: unknown) => Promise<void> };
-}): PersistenceCallbacks {
-  const append = repositories?.messages?.append;
-
-  const noop = (): Promise<void> => Promise.resolve();
-  if (!append) {
-    return {
-      onMessageStart: noop,
-      onTextDelta: noop,
-      onToolCall: noop,
-      onToolResult: noop,
-      onFileEdit: noop,
-      onMessageComplete: noop,
-      onTurnEnd: noop,
-    };
-  }
-
-  return {
-    onMessageStart: (input) => append({ kind: 'message-start', ...input }),
-    onTextDelta: (input) => append({ kind: 'text-delta', ...input }),
-    onToolCall: (input) => append({ kind: 'tool-call', ...input }),
-    onToolResult: (input) => append({ kind: 'tool-result', ...input }),
-    onFileEdit: (input) => append({ kind: 'file-edit', ...input }),
-    onMessageComplete: (input) => append({ kind: 'message-complete', ...input }),
-    onTurnEnd: (input) => append({ kind: 'turn-end', ...input }),
-  };
-}
-
-/** Default empty hook pipeline. */
-function noopHookPipeline(): SessionContext['hooks'] {
-  return {
-    preToolUse: [],
-    postToolUse: [],
-    preMessage: [],
-  } as unknown as SessionContext['hooks'];
-}
-
-/** Default permissive permissions resolver. */
-function allowAllPermissions(): SessionContext['permissions'] {
-  return {
-    getEffectiveDenyList: async () => new Set<string>(),
-  } as unknown as SessionContext['permissions'];
-}
-
-/** Wrap the DO's logger surface in the kernel's `SessionLogger` shape. */
-/* eslint-disable no-console */
-function createSessionLogger(_do: AgentChatDO): SessionContext['logger'] {
-  const tag = '[AgentChatDO]';
-  return {
-    debug(message, meta) {
-      console.debug(tag, message, meta ?? {});
-    },
-    info(message, meta) {
-      console.info(tag, message, meta ?? {});
-    },
-    warn(message, meta) {
-      console.warn(tag, message, meta ?? {});
-    },
-    error(message, meta) {
-      console.error(tag, message, meta ?? {});
-    },
-  };
-}
-/* eslint-enable no-console */

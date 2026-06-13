@@ -29,6 +29,8 @@ export interface AgentsApiClients {
   workspaces: WorkspacesApiClient;
   credentials: CredentialsApiClient;
   skills: SkillsApiClient;
+  /** Resolved API base URL — used by the HTTP/SSE chat transport. */
+  baseUrl: string;
 }
 
 const AgentsApiContext = React.createContext<AgentsApiClients | undefined>(undefined);
@@ -68,6 +70,7 @@ export function AgentsApiProvider({
       workspaces: new WorkspacesApiClient({ baseUrl: resolvedBase }),
       credentials: new CredentialsApiClient({ baseUrl: resolvedBase }),
       skills: new SkillsApiClient({ baseUrl: resolvedBase }),
+      baseUrl: resolvedBase,
     };
   }, [value, resolvedBase]);
 

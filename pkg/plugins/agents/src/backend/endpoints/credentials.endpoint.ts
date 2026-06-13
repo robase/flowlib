@@ -112,7 +112,7 @@ export function createCredentialsEndpoints(ctx: PluginContext): FlowlibPluginEnd
   return [
     {
       method: 'GET',
-      path: '/credentials/llm',
+      path: '/agents/credentials/llm',
       handler: safeHandler(ctx, listLlmCredentials),
     },
   ];

@@ -17,6 +17,7 @@ export const webhooksFrontend: FlowlibFrontendPlugin = {
       icon: Globe,
       path: '/webhooks',
       position: 'top',
+      order: 50,
     },
   ],
 

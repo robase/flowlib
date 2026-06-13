@@ -79,11 +79,20 @@ interface UpdateSessionBody {
 
 function withDoAgentName(
   session: AgentSession,
-  orgId: string,
+  deps: EndpointDeps,
 ): AgentSession & { doAgentName: string } {
+  // The chat transport is decided by whether a Cloudflare Durable Object
+  // is wired into this deployment: present → the DO WebSocket transport;
+  // absent (e.g. Express/Node) → the HTTP/SSE transport. `doAgentName` is
+  // always computed (cheap, deterministic) so the frontend can use it
+  // when the DO transport is selected.
+  const transportMode: AgentSession['transportMode'] = deps.pluginCtx.registries.cloudflareDoClass
+    ? 'durable-object'
+    : 'http';
   return {
     ...session,
-    doAgentName: tenantScopedName('chat', orgId, session.id),
+    doAgentName: tenantScopedName('chat', deps.auth.orgId, session.id),
+    transportMode,
   };
 }
 
@@ -94,7 +103,7 @@ function getProvider(pluginCtx: PluginContext, providerId: string): AgentProvide
 async function listSessions(deps: EndpointDeps): Promise<PluginEndpointResponse> {
   const rows = await deps.repos.sessions.list({ orgId: deps.auth.orgId });
   return {
-    body: { data: rows.map((r) => withDoAgentName(r, deps.auth.orgId)) },
+    body: { data: rows.map((r) => withDoAgentName(r, deps)) },
   };
 }
 
@@ -104,7 +113,7 @@ async function getSession(deps: EndpointDeps): Promise<PluginEndpointResponse> {
   if (!row) {
     return notFound('Session not found');
   }
-  return { body: withDoAgentName(row, deps.auth.orgId) };
+  return { body: withDoAgentName(row, deps) };
 }
 
 /**
@@ -300,7 +309,7 @@ async function createSession(deps: EndpointDeps): Promise<PluginEndpointResponse
     status: 'active',
   });
 
-  return { status: 201, body: withDoAgentName(created, deps.auth.orgId) };
+  return { status: 201, body: withDoAgentName(created, deps) };
 }
 
 /**
@@ -511,7 +520,7 @@ async function updateSession(deps: EndpointDeps): Promise<PluginEndpointResponse
     }
   }
 
-  return { body: withDoAgentName(updated, deps.auth.orgId) };
+  return { body: withDoAgentName(updated, deps) };
 }
 
 /**
@@ -737,42 +746,42 @@ export function createSessionsEndpoints(ctx: PluginContext): FlowlibPluginEndpoi
   return [
     {
       method: 'GET',
-      path: '/sessions',
+      path: '/agents/sessions',
       handler: safeHandler(ctx, listSessions),
     },
     {
       method: 'POST',
-      path: '/sessions',
+      path: '/agents/sessions',
       handler: safeHandler(ctx, createSession),
     },
     {
       method: 'GET',
-      path: '/sessions/:id',
+      path: '/agents/sessions/:id',
       handler: safeHandler(ctx, getSession),
     },
     {
       method: 'PATCH',
-      path: '/sessions/:id',
+      path: '/agents/sessions/:id',
       handler: safeHandler(ctx, updateSession),
     },
     {
       method: 'DELETE',
-      path: '/sessions/:id',
+      path: '/agents/sessions/:id',
       handler: safeHandler(ctx, deleteSession),
     },
     {
       method: 'GET',
-      path: '/sessions/:id/messages',
+      path: '/agents/sessions/:id/messages',
       handler: safeHandler(ctx, listMessages),
     },
     {
       method: 'POST',
-      path: '/sessions/:id/prompt',
+      path: '/agents/sessions/:id/prompt',
       handler: safeHandler(ctx, promptSession),
     },
     {
       method: 'POST',
-      path: '/sessions/:id/interrupt',
+      path: '/agents/sessions/:id/interrupt',
       handler: safeHandler(ctx, interruptSession),
     },
   ];

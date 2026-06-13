@@ -25,6 +25,7 @@ export type WorkspaceProviderId =
   | 'git-clone'
   | 'cloudflare-sandbox'
   | 'cloudflare-sandbox-claude'
+  | 'computesdk'
   | 'remote-sandbox'
   | 'none';
 
@@ -144,6 +145,15 @@ export interface AgentSession {
    * server-side so the naming scheme stays on the backend.
    */
   doAgentName?: string;
+  /**
+   * Which chat transport the frontend should use for this session,
+   * decided server-side by whether a Cloudflare Durable Object is wired
+   * into the deployment:
+   *   - `'durable-object'` — connect a WebSocket to `AgentChatDO` (Cloudflare).
+   *   - `'http'` — POST to `/sessions/:id/stream` (SSE) + `/sessions/:id/control`
+   *     (Express/Node and any non-CF host).
+   */
+  transportMode?: 'durable-object' | 'http';
 }
 
 /** An assistant or user message — message parts encode rich content. */

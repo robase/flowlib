@@ -158,6 +158,15 @@ export interface PromptInput {
   providerTools?: Record<string, ProviderToolDescriptor>;
   /** Cancel the iterator. Provider must honour `signal.aborted`. */
   abortSignal: AbortSignal;
+  /**
+   * Human-in-the-loop decision gate (see `SessionContext.decisionGate`).
+   * Threaded onto the turn so a provider can **block** on a
+   * permission-request / human-input-request (`await gate.awaitPermission(...)`)
+   * instead of merely emitting the event. Optional — a provider that
+   * ignores it keeps the legacy pass-through. Same gate on both transports
+   * (DO + Express), so blocking behaves identically wherever the loop runs.
+   */
+  decisionGate?: import('../service/types').DecisionGate;
   /** Provider-specific extras (e.g. Claude `permissionMode` override). */
   extras?: Record<string, unknown>;
 }

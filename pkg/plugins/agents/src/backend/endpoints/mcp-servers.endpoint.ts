@@ -106,10 +106,10 @@ async function deleteServer(deps: EndpointDeps): Promise<PluginEndpointResponse>
 
 export function createMcpServersEndpoints(ctx: PluginContext): FlowlibPluginEndpoint[] {
   return [
-    { method: 'GET', path: '/mcp-servers', handler: safeHandler(ctx, listServers) },
-    { method: 'POST', path: '/mcp-servers', handler: safeHandler(ctx, createServer) },
-    { method: 'GET', path: '/mcp-servers/:id', handler: safeHandler(ctx, getServer) },
-    { method: 'PATCH', path: '/mcp-servers/:id', handler: safeHandler(ctx, updateServer) },
-    { method: 'DELETE', path: '/mcp-servers/:id', handler: safeHandler(ctx, deleteServer) },
+    { method: 'GET', path: '/agents/mcp-servers', handler: safeHandler(ctx, listServers) },
+    { method: 'POST', path: '/agents/mcp-servers', handler: safeHandler(ctx, createServer) },
+    { method: 'GET', path: '/agents/mcp-servers/:id', handler: safeHandler(ctx, getServer) },
+    { method: 'PATCH', path: '/agents/mcp-servers/:id', handler: safeHandler(ctx, updateServer) },
+    { method: 'DELETE', path: '/agents/mcp-servers/:id', handler: safeHandler(ctx, deleteServer) },
   ];
 }

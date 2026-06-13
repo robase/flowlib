@@ -167,27 +167,27 @@ export function createWorkspacesEndpoints(ctx: PluginContext): FlowlibPluginEndp
   return [
     {
       method: 'GET',
-      path: '/workspaces',
+      path: '/agents/workspaces',
       handler: safeHandler(ctx, listWorkspaces),
     },
     {
       method: 'POST',
-      path: '/workspaces',
+      path: '/agents/workspaces',
       handler: safeHandler(ctx, createWorkspace),
     },
     {
       method: 'GET',
-      path: '/workspaces/:id',
+      path: '/agents/workspaces/:id',
       handler: safeHandler(ctx, getWorkspace),
     },
     {
       method: 'PATCH',
-      path: '/workspaces/:id',
+      path: '/agents/workspaces/:id',
       handler: safeHandler(ctx, updateWorkspace),
     },
     {
       method: 'DELETE',
-      path: '/workspaces/:id',
+      path: '/agents/workspaces/:id',
       handler: safeHandler(ctx, deleteWorkspace),
     },
   ];

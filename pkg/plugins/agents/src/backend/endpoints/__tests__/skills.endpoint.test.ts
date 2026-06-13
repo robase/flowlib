@@ -18,7 +18,7 @@ function setup() {
 describe('skills endpoints', () => {
   it('POST /skills creates a personal skill owned by the caller', async () => {
     const { db, endpoints } = setup();
-    const post = findEndpoint(endpoints, 'POST', '/skills');
+    const post = findEndpoint(endpoints, 'POST', '/agents/skills');
 
     const res = await post.handler(
       makeEndpointCtx({
@@ -38,7 +38,7 @@ describe('skills endpoints', () => {
 
   it('POST /skills validates required fields', async () => {
     const { db, endpoints } = setup();
-    const post = findEndpoint(endpoints, 'POST', '/skills');
+    const post = findEndpoint(endpoints, 'POST', '/agents/skills');
     const res = await post.handler(
       makeEndpointCtx({ db, identity: makeIdentity('u1', 'org-a'), body: { name: 'x' } }),
     );
@@ -47,8 +47,8 @@ describe('skills endpoints', () => {
 
   it('GET /skills returns the caller’s globals + own personal, not other users’ personal', async () => {
     const { db, endpoints } = setup();
-    const post = findEndpoint(endpoints, 'POST', '/skills');
-    const get = findEndpoint(endpoints, 'GET', '/skills');
+    const post = findEndpoint(endpoints, 'POST', '/agents/skills');
+    const get = findEndpoint(endpoints, 'GET', '/agents/skills');
 
     // u1 personal, a global, and u2's personal.
     await post.handler(
@@ -80,8 +80,8 @@ describe('skills endpoints', () => {
 
   it('GET /skills/:id 404s on another user’s personal skill (no leak)', async () => {
     const { db, endpoints } = setup();
-    const post = findEndpoint(endpoints, 'POST', '/skills');
-    const getOne = findEndpoint(endpoints, 'GET', '/skills/:id');
+    const post = findEndpoint(endpoints, 'POST', '/agents/skills');
+    const getOne = findEndpoint(endpoints, 'GET', '/agents/skills/:id');
 
     const created = jsonBody(
       await post.handler(
@@ -105,10 +105,10 @@ describe('skills endpoints', () => {
 
   it('PATCH and DELETE round-trip on an owned skill', async () => {
     const { db, endpoints } = setup();
-    const post = findEndpoint(endpoints, 'POST', '/skills');
-    const patch = findEndpoint(endpoints, 'PATCH', '/skills/:id');
-    const del = findEndpoint(endpoints, 'DELETE', '/skills/:id');
-    const getOne = findEndpoint(endpoints, 'GET', '/skills/:id');
+    const post = findEndpoint(endpoints, 'POST', '/agents/skills');
+    const patch = findEndpoint(endpoints, 'PATCH', '/agents/skills/:id');
+    const del = findEndpoint(endpoints, 'DELETE', '/agents/skills/:id');
+    const getOne = findEndpoint(endpoints, 'GET', '/agents/skills/:id');
 
     const id = jsonBody(
       await post.handler(

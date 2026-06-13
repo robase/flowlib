@@ -118,10 +118,10 @@ async function deleteSkill(deps: EndpointDeps): Promise<PluginEndpointResponse> 
 
 export function createSkillsEndpoints(ctx: PluginContext): FlowlibPluginEndpoint[] {
   return [
-    { method: 'GET', path: '/skills', handler: safeHandler(ctx, listSkills) },
-    { method: 'POST', path: '/skills', handler: safeHandler(ctx, createSkill) },
-    { method: 'GET', path: '/skills/:id', handler: safeHandler(ctx, getSkill) },
-    { method: 'PATCH', path: '/skills/:id', handler: safeHandler(ctx, updateSkill) },
-    { method: 'DELETE', path: '/skills/:id', handler: safeHandler(ctx, deleteSkill) },
+    { method: 'GET', path: '/agents/skills', handler: safeHandler(ctx, listSkills) },
+    { method: 'POST', path: '/agents/skills', handler: safeHandler(ctx, createSkill) },
+    { method: 'GET', path: '/agents/skills/:id', handler: safeHandler(ctx, getSkill) },
+    { method: 'PATCH', path: '/agents/skills/:id', handler: safeHandler(ctx, updateSkill) },
+    { method: 'DELETE', path: '/agents/skills/:id', handler: safeHandler(ctx, deleteSkill) },
   ];
 }

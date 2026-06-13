@@ -1170,6 +1170,9 @@ importers:
       '@openrouter/ai-sdk-provider':
         specifier: '>=1.0.0'
         version: 2.9.0(ai@6.0.177(zod@3.25.76))(zod@3.25.76)
+      computesdk:
+        specifier: '*'
+        version: 4.1.3
     devDependencies:
       '@anthropic-ai/claude-agent-sdk':
         specifier: ^0.2.138
@@ -2925,6 +2928,9 @@ packages:
   '@commitlint/types@20.5.0':
     resolution: {integrity: sha512-ZJoS8oSq2CAZEpc/YI9SulLrdiIyXeHb/OGqGrkUP6Q7YV+0ouNAa7GjqRdXeQPncHQIDz/jbCTlHScvYvO/gA==}
     engines: {node: '>=v18'}
+
+  '@computesdk/cmd@0.4.1':
+    resolution: {integrity: sha512-hhcYrwMnOpRSwWma3gkUeAVsDFG56nURwSaQx8vCepv0IuUv39bK4mMkgszolnUQrVjBDdW7b3lV+l5B2S8fRA==}
 
   '@conventional-changelog/git-client@2.7.0':
     resolution: {integrity: sha512-j7A8/LBEQ+3rugMzPXoKYzyUPpw/0CBQCyvtTR7Lmu4olG4yRC/Tfkq79Mr3yuPs0SUitlO2HwGP3gitMJnRFw==}
@@ -8862,6 +8868,9 @@ packages:
   compute-scroll-into-view@3.1.1:
     resolution: {integrity: sha512-VRhuHOLoKYOy4UbilLbUzbYg93XLjv2PncJC50EuTWPA3gaja1UjBsUP/D/9/juV3vQFr6XBEzn9KCAHdUvOHw==}
 
+  computesdk@4.1.3:
+    resolution: {integrity: sha512-IVC7KenrhCyiGJ1FKTs7jzXTc+mJZNCljux39yzPeR2M48v6tr03YXTtiyefoJ+VZ1J/nVthrAqTF1ng+H4uOQ==}
+
   concat-stream@2.0.0:
     resolution: {integrity: sha512-MWufYdFw53ccGjCA+Ol7XJYpAlW6/prSMzuPOTRnJGcGzuhLn4Scrz7qf6o8bROZ514ltazcIFJZevcfbo0x7A==}
     engines: {'0': node >= 6.0}
@@ -9178,6 +9187,11 @@ packages:
   d3@7.9.0:
     resolution: {integrity: sha512-e1U46jVP+w7Iut8Jt8ri1YsPOvFpg46k+K8TpCb0P+zjCkjkPnV7WzfDJzMHy1LnA+wj5pLT1wjO901gLXeEhA==}
     engines: {node: '>=12'}
+
+  daemond@0.1.4:
+    resolution: {integrity: sha512-xiLScBiwYGGPmxfcAb24aH+FkmR/ZSd+PxOvigGpKda6OsDjE2Gj6/4oAX2N3hMWoL4atti1hYyF9dLV3FFM0A==}
+    engines: {node: '>=18.0.0'}
+    os: [linux, darwin]
 
   dagre-d3-es@7.0.14:
     resolution: {integrity: sha512-P4rFMVq9ESWqmOgK+dlXvOtLwYg0i7u0HBGJER0LZDJT2VHIPAMZ/riPxqJceWMStH5+E61QxFra9kIS3AqdMg==}
@@ -15958,6 +15972,8 @@ snapshots:
       conventional-commits-parser: 6.4.0
       picocolors: 1.1.1
 
+  '@computesdk/cmd@0.4.1': {}
+
   '@conventional-changelog/git-client@2.7.0(conventional-commits-parser@6.4.0)':
     dependencies:
       '@simple-libs/child-process-utils': 1.0.2
@@ -22413,6 +22429,11 @@ snapshots:
 
   compute-scroll-into-view@3.1.1: {}
 
+  computesdk@4.1.3:
+    dependencies:
+      '@computesdk/cmd': 0.4.1
+      daemond: 0.1.4
+
   concat-stream@2.0.0:
     dependencies:
       buffer-from: 1.1.2
@@ -22763,6 +22784,8 @@ snapshots:
       d3-timer: 3.0.1
       d3-transition: 3.0.1(d3-selection@3.0.0)
       d3-zoom: 3.0.0
+
+  daemond@0.1.4: {}
 
   dagre-d3-es@7.0.14:
     dependencies:

@@ -66,6 +66,8 @@ export interface PluginSidebarContribution {
   path: string;
   /** Position hint: 'top' (after defaults), 'bottom' (before theme toggle) */
   position?: 'top' | 'bottom';
+  /** Sort weight among 'top' sidebar items (core + plugin), lower first */
+  order?: number;
   /** Required permission — item hidden if check fails */
   permission?: string;
 }

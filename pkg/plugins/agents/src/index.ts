@@ -58,6 +58,24 @@ export {
 } from './backend/service/agent-service';
 export { runTurn } from './backend/service/run-turn';
 
+// Runtime-agnostic chat host — drives one turn against an injected
+// `emit`/`abortSignal`, so the DO and the Express SSE endpoint share it.
+export {
+  buildSessionContext,
+  runChatTurn,
+  buildPersistenceCallbacks,
+  createInMemoryPromptCache,
+  createDecisionGate,
+  createConsoleSessionLogger,
+} from './backend/service/chat-session-host';
+export type {
+  ChatHostDeps,
+  ChatHostError,
+  PromptCache,
+  RepositoriesBag,
+} from './backend/service/chat-session-host';
+export type { DecisionGate } from './backend/service/types';
+
 export { ProviderRegistry, createProviderRegistry } from './backend/providers/registry';
 export { registerProviders } from './backend/providers/register';
 

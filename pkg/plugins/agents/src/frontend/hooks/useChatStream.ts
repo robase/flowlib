@@ -44,6 +44,7 @@ import type { AgentSession } from '../../shared/types';
 import type { AgentEvent } from '../../shared/events';
 import { useAgentsApiClients } from '../api/context';
 import { parseInboundFrame, type ParsedInboundFrame } from './parse-inbound-frame';
+import { useHttpChatTransport } from './http-stream-adapter';
 
 // Re-export so existing consumers of `useChatStream` keep working.
 export { parseInboundFrame } from './parse-inbound-frame';
@@ -418,19 +419,31 @@ export function useChatStream(
   // this, the SDK eagerly connects to `/agents/<kebab-class>/default` (its
   // fallback for empty `name`), which 404s — and on the production worker
   // floods the logs with failed upgrades.
+  // Transport selection: `transportMode` is set server-side — `'http'`
+  // when no Durable Object is wired (Express/Node), else `'durable-object'`.
+  // Both transports' hooks are called unconditionally (rules of hooks);
+  // the inactive one is disabled so it opens nothing.
   const doName = session?.doAgentName ?? '';
-  const socket = a.useAgent({
+  const isHttp = session?.transportMode === 'http';
+  const doSocket = a.useAgent({
     agent: 'AgentChatDO',
     name: doName || 'pending',
-    enabled: Boolean(doName),
+    enabled: Boolean(doName) && !isHttp,
   });
-  const chat = a.useAgentChat({
-    agent: Object.assign(socket, { agent: 'AgentChatDO', name: doName }),
+  const doChat = a.useAgentChat({
+    agent: Object.assign(doSocket, { agent: 'AgentChatDO', name: doName }),
   });
+  const http = useHttpChatTransport({
+    sessionId,
+    baseUrl: apiClients.baseUrl ?? '',
+    enabled: isHttp,
+  });
+  const socket = isHttp ? http.socket : doSocket;
+  const chat = isHttp ? http.chat : doChat;
 
-  // Step 3 — stream agent events from the socket.
+  // Step 3 — stream agent events from the active transport.
   React.useEffect(() => {
-    if (!session?.doAgentName) {
+    if (!session) {
       return;
     }
     const onMessage = (msg: MessageEvent) => {
@@ -451,7 +464,7 @@ export function useChatStream(
     return () => {
       socket.removeEventListener('message', onMessage);
     };
-  }, [session?.doAgentName, socket]);
+  }, [session, socket]);
 
   // Step 4 — outbound helpers.
   const sendControl = React.useCallback(
