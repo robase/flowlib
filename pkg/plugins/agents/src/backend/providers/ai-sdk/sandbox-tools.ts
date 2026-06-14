@@ -46,6 +46,22 @@ import type { WorkspaceAccessor } from '../../workspaces/types';
 import type { AiSdkToolDescriptor, AiSdkToolSet } from './tools';
 
 /**
+ * Resolve a git access token server-side for a clone/push (the agent never
+ * sees raw tokens). The host wires this to its credential store — e.g. the
+ * org's GitHub credential. Returning `undefined` clones without auth
+ * (public repos only).
+ */
+export type ResolveGitToken = (input: {
+  repoUrl: string;
+  credentialId?: string;
+}) => Promise<string | undefined>;
+
+export interface BuildSandboxToolsOptions {
+  /** Host-supplied git-token resolver for `sandbox.clone` (see {@link ResolveGitToken}). */
+  resolveGitToken?: ResolveGitToken;
+}
+
+/**
  * Default per-call timeout for `run_shell`. The LLM can override per
  * call via `timeoutMs`. We cap below `containerFetch`'s effective
  * budget to leave room for opencode → container roundtrip overhead.
@@ -77,7 +93,10 @@ const GREP_MAX_CONTEXT = 5;
  * Returned tools close over `ensure`; each call provisions-or-resolves
  * the sandbox on first use and then flows through the handle's methods.
  */
-export function buildSandboxTools(ensure: WorkspaceAccessor): AiSdkToolSet {
+export function buildSandboxTools(
+  ensure: WorkspaceAccessor,
+  options: BuildSandboxToolsOptions = {},
+): AiSdkToolSet {
   const start: AiSdkToolDescriptor = {
     description:
       'Provision (or attach to) the agent sandbox — a Linux container with ' +
@@ -293,7 +312,13 @@ export function buildSandboxTools(ensure: WorkspaceAccessor): AiSdkToolSet {
         const replace = String(e.replace ?? '');
         const replaceAll = e.replaceAll === true;
         try {
-          const { result, replacements } = applyLiteralEdit(working, find, replace, replaceAll, path);
+          const { result, replacements } = applyLiteralEdit(
+            working,
+            find,
+            replace,
+            replaceAll,
+            path,
+          );
           working = result;
           total += replacements;
         } catch (err) {
@@ -503,7 +528,10 @@ export function buildSandboxTools(ensure: WorkspaceAccessor): AiSdkToolSet {
     parameters: {
       type: 'object',
       properties: {
-        glob: { type: 'string', description: 'Glob pattern, e.g. "**/*.ts". Defaults to all files.' },
+        glob: {
+          type: 'string',
+          description: 'Glob pattern, e.g. "**/*.ts". Defaults to all files.',
+        },
         maxResults: {
           type: 'number',
           description: `Max paths (default ${GLOB_DEFAULT_MAX}, hard cap ${GLOB_HARD_MAX}).`,
@@ -523,12 +551,129 @@ export function buildSandboxTools(ensure: WorkspaceAccessor): AiSdkToolSet {
         .split('\n')
         .map((l) => l.replace(/^\.\//, '').trim())
         .filter((l) => l.length > 0);
-      return { glob: pattern ?? '**/*', files, count: files.length, truncated: files.length >= max };
+      return {
+        glob: pattern ?? '**/*',
+        files,
+        count: files.length,
+        truncated: files.length >= max,
+      };
+    },
+  };
+
+  const clone: AiSdkToolDescriptor = {
+    description:
+      'Clone a git repository into the workspace so you can work on it. ' +
+      'Authentication is handled server-side for private repos (you never ' +
+      'pass a token). Returns the directory the repo was cloned into; `cd` ' +
+      'there (via cwd on other tools) to work on it.',
+    parameters: {
+      type: 'object',
+      properties: {
+        repoUrl: {
+          type: 'string',
+          description: 'Clone URL, e.g. https://github.com/owner/repo.git',
+        },
+        branch: { type: 'string', description: 'Branch to check out (optional).' },
+        dir: { type: 'string', description: 'Target directory (defaults to the repo name).' },
+        depth: { type: 'number', description: 'Shallow-clone depth (optional; omit for full).' },
+      },
+      required: ['repoUrl'],
+      additionalProperties: false,
+    },
+    execute: async (raw, opts) => {
+      const repoUrl = String(raw.repoUrl ?? '');
+      if (!repoUrl) {
+        throw new Error('sandbox.clone: `repoUrl` is required.');
+      }
+      opts.abortSignal?.throwIfAborted?.();
+      const workspace = await ensure();
+      if (!workspace.cloneRepo) {
+        return { error: 'This workspace does not support git clone.' };
+      }
+      const token = options.resolveGitToken
+        ? await options.resolveGitToken({
+            repoUrl,
+            credentialId: typeof raw.credentialId === 'string' ? raw.credentialId : undefined,
+          })
+        : undefined;
+      const res = await workspace.cloneRepo({
+        repoUrl,
+        ...(typeof raw.branch === 'string' ? { branch: raw.branch } : {}),
+        ...(typeof raw.dir === 'string' ? { dir: raw.dir } : {}),
+        ...(typeof raw.depth === 'number' ? { depth: raw.depth } : {}),
+        ...(token ? { token } : {}),
+      });
+      return {
+        dir: res.dir,
+        exitCode: res.exitCode,
+        stdout: res.stdout,
+        stderr: res.stderr,
+      };
+    },
+  };
+
+  const runTask: AiSdkToolDescriptor = {
+    description:
+      'Start a long-running command (install deps, build, test suite) ' +
+      'detached and return a task id immediately — use this instead of ' +
+      'run_shell for anything that may take more than a few seconds. Poll ' +
+      'it with sandbox.check_task until status is "completed"/"failed".',
+    parameters: {
+      type: 'object',
+      properties: {
+        command: { type: 'string', description: 'The command line to run, e.g. "pnpm install".' },
+        cwd: { type: 'string', description: 'Workspace-relative working directory (optional).' },
+      },
+      required: ['command'],
+      additionalProperties: false,
+    },
+    execute: async (raw, opts) => {
+      const command = String(raw.command ?? '');
+      if (command.trim().length === 0) {
+        throw new Error('sandbox.run_task: `command` must be a non-empty string.');
+      }
+      opts.abortSignal?.throwIfAborted?.();
+      const workspace = await ensure();
+      if (!workspace.startCommand) {
+        return { error: 'This workspace does not support detached commands.' };
+      }
+      const cwd = typeof raw.cwd === 'string' ? raw.cwd : undefined;
+      const { id } = await workspace.startCommand(command, cwd ? { cwd } : undefined);
+      return { taskId: id, status: 'running', note: 'Poll with sandbox.check_task.' };
+    },
+  };
+
+  const checkTask: AiSdkToolDescriptor = {
+    description:
+      'Check a task started by sandbox.run_task. Returns its status ' +
+      '("running" | "completed" | "failed" | …), exit code, and accumulated ' +
+      'stdout/stderr. Poll periodically until it is no longer "running".',
+    parameters: {
+      type: 'object',
+      properties: {
+        taskId: { type: 'string', description: 'The id returned by sandbox.run_task.' },
+      },
+      required: ['taskId'],
+      additionalProperties: false,
+    },
+    execute: async (raw, opts) => {
+      const taskId = String(raw.taskId ?? '');
+      if (!taskId) {
+        throw new Error('sandbox.check_task: `taskId` is required.');
+      }
+      opts.abortSignal?.throwIfAborted?.();
+      const workspace = await ensure();
+      if (!workspace.getCommand) {
+        return { error: 'This workspace does not support detached commands.' };
+      }
+      const status = await workspace.getCommand(taskId);
+      return { taskId, ...status };
     },
   };
 
   return {
     'sandbox.start': start,
+    'sandbox.clone': clone,
     'sandbox.read_file': readFile,
     'sandbox.write_file': writeFile,
     'sandbox.edit_file': editFile,
@@ -537,6 +682,8 @@ export function buildSandboxTools(ensure: WorkspaceAccessor): AiSdkToolSet {
     'sandbox.glob': glob,
     'sandbox.grep': grep,
     'sandbox.run_shell': runShell,
+    'sandbox.run_task': runTask,
+    'sandbox.check_task': checkTask,
     'sandbox.git': git,
   };
 }
@@ -636,20 +783,36 @@ function buildGrepCommand(opts: {
   max: number;
 }): string {
   const rg = ['rg', '--line-number', '--no-heading', '--color', 'never'];
-  if (opts.ci) rg.push('-i');
-  if (opts.literal) rg.push('-F');
-  if (opts.ctx > 0) rg.push('-C', String(opts.ctx));
-  if (opts.glob) rg.push('-g', shQuote(opts.glob));
+  if (opts.ci) {
+    rg.push('-i');
+  }
+  if (opts.literal) {
+    rg.push('-F');
+  }
+  if (opts.ctx > 0) {
+    rg.push('-C', String(opts.ctx));
+  }
+  if (opts.glob) {
+    rg.push('-g', shQuote(opts.glob));
+  }
   rg.push('-m', String(opts.max), '--', shQuote(opts.pattern), shQuote(opts.path));
 
   const grep = ['grep', '-rnI'];
-  if (opts.ci) grep.push('-i');
-  if (opts.literal) grep.push('-F');
-  if (opts.ctx > 0) grep.push('-C', String(opts.ctx));
+  if (opts.ci) {
+    grep.push('-i');
+  }
+  if (opts.literal) {
+    grep.push('-F');
+  }
+  if (opts.ctx > 0) {
+    grep.push('-C', String(opts.ctx));
+  }
   for (const dir of ['node_modules', '.git', 'dist', 'build', '.next']) {
     grep.push(`--exclude-dir=${dir}`);
   }
-  if (opts.glob) grep.push(`--include=${shQuote(opts.glob)}`);
+  if (opts.glob) {
+    grep.push(`--include=${shQuote(opts.glob)}`);
+  }
   grep.push('--', shQuote(opts.pattern), shQuote(opts.path));
   const grepCmd = `${grep.join(' ')} | head -n ${opts.max}`;
 
@@ -659,7 +822,9 @@ function buildGrepCommand(opts: {
 /** Build the rg-preferred / find-fallback file-listing command. */
 function buildGlobCommand(opts: { glob?: string; max: number }): string {
   const rg = ['rg', '--files'];
-  if (opts.glob) rg.push('-g', shQuote(opts.glob));
+  if (opts.glob) {
+    rg.push('-g', shQuote(opts.glob));
+  }
   const rgCmd = `${rg.join(' ')} | head -n ${opts.max}`;
 
   const find = [

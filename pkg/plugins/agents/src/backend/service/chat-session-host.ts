@@ -106,7 +106,9 @@ export interface RepositoriesBag {
     get(
       sessionId: string,
       orgId?: string | null,
-    ): Promise<{ checkpoints: ReadonlyArray<{ id: string; label: string; status: string }> } | null>;
+    ): Promise<{
+      checkpoints: ReadonlyArray<{ id: string; label: string; status: string }>;
+    } | null>;
     upsert(
       sessionId: string,
       orgId: string | null,
@@ -473,7 +475,9 @@ async function composeEffectiveSystemPrompt(
 async function loadSessionPlan(
   deps: ChatHostDeps,
   sessionId: string,
-): Promise<{ checkpoints: ReadonlyArray<{ id: string; label: string; status: string }> } | undefined> {
+): Promise<
+  { checkpoints: ReadonlyArray<{ id: string; label: string; status: string }> } | undefined
+> {
   const repo = deps.repositories.sessionPlans;
   if (!repo) {
     return undefined;

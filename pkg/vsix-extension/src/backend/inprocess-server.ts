@@ -107,14 +107,39 @@ async function init(
   const cors = (corsMod as { default?: typeof import('cors') }).default ?? corsMod;
   const app = (express as unknown as () => import('express').Express)();
   // Flowlib's ApiClient sends `credentials: 'include'`; CORS forbids the
-  // wildcard `Access-Control-Allow-Origin: *` for credentialed requests.
-  // Reflect the request's `Origin` header back instead so the webview's
-  // `vscode-webview://...` origin is whitelisted, with credentials on.
+  // wildcard `Access-Control-Allow-Origin: *` for credentialed requests, so
+  // we must reflect a specific origin. Rather than reflect ANY origin
+  // (`origin: true` — flagged as overly permissive), allow only the
+  // VS Code webview origin and loopback (for local browser previews). This
+  // is an in-process, loopback-bound dev server, so the allow-list is the
+  // full set of legitimate callers.
+  type OriginCb = (err: Error | null, allow?: boolean) => void;
   type CorsFn = (opts: {
-    origin: boolean;
+    origin: (origin: string | undefined, cb: OriginCb) => void;
     credentials: boolean;
   }) => import('express').RequestHandler;
-  app.use((cors as unknown as CorsFn)({ origin: true, credentials: true }));
+  const LOOPBACK_HOSTS = new Set(['localhost', '127.0.0.1', '[::1]', '::1']);
+  const allowOrigin = (origin: string | undefined, cb: OriginCb): void => {
+    // No Origin header → same-origin / non-browser caller; allow.
+    if (!origin) {
+      cb(null, true);
+      return;
+    }
+    if (origin.startsWith('vscode-webview://')) {
+      cb(null, true);
+      return;
+    }
+    // Loopback only — parse the URL (no regex) and check the host.
+    let ok = false;
+    try {
+      const u = new URL(origin);
+      ok = (u.protocol === 'http:' || u.protocol === 'https:') && LOOPBACK_HOSTS.has(u.hostname);
+    } catch {
+      ok = false;
+    }
+    cb(null, ok);
+  };
+  app.use((cors as unknown as CorsFn)({ origin: allowOrigin, credentials: true }));
   // Parse JSON BEFORE the file-sync middleware so it can introspect
   // request bodies. The Flowlib router parses again internally — that's
   // a no-op when `req.body` is already set, so harmless.

@@ -3,12 +3,7 @@
  * Network is faked via an injected `fetchImpl`.
  */
 import { describe, it, expect } from 'vitest';
-import {
-  assertFetchableUrl,
-  buildWebFetchTool,
-  htmlToText,
-  isBlockedHost,
-} from '../web-fetch';
+import { assertFetchableUrl, buildWebFetchTool, htmlToText, isBlockedHost } from '../web-fetch';
 
 describe('web.fetch — SSRF / scheme guards', () => {
   it('blocks loopback, private, link-local, and metadata hosts', () => {
@@ -62,7 +57,10 @@ describe('htmlToText', () => {
 describe('web.fetch tool execute', () => {
   function fakeFetch(body: string, contentType: string): typeof fetch {
     return (async () =>
-      new Response(body, { status: 200, headers: { 'content-type': contentType } })) as typeof fetch;
+      new Response(body, {
+        status: 200,
+        headers: { 'content-type': contentType },
+      })) as typeof fetch;
   }
 
   it('fetches HTML and returns stripped text', async () => {

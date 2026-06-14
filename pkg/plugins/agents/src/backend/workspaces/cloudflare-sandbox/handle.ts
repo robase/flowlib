@@ -27,7 +27,14 @@
  * raced cold-start and produced `Sandbox.startProcess - Canceled` errors.
  */
 
-import type { WorkspaceExecOptions, WorkspaceExecResult, WorkspaceHandle } from '../types';
+import type {
+  WorkspaceCloneInput,
+  WorkspaceCloneResult,
+  WorkspaceCommandStatus,
+  WorkspaceExecOptions,
+  WorkspaceExecResult,
+  WorkspaceHandle,
+} from '../types';
 import {
   OutboundCredentialKV,
   type OutboundCredentialKVStore,
@@ -61,6 +68,28 @@ export interface SandboxStub {
     }>;
   }>;
   destroy(): Promise<void>;
+}
+
+/** Structural shape of `@cloudflare/sandbox`'s `Process`. */
+export interface SandboxProcess {
+  readonly id: string;
+  readonly status: string;
+  readonly exitCode?: number;
+  getLogs(): Promise<{ stdout: string; stderr: string }>;
+}
+
+/**
+ * The subset of `@cloudflare/sandbox`'s process API the handle uses for
+ * detached commands. Cast onto the stub at the call site (kept off the
+ * shared {@link SandboxStub} so other providers' process typings don't
+ * conflict).
+ */
+interface ProcCapableSandbox {
+  startProcess(
+    command: string,
+    options?: { cwd?: string; env?: Record<string, string | undefined> },
+  ): Promise<SandboxProcess>;
+  getProcess(id: string): Promise<SandboxProcess | null>;
 }
 
 /**
@@ -319,6 +348,94 @@ export class CloudflareSandboxHandle implements WorkspaceHandle {
   }
 
   /**
+   * Clone a git repo into the workspace. When a `token` is given, a git
+   * credential store is configured inside the container so the clone — and
+   * later `git push`/`fetch` to the same host — authenticate without the
+   * token ever appearing on a command line. The credential file lives under
+   * `/workspace` in the isolated, per-org container.
+   *
+   * NOTE: the token is stored inside the container. That's acceptable for
+   * an isolated per-org sandbox (the same trust boundary as the cloned
+   * code), and is the standard CI pattern. Hardening to Worker-side egress
+   * injection (like the LLM-key path) is a documented follow-up.
+   */
+  async cloneRepo(input: WorkspaceCloneInput): Promise<WorkspaceCloneResult> {
+    const dir = input.dir ?? deriveRepoDir(input.repoUrl);
+    assertSafeRelPath(dir);
+    const timeoutMs = input.timeoutMs ?? CLONE_TIMEOUT_MS;
+
+    if (input.token) {
+      const host = safeHost(input.repoUrl);
+      const credFile = `${SANDBOX_WORKSPACE_ROOT}/.flowlib-git-credentials`;
+      // x-access-token is GitHub's username convention for PAT/installation tokens.
+      await this.sandbox.writeFile(credFile, `https://x-access-token:${input.token}@${host}\n`);
+      // `git config` values are constant strings (no token) — safe to inline.
+      await this.runConfig(
+        `git config --global credential.helper 'store --file=${credFile}' && ` +
+          'git config --global user.email "agent@flowlib.dev" && ' +
+          'git config --global user.name "Flowlib Agent"',
+        timeoutMs,
+      );
+    }
+
+    const parts = ['git', 'clone'];
+    if (input.depth && input.depth > 0) {
+      parts.push('--depth', String(input.depth));
+    }
+    if (input.branch) {
+      parts.push('--branch', shArg(input.branch));
+    }
+    parts.push(shArg(input.repoUrl), shArg(dir));
+    const result = await this.sandbox.exec(parts.join(' '), {
+      cwd: SANDBOX_WORKSPACE_ROOT,
+      signal: AbortSignal.timeout(timeoutMs),
+    });
+    return { dir, stdout: result.stdout, stderr: result.stderr, exitCode: result.exitCode };
+  }
+
+  /**
+   * Start a detached command. Requires the SDK's `startProcess` (present on
+   * `@cloudflare/sandbox`); throws a clear error if the underlying sandbox
+   * doesn't support it.
+   */
+  async startCommand(command: string, options?: WorkspaceExecOptions): Promise<{ id: string }> {
+    const procApi = this.sandbox as unknown as Partial<ProcCapableSandbox>;
+    if (typeof procApi.startProcess !== 'function') {
+      throw new Error('This sandbox does not support detached commands (startProcess).');
+    }
+    const cwd = options?.cwd ? this.absolute(options.cwd) : SANDBOX_WORKSPACE_ROOT;
+    const proc = await procApi.startProcess(command, { cwd, env: options?.env });
+    return { id: proc.id };
+  }
+
+  /** Poll a detached command started by {@link startCommand}. */
+  async getCommand(id: string): Promise<WorkspaceCommandStatus> {
+    const procApi = this.sandbox as unknown as Partial<ProcCapableSandbox>;
+    if (typeof procApi.getProcess !== 'function') {
+      throw new Error('This sandbox does not support detached commands (getProcess).');
+    }
+    const proc = await procApi.getProcess(id);
+    if (!proc) {
+      return { status: 'error', stdout: '', stderr: `No process with id "${id}".` };
+    }
+    const logs = await proc.getLogs();
+    return {
+      status: proc.status,
+      ...(proc.exitCode !== undefined ? { exitCode: proc.exitCode } : {}),
+      stdout: logs.stdout,
+      stderr: logs.stderr,
+    };
+  }
+
+  /** Run a constant config command (no untrusted interpolation). */
+  private async runConfig(command: string, timeoutMs: number): Promise<void> {
+    await this.sandbox.exec(command, {
+      cwd: SANDBOX_WORKSPACE_ROOT,
+      signal: AbortSignal.timeout(timeoutMs),
+    });
+  }
+
+  /**
    * Resolve a workspace-relative path to an absolute path inside the
    * sandbox. Rejects `..` segments and absolute paths outside
    * `/workspace`.
@@ -383,4 +500,39 @@ const defaultOpencodeLoader: OpencodeLoader = async (sandbox, options) => {
  */
 export function _resetOpencodeFactoryCacheForTests(): void {
   cachedOpencodeFactory = undefined;
+}
+
+/** Default clone timeout (clones run over the long-lived RPC transport). */
+const CLONE_TIMEOUT_MS = 180_000;
+
+/** POSIX single-quote a shell argument (guards against injection). */
+function shArg(value: string): string {
+  return `'${value.replace(/'/g, `'\\''`)}'`;
+}
+
+/** Derive a target directory name from a clone URL (`…/owner/repo.git` → `repo`). */
+export function deriveRepoDir(repoUrl: string): string {
+  const last = repoUrl
+    .replace(/\.git$/, '')
+    .replace(/\/+$/, '')
+    .split('/')
+    .pop();
+  const name = (last ?? '').trim();
+  return /^[a-zA-Z0-9._-]+$/.test(name) ? name : 'repo';
+}
+
+/** Host of a clone URL, defaulting to github.com on parse failure. */
+function safeHost(repoUrl: string): string {
+  try {
+    return new URL(repoUrl).host || 'github.com';
+  } catch {
+    return 'github.com';
+  }
+}
+
+/** Reject directory names that escape the workspace root. */
+function assertSafeRelPath(dir: string): void {
+  if (dir.startsWith('/') || dir.split('/').includes('..') || dir.includes('\0')) {
+    throw new Error(`Unsafe clone directory: ${JSON.stringify(dir)}`);
+  }
 }

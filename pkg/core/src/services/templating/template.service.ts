@@ -29,8 +29,26 @@ export interface TemplateValidationResult {
   error?: string;
 }
 
-/** Regex to detect at least one {{ … }} block. */
-const TEMPLATE_PATTERN = /\{\{[^}]*\}\}/;
+/**
+ * Detect at least one `{{ … }}` block, without a regex. Equivalent to
+ * `/\{\{[^}]*\}\}/.test(value)` (a `{{`, then non-`}` chars, then `}}`) but
+ * linear — the regex form is polynomial (ReDoS) because `.test` retries at
+ * every position and `value` can be attacker-controlled (a flow input).
+ */
+function containsTemplateBlock(value: string): boolean {
+  let from = value.indexOf('{{');
+  while (from !== -1) {
+    let j = from + 2;
+    while (j < value.length && value[j] !== '}') {
+      j += 1;
+    }
+    if (value.startsWith('}}', j)) {
+      return true;
+    }
+    from = value.indexOf('{{', from + 1);
+  }
+  return false;
+}
 
 /** Regex to detect a "pure expression": the entire string is one {{ expr }} with no other text or expressions. */
 const PURE_EXPRESSION_PATTERN = /^\{\{([\s\S]*?)\}\}$/;
@@ -114,7 +132,7 @@ export class TemplateService {
     if (typeof value !== 'string') {
       return false;
     }
-    return TEMPLATE_PATTERN.test(value);
+    return containsTemplateBlock(value);
   }
 
   /**

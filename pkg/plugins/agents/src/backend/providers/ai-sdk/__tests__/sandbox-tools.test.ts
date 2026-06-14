@@ -61,6 +61,7 @@ describe('buildSandboxTools — lazy provisioning', () => {
     expect(Object.keys(tools).sort()).toEqual(
       [
         'sandbox.start',
+        'sandbox.clone',
         'sandbox.read_file',
         'sandbox.write_file',
         'sandbox.edit_file',
@@ -69,6 +70,8 @@ describe('buildSandboxTools — lazy provisioning', () => {
         'sandbox.glob',
         'sandbox.grep',
         'sandbox.run_shell',
+        'sandbox.run_task',
+        'sandbox.check_task',
         'sandbox.git',
       ].sort(),
     );
@@ -196,7 +199,10 @@ function makeExecWorkspace(execImpl: (command: string) => { stdout: string; exit
   return { workspace, commands };
 }
 
-const passthroughAccessor = (h: WorkspaceHandle): WorkspaceAccessor => async () => h;
+const passthroughAccessor =
+  (h: WorkspaceHandle): WorkspaceAccessor =>
+  async () =>
+    h;
 
 describe('buildSandboxTools — grep', () => {
   it('prefers rg, scopes by glob, and parses match lines', async () => {
@@ -205,10 +211,11 @@ describe('buildSandboxTools — grep', () => {
     }));
     const tools = buildSandboxTools(passthroughAccessor(workspace));
 
-    const res = (await tools['sandbox.grep'].execute(
-      { pattern: 'const x', glob: '*.ts' },
-      {},
-    )) as { count: number; output: string; truncated: boolean };
+    const res = (await tools['sandbox.grep'].execute({ pattern: 'const x', glob: '*.ts' }, {})) as {
+      count: number;
+      output: string;
+      truncated: boolean;
+    };
 
     expect(res.count).toBe(2);
     expect(res.output).toContain('src/a.ts:12');
@@ -301,6 +308,103 @@ describe('buildSandboxTools — ranged read_file', () => {
     expect(res.totalLines).toBe(500);
     expect(res.endLine).toBe(400);
     expect(res.truncated).toBe(true);
+  });
+});
+
+describe('buildSandboxTools — clone + run_task/check_task', () => {
+  function makeRepoWorkspace(): {
+    workspace: WorkspaceHandle;
+    cloneCalls: Array<{ repoUrl: string; token?: string; branch?: string; dir?: string }>;
+    procs: Map<string, { status: string; exitCode?: number; stdout: string; stderr: string }>;
+  } {
+    const cloneCalls: Array<{ repoUrl: string; token?: string; branch?: string; dir?: string }> =
+      [];
+    const procs = new Map<
+      string,
+      { status: string; exitCode?: number; stdout: string; stderr: string }
+    >();
+    const base = makeWorkspace();
+    const workspace: WorkspaceHandle = {
+      ...base,
+      async cloneRepo(input) {
+        cloneCalls.push({
+          repoUrl: input.repoUrl,
+          token: input.token,
+          branch: input.branch,
+          dir: input.dir,
+        });
+        return { dir: input.dir ?? 'repo', stdout: 'Cloning…', stderr: '', exitCode: 0 };
+      },
+      async startCommand(command) {
+        const id = `task-${procs.size + 1}`;
+        procs.set(id, { status: 'running', stdout: `started: ${command}`, stderr: '' });
+        return { id };
+      },
+      async getCommand(id) {
+        return procs.get(id) ?? { status: 'error', stdout: '', stderr: 'no such task' };
+      },
+    };
+    return { workspace, cloneCalls, procs };
+  }
+
+  it('clone resolves a token server-side and passes it to the handle', async () => {
+    const { workspace, cloneCalls } = makeRepoWorkspace();
+    const tools = buildSandboxTools(passthroughAccessor(workspace), {
+      resolveGitToken: async ({ repoUrl }) =>
+        repoUrl.includes('github.com') ? 'ghp_secret' : undefined,
+    });
+    const res = (await tools['sandbox.clone'].execute(
+      { repoUrl: 'https://github.com/acme/app.git', branch: 'main' },
+      {},
+    )) as { dir: string; exitCode: number };
+    expect(res.dir).toBe('repo');
+    expect(res.exitCode).toBe(0);
+    expect(cloneCalls).toEqual([
+      {
+        repoUrl: 'https://github.com/acme/app.git',
+        token: 'ghp_secret',
+        branch: 'main',
+        dir: undefined,
+      },
+    ]);
+  });
+
+  it('clone works without a resolver (public repo, no token)', async () => {
+    const { workspace, cloneCalls } = makeRepoWorkspace();
+    const tools = buildSandboxTools(passthroughAccessor(workspace));
+    await tools['sandbox.clone'].execute({ repoUrl: 'https://github.com/acme/pub.git' }, {});
+    expect(cloneCalls[0].token).toBeUndefined();
+  });
+
+  it('clone degrades gracefully when the workspace lacks support', async () => {
+    const tools = buildSandboxTools(passthroughAccessor(makeWorkspace()));
+    const res = (await tools['sandbox.clone'].execute({ repoUrl: 'https://x/y.git' }, {})) as {
+      error?: string;
+    };
+    expect(res.error).toMatch(/does not support git clone/);
+  });
+
+  it('run_task starts a detached command and check_task polls it', async () => {
+    const { workspace, procs } = makeRepoWorkspace();
+    const tools = buildSandboxTools(passthroughAccessor(workspace));
+
+    const started = (await tools['sandbox.run_task'].execute({ command: 'pnpm install' }, {})) as {
+      taskId: string;
+      status: string;
+    };
+    expect(started.status).toBe('running');
+    expect(started.taskId).toBe('task-1');
+
+    // Simulate the task finishing.
+    procs.set('task-1', { status: 'completed', exitCode: 0, stdout: 'done', stderr: '' });
+    const checked = (await tools['sandbox.check_task'].execute({ taskId: 'task-1' }, {})) as {
+      status: string;
+      exitCode: number;
+      stdout: string;
+    };
+    expect(checked.status).toBe('completed');
+    expect(checked.exitCode).toBe(0);
+    expect(checked.stdout).toBe('done');
   });
 });
 

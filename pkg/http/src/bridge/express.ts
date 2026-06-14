@@ -168,7 +168,9 @@ export async function writeFlowlibHttpResultToExpress(
     let cancelled = false;
     const onClose = (): void => {
       cancelled = true;
-      void reader.cancel().catch(() => {});
+      void reader.cancel().catch(() => {
+        /* best-effort: client already gone */
+      });
     };
     res.on?.('close', onClose);
     try {

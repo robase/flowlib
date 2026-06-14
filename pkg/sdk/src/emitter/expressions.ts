@@ -107,13 +107,13 @@ export function arrowFromOutputValue(raw: unknown, upstream: string[]): string {
     return `(ctx) => (${JSON.stringify(raw)})`;
   }
 
-  const TEMPLATE_BLOCK = /\{\{([\s\S]*?)\}\}/g;
+  const TEMPLATE_BLOCK = /\{\{((?:[^}]|\}(?!\}))*)\}\}/g;
   if (!TEMPLATE_BLOCK.test(raw)) {
     return `(ctx) => (${JSON.stringify(raw)})`;
   }
 
   // Pure expression: entire string is a single `{{ expr }}` block.
-  const pure = raw.match(/^\{\{([\s\S]*?)\}\}$/);
+  const pure = raw.match(/^\{\{((?:[^}]|\}(?!\}))*)\}\}$/);
   if (pure && !pure[1].includes('{{') && !pure[1].includes('}}')) {
     return arrowFromExpression(pure[1].trim(), upstream);
   }
@@ -121,7 +121,7 @@ export function arrowFromOutputValue(raw: unknown, upstream: string[]): string {
   // Mixed → template literal.
   const parts: string[] = [];
   let lastIndex = 0;
-  const exprBody = /\{\{([\s\S]*?)\}\}/g;
+  const exprBody = /\{\{((?:[^}]|\}(?!\}))*)\}\}/g;
   let m: RegExpExecArray | null;
   let touchesPreviousNodes = false;
   while ((m = exprBody.exec(raw)) !== null) {
