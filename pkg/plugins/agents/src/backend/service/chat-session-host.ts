@@ -568,6 +568,41 @@ function buildProviderTools(
   // deployment can disable it per-session via the deny-list.
   tools['web.fetch'] = buildWebFetchTool();
 
+  // Ask the user a clarifying question and block until they answer — wired
+  // onto the decision gate + the human-input transport (DO WebSocket / SSE
+  // control frame). Only offered when a gate is present.
+  const gate = deps.decisionGate;
+  if (gate) {
+    tools['ask_user'] = {
+      description:
+        'Ask the user a clarifying question and wait for their reply. Use ' +
+        'sparingly — only when you genuinely cannot proceed without a decision ' +
+        'that is the user’s to make (ambiguous requirements, a risky/destructive ' +
+        'action, missing information). Returns { answer }.',
+      parameters: {
+        type: 'object',
+        properties: {
+          question: { type: 'string', description: 'The question to ask the user.' },
+        },
+        required: ['question'],
+        additionalProperties: false,
+      },
+      execute: async (input, options) => {
+        const question = typeof input.question === 'string' ? input.question.trim() : '';
+        if (!question) {
+          return { error: 'question is required.' };
+        }
+        const id = globalThis.crypto.randomUUID();
+        options.abortSignal?.throwIfAborted?.();
+        await deps.emit({ type: 'human-input-request', id, prompt: question, blocking: true });
+        // Blocks until the transport calls gate.resolveHumanInput(id, …)
+        // (or rejectAll on abort/disconnect).
+        const answer = await gate.awaitHumanInput({ id, prompt: question });
+        return { answer };
+      },
+    };
+  }
+
   const skillsRepo = deps.repositories.skills;
   if (skillsRepo && hasSkills) {
     tools['skills.read'] = {
