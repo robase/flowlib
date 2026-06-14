@@ -96,6 +96,20 @@ describe('web.fetch tool execute', () => {
     expect(res.truncated).toBe(true);
   });
 
+  it('strips hidden Unicode from fetched content and reports the count', async () => {
+    const zwsp = String.fromCodePoint(0x200b);
+    const tag = String.fromCodePoint(0xe0049); // invisible tag char
+    const tool = buildWebFetchTool({
+      fetchImpl: fakeFetch(`vis${zwsp}ible${tag}`, 'text/plain'),
+    });
+    const res = (await tool.execute({ url: 'https://example.com' }, {})) as {
+      text: string;
+      hiddenCharsRemoved: number;
+    };
+    expect(res.text).toBe('visible');
+    expect(res.hiddenCharsRemoved).toBe(2);
+  });
+
   it('refuses to fetch a private address (SSRF)', async () => {
     let called = false;
     const tool = buildWebFetchTool({
