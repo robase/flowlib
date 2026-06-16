@@ -10,7 +10,11 @@ import { rbac } from '@flowlib/rbac';
 import { webhooks } from '@flowlib/webhooks';
 import { mcp } from '@flowlib/mcp';
 import { agents } from '@flowlib/agents';
-import { aiSdkProvider, standardAiSdkVendors } from '@flowlib/agents/providers';
+import {
+  aiSdkProvider,
+  buildAiSdkSandboxTools,
+  standardAiSdkVendors,
+} from '@flowlib/agents/providers';
 import { localDockerWorkspace } from '@flowlib/agents/workspaces';
 import { streamText } from 'ai';
 import { createAnthropic } from '@ai-sdk/anthropic';
@@ -20,13 +24,20 @@ import { versionControl } from '@flowlib/version-control';
 import { githubProvider } from '@flowlib/version-control/providers/github';
 import { defineConfig } from '@flowlib/core';
 
+// Local Docker sandbox image for the agent (e.g. `node:24-slim`). When
+// set, the agent gets real shell/filesystem tools backed by a per-chat
+// Docker container; unset → pure chat.
+const dockerSandboxImage = process.env.AGENT_DOCKER_SANDBOX_IMAGE;
+
 export const flowlibConfig = defineConfig({
   encryptionKey: process.env.FLOWLIB_ENCRYPTION_KEY || 'change-me-in-production',
+  // Env-driven so the same config powers `pnpm dev` and the Docker image
+  // (which sets `DATABASE_URL`/`FLOWLIB_DB_TYPE`); defaults to local SQLite.
   database: {
-    type: 'sqlite',
-    connectionString: 'file:./dev.db',
+    type: (process.env.FLOWLIB_DB_TYPE as 'sqlite' | 'postgresql' | 'mysql') || 'sqlite',
+    connectionString: process.env.DATABASE_URL || process.env.DB_FILE_NAME || 'file:./dev.db',
   },
-  apiPath: 'http://localhost:3000/flowlib',
+  apiPath: process.env.FLOWLIB_API_PATH || 'http://localhost:3000/flowlib',
   frontendPath: '/flowlib',
   logging: {
     level: 'info',
@@ -95,7 +106,16 @@ export const flowlibConfig = defineConfig({
   ],
   plugins: [
     auth({
-      trustedOrigins: ['http://localhost:5173', 'http://localhost:5174', 'http://localhost:3000'],
+      // Dev origins plus any extra from `FLOWLIB_TRUSTED_ORIGINS` (comma-
+      // separated) — e.g. the Docker host's public URL.
+      trustedOrigins: [
+        'http://localhost:5173',
+        'http://localhost:5174',
+        'http://localhost:3000',
+        ...(process.env.FLOWLIB_TRUSTED_ORIGINS
+          ? process.env.FLOWLIB_TRUSTED_ORIGINS.split(',').map((o) => o.trim()).filter(Boolean)
+          : []),
+      ],
       betterAuthOptions: {
         secret: process.env.BETTER_AUTH_SECRET || 'flowlib-dev-secret-do-not-use-in-production',
       },
@@ -156,20 +176,21 @@ export const flowlibConfig = defineConfig({
             createOpenAI,
             createGoogleGenerativeAI,
           }),
+          // Sandbox tools (run shell / read / write / glob / grep / …) —
+          // only when a Docker sandbox is configured. They lazily call
+          // `ensureWorkspace()`, which provisions the local Docker
+          // container on first use, so pure-chat turns never boot one.
+          ...(dockerSandboxImage
+            ? { tools: ({ ensureWorkspace }) => buildAiSdkSandboxTools(ensureWorkspace) }
+            : {}),
         }),
       ],
       // Sandbox offload (opt-in). Pure chat needs no workspace. Set
       // `AGENT_DOCKER_SANDBOX_IMAGE` (e.g. `node:24-slim`) to give the
       // agent a real shell + filesystem in a local Docker container — no
-      // cloud creds, just a running Docker daemon. The example still boots
-      // without it (the sandbox is provisioned lazily, only when a tool
-      // actually needs it).
-      ...(process.env.AGENT_DOCKER_SANDBOX_IMAGE
-        ? {
-            workspaceProviders: [
-              localDockerWorkspace({ image: process.env.AGENT_DOCKER_SANDBOX_IMAGE }),
-            ],
-          }
+      // cloud creds, just a running Docker daemon.
+      ...(dockerSandboxImage
+        ? { workspaceProviders: [localDockerWorkspace({ image: dockerSandboxImage })] }
         : {}),
       // Alternatively, a cloud sandbox via ComputeSDK — install a provider
       // (e.g. `@computesdk/e2b`) and wire it the same way:

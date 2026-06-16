@@ -1,38 +1,80 @@
+# Flowlib — full-feature self-host stack.
+#
+#   docker compose -f docker/docker-compose.yml up --build
+#
+# Then open http://localhost:3000 and sign in with FLOWLIB_ADMIN_EMAIL /
+# FLOWLIB_ADMIN_PASSWORD. Set FLOWLIB_ENCRYPTION_KEY first (required).
 services:
   flowlib:
-    build: .
+    build:
+      # Build context is the repo root (the Dockerfile copies the whole
+      # monorepo); the Dockerfile lives in ./docker.
+      context: ..
+      dockerfile: docker/Dockerfile
     ports:
       - '3000:3000'
     volumes:
       - flowlib-data:/app/data
+      # --- Agent sandbox (opt-in) ---
+      # The agents plugin can run chat tool calls (shell, file I/O) inside a
+      # per-chat Docker container. That requires the host Docker socket.
+      # SECURITY: mounting the socket grants the container host-root-equiv
+      # access. Only enable on a trusted host. Then also set
+      # AGENT_DOCKER_SANDBOX_IMAGE below.
+      # - /var/run/docker.sock:/var/run/docker.sock
     environment:
-      # --- Server ---
+      # ── Server ───────────────────────────────────────────────────
       PORT: 3000
+      FLOWLIB_LOG_LEVEL: info
 
-      # --- Database ---
-      # SQLite (default): file path inside the container
+      # ── Database ─────────────────────────────────────────────────
+      # SQLite (default). For PostgreSQL/MySQL set FLOWLIB_DB_TYPE +
+      # DATABASE_URL and add a db service.
       DATABASE_URL: 'file:/app/data/flowlib.db'
       FLOWLIB_DB_TYPE: sqlite
-      # PostgreSQL: uncomment and set
-      # DATABASE_URL: "postgresql://user:pass@host:5432/flowlib"
-      # FLOWLIB_DB_TYPE: postgres
+      # DATABASE_URL: 'postgresql://user:pass@db:5432/flowlib'
+      # FLOWLIB_DB_TYPE: postgresql
 
-      # --- Admin user (created on first boot) ---
-      FLOWLIB_ADMIN_EMAIL: admin@flowlib.local
-      FLOWLIB_ADMIN_PASSWORD: changeme
-
-      # --- Security (required) ---
+      # ── Security (REQUIRED) ──────────────────────────────────────
       # Generate with: npx flowlib-cli secret
-      FLOWLIB_ENCRYPTION_KEY: '' # REQUIRED — used for credential encryption + auth sessions
+      FLOWLIB_ENCRYPTION_KEY: '${FLOWLIB_ENCRYPTION_KEY:-}'
+      # Optional — defaults to the encryption key if unset.
+      # BETTER_AUTH_SECRET: '${BETTER_AUTH_SECRET:-}'
 
-      # --- Webhooks ---
-      # FLOWLIB_WEBHOOK_BASE_URL: "https://your-domain.com/flowlib"
+      # ── Admin user (seeded on first boot) ────────────────────────
+      FLOWLIB_ADMIN_EMAIL: '${FLOWLIB_ADMIN_EMAIL:-admin@flowlib.local}'
+      FLOWLIB_ADMIN_PASSWORD: '${FLOWLIB_ADMIN_PASSWORD:-changeme}'
 
-      # --- Trusted origins (comma-separated, for CORS + auth) ---
-      # FLOWLIB_TRUSTED_ORIGINS: "https://your-domain.com"
+      # ── CORS / auth origins (comma-separated) ────────────────────
+      # FLOWLIB_TRUSTED_ORIGINS: 'https://flowlib.example.com'
 
-      # --- Logging ---
-      FLOWLIB_LOG_LEVEL: info
+      # ── Webhooks ─────────────────────────────────────────────────
+      # FLOWLIB_WEBHOOK_BASE_URL: 'https://flowlib.example.com/flowlib'
+
+      # ── Agents — LLM credentials (seeded) ────────────────────────
+      # The agent chat needs an LLM key. Set either an OpenRouter key
+      # (one key → Claude/GPT/Gemini) or a direct vendor key.
+      SEED_OPENROUTER_API_KEY: '${SEED_OPENROUTER_API_KEY:-}'
+      SEED_ANTHROPIC_API_KEY: '${SEED_ANTHROPIC_API_KEY:-}'
+
+      # ── Agents — sandbox (opt-in) ────────────────────────────────
+      # Uncomment + uncomment the docker.sock mount above to give the
+      # agent a real shell/filesystem in a per-chat container. Unset →
+      # pure chat (no sandbox tools).
+      # AGENT_DOCKER_SANDBOX_IMAGE: node:24-slim
+
+      # ── Version control (optional) ───────────────────────────────
+      # GITHUB_TOKEN: '${GITHUB_TOKEN:-}'
+      # FLOWLIB_VC_REPO: 'your-org/your-flows'
+
+      # ── Vercel Workflows (optional) ──────────────────────────────
+      # VERCEL_DEPLOYMENT_URL: 'https://your-app.vercel.app'
+    healthcheck:
+      test: ['CMD', 'wget', '-qO-', 'http://localhost:3000/health']
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
 
 volumes:
   flowlib-data:

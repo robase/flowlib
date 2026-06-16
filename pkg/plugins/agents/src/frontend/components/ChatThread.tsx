@@ -44,10 +44,13 @@ import {
   SquareIcon,
 } from 'lucide-react';
 import { FLOWLIB_TOOL_NAMES } from '../hooks/useAgentRuntime';
-import { useProviderCatalogue, useUpdateSession } from '../hooks/useSessions';
+import { useUpdateSession } from '../hooks/useSessions';
 import { useActiveSession } from './ActiveSessionContext';
 import { useAgentStream } from './AgentStreamContext';
-import { ModelSelector, type ModelSelection } from './ModelSelector';
+import {
+  ProviderModelSelector,
+  type ProviderModelSelection,
+} from './ProviderModelSelector';
 import { StatusDot, streamStatusToDot } from './StatusDot';
 import { FileDiffViewer } from './FileDiffViewer';
 import { PermissionRequestPrompt } from './PermissionRequestPrompt';
@@ -259,13 +262,15 @@ function ComposerAction({
   status: 'connecting' | 'streaming' | 'idle' | 'error';
 }): React.ReactElement {
   const updateSession = useUpdateSession();
-  const { catalogue } = useProviderCatalogue();
 
   const handleModelChange = React.useCallback(
-    (next: ModelSelection) => {
+    (next: ProviderModelSelection) => {
+      // Set both the credential (provider) and the model together so the
+      // credential vendor always matches the model vendor. `providerId`
+      // (the agent provider, e.g. `ai-sdk`) is unchanged.
       updateSession.mutate({
         id: session.id,
-        input: { providerId: next.providerId, model: next.model },
+        input: { credentialId: next.credentialId, model: next.model },
       });
     },
     [session.id, updateSession],
@@ -275,13 +280,12 @@ function ComposerAction({
     <div className="relative mx-2 mb-2 flex items-center gap-2">
       <ComposerAddAttachment />
 
-      <ModelSelector
-        providerId={session.providerId}
+      <ProviderModelSelector
+        credentialId={session.credentialId}
         model={session.model}
         onChange={handleModelChange}
         menuPlacement="top"
         disabled={updateSession.isPending || status === 'streaming'}
-        catalogue={catalogue}
       />
 
       <div className="ml-auto" />

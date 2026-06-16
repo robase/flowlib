@@ -452,7 +452,15 @@ export function useChatStream(
         setEvents((prev) => [...prev, frame.event]);
         setStatus((prev) => (prev === 'error' ? prev : 'streaming'));
         if (frame.event.type === 'session-end') {
-          setStatus('idle');
+          // A turn that ended in error (e.g. credential/model mismatch,
+          // provider failure) carries the message on the session-end event
+          // — surface it instead of silently going idle with no response.
+          if (frame.event.reason === 'error') {
+            setError(frame.event.error ?? 'The agent turn ended with an error.');
+            setStatus('error');
+          } else {
+            setStatus('idle');
+          }
         }
       } else if (frame.kind === 'agent-error') {
         setError(frame.error.message);
