@@ -6,12 +6,18 @@ behaviour**. This is the implementation of Part F of
 [`docs/coding-agent-parity-plan.md`](../docs/coding-agent-parity-plan.md):
 unit tests prove tool _mechanics_; this proves agent _quality_.
 
-It drives the **real kernel loop** (`runTurn`) — the same one production uses —
-swapping only the provider, the persistence callbacks (no-ops), and the emit
-sink (a transcript collector). An eval green here means the real loop behaves.
+It drives the **real host path** (`runChatTurn` — the same function the Express
+SSE endpoint and the Cloudflare Durable Object call) — swapping only the
+provider, in-memory repositories, the emit sink (a transcript collector), and an
+auto-responder for human-input / permission requests. An eval green here means
+the real path behaves.
 
 ## Why it's shaped this way
 
+- **Production fidelity.** Going through `runChatTurn` means every eval gets the
+  real **tool surface** (`web.fetch`, `ask_user`, `memory.search`/`write`,
+  `update_plan`, wired by `buildProviderTools`), the real **decision gate**, and
+  **production-identical prompt composition** — not a stubbed subset.
 - **Provider-injectable.** Pass the **scripted provider** for offline,
   deterministic self-tests (no API key, no Docker), or the real
   **`aiSdkProvider`** for live evals against Anthropic. The thing under test is
@@ -19,9 +25,9 @@ sink (a transcript collector). An eval green here means the real loop behaves.
 - **Node, not workerd.** The plugin's own `vitest.config.ts` runs in the
   Cloudflare `workerd` pool. Evals need real timers, `node:fs`, and the AI SDK,
   so they run in Node via a separate config and `tsx`.
-- **Real prompt composition.** Cases run through the actual
-  `composeSystemPrompt`, so operating directives, memory, and deny-list
-  mentions are exercised — not a stubbed prompt.
+- **Turns never hang.** `ask_user` / human-input and permission requests are
+  auto-answered (configurable per case via `humanInput` / `permission`), so a
+  case that asks a clarifying question still runs to completion and is scorable.
 
 ## Layout
 
@@ -29,7 +35,8 @@ sink (a transcript collector). An eval green here means the real loop behaves.
 eval/
 ├── src/
 │   ├── types.ts            # EvalCase, Scorer, Score, reports
-│   ├── harness.ts          # runCase / runSuite — builds SessionContext, drives runTurn
+│   ├── harness.ts          # runCase / runSuite — drives the real runChatTurn host path
+│   ├── fakes.ts            # in-memory repositories + workspace provider
 │   ├── transcript.ts       # structured view over the AgentEvent stream
 │   ├── report.ts           # console + JSON reporting
 │   ├── run.ts              # CLI entry (discovers cases, runs live, exits non-zero on fail)
@@ -47,17 +54,25 @@ eval/
 ```bash
 # From pkg/plugins/agents:
 
-pnpm eval:test               # harness self-tests — scripted provider, no API key
-pnpm eval                    # live suite — needs ANTHROPIC_API_KEY
-pnpm eval --grep clarify     # only cases whose id includes "clarify"
+pnpm eval:test                  # harness self-tests — scripted provider, no API key
+pnpm eval                       # live suite — needs ANTHROPIC_API_KEY
+pnpm eval --grep clarify        # only cases whose id includes "clarify"
 pnpm eval --model anthropic/claude-haiku-4-5
-pnpm eval --json report.json # also write a machine-readable report
-pnpm eval --sandbox          # expose sandbox.* tools (needs a real workspace)
-pnpm eval:typecheck          # typecheck the harness
+pnpm eval --samples 5           # run each case 5× (overrides per-case samples)
+pnpm eval --concurrency 6       # up to 6 cases in flight (default 4; 1 for --sandbox)
+pnpm eval --json report.json    # also write a machine-readable report
+pnpm eval --sandbox             # real Docker workspace + sandbox.* tools
+pnpm eval --sandbox --image node:24-slim
+pnpm eval:typecheck             # typecheck the harness
 ```
 
-`pnpm eval` exits non-zero if any case fails — wire it into CI behind an
-API-key gate (like the existing `pnpm test:e2e`).
+From the repo root: `pnpm test:eval` (self-tests, no key) and `pnpm eval:agents`
+(live). `pnpm eval` exits non-zero if any case fails — wire it into CI behind an
+API-key gate (like the existing `pnpm test:e2e`); `test:eval` needs no key and
+can run on every change.
+
+Sandbox-only cases (`requiresSandbox: true`) are skipped — and listed — unless
+you pass `--sandbox`.
 
 ## Writing a case
 
@@ -91,30 +106,63 @@ judge only for things that aren't mechanically checkable.
 | `finalTextContains(s)` / `finalTextMatches(re)` | the assistant's text |
 | `completedWithin({ maxToolCalls, maxMs })` | the turn stayed in budget |
 | `noDeniedToolsUsed()` / `noToolErrors()` | safety / no tool errors |
+| `commandSucceeds(cmd)` | `cmd` exits 0 in the post-run workspace (verification loop) |
+| `commandOutputContains(cmd, x)` | `cmd`'s post-run stdout matches `x` |
 | `llmJudge({ rubric, passThreshold })` | a 1–5 judge score ≥ threshold |
 
 Tool names are matched on a normalised form, so `usedTool('sandbox.grep')`
 matches the sanitised `sandbox_grep` that crosses the wire.
 
-### A coding case (needs `--sandbox` + a real workspace)
+### Nondeterminism: samples + pass rate
+
+Models are stochastic, so a single run per case is a coin flip. Set `samples`
+to run a case N times; the case passes when the per-sample pass rate meets
+`minPassRate` (default 1.0 — every sample must pass):
+
+```ts
+samples: 5,
+minPassRate: 0.6,   // passes if ≥3/5 samples pass
+```
+
+The report shows `3/5 samples`, the weighted score is averaged across samples,
+and the representative scorer breakdown comes from the first *failing* sample so
+you see why a flaky case slipped.
+
+### Prompt versioning (A/B over time)
+
+Every report stamps a `promptHash` (`#a1b2c3d4`) — a stable hash of the exact
+system prompt the host composed. Diff `--json` reports across prompt edits to
+see which change moved which case: same hash ⇒ same prompt ⇒ score deltas are
+model noise, not your edit.
+
+### The verification loop (`--sandbox`)
 
 Lightweight cases use the in-memory workspace (no shell). To score the
-**verification loop** (edit → run tests → fix), wire the real `local-docker`
-workspace provider via `runSuite`'s `createWorkspace` and run with `--sandbox`:
+**verification loop** (edit → run tests → fix), mark a case `requiresSandbox`
+and run `pnpm eval --sandbox` — the CLI provisions a real local Docker container
+per case (via the `local-docker` workspace provider), seeds `files` into it, and
+exposes the `sandbox.*` tools. `commandSucceeds` then runs the test in the
+post-run container:
 
 ```ts
 export default defineEvalCase({
-  id: 'grep-before-editing',
-  systemPrompt: '…',
-  prompt: 'Rename the `getUser` helper to `fetchUser` everywhere.',
-  files: { 'src/user.ts': 'export function getUser() {}\n' },
+  id: 'fix-failing-test',
+  requiresSandbox: true,
+  prompt: 'Running `node test.js` fails. Find the bug, fix it, and make it pass.',
+  files: {
+    'src/add.js': 'function add(a, b) { return a - b; }\nmodule.exports = { add };\n',
+    'test.js': "const {add}=require('./src/add');require('assert').strictEqual(add(2,3),5);",
+  },
   scorers: [
-    usedToolBefore('sandbox.grep', 'sandbox.edit_file'), // gauge blast radius first
-    fileContains('src/user.ts', /fetchUser/),
+    usedTool('sandbox.read_file'),        // oriented before editing
+    fileContains('src/add.js', /a \+ b/), // applied the fix
+    commandSucceeds('node test.js'),      // the verification-loop assertion
     turnSucceeded(),
   ],
 });
 ```
+
+See [cases/fix-failing-test.eval.ts](cases/fix-failing-test.eval.ts).
 
 ## The feedback loop this enables
 
@@ -130,9 +178,11 @@ marginal value of each block instead of guessing.
 
 ## Limitations
 
-- The in-memory workspace can't `exec`; coding/verification-loop cases need the
-  `local-docker` (or a sandbox) workspace.
+- The in-memory workspace can't `exec` — verification-loop cases must be
+  `requiresSandbox` and run with `--sandbox`, which needs Docker running.
 - The LLM judge is itself a model — keep rubrics narrow, pair with deterministic
   scorers, and re-validate the judge against human labels periodically.
 - Live runs need `ai` + `@ai-sdk/anthropic` installed (devDeps) and
   `ANTHROPIC_API_KEY` set.
+- The suite is only as good as its cases — grow it from real production
+  failures (each bug becomes a case that can't regress), not just happy paths.

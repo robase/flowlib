@@ -32,7 +32,12 @@ export function printReport(suite: SuiteReport, opts: { colors?: boolean } = {})
   for (const cr of suite.cases) {
     const mark = cr.error ? r('ERROR') : cr.passed ? g('PASS') : r('FAIL');
     const score = cr.error ? '' : d(` ${(cr.weightedScore * 100).toFixed(0)}%`);
-    log(`  ${mark} ${cr.case.id}${score} ${d(`${cr.durationMs}ms`)}`);
+    const samples =
+      !cr.error && cr.samples > 1
+        ? d(` ${Math.round(cr.passRate * cr.samples)}/${cr.samples} samples`)
+        : '';
+    const hash = cr.promptHash ? d(` #${cr.promptHash}`) : '';
+    log(`  ${mark} ${cr.case.id}${score}${samples}${hash} ${d(`${cr.durationMs}ms`)}`);
     if (cr.error) {
       log(`       ${r(cr.error)}`);
       continue;
@@ -78,6 +83,9 @@ function serialiseCase(cr: CaseReport): unknown {
     description: cr.case.description,
     passed: cr.passed,
     weightedScore: cr.weightedScore,
+    samples: cr.samples,
+    passRate: cr.passRate,
+    promptHash: cr.promptHash,
     durationMs: cr.durationMs,
     error: cr.error,
     scores: cr.scores.map((s) => ({

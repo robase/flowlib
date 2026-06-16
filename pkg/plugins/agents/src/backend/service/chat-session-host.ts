@@ -301,7 +301,11 @@ export async function buildSessionContext(
   try {
     await provider.createSession({
       auth,
-      config: {},
+      // Thread the chat's selected model so the provider session resolves
+      // its credential against the right vendor. Without this the provider
+      // falls back to its own default model (e.g. `anthropic/...`) and
+      // credential resolution targets the wrong vendor.
+      config: sessionRow.model ? { defaultModel: sessionRow.model } : {},
       workspace: workspaceHandle as never,
       ensureWorkspace: ensureWorkspace as never,
       credentialId: sessionRow.credentialId ?? undefined,

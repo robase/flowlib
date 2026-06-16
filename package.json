@@ -53,6 +53,8 @@
     "test:pw:force-kill": "node scripts/run-playwright-with-port-check.mjs --force-kill-ports --project api --project frontend --project e2e --project critical-paths --project auth",
     "test:pw:ui": "node scripts/run-playwright-with-port-check.mjs --ui",
     "test:pw:headed": "node scripts/run-playwright-with-port-check.mjs --headed",
+    "test:eval": "pnpm --filter '@flowlib/agents' run eval:test",
+    "eval:agents": "pnpm --filter '@flowlib/agents' run eval",
     "ux:capture": "npx playwright test --config playwright/playwright.config.ts --project visual-audit",
     "ux:analyze": "npx tsx playwright/visual-audit/analyze.ts",
     "ux:audit": "pnpm ux:capture && pnpm ux:analyze",

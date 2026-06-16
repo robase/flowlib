@@ -304,7 +304,37 @@ export function aiSdkProvider(options: AiSdkProviderOptions): AgentProvider {
     async createSession(input: CreateSessionInput): Promise<{ providerSessionId: string }> {
       const sessionId = input.providerSessionId ?? newPlaceholderSessionId();
       if (input.providerSessionId && sessionsById.has(input.providerSessionId)) {
-        // Idempotent rehydration. Same semantics as opencode provider.
+        // Idempotent rehydration — but REFRESH mutable per-turn state. A
+        // session is often registered earlier (e.g. credential-less at
+        // chat-create time) and the chat can change its model, credential,
+        // system prompt, or workspace between turns. Without this refresh the
+        // first registration's stale state (default model, no credential)
+        // sticks for the isolate's lifetime, so credential resolution targets
+        // the wrong vendor or finds no credential at all.
+        const existing = sessionsById.get(input.providerSessionId)!;
+        const nextModel =
+          (input.config?.defaultModel as string | undefined) ?? existing.defaultModel;
+        const credentialChanged = existing.credentialId !== input.credentialId;
+        const modelChanged = nextModel !== existing.defaultModel;
+        existing.auth = input.auth;
+        existing.credentialId = input.credentialId;
+        existing.defaultModel = nextModel;
+        existing.systemPrompt = input.systemPrompt;
+        existing.extras = input.extras;
+        if (input.credentials) {
+          existing.credentials = input.credentials;
+        }
+        if (input.workspace) {
+          existing.workspace = input.workspace;
+        }
+        if (input.ensureWorkspace) {
+          existing.ensureWorkspace = input.ensureWorkspace;
+        }
+        // Drop the cached resolved credential if the credential or model
+        // (hence vendor) changed, so the next `prompt()` re-resolves.
+        if (credentialChanged || modelChanged) {
+          existing.credential = undefined;
+        }
         return { providerSessionId: input.providerSessionId };
       }
       sessionsById.set(sessionId, {

@@ -161,6 +161,33 @@ export function noDeniedToolsUsed(): Scorer {
   };
 }
 
+/**
+ * Passes if running `command` in the post-run workspace exits 0 — the
+ * verification-loop check ("did the agent's edit actually make the tests
+ * pass?"). Needs a real shell, so use it on `requiresSandbox` cases; the
+ * in-memory workspace returns a non-zero exit and this fails.
+ */
+export function commandSucceeds(command: string): Scorer {
+  return async (o) => {
+    const name = `commandSucceeds(${truncate(command, 48)})`;
+    const res = await o.workspace.exec(command, { timeoutMs: 60_000 });
+    return res.exitCode === 0
+      ? ok(name)
+      : fail(name, `exit ${res.exitCode}: ${truncate(res.stderr || res.stdout)}`);
+  };
+}
+
+/** Passes if `command`'s post-run stdout matches `needle`. */
+export function commandOutputContains(command: string, needle: string | RegExp): Scorer {
+  return async (o) => {
+    const name = `commandOutputContains(${truncate(command, 40)})`;
+    const res = await o.workspace.exec(command, { timeoutMs: 60_000 });
+    return testMatch(res.stdout, needle)
+      ? ok(name)
+      : fail(name, `output did not match ${String(needle)} (exit ${res.exitCode})`);
+  };
+}
+
 /** Passes if no tool call ended in an error result. */
 export function noToolErrors(): Scorer {
   return (o) => {

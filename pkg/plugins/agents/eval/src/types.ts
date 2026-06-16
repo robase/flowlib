@@ -46,10 +46,34 @@ export interface EvalCase {
   files?: Record<string, string>;
   /** Memory excerpts to inject into the composed prompt. */
   memory?: ReadonlyArray<{ scope: string; content: string }>;
+  /**
+   * Auto-answer for `ask_user` / human-input requests so the turn never
+   * hangs. A string, or a function of the agent's question. Defaults to a
+   * neutral "proceed" answer. The point of the case is usually whether the
+   * agent *asked* (see `askedClarifyingQuestion`), not the answer content.
+   */
+  humanInput?: string | ((question: string) => string);
+  /** Auto-decision for permission requests. Default `allow`. */
+  permission?: 'allow' | 'deny';
   /** The checks that decide pass/fail. */
   scorers: Scorer[];
   /** Hard wall-clock cap for the turn (ms). Default 120_000. */
   timeoutMs?: number;
+  /**
+   * Run the case N times to tame model nondeterminism. Default 1. The case
+   * passes if the per-sample pass rate ≥ `minPassRate`.
+   */
+  samples?: number;
+  /**
+   * Fraction of samples (0..1) that must pass for the case to pass. Default
+   * 1 (every sample must pass). E.g. `samples: 5, minPassRate: 0.6` → ≥3/5.
+   */
+  minPassRate?: number;
+  /**
+   * Case needs a real shell/filesystem (the verification loop). The CLI
+   * skips it unless run with `--sandbox`, and logs how many were skipped.
+   */
+  requiresSandbox?: boolean;
 }
 
 /** Everything a scorer is handed about one completed run. */
@@ -64,6 +88,10 @@ export interface RunOutcome {
   durationMs: number;
   /** The workspace handle, for post-run filesystem inspection. */
   workspace: WorkspaceHandle;
+  /** The exact system prompt the host composed for this turn. */
+  systemPrompt: string;
+  /** Stable short hash of `systemPrompt` — the prompt "version" for A/B. */
+  promptHash: string;
 }
 
 /** Optional services a scorer may use (e.g. an LLM judge client). */
@@ -102,12 +130,18 @@ export type JudgeClient = (input: {
 /** Result of scoring one case. */
 export interface CaseReport {
   case: EvalCase;
-  /** All scorer verdicts. */
+  /** Scorer verdicts (from the first sample, representative). */
   scores: Score[];
-  /** True iff every scorer passed. */
+  /** True iff the case passed (per-sample pass rate ≥ minPassRate). */
   passed: boolean;
-  /** Weighted mean of the scorer scores (0..1). */
+  /** Weighted mean of the scorer scores (0..1), averaged across samples. */
   weightedScore: number;
+  /** Number of samples run for this case. */
+  samples: number;
+  /** Fraction of samples that passed (0..1). */
+  passRate: number;
+  /** Prompt-version hash for the composed system prompt. */
+  promptHash?: string;
   durationMs: number;
   /** Set when the run threw before scoring (provider/setup error). */
   error?: string;
@@ -132,12 +166,16 @@ export interface SuiteReport {
 export interface RunOptions {
   /** Provider under test (scripted for self-tests, ai-sdk for live). */
   provider: AgentProvider;
-  /** Factory for a fresh workspace per case. */
+  /** Factory for a fresh workspace per case (and per sample). */
   createWorkspace: () => WorkspaceHandle | Promise<WorkspaceHandle>;
+  /** Tear down a workspace after a sample finishes (e.g. remove a container). */
+  destroyWorkspace?: (workspace: WorkspaceHandle) => void | Promise<void>;
   /** Judge client for `llmJudge` scorers. Optional until a case needs one. */
   judge?: JudgeClient;
   /** Default model when a case omits one. */
   defaultModel?: string;
+  /** Max cases run concurrently. Default 1 (sequential). */
+  concurrency?: number;
   /** Called as each case finishes, for live progress output. */
   onCaseComplete?: (report: CaseReport) => void;
 }

@@ -114,6 +114,12 @@ export function vendorForProviderSlug(slug: string): {
     case 'gemini':
       return { vendor: 'google' };
     case 'openrouter':
+      // OpenRouter has a dedicated AI SDK provider
+      // (`@openrouter/ai-sdk-provider`) with its base URL built in, and the
+      // model normaliser rewrites gateway-credentialed chats to
+      // `openrouter/<model>`. Map to the `openrouter` vendor so that spec
+      // matches. Hosts wire `createOpenRouter` via `standardAiSdkVendors`.
+      return { vendor: 'openrouter', baseUrl: DEFAULT_OPENAI_COMPATIBLE_BASE_URLS.openrouter };
     case 'groq':
     case 'together':
     case 'fireworks':

@@ -1,0 +1,21 @@
+# Agent sandbox overlay — opt-in.
+#
+#   docker compose -f docker/docker-compose.yml -f docker/docker-compose.sandbox.yml up -d
+#
+# Gives the agent a real shell + filesystem in a per-chat Docker container
+# running locally (docker-outside-of-docker via the mounted host socket).
+# Without this overlay the agent is pure-chat (no sandbox tools).
+#
+# SECURITY: mounting the host Docker socket grants the flowlib container
+# (and therefore the agent's tools) root-equivalent control of the host
+# Docker daemon. Only enable on a trusted host / for trusted users.
+services:
+  flowlib:
+    volumes:
+      # docker-outside-of-docker: the in-container `docker` CLI drives the
+      # host daemon, spawning sibling sandbox containers.
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      # Image the per-chat sandbox container runs. When set (and the socket
+      # is mounted), the agent gains shell/file tools backed by this image.
+      AGENT_DOCKER_SANDBOX_IMAGE: '${AGENT_DOCKER_SANDBOX_IMAGE:-node:24-slim}'

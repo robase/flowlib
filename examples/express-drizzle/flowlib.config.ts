@@ -20,6 +20,7 @@ import { streamText } from 'ai';
 import { createAnthropic } from '@ai-sdk/anthropic';
 import { createOpenAI } from '@ai-sdk/openai';
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
+import { createOpenRouter } from '@openrouter/ai-sdk-provider';
 import { versionControl } from '@flowlib/version-control';
 import { githubProvider } from '@flowlib/version-control/providers/github';
 import { defineConfig } from '@flowlib/core';
@@ -175,6 +176,9 @@ export const flowlibConfig = defineConfig({
             createAnthropic,
             createOpenAI,
             createGoogleGenerativeAI,
+            // Dedicated OpenRouter vendor — one key fronts Claude/GPT/Gemini.
+            // The seeded `OpenRouter API Key` credential routes here.
+            createOpenRouter,
           }),
           // Sandbox tools (run shell / read / write / glob / grep / …) —
           // only when a Docker sandbox is configured. They lazily call
