@@ -116,13 +116,15 @@ export const VENDOR_MODEL_CATALOGUE: Record<string, VendorEntry> = {
   openrouter: {
     slug: 'openrouter',
     label: 'OpenRouter',
-    // OpenRouter is OpenAI-compatible → `openai/<openrouter-model>` with a
-    // `baseURL` on the credential. Type any OpenRouter model into the
-    // combobox; these are common starters.
+    // OpenRouter is wired as its own dedicated vendor (`createOpenRouter`),
+    // so model ids are OpenRouter's native `<vendor>/<model>` form — NOT
+    // `openai/`-prefixed. The backend normaliser adds the `openrouter/`
+    // routing prefix. Type any OpenRouter model into the combobox; these
+    // are common starters.
     models: [
-      { id: 'openai/anthropic/claude-sonnet-4.5', label: 'Claude Sonnet 4.5' },
-      { id: 'openai/openai/gpt-4o', label: 'GPT-4o' },
-      { id: 'openai/google/gemini-2.0-flash-exp', label: 'Gemini 2.0 Flash' },
+      { id: 'anthropic/claude-sonnet-4.6', label: 'Claude Sonnet 4.6' },
+      { id: 'openai/gpt-4o', label: 'GPT-4o' },
+      { id: 'google/gemini-2.0-flash-exp', label: 'Gemini 2.0 Flash' },
     ],
   },
 };
