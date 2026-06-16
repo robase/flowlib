@@ -47,10 +47,7 @@ import { FLOWLIB_TOOL_NAMES } from '../hooks/useAgentRuntime';
 import { useUpdateSession } from '../hooks/useSessions';
 import { useActiveSession } from './ActiveSessionContext';
 import { useAgentStream } from './AgentStreamContext';
-import {
-  ProviderModelSelector,
-  type ProviderModelSelection,
-} from './ProviderModelSelector';
+import { ProviderModelSelector, type ProviderModelSelection } from './ProviderModelSelector';
 import { StatusDot, streamStatusToDot } from './StatusDot';
 import { FileDiffViewer } from './FileDiffViewer';
 import { PermissionRequestPrompt } from './PermissionRequestPrompt';

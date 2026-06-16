@@ -96,7 +96,9 @@ export function ProviderModelSelector({
     () => (credentials ?? []).find((c) => c.id === credentialId) ?? null,
     [credentials, credentialId],
   );
-  const selectedSlug = selectedCredential ? normalizeProviderSlug(selectedCredential.provider) : null;
+  const selectedSlug = selectedCredential
+    ? normalizeProviderSlug(selectedCredential.provider)
+    : null;
   const modelOptions = modelsForProvider(selectedSlug);
   const selectedModelOption = modelOptions.find((m) => m.id === model);
 
@@ -143,9 +145,7 @@ export function ProviderModelSelector({
         {(close) => (
           <div className="py-1" role="listbox" data-testid={`${testIdPrefix}-provider-menu`}>
             {providers.length === 0 ? (
-              <div className="px-3 py-2 text-xs text-muted-foreground">
-                No LLM credentials yet.
-              </div>
+              <div className="px-3 py-2 text-xs text-muted-foreground">No LLM credentials yet.</div>
             ) : (
               providers.map((p) => {
                 const isActive = p.credential.id === credentialId;
@@ -171,7 +171,9 @@ export function ProviderModelSelector({
                         {p.credential.name}
                       </div>
                     </div>
-                    <Check className={`size-3 shrink-0 ${isActive ? 'opacity-100' : 'opacity-0'}`} />
+                    <Check
+                      className={`size-3 shrink-0 ${isActive ? 'opacity-100' : 'opacity-0'}`}
+                    />
                   </button>
                 );
               })
