@@ -32,12 +32,15 @@ import type {
 } from '../providers/types';
 import type { McpClientFactory } from '../mcp/client';
 import { buildWebFetchTool } from '../tools/web-fetch';
-import type { WorkspaceProvider } from '../workspaces/types';
+import { buildWebSearchTool } from '../tools/web-search';
+import type { WorkspaceProvider, WorkspaceHandle } from '../workspaces/types';
 import type { HookPipeline } from '../hooks/types';
 import { noopHookPipeline } from '../hooks/types';
 import type { PermissionsResolver } from '../permissions/types';
 import { allowAllResolver } from '../permissions/types';
 import { composeSystemPrompt } from '../prompt/compose';
+import { gatherCodeContext, type CodeContext } from '../prompt/gather-context';
+import { buildDispatchAgentTool } from './dispatch-agent';
 
 // ─── Repositories surface ────────────────────────────────────────────
 
@@ -186,6 +189,22 @@ export interface ChatHostDeps {
   /** Override the prompt composer (tests); defaults to `composeSystemPrompt`. */
   composeSystemPrompt?: typeof composeSystemPrompt;
   /**
+   * Eagerly provision the workspace at session start so the system prompt
+   * includes real environment/git/directory context (Cut 2). Mirrors the
+   * `eagerWorkspace` plugin option. Default false (lazy provisioning).
+   */
+  eagerWorkspace?: boolean;
+  /**
+   * Web-search config (API key + optional endpoint). When present, the
+   * `web.search` tool is offered. Mirrors the `webSearch` plugin option.
+   */
+  webSearch?: { apiKey: string; endpoint?: string; apiKeyHeader?: string };
+  /**
+   * Offer the `dispatch_agent` read-only sub-agent tool. Mirrors the
+   * `subAgents` plugin option. Default false (token-heavy).
+   */
+  subAgents?: boolean;
+  /**
    * Factory that connects to an external MCP server and returns a client.
    * When set (and the session has `enabledMcpServerIds`), each enabled
    * server's tools are loaded and exposed to the agent as provider tools.
@@ -261,9 +280,14 @@ export async function buildSessionContext(
 
   const ensureWorkspace = makeEnsureWorkspace(deps, provider, sessionRow.workspaceId);
 
-  // Eager-resolve only when the provider needs a workspace up front.
+  // Eager-resolve when the provider needs a workspace up front, OR when the
+  // deployment opted into `eagerWorkspace` (Cut 2) so the system prompt can
+  // carry real environment / git / directory context. Best-effort: a
+  // provisioning failure degrades to a context-less prompt, never a turn
+  // failure.
   let workspaceHandle: { metadata?: Record<string, unknown> } | undefined;
-  if (provider.capabilities.workspaceRequired) {
+  const wantEager = provider.capabilities.workspaceRequired || deps.eagerWorkspace === true;
+  if (wantEager) {
     try {
       workspaceHandle = await ensureWorkspace();
     } catch (err) {
@@ -272,6 +296,16 @@ export async function buildSessionContext(
         message: err instanceof Error ? err.message : String(err),
       });
     }
+  }
+
+  // When a workspace booted eagerly, gather the session-start orienting
+  // context (env + git + tree) for the prompt. Skipped (and the prompt has
+  // no Environment/Git blocks) for lazy / pure-chat sessions.
+  let codeContext: CodeContext | undefined;
+  if (workspaceHandle) {
+    codeContext = await gatherCodeContext(workspaceHandle as unknown as WorkspaceHandle, {
+      ...(sessionRow.model ? { model: sessionRow.model } : {}),
+    });
   }
 
   // System-prompt composition (memoised) + progressive-disclosure skills
@@ -286,6 +320,8 @@ export async function buildSessionContext(
     skillSummaries,
     relevantMemories,
     sessionPlan,
+    workspaceHandle ? (workspaceHandle as unknown as WorkspaceHandle) : undefined,
+    codeContext,
   );
   const providerTools = buildProviderTools(deps, sessionId, skillSummaries.length > 0);
   // Merge in tools from the session's enabled external MCP servers.
@@ -295,6 +331,31 @@ export async function buildSessionContext(
     sessionId,
   );
   Object.assign(providerTools, mcpTools);
+
+  // Sub-agent tool (Cut 4) — gated on the deployment opting in. Built here
+  // (not in `buildProviderTools`) because it needs the provider + session
+  // pieces only assembled at this layer. The sub-agent reuses the parent
+  // provider session but with a read-only allowlist + isolated sink; the
+  // allowlist also excludes `dispatch_agent`, capping depth at 1.
+  const agentService = (deps as { agentService?: AgentService }).agentService;
+  if (deps.subAgents && agentService) {
+    providerTools['dispatch_agent'] = buildDispatchAgentTool({
+      agentService,
+      base: {
+        sessionId,
+        providerSessionId: sessionRow.providerSessionId,
+        auth,
+        provider,
+        ...(workspaceHandle ? { workspace: workspaceHandle as unknown as WorkspaceHandle } : {}),
+        hooks: deps.hookPipeline ?? noopHookPipeline,
+        permissions: deps.permissions ?? allowAllResolver,
+        logger,
+        abortSignal: deps.abortSignal,
+        ...(sessionRow.model ? { defaultModel: sessionRow.model } : {}),
+        providerTools,
+      },
+    });
+  }
 
   // Provider rehydration — idempotent for providers that recognise the
   // existing providerSessionId; best-effort otherwise.
@@ -453,11 +514,23 @@ async function composeEffectiveSystemPrompt(
   skillSummaries: ReadonlyArray<{ name: string; description: string; body?: string }>,
   memory: ReadonlyArray<{ scope: string; content: string }>,
   plan: { checkpoints: ReadonlyArray<{ id: string; label: string; status: string }> } | undefined,
+  workspaceHandle?: WorkspaceHandle,
+  codeContext?: CodeContext,
 ): Promise<string> {
   const cached = deps.promptCache.get(sessionId);
   if (cached !== undefined) {
     return cached;
   }
+  // When a workspace booted eagerly, include the workspace-context section
+  // (top-level tree + branch) and run the CLAUDE.md walk from its root.
+  const workspaceField =
+    workspaceHandle && codeContext
+      ? {
+          handle: workspaceHandle,
+          rootPath: codeContext.environment.cwd,
+          ...(codeContext.gitStatus?.branch ? { branch: codeContext.gitStatus.branch } : {}),
+        }
+      : undefined;
   const compose = deps.composeSystemPrompt ?? composeSystemPrompt;
   const prompt = await compose({
     systemPrompt: row.systemPrompt ?? '',
@@ -467,6 +540,9 @@ async function composeEffectiveSystemPrompt(
     memory,
     ...(plan ? { plan } : {}),
     attachments: [],
+    ...(workspaceField ? { workspace: workspaceField } : {}),
+    ...(codeContext?.environment ? { environment: codeContext.environment } : {}),
+    ...(codeContext?.gitStatus ? { gitStatus: codeContext.gitStatus } : {}),
   });
   deps.promptCache.set(sessionId, prompt);
   return prompt;
@@ -575,6 +651,12 @@ function buildProviderTools(
   // Always-on: fetch public URLs (docs/issues/specs). SSRF-guarded; a
   // deployment can disable it per-session via the deny-list.
   tools['web.fetch'] = buildWebFetchTool();
+
+  // Config-gated: web search (needs an API key). Pairs with web.fetch —
+  // search to find a url, then fetch it. Omitted entirely when unconfigured.
+  if (deps.webSearch?.apiKey) {
+    tools['web.search'] = buildWebSearchTool(deps.webSearch);
+  }
 
   // Ask the user a clarifying question and block until they answer — wired
   // onto the decision gate + the human-input transport (DO WebSocket / SSE

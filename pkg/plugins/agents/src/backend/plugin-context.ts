@@ -51,6 +51,24 @@ export interface AgentsRuntimeRegistries {
   hookPipeline?: unknown;
   /** Cloudflare AIChatAgent DO class export — Stream H. */
   cloudflareDoClass?: unknown;
+  /**
+   * Whether to eagerly provision the workspace at session start so the
+   * system prompt gets real environment/git/directory context. Mirrors
+   * the `eagerWorkspace` plugin option; read by both transports into
+   * `ChatHostDeps.eagerWorkspace`. Default false (lazy).
+   */
+  eagerWorkspace?: boolean;
+  /**
+   * Web-search config (API key + optional endpoint). When set, both
+   * transports offer the `web.search` tool. Mirrors the `webSearch`
+   * plugin option. Undefined → tool omitted.
+   */
+  webSearch?: { apiKey: string; endpoint?: string; apiKeyHeader?: string };
+  /**
+   * Whether the `dispatch_agent` (read-only sub-agent) tool is offered.
+   * Mirrors the `subAgents` plugin option. Default false.
+   */
+  subAgents?: boolean;
 }
 
 /**

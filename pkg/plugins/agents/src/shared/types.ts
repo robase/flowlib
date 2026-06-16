@@ -232,4 +232,30 @@ export interface AgentsPluginPublicOptions {
    * @default 'anthropic/claude-sonnet-4-5'
    */
   defaultModel?: string;
+  /**
+   * Eagerly provision the session's sandbox **at session start** (rather
+   * than lazily on the first `sandbox.*` tool call) so the system prompt
+   * can include real environment + git-status + directory context — the
+   * orienting context a coding agent benefits from.
+   *
+   * Tradeoff: every chat on a workspace-capable provider pays one
+   * container cold-start up front, even pure-chat turns. Enable for
+   * code-first deployments; leave off (default) for chat-first ones.
+   * @default false
+   */
+  eagerWorkspace?: boolean;
+  /**
+   * Enable the `web.search` agent tool by supplying a search API key.
+   * Off by default (the tool is omitted entirely when unset). Defaults
+   * target the Brave Search API; override `endpoint`/`apiKeyHeader` for
+   * other providers.
+   */
+  webSearch?: { apiKey: string; endpoint?: string; apiKeyHeader?: string };
+  /**
+   * Enable the `dispatch_agent` tool — lets the agent spawn read-only
+   * exploration sub-turns (depth capped at 1). Token-heavy, so off by
+   * default; enable for deep-research / large-codebase deployments.
+   * @default false
+   */
+  subAgents?: boolean;
 }

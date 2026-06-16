@@ -104,6 +104,11 @@ async function streamSession(deps: EndpointDeps): Promise<PluginEndpointResponse
     hookPipeline: (registries as { hookPipeline?: ChatHostDeps['hookPipeline'] }).hookPipeline,
     permissions: registries.permissions as ChatHostDeps['permissions'],
     credentials: registries.credentials as ChatHostDeps['credentials'],
+    eagerWorkspace: (registries as { eagerWorkspace?: boolean }).eagerWorkspace === true,
+    subAgents: (registries as { subAgents?: boolean }).subAgents === true,
+    ...((registries as { webSearch?: ChatHostDeps['webSearch'] }).webSearch
+      ? { webSearch: (registries as { webSearch?: ChatHostDeps['webSearch'] }).webSearch }
+      : {}),
     mcpClientFactory: mcpClientFactory(),
     repositories: deps.repos as unknown as ChatHostDeps['repositories'],
     emit,

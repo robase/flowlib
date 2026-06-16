@@ -390,6 +390,15 @@ export function agents(options: AgentsPluginOptions = {}): FlowlibPluginDefiniti
         getDecryptedWithRefresh: (id: string) =>
           ctx.flowlib.getFlowlib().credentials.getDecryptedWithRefresh(id),
       };
+      // Eager-workspace flag (Cut 2 — session-start code context). Read by
+      // both transports into `ChatHostDeps.eagerWorkspace`.
+      ctx.registries.eagerWorkspace = resolved.eagerWorkspace ?? false;
+      // Web-search config (Cut 4 — `web.search` tool, config-gated).
+      if (resolved.webSearch?.apiKey) {
+        ctx.registries.webSearch = resolved.webSearch;
+      }
+      // Sub-agent flag (Cut 4 — `dispatch_agent` tool).
+      ctx.registries.subAgents = resolved.subAgents ?? false;
       registerPermissions(ctx);
       registerAudit(ctx);
       // Hooks depend on the audit writer (above) being on the registry.

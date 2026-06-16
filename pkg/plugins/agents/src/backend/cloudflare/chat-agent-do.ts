@@ -464,6 +464,11 @@ export class AgentChatDO extends (AIChatAgent as unknown as new (
       hookPipeline: (runtime as { hookPipeline?: ChatHostDeps['hookPipeline'] }).hookPipeline,
       permissions: runtime.permissions as ChatHostDeps['permissions'],
       credentials: (runtime as { credentials?: ChatHostDeps['credentials'] }).credentials,
+      eagerWorkspace: (runtime as { eagerWorkspace?: boolean }).eagerWorkspace === true,
+      subAgents: (runtime as { subAgents?: boolean }).subAgents === true,
+      ...((runtime as { webSearch?: ChatHostDeps['webSearch'] }).webSearch
+        ? { webSearch: (runtime as { webSearch?: ChatHostDeps['webSearch'] }).webSearch }
+        : {}),
       mcpClientFactory: mcpClientFactory(),
       repositories,
       emit,
