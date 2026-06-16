@@ -11,6 +11,7 @@ import { webhooks } from '@flowlib/webhooks';
 import { mcp } from '@flowlib/mcp';
 import { agents } from '@flowlib/agents';
 import { aiSdkProvider, standardAiSdkVendors } from '@flowlib/agents/providers';
+import { localDockerWorkspace } from '@flowlib/agents/workspaces';
 import { streamText } from 'ai';
 import { createAnthropic } from '@ai-sdk/anthropic';
 import { createOpenAI } from '@ai-sdk/openai';
@@ -157,18 +158,24 @@ export const flowlibConfig = defineConfig({
           }),
         }),
       ],
-      // Sandbox offload (opt-in). Pure chat needs no workspace. To let the
-      // agent run shell/filesystem tools in a real sandbox, install a
-      // ComputeSDK provider and uncomment — gated on an env key so the
-      // example still boots without sandbox credentials:
-      //
-      //   ...(process.env.SEED_E2B_API_KEY
-      //     ? {
-      //         workspaceProviders: [
-      //           computesdkWorkspace({ compute: e2b({ apiKey: process.env.SEED_E2B_API_KEY }) }),
-      //         ],
-      //       }
-      //     : {}),
+      // Sandbox offload (opt-in). Pure chat needs no workspace. Set
+      // `AGENT_DOCKER_SANDBOX_IMAGE` (e.g. `node:24-slim`) to give the
+      // agent a real shell + filesystem in a local Docker container — no
+      // cloud creds, just a running Docker daemon. The example still boots
+      // without it (the sandbox is provisioned lazily, only when a tool
+      // actually needs it).
+      ...(process.env.AGENT_DOCKER_SANDBOX_IMAGE
+        ? {
+            workspaceProviders: [
+              localDockerWorkspace({ image: process.env.AGENT_DOCKER_SANDBOX_IMAGE }),
+            ],
+          }
+        : {}),
+      // Alternatively, a cloud sandbox via ComputeSDK — install a provider
+      // (e.g. `@computesdk/e2b`) and wire it the same way:
+      //   import { computesdkWorkspace } from '@flowlib/agents/workspaces';
+      //   import { e2b } from '@computesdk/e2b';
+      //   workspaceProviders: [computesdkWorkspace({ compute: e2b({ apiKey: ... }) })],
     }),
   ],
 });

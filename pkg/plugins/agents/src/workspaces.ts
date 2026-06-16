@@ -18,6 +18,11 @@
  */
 export { computesdkWorkspace } from './backend/workspaces/computesdk/provider';
 export type { ComputesdkWorkspaceOptions } from './backend/workspaces/computesdk/provider';
+
+// Local Docker sandbox — runs each workspace as a `docker` container,
+// driven straight from Node (no Cloudflare/Workers runtime needed).
+export { localDockerWorkspace } from './backend/workspaces/local-docker/provider';
+export type { LocalDockerWorkspaceOptions } from './backend/workspaces/local-docker/provider';
 export type {
   ComputeLike,
   ComputeSandbox,

@@ -41,6 +41,7 @@ const WORKSPACE_PROVIDER_VALUES = [
   'cloudflare-sandbox',
   'cloudflare-sandbox-claude',
   'computesdk',
+  'local-docker',
   'remote-sandbox',
   'none',
 ] as const;

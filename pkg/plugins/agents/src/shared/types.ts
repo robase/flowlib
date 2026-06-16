@@ -26,6 +26,7 @@ export type WorkspaceProviderId =
   | 'cloudflare-sandbox'
   | 'cloudflare-sandbox-claude'
   | 'computesdk'
+  | 'local-docker'
   | 'remote-sandbox'
   | 'none';
 
