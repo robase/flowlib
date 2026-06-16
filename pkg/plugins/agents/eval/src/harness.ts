@@ -169,6 +169,8 @@ export async function runCaseRaw(
     if ('error' in out) {
       throw new Error(`${out.error.code}: ${out.error.message}`);
     }
+    // On success the *caller* owns teardown — scorers like `commandSucceeds`
+    // need to exec in this workspace after we return, so it must outlive us.
     return {
       case: c,
       transcript,
@@ -178,10 +180,14 @@ export async function runCaseRaw(
       systemPrompt,
       promptHash: shortHash(systemPrompt),
     };
+  } catch (err) {
+    // Failure path: nothing downstream will inspect the workspace, so clean
+    // it up here (a container would otherwise leak).
+    await opts.destroyWorkspace?.(workspace);
+    throw err;
   } finally {
     clearTimeout(timeout);
     gate.rejectAll(new Error('eval turn finished'));
-    await opts.destroyWorkspace?.(workspace);
   }
 }
 
@@ -244,13 +250,18 @@ export async function runCase(c: EvalCase, opts: RunOptions): Promise<CaseReport
       opts.onCaseComplete?.(report);
       return report;
     }
-    const scored = await scoreOutcome(outcome, c.scorers, scorerCtx);
-    sampleResults.push({
-      ...scored,
-      durationMs: outcome.durationMs,
-      result: outcome.result,
-      promptHash: outcome.promptHash,
-    });
+    try {
+      const scored = await scoreOutcome(outcome, c.scorers, scorerCtx);
+      sampleResults.push({
+        ...scored,
+        durationMs: outcome.durationMs,
+        result: outcome.result,
+        promptHash: outcome.promptHash,
+      });
+    } finally {
+      // Teardown after scoring so `commandSucceeds` & friends can exec.
+      await opts.destroyWorkspace?.(outcome.workspace);
+    }
   }
 
   const passedCount = sampleResults.filter((s) => s.passed).length;
