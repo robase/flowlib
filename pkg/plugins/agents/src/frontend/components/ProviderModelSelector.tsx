@@ -22,7 +22,7 @@
 import * as React from 'react';
 import { Link, useLocation } from 'react-router';
 import { Check, ChevronDown, Plus, Search } from 'lucide-react';
-import { useLlmCredentials } from '../hooks/useCredentials';
+import { useCredentialModels, useLlmCredentials } from '../hooks/useCredentials';
 import type { AgentCredentialOption } from '../api/credentials.api';
 import {
   modelsForProvider,
@@ -99,7 +99,16 @@ export function ProviderModelSelector({
   const selectedSlug = selectedCredential
     ? normalizeProviderSlug(selectedCredential.provider)
     : null;
-  const modelOptions = modelsForProvider(selectedSlug);
+
+  // Live vendor catalogue for the selected credential; fall back to the
+  // static list while loading or when the vendor has no live fetcher.
+  const { data: liveModels, isLoading: modelsLoading } = useCredentialModels(credentialId);
+  const modelOptions = React.useMemo<ModelOption[]>(() => {
+    if (liveModels && liveModels.source === 'live' && liveModels.models.length > 0) {
+      return liveModels.models;
+    }
+    return modelsForProvider(selectedSlug);
+  }, [liveModels, selectedSlug]);
   const selectedModelOption = modelOptions.find((m) => m.id === model);
 
   const handleProviderPick = (provider: ProviderOption) => {
@@ -199,6 +208,7 @@ export function ProviderModelSelector({
         triggerLabel={modelTriggerLabel}
         model={model ?? null}
         options={modelOptions}
+        loading={modelsLoading}
         onPick={handleModelPick}
       />
     </div>
@@ -214,6 +224,7 @@ function ModelCombobox({
   triggerLabel,
   model,
   options,
+  loading,
   onPick,
 }: {
   disabled?: boolean;
@@ -222,6 +233,7 @@ function ModelCombobox({
   triggerLabel: string;
   model: string | null;
   options: ModelOption[];
+  loading?: boolean;
   onPick: (model: string) => void;
 }): React.ReactElement {
   const [query, setQuery] = React.useState('');
@@ -255,6 +267,14 @@ function ModelCombobox({
             />
           </div>
           <div className="max-h-72 overflow-y-auto py-1">
+            {loading ? (
+              <div
+                className="px-3 py-2 text-xs text-muted-foreground"
+                data-testid={`${testId}-loading`}
+              >
+                Loading models…
+              </div>
+            ) : null}
             {filtered.map((m) => {
               const isActive = m.id === model;
               return (
