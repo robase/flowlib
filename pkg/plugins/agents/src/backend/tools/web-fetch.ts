@@ -198,20 +198,44 @@ async function readCapped(res: Response, maxBytes: number): Promise<string> {
   return new TextDecoder('utf-8', { fatal: false }).decode(merged.subarray(0, maxBytes));
 }
 
+const HTML_ENTITIES: Record<string, string> = {
+  nbsp: ' ',
+  amp: '&',
+  lt: '<',
+  gt: '>',
+  quot: '"',
+  '#39': "'",
+  apos: "'",
+};
+
 /** Strip HTML to readable text — no DOM dependency (Workers-safe). */
 export function htmlToText(html: string): string {
-  return html
-    .replace(/<!--[\s\S]*?-->/g, '')
-    .replace(/<(script|style|noscript|template|svg)\b[\s\S]*?<\/\1>/gi, '')
+  // Remove comments and script/style-like blocks. Loop until the string stops
+  // changing: a single pass can leave a reconstituted tag behind when constructs
+  // are nested/overlapping (e.g. `<scr<script>ipt>`), which is what CodeQL's
+  // "incomplete multi-character sanitization" warning is about.
+  let text = html;
+  let prev: string;
+  do {
+    prev = text;
+    text = text
+      .replace(/<!--[\s\S]*?-->/g, '')
+      .replace(/<(script|style|noscript|template|svg)\b[\s\S]*?<\/\1>/gi, '');
+  } while (text !== prev);
+
+  text = text
     .replace(/<\/(p|div|li|tr|h[1-6]|section|article|header|footer|br)\s*>/gi, '\n')
     .replace(/<br\s*\/?>/gi, '\n')
-    .replace(/<[^>]+>/g, '')
-    .replace(/&nbsp;/gi, ' ')
-    .replace(/&amp;/gi, '&')
-    .replace(/&lt;/gi, '<')
-    .replace(/&gt;/gi, '>')
-    .replace(/&quot;/gi, '"')
-    .replace(/&#39;|&apos;/gi, "'")
+    .replace(/<[^>]+>/g, '');
+
+  // Decode entities in a single pass so a decoded value can't be decoded again
+  // (decoding `&amp;` before `&lt;` would turn `&amp;lt;` into `<` — the
+  // "double unescaping" CodeQL flags).
+  text = text.replace(/&(nbsp|amp|lt|gt|quot|#39|apos);/gi, (match, entity: string) => {
+    return HTML_ENTITIES[entity.toLowerCase()] ?? match;
+  });
+
+  return text
     .replace(/[ \t]+\n/g, '\n')
     .replace(/\n{3,}/g, '\n\n')
     .trim();

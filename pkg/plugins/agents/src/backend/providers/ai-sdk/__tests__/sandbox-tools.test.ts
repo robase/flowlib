@@ -351,7 +351,7 @@ describe('buildSandboxTools — clone + run_task/check_task', () => {
     const { workspace, cloneCalls } = makeRepoWorkspace();
     const tools = buildSandboxTools(passthroughAccessor(workspace), {
       resolveGitToken: async ({ repoUrl }) =>
-        repoUrl.includes('github.com') ? 'ghp_secret' : undefined,
+        new URL(repoUrl).hostname === 'github.com' ? 'ghp_secret' : undefined,
     });
     const res = (await tools['sandbox.clone'].execute(
       { repoUrl: 'https://github.com/acme/app.git', branch: 'main' },
