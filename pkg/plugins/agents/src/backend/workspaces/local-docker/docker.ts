@@ -53,7 +53,11 @@ export function runDocker(
           }
           // `killed` (timeout) → conventional 124; otherwise the exit code.
           const exitCode =
-            (error as { killed?: boolean }).killed === true ? 124 : typeof code === 'number' ? code : 1;
+            (error as { killed?: boolean }).killed === true
+              ? 124
+              : typeof code === 'number'
+                ? code
+                : 1;
           resolve({ stdout: String(stdout), stderr: String(stderr), exitCode });
           return;
         }

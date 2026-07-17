@@ -36,7 +36,9 @@ describe('parseSearchResults', () => {
   });
 
   it('caps results and skips entries without a url', () => {
-    const body = { web: { results: [{ url: 'https://a' }, { title: 'no-url' }, { url: 'https://b' }] } };
+    const body = {
+      web: { results: [{ url: 'https://a' }, { title: 'no-url' }, { url: 'https://b' }] },
+    };
     const out = parseSearchResults(body, 1);
     expect(out).toHaveLength(1);
     expect(out[0]?.url).toBe('https://a');
@@ -51,7 +53,9 @@ describe('buildWebSearchTool', () => {
       apiKey: 'secret-key',
       fetchImpl: fakeFetch((url, init) => {
         seenUrl = url;
-        seenHeader = String((init?.headers as Record<string, string>)['X-Subscription-Token'] ?? '');
+        seenHeader = String(
+          (init?.headers as Record<string, string>)['X-Subscription-Token'] ?? '',
+        );
         return json(BRAVE_BODY);
       }),
     });

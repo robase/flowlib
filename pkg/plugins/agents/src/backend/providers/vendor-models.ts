@@ -129,13 +129,15 @@ const FETCHERS: Record<string, Fetcher> = {
     const body = (await getJson(f, `${base}/models`, {
       Authorization: `Bearer ${creds.apiKey}`,
     })) as { data?: Array<{ id?: string }> };
-    return (body.data ?? [])
-      .map((m) => m.id)
-      .filter((id): id is string => typeof id === 'string')
-      // The bare OpenAI list includes embeddings/tts/whisper/etc. Keep the
-      // chat-capable families so the picker isn't drowned in noise.
-      .filter((id) => /^(gpt-|o\d|chatgpt)/i.test(id))
-      .map((id) => ({ id: `openai/${id}`, label: id }));
+    return (
+      (body.data ?? [])
+        .map((m) => m.id)
+        .filter((id): id is string => typeof id === 'string')
+        // The bare OpenAI list includes embeddings/tts/whisper/etc. Keep the
+        // chat-capable families so the picker isn't drowned in noise.
+        .filter((id) => /^(gpt-|o\d|chatgpt)/i.test(id))
+        .map((id) => ({ id: `openai/${id}`, label: id }))
+    );
   },
 
   google: async (creds, f) => {

@@ -7,7 +7,13 @@
  */
 
 import { defineEvalCase } from '../src/index';
-import { completedWithin, finalTextContains, finalTextMatches, turnSucceeded, usedTool } from '../src/scorers';
+import {
+  completedWithin,
+  finalTextContains,
+  finalTextMatches,
+  turnSucceeded,
+  usedTool,
+} from '../src/scorers';
 
 export default defineEvalCase({
   id: 'find-where-configured',

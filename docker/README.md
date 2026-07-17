@@ -39,15 +39,15 @@ curl http://localhost:3000/health        # {"status":"ok",...}
 Set these in `docker/.env` (consumed via `--env-file`). The compose file maps
 them onto the container.
 
-| Variable | Required | Default | Purpose |
-| --- | --- | --- | --- |
-| `FLOWLIB_ENCRYPTION_KEY` | **yes** | — | base64 32-byte key for credential encryption + auth. The server **refuses to start** without it. |
-| `FLOWLIB_ADMIN_EMAIL` / `FLOWLIB_ADMIN_PASSWORD` | no | `admin@flowlib.local` / `changeme` | Admin user seeded on first boot. |
-| `SEED_OPENROUTER_API_KEY` | for chat | — | Seeded LLM credential. One OpenRouter key serves Claude/GPT/Gemini. |
-| `SEED_ANTHROPIC_API_KEY` | alt | — | Direct Anthropic key (alternative to OpenRouter). |
-| `DATABASE_URL` / `FLOWLIB_DB_TYPE` | no | `file:/app/data/flowlib.db` / `sqlite` | DB connection. SQLite persists to the `flowlib-data` volume. |
-| `FLOWLIB_TRUSTED_ORIGINS` | no | — | Comma-separated extra CORS/auth origins (e.g. your public URL). |
-| `AGENT_DOCKER_SANDBOX_IMAGE` | no | — | Enables the local agent sandbox (see below). |
+| Variable                                         | Required | Default                                | Purpose                                                                                          |
+| ------------------------------------------------ | -------- | -------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| `FLOWLIB_ENCRYPTION_KEY`                         | **yes**  | —                                      | base64 32-byte key for credential encryption + auth. The server **refuses to start** without it. |
+| `FLOWLIB_ADMIN_EMAIL` / `FLOWLIB_ADMIN_PASSWORD` | no       | `admin@flowlib.local` / `changeme`     | Admin user seeded on first boot.                                                                 |
+| `SEED_OPENROUTER_API_KEY`                        | for chat | —                                      | Seeded LLM credential. One OpenRouter key serves Claude/GPT/Gemini.                              |
+| `SEED_ANTHROPIC_API_KEY`                         | alt      | —                                      | Direct Anthropic key (alternative to OpenRouter).                                                |
+| `DATABASE_URL` / `FLOWLIB_DB_TYPE`               | no       | `file:/app/data/flowlib.db` / `sqlite` | DB connection. SQLite persists to the `flowlib-data` volume.                                     |
+| `FLOWLIB_TRUSTED_ORIGINS`                        | no       | —                                      | Comma-separated extra CORS/auth origins (e.g. your public URL).                                  |
+| `AGENT_DOCKER_SANDBOX_IMAGE`                     | no       | —                                      | Enables the local agent sandbox (see below).                                                     |
 
 `BETTER_AUTH_SECRET`, `FLOWLIB_WEBHOOK_BASE_URL`, `GITHUB_TOKEN` /
 `FLOWLIB_VC_REPO`, and the OAuth `SEED_*_CLIENT_ID/SECRET` pairs are also
@@ -101,13 +101,13 @@ commented example in [`flowlib.config.ts`](../examples/express-drizzle/flowlib.c
 
 ## Files
 
-| File | Purpose |
-| --- | --- |
-| [`Dockerfile`](Dockerfile) | 3-stage build (base → build → production). Copies the whole monorepo, installs from the lockfile, builds every package + the SPA. |
-| [`docker-compose.yml`](docker-compose.yml) | The service: port, `flowlib-data` volume, env, healthcheck. |
-| [`docker-compose.sandbox.yml`](docker-compose.sandbox.yml) | Opt-in overlay enabling the local Docker agent sandbox. |
-| [`server.ts`](server.ts) | Thin Express entry — mounts the shared `flowlibConfig` at `/flowlib` and serves the SPA. |
-| [`vite.config.docker.ts`](vite.config.docker.ts) | SPA build config (bundles `@flowlib/*` for static serving, same-origin `/flowlib` API base). |
+| File                                                       | Purpose                                                                                                                           |
+| ---------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| [`Dockerfile`](Dockerfile)                                 | 3-stage build (base → build → production). Copies the whole monorepo, installs from the lockfile, builds every package + the SPA. |
+| [`docker-compose.yml`](docker-compose.yml)                 | The service: port, `flowlib-data` volume, env, healthcheck.                                                                       |
+| [`docker-compose.sandbox.yml`](docker-compose.sandbox.yml) | Opt-in overlay enabling the local Docker agent sandbox.                                                                           |
+| [`server.ts`](server.ts)                                   | Thin Express entry — mounts the shared `flowlibConfig` at `/flowlib` and serves the SPA.                                          |
+| [`vite.config.docker.ts`](vite.config.docker.ts)           | SPA build config (bundles `@flowlib/*` for static serving, same-origin `/flowlib` API base).                                      |
 
 ## Notes
 

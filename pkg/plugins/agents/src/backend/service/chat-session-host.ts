@@ -303,9 +303,7 @@ export async function buildSessionContext(
   // no Environment/Git blocks) for lazy / pure-chat sessions.
   let codeContext: CodeContext | undefined;
   if (workspaceHandle) {
-    codeContext = await gatherCodeContext(workspaceHandle as unknown as WorkspaceHandle, {
-      ...(sessionRow.model ? { model: sessionRow.model } : {}),
-    });
+    codeContext = await gatherCodeContext(workspaceHandle as unknown as WorkspaceHandle, (sessionRow.model ? { model: sessionRow.model } : {}));
   }
 
   // System-prompt composition (memoised) + progressive-disclosure skills

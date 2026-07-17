@@ -95,20 +95,20 @@ export default defineEvalCase({
 Prefer **deterministic** scorers — cheap and trustworthy — and reach for the
 judge only for things that aren't mechanically checkable.
 
-| Scorer | Passes when |
-| --- | --- |
-| `turnSucceeded()` | the turn ended with reason `completed` |
-| `answeredDirectly()` | no tools were called |
-| `usedTool(name)` / `didNotUseTool(name)` | a tool was / wasn't invoked |
-| `usedToolBefore(a, b)` | `a` was first called before `b` (e.g. grep→edit) |
-| `askedClarifyingQuestion()` | `ask_user` / a human-input request fired |
-| `fileExists(path)` / `fileContains(path, x)` | post-run workspace state |
-| `finalTextContains(s)` / `finalTextMatches(re)` | the assistant's text |
-| `completedWithin({ maxToolCalls, maxMs })` | the turn stayed in budget |
-| `noDeniedToolsUsed()` / `noToolErrors()` | safety / no tool errors |
-| `commandSucceeds(cmd)` | `cmd` exits 0 in the post-run workspace (verification loop) |
-| `commandOutputContains(cmd, x)` | `cmd`'s post-run stdout matches `x` |
-| `llmJudge({ rubric, passThreshold })` | a 1–5 judge score ≥ threshold |
+| Scorer                                          | Passes when                                                 |
+| ----------------------------------------------- | ----------------------------------------------------------- |
+| `turnSucceeded()`                               | the turn ended with reason `completed`                      |
+| `answeredDirectly()`                            | no tools were called                                        |
+| `usedTool(name)` / `didNotUseTool(name)`        | a tool was / wasn't invoked                                 |
+| `usedToolBefore(a, b)`                          | `a` was first called before `b` (e.g. grep→edit)            |
+| `askedClarifyingQuestion()`                     | `ask_user` / a human-input request fired                    |
+| `fileExists(path)` / `fileContains(path, x)`    | post-run workspace state                                    |
+| `finalTextContains(s)` / `finalTextMatches(re)` | the assistant's text                                        |
+| `completedWithin({ maxToolCalls, maxMs })`      | the turn stayed in budget                                   |
+| `noDeniedToolsUsed()` / `noToolErrors()`        | safety / no tool errors                                     |
+| `commandSucceeds(cmd)`                          | `cmd` exits 0 in the post-run workspace (verification loop) |
+| `commandOutputContains(cmd, x)`                 | `cmd`'s post-run stdout matches `x`                         |
+| `llmJudge({ rubric, passThreshold })`           | a 1–5 judge score ≥ threshold                               |
 
 Tool names are matched on a normalised form, so `usedTool('sandbox.grep')`
 matches the sanitised `sandbox_grep` that crosses the wire.
@@ -125,7 +125,7 @@ minPassRate: 0.6,   // passes if ≥3/5 samples pass
 ```
 
 The report shows `3/5 samples`, the weighted score is averaged across samples,
-and the representative scorer breakdown comes from the first *failing* sample so
+and the representative scorer breakdown comes from the first _failing_ sample so
 you see why a flaky case slipped.
 
 ### Prompt versioning (A/B over time)
@@ -154,9 +154,9 @@ export default defineEvalCase({
     'test.js': "const {add}=require('./src/add');require('assert').strictEqual(add(2,3),5);",
   },
   scorers: [
-    usedTool('sandbox.read_file'),        // oriented before editing
+    usedTool('sandbox.read_file'), // oriented before editing
     fileContains('src/add.js', /a \+ b/), // applied the fix
-    commandSucceeds('node test.js'),      // the verification-loop assertion
+    commandSucceeds('node test.js'), // the verification-loop assertion
     turnSucceeded(),
   ],
 });

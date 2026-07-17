@@ -141,7 +141,8 @@ export async function runCaseRaw(
   // uses. `rawSystemPrompt` short-circuits composition entirely.
   let systemPrompt = '';
   const composer: ChatHostDeps['composeSystemPrompt'] = async (input) => {
-    systemPrompt = c.rawSystemPrompt !== undefined ? c.rawSystemPrompt : await composeSystemPrompt(input);
+    systemPrompt =
+      c.rawSystemPrompt !== undefined ? c.rawSystemPrompt : await composeSystemPrompt(input);
     return systemPrompt;
   };
 
@@ -151,7 +152,10 @@ export async function runCaseRaw(
     auth: EVAL_AUTH,
     providers: new Map([[opts.provider.id, opts.provider]]),
     workspaces: new Map([
-      [EVAL_WORKSPACE_PROVIDER_ID, createEvalWorkspaceProvider(EVAL_WORKSPACE_PROVIDER_ID, workspace)],
+      [
+        EVAL_WORKSPACE_PROVIDER_ID,
+        createEvalWorkspaceProvider(EVAL_WORKSPACE_PROVIDER_ID, workspace),
+      ],
     ]),
     repositories,
     emit,

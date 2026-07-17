@@ -72,7 +72,9 @@ export function createEvalRepositories(input: EvalRepositoriesInput): Repositori
     messages: { append: async () => {} },
     memories: {
       listForScope: async ({ limit }) =>
-        memories.slice(0, limit ?? memories.length).map((m) => ({ scope: m.scope, content: m.content })),
+        memories
+          .slice(0, limit ?? memories.length)
+          .map((m) => ({ scope: m.scope, content: m.content })),
       search: async (query, scope) => {
         const q = query.toLowerCase();
         return memories

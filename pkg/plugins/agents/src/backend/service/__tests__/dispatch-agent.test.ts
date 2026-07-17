@@ -68,10 +68,12 @@ describe('buildDispatchAgentTool', () => {
 
   it('frames the task as a read-only investigation in the prompt', async () => {
     let promptText = '';
-    const runTurn = vi.fn(async (_ctx: SessionContext, prompt: { parts: Array<{ text?: string }> }) => {
-      promptText = prompt.parts[0]?.text ?? '';
-      return RESULT;
-    });
+    const runTurn = vi.fn(
+      async (_ctx: SessionContext, prompt: { parts: Array<{ text?: string }> }) => {
+        promptText = prompt.parts[0]?.text ?? '';
+        return RESULT;
+      },
+    );
     const tool = buildDispatchAgentTool(baseDeps(runTurn as unknown as AgentService['runTurn']));
     await tool.execute({ task: 'trace callers of bar()' }, {});
     expect(promptText).toContain('read-only exploration sub-agent');

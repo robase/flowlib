@@ -33,7 +33,10 @@ import type { AgentProvider } from '../../src/backend/providers/types';
 import type { AgentEvent } from '../../src/shared/events';
 import type { EvalCase, JudgeClient, RunOptions } from '../src/types';
 
-function opts(provider: ReturnType<typeof createScriptedProvider>, judge?: JudgeClient): RunOptions {
+function opts(
+  provider: ReturnType<typeof createScriptedProvider>,
+  judge?: JudgeClient,
+): RunOptions {
   return {
     provider,
     createWorkspace: () => new InMemoryWorkspace(),
@@ -124,9 +127,12 @@ describe('deterministic scorers', () => {
   });
 
   it('noDeniedToolsUsed flags a denied call', async () => {
-    const { provider, case: c } = make({ tools: [{ name: 'sandbox.run_shell' }] }, {
-      denyList: ['sandbox.run_shell'],
-    });
+    const { provider, case: c } = make(
+      { tools: [{ name: 'sandbox.run_shell' }] },
+      {
+        denyList: ['sandbox.run_shell'],
+      },
+    );
     const report = await runCase({ ...c, scorers: [noDeniedToolsUsed()] }, opts(provider));
     expect(report.passed).toBe(false);
     expect(report.scores[0]?.detail).toContain('run_shell');
@@ -153,8 +159,7 @@ describe('deterministic scorers', () => {
 describe('llm judge', () => {
   it('passes when the (fake) judge scores at/above threshold', async () => {
     const provider = createScriptedProvider(scriptTurn({ text: 'I should ask which config.' }));
-    const judge: JudgeClient = async () =>
-      '{"score": 5, "reasoning": "asked for clarification"}';
+    const judge: JudgeClient = async () => '{"score": 5, "reasoning": "asked for clarification"}';
     const report = await runCase(
       {
         id: 'j',
@@ -218,7 +223,10 @@ describe('suite aggregation', () => {
     const provider = createScriptedProvider(() => {
       throw new Error('boom');
     });
-    const report = await runCase({ id: 'e', prompt: 'p', scorers: [turnSucceeded()] }, opts(provider));
+    const report = await runCase(
+      { id: 'e', prompt: 'p', scorers: [turnSucceeded()] },
+      opts(provider),
+    );
     // A provider throw inside prompt() surfaces as an error-reason session-end,
     // so the turn completes (with reason 'error') rather than throwing.
     expect(report.passed).toBe(false);
@@ -256,10 +264,19 @@ describe('production fidelity (real host path)', () => {
 
   it('wires the production tool surface (web.fetch / ask_user / memory / plan) onto the turn', async () => {
     const sink = { tools: [] as string[] };
-    await runCase({ id: 'tools', prompt: 'hi', scorers: [turnSucceeded()] }, opts(captureProvider(sink)));
+    await runCase(
+      { id: 'tools', prompt: 'hi', scorers: [turnSucceeded()] },
+      opts(captureProvider(sink)),
+    );
     // These come from the real `buildProviderTools`, not the harness.
     expect(sink.tools).toEqual(
-      expect.arrayContaining(['web.fetch', 'ask_user', 'memory.search', 'memory.write', 'update_plan']),
+      expect.arrayContaining([
+        'web.fetch',
+        'ask_user',
+        'memory.search',
+        'memory.write',
+        'update_plan',
+      ]),
     );
   });
 
@@ -273,7 +290,12 @@ describe('production fidelity (real host path)', () => {
       },
     };
     await runCase(
-      { id: 'prompt', prompt: 'hi', systemPrompt: 'You are a test agent.', scorers: [turnSucceeded()] },
+      {
+        id: 'prompt',
+        prompt: 'hi',
+        systemPrompt: 'You are a test agent.',
+        scorers: [turnSucceeded()],
+      },
       opts(provider),
     );
     expect(systemPrompt).toContain('You are a test agent.');
@@ -305,7 +327,11 @@ describe('production fidelity (real host path)', () => {
       { type: 'session-end', reason: 'completed' },
     ]);
     const report = await runCase(
-      { id: 'clarify', prompt: 'delete the config', scorers: [askedClarifyingQuestion(), turnSucceeded()] },
+      {
+        id: 'clarify',
+        prompt: 'delete the config',
+        scorers: [askedClarifyingQuestion(), turnSucceeded()],
+      },
       opts(provider),
     );
     expect(report.passed).toBe(true);
@@ -324,7 +350,10 @@ describe('sampling, hashing, concurrency', () => {
 
   it('samples N times and passes when the rate meets minPassRate', async () => {
     const base = { id: 's', prompt: 'p', scorers: [finalTextContains('ok')] };
-    const lenient = await runCase({ ...base, samples: 3, minPassRate: 0.66 }, opts(alternatingProvider()));
+    const lenient = await runCase(
+      { ...base, samples: 3, minPassRate: 0.66 },
+      opts(alternatingProvider()),
+    );
     expect(lenient.samples).toBe(3);
     expect(lenient.passRate).toBeCloseTo(2 / 3, 5); // samples 1 & 3 pass
     expect(lenient.passed).toBe(true);

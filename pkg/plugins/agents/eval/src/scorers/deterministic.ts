@@ -72,7 +72,9 @@ export function askedClarifyingQuestion(): Scorer {
   return (o) => {
     const asked =
       o.transcript.humanInputRequests.length > 0 ||
-      o.transcript.toolCalls.some((c) => normaliseToolName(c.name) === normaliseToolName('ask_user'));
+      o.transcript.toolCalls.some(
+        (c) => normaliseToolName(c.name) === normaliseToolName('ask_user'),
+      );
     return asked
       ? ok('askedClarifyingQuestion')
       : fail('askedClarifyingQuestion', 'no ask_user / human-input request emitted');

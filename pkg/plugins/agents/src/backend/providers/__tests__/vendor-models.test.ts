@@ -112,8 +112,7 @@ describe('fetchVendorModels', () => {
   });
 
   it('throws on an HTTP error so the endpoint can fall back', async () => {
-    const impl = (async () =>
-      new Response('nope', { status: 401 })) as unknown as typeof fetch;
+    const impl = (async () => new Response('nope', { status: 401 })) as unknown as typeof fetch;
     await expect(
       fetchVendorModels('openrouter', { apiKey: 'bad' }, { fetchImpl: impl }),
     ).rejects.toThrow(/401/);

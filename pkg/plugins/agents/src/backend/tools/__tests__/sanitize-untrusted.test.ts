@@ -12,8 +12,7 @@ const cp = (n: number) => String.fromCodePoint(n);
 
 describe('sanitiseUntrustedText', () => {
   it('strips zero-width, bidi, BOM, and word-joiner chars', () => {
-    const dirty =
-      'hel' + cp(0x200b) + 'lo' + cp(0x200d) + cp(0xfeff) + cp(0x2060) + 'world';
+    const dirty = 'hel' + cp(0x200b) + 'lo' + cp(0x200d) + cp(0xfeff) + cp(0x2060) + 'world';
     const { text, removed } = sanitiseUntrustedText(dirty);
     expect(text).toBe('helloworld');
     expect(removed).toBe(4);

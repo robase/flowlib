@@ -83,7 +83,9 @@ app.listen(port, '0.0.0.0', () => {
     `  Database: ${flowlibConfig.database.type} (${flowlibConfig.database.connectionString})`,
   );
   console.log(`  Static:   ${staticDir}`);
-  console.log(`  Agent sandbox: ${process.env.AGENT_DOCKER_SANDBOX_IMAGE || '(disabled — pure chat)'}`);
+  console.log(
+    `  Agent sandbox: ${process.env.AGENT_DOCKER_SANDBOX_IMAGE || '(disabled — pure chat)'}`,
+  );
 });
 
 process.on('SIGINT', () => process.exit(0));

@@ -57,9 +57,7 @@ export class Transcript {
 
   /** Human-input requests (e.g. the `ask_user` tool blocking). */
   get humanInputRequests(): HumanInputRequestEvent[] {
-    return this.events.filter(
-      (e): e is HumanInputRequestEvent => e.type === 'human-input-request',
-    );
+    return this.events.filter((e): e is HumanInputRequestEvent => e.type === 'human-input-request');
   }
 
   /** Tool calls joined to their results by id, in call order. */

@@ -38,10 +38,7 @@ async function loadAiSdk(): Promise<{
   const aiPkg = 'ai';
   const anthropicPkg = '@ai-sdk/anthropic';
   try {
-    const [ai, anthropic] = await Promise.all([
-      import(aiPkg),
-      import(anthropicPkg),
-    ]);
+    const [ai, anthropic] = await Promise.all([import(aiPkg), import(anthropicPkg)]);
     return {
       streamText: ai.streamText as never,
       generateText: ai.generateText as never,
@@ -89,10 +86,12 @@ export async function createLiveProvider(
 }
 
 /** Build a {@link JudgeClient} backed by Anthropic (defaults to a cheap model). */
-export async function createAnthropicJudge(options: {
-  apiKey?: string;
-  model?: string;
-} = {}): Promise<JudgeClient> {
+export async function createAnthropicJudge(
+  options: {
+    apiKey?: string;
+    model?: string;
+  } = {},
+): Promise<JudgeClient> {
   const { generateText, createAnthropic } = await loadAiSdk();
   const apiKey = resolveKey(options.apiKey);
   const model = createAnthropic({ apiKey })(options.model ?? 'claude-sonnet-4-5');

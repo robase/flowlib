@@ -83,7 +83,12 @@ export function llmJudge(options: LlmJudgeOptions): Scorer {
 
     const verdict = parseVerdict(raw);
     if (!verdict) {
-      return { name, passed: false, score: 0, detail: `unparseable judge output: ${truncate(raw)}` };
+      return {
+        name,
+        passed: false,
+        score: 0,
+        detail: `unparseable judge output: ${truncate(raw)}`,
+      };
     }
     const clamped = Math.max(1, Math.min(5, verdict.score));
     return {

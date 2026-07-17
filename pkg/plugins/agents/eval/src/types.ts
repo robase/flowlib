@@ -122,10 +122,7 @@ export type Scorer = (outcome: RunOutcome, ctx: ScorerContext) => Score | Promis
  * default implementation wires Anthropic via the AI SDK; tests inject a
  * deterministic fake.
  */
-export type JudgeClient = (input: {
-  system: string;
-  prompt: string;
-}) => Promise<string>;
+export type JudgeClient = (input: { system: string; prompt: string }) => Promise<string>;
 
 /** Result of scoring one case. */
 export interface CaseReport {

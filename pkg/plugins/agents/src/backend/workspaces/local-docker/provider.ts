@@ -57,12 +57,7 @@ export function localDockerWorkspace(options: LocalDockerWorkspaceOptions): Work
 
   /** Re-attach to a running container, start a stopped one, or boot one. */
   async function ensureContainer(name: string): Promise<void> {
-    const inspect = await runDocker(dockerPath, [
-      'inspect',
-      '-f',
-      '{{.State.Running}}',
-      name,
-    ]);
+    const inspect = await runDocker(dockerPath, ['inspect', '-f', '{{.State.Running}}', name]);
     if (inspect.exitCode === 0) {
       if (inspect.stdout.trim() === 'true') {
         return; // already running

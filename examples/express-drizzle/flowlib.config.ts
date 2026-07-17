@@ -114,7 +114,9 @@ export const flowlibConfig = defineConfig({
         'http://localhost:5174',
         'http://localhost:3000',
         ...(process.env.FLOWLIB_TRUSTED_ORIGINS
-          ? process.env.FLOWLIB_TRUSTED_ORIGINS.split(',').map((o) => o.trim()).filter(Boolean)
+          ? process.env.FLOWLIB_TRUSTED_ORIGINS.split(',')
+              .map((o) => o.trim())
+              .filter(Boolean)
           : []),
       ],
       betterAuthOptions: {

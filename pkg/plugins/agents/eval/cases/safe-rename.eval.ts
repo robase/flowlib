@@ -25,8 +25,7 @@ export default defineEvalCase({
     'src/math.js':
       'function addNumbers(a, b) {\n  return a + b;\n}\nmodule.exports = { addNumbers };\n',
     'main.js':
-      "const { addNumbers } = require('./src/math');\n" +
-      'console.log(addNumbers(2, 3));\n',
+      "const { addNumbers } = require('./src/math');\n" + 'console.log(addNumbers(2, 3));\n',
   },
   timeoutMs: 180_000,
   scorers: [

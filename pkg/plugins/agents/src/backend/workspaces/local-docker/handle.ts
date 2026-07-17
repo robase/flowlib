@@ -93,7 +93,9 @@ export function createLocalDockerHandle(ctx: LocalDockerHandleContext): Workspac
         { input: content },
       );
       if (res.exitCode !== 0) {
-        throw new Error(`writeFile(${path}) failed: ${res.stderr.trim() || `exit ${res.exitCode}`}`);
+        throw new Error(
+          `writeFile(${path}) failed: ${res.stderr.trim() || `exit ${res.exitCode}`}`,
+        );
       }
     },
     async listFiles(glob: string): Promise<string[]> {
