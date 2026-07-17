@@ -1,45 +1,57 @@
 ---
 title: Execution Model
-description: How Flowlib flows run — edges, data passing, templates, iteration, and how it compares to tools like n8n.
+description: How Flowlib flows run — scheduling, data passing, templates, iteration, branching, and how it compares to tools like n8n.
 ---
 
-Flowlib takes a different approach to workflow execution than most automation tools. This page explains how data moves through a flow, how nodes talk to each other, and how iteration works.
+Flowlib takes a different approach to workflow execution than most automation tools. This page explains how a flow is scheduled, how data moves between nodes, and how iteration works.
 
 ## How a flow runs
 
-When you trigger a flow, Flowlib follows a simple sequence:
+When you trigger a flow, Flowlib follows this sequence:
 
 1. **Load the flow** — fetch the flow definition (nodes + edges) from the database
-2. **Sort the nodes** — use the edges to figure out which nodes depend on which, then line them up in order (topological sort)
-3. **Execute each node in order** — one at a time, top to bottom
-4. **Store the result** — save the full execution trace (every node's input, output, timing, and status)
+2. **Build the dependency graph** — use the edges to work out which nodes depend on which
+3. **Schedule nodes as they become ready** — a node is ready once every one of its parents has reached a terminal state (completed, failed, or skipped)
+4. **Store the result** — save the execution trace: every node's input, output, timing, and status
 
-Execution is **strictly sequential**. Node B won't start until Node A finishes. This keeps things predictable and easy to debug — you can always trace exactly what happened and in what order.
+### Scheduling and concurrency
+
+Flowlib uses a **ready-set scheduler**. Rather than walking the graph in a single fixed line, it repeatedly launches whichever nodes are ready, up to a concurrency limit (**8 by default**).
+
+The practical consequence: **independent branches run in parallel**. If a flow fans out from one node into three unrelated chains, those chains progress simultaneously. Ordering is guaranteed only where you have expressed it — through edges. Two nodes with no dependency path between them have no guaranteed order relative to one another.
+
+If you need strictly sequential behaviour, set the scheduler concurrency to `1`. Nodes then launch one at a time on the same code path.
 
 ## How edges work
 
 Edges are the connections between nodes on the canvas. They serve two purposes:
 
-1. **Execution order** — edges determine which nodes run before others
-2. **Data availability** — a node can only reference data from nodes that are upstream of it (connected via edges)
-
-Unlike some tools where data is automatically pushed forward, Flowlib uses a **pull-based** model. Each node explicitly chooses what upstream data to reference using template expressions. Just because Node A connects to Node B doesn't mean B automatically receives A's output — B's config params must reference A's data with a `{{ }}` expression.
+1. **Execution order** — a node waits until all of its parents have finished
+2. **Data availability** — a node's incoming data is assembled from its upstream nodes
 
 ### Direct parents vs. ancestors
 
-When a node runs, it has access to two categories of upstream data:
+When a node runs, its incoming data contains two categories of upstream output:
 
-- **Direct parents** — nodes with an edge directly into the current node. Their outputs appear as top-level keys.
-- **Indirect ancestors** — nodes further back in the chain (grandparent nodes, etc.). Their outputs are grouped under a `previous_nodes` key.
+- **Direct parents** — nodes with an edge directly into this node. Their outputs appear as top-level keys.
+- **Indirect ancestors** — nodes further back in the chain. Their outputs are grouped under a `previous_nodes` key.
 
-For example, if your flow is `Fetch User → Transform → Send Email`, when "Send Email" runs:
+For a flow of `Fetch User → Transform → Send Email`, when "Send Email" runs:
 
-- `transform` is a direct parent (top-level key)
-- `fetch_user` is an indirect ancestor (available under `previous_nodes.fetch_user`)
+- `transform` is a direct parent → available as `{{ transform }}`
+- `fetch_user` is an indirect ancestor → available as `{{ previous_nodes.fetch_user }}`
+
+<Callout type="info">
+  A **manual trigger** parent is the one exception: its declared inputs are spread flat into the top
+  level rather than nested under the trigger's own key. A trigger input named `topic` is referenced
+  as `{{ topic }}`, not `{{ trigger.topic }}`.
+</Callout>
 
 ## How data passes between nodes
 
-Every node produces an output when it runs. That output is stored and made available to downstream nodes as part of their **incoming data object** — a JSON object where each key is the upstream node's reference ID.
+Every node produces an output when it runs. That output is stored and made available to downstream nodes as part of their **incoming data object** — a JSON object keyed by each upstream node's reference ID.
+
+This object is assembled for every node before it runs, whether or not that node's configuration mentions any of it. What is opt-in is **use**, not availability: template expressions read from this object, and a node that references nothing still receives it in full.
 
 ### Reference IDs
 
@@ -49,11 +61,11 @@ Each node has a reference ID derived from its label, normalized to `snake_case`:
 - "Send Email" → `send_email`
 - "API Response" → `api_response`
 
-These reference IDs become the keys in the incoming data object. If two upstream nodes would produce the same key, Flowlib appends numbers to avoid collisions (`some_node`, `some_node1`).
+These become the keys in the incoming data object. When a new node would collide with an existing reference ID, the editor appends a counter starting at 2 (`some_node`, `some_node2`).
 
 ### Example
 
-Imagine a node called "Send Email" with two upstream nodes:
+A node called "Send Email" with two upstream nodes receives:
 
 ```json
 {
@@ -62,7 +74,7 @@ Imagine a node called "Send Email" with two upstream nodes:
 }
 ```
 
-The "Send Email" node can now reference `{{ fetch_user.email }}` or `{{ generate_subject }}` in its config.
+"Send Email" can now reference `{{ fetch_user.email }}` or `{{ generate_subject }}` in its config.
 
 ## Template expressions
 
@@ -85,102 +97,140 @@ Node config fields support JavaScript expressions wrapped in double curly braces
 | Pure expression | A field set to `{{ fetch_user }}`         | The raw value (object, array, number)  |
 | Mixed template  | `"Hello {{ fetch_user.name }}, welcome!"` | A string with expressions interpolated |
 
-If the entire field is a single `{{ }}` block, you get back the raw JavaScript value (an object, array, or number). If the field mixes text with expressions, the result is always a string.
+If the entire field is a single `{{ }}` block, you get back the raw JavaScript value. If the field mixes text with expressions, the result is always a string.
 
-Expressions run in a sandboxed JavaScript environment (QuickJS via WebAssembly), so they're safe and isolated. Built-in helpers like `json()`, `first()`, `last()`, `keys()`, `values()`, and `exists()` are available.
+Expressions run in a sandboxed JavaScript environment (QuickJS via WebAssembly), isolated from the host. An expression is treated as a function body, so `return` is supported. Async expressions are rejected, and evaluation is bounded by memory and time limits.
+
+Built-in helpers: `json()`, `first()`, `last()`, `keys()`, `values()`, `exists()`, `isArray()`, `isObject()`. The full context object is also available as `$input`, which is useful when an upstream reference ID collides with a JavaScript global.
+
+<Callout type="warn">
+  The two modes handle failure differently. A failing **pure expression** fails the node. A failing
+  expression inside a **mixed template** resolves to an empty string and the node continues. If a
+  templated string arrives with a suspicious gap in it, this is usually why.
+</Callout>
 
 ## Iteration and the data mapper
 
-Most automation tools (like n8n) pass arrays of "items" through the entire workflow, processing each item individually at every node. Flowlib works differently.
+Most automation tools (like n8n) pass arrays of "items" through the entire workflow, processing each item at every node. Flowlib works differently.
 
-In Flowlib, **nodes process single values by default**. If a node returns an array, the downstream node receives that array as one value. There's no automatic item-by-item processing.
+In Flowlib, **nodes process single values by default**. If a node returns an array, the downstream node receives that array as one value. There is no automatic item-by-item processing.
 
-When you **do** need iteration, you enable the **data mapper** on a specific node. The mapper is a per-node configuration that says: "take this array, and run this node once for each item."
+When you **do** need iteration, enable the **data mapper** on a specific node: take this array, and run this node once per item.
 
-### How the mapper works
+### Mapper configuration
 
-Any node can have a mapper configuration with:
+| Option        | Values                                                 | Notes                                                       |
+| ------------- | ------------------------------------------------------ | ----------------------------------------------------------- |
+| `expression`  | A JS expression resolving to the array                 | e.g. `{{ fetch_users }}`                                    |
+| `mode`        | `auto` (default), `iterate`, `reshape`                 | See below                                                   |
+| `outputMode`  | `array` (default), `object`, `first`, `last`, `concat` | How results are packaged                                    |
+| `keyField`    | A field path                                           | Only for `outputMode: object` — which field becomes the key |
+| `concurrency` | 1 (default) to 50                                      | Parallel iterations                                         |
+| `onEmpty`     | `skip`, `error`                                        | Behaviour when the expression yields an empty array         |
 
-- **Expression** — a JavaScript expression that resolves to the array you want to iterate over (e.g., `{{ fetch_users }}`)
-- **Mode** — how to handle the result:
-  - `auto` (default) — if the expression returns an array, iterate; otherwise run once
-  - `iterate` — always iterate (fails if expression doesn't return an array)
-  - `reshape` — always run once, even if the expression returns an array
-- **Concurrency** — how many iterations to run in parallel (default: 1, sequential)
-- **Output mode** — how to package the results (`array`, `object`, `flatten`, `concat`)
+**Modes:**
+
+- `auto` — iterate if the expression returns an array, otherwise run once
+- `iterate` — always iterate; **fails the node** if the expression does not return an array
+- `reshape` — always a single run; if the expression returns an array it is wrapped as `{ items: [...] }`
 
 ### Iteration context
 
-During each iteration, the node receives:
+During each iteration, the node receives all the usual upstream data, plus the current item's properties spread into the context, plus an `_item` object with `index`, `total`, `first`, `last`, `iteration`, and the raw `value`.
 
-- All upstream data (same as usual)
-- The current item's properties (spread into the context)
-- An `_item` metadata object with `index`, `total`, `first`, `last`, and the raw `value`
-
-So if you're iterating over a list of users, each iteration can reference `{{ name }}` and `{{ email }}` directly, plus `{{ _item.index }}` for the position.
+Iterating over a list of users, each iteration can reference `{{ name }}` and `{{ email }}` directly, plus `{{ _item.index }}` for position.
 
 ### Concurrency
 
-With `concurrency: 1` (default), items process one at a time. Set it higher to process items in parallel batches — `concurrency: 5` runs 5 items simultaneously before moving to the next batch.
-
-## How Flowlib differs from n8n
-
-If you're coming from n8n, the biggest conceptual difference is how data flows between nodes.
-
-### n8n: items flow through the whole pipeline
-
-In n8n, every node receives an array of **items**. Each item is a JSON object, and most nodes automatically process every item in the array. The items array is the central data structure that flows through the entire workflow.
-
-- If a node produces 10 items, the next node runs 10 times automatically
-- To stop automatic iteration, you need a specific "loop" or "batch" node
-- All nodes in the chain see and operate on the same items array
-
-### Flowlib: nodes produce values, downstream nodes reference them
-
-In Flowlib, each node produces a **single output value** (which can be an object, array, string, or number). Downstream nodes explicitly choose what to reference using template expressions.
-
-- A node that returns an array of 10 users passes that array as **one value**
-- The next node decides what to do with it — use the whole array, pick one field, or enable the mapper to iterate
-- Iteration is opt-in, per-node, not a workflow-wide behavior
-
-### Key differences at a glance
-
-|                        | n8n                                         | Flowlib                                              |
-| ---------------------- | ------------------------------------------- | ---------------------------------------------------- |
-| **Core data model**    | Array of items flows through every node     | Each node produces a single output value             |
-| **Iteration**          | Automatic — every node processes every item | Opt-in — enable the mapper on specific nodes         |
-| **Data referencing**   | Implicit — items array is always available  | Explicit — use `{{ node_name.field }}` templates     |
-| **Loop control**       | Dedicated loop node wraps a sub-workflow    | Mapper config on any node (expression + concurrency) |
-| **Parallelism**        | Mainly at workflow level                    | Per-node — mapper supports concurrent iteration      |
-| **Scope of iteration** | Affects the entire downstream chain         | Affects only the node with the mapper enabled        |
-
-The Flowlib approach gives you more control. You decide exactly which node iterates, how many items run in parallel, and how results are packaged. The tradeoff is that you need to be more explicit about data references — but this also makes flows easier to reason about since there's no hidden implicit data passing.
+With `concurrency: 1` (the default), items process one at a time. Higher values process items in parallel batches. This is **separate** from the flow-level scheduler concurrency: the mapper controls parallelism *within* a single node.
 
 ## Branching
 
 ### If/Else
 
-The If/Else node evaluates a condition and routes execution to one of two branches (true or false). Nodes on the inactive branch are automatically marked as **skipped**.
+The If/Else node evaluates a condition and routes execution to one of two branches. Nodes on the inactive branch are marked **skipped**.
 
-The If/Else node is a **passthrough** — its output equals its input. It doesn't transform data, it just decides which path to take.
+If/Else is a **passthrough** — its output equals its input. It does not transform data; it decides which path runs.
 
 ### Switch
 
-The Switch node extends this to multiple branches. You define cases with JavaScript expressions, and execution routes to the first matching case (or all matching cases, depending on the match mode). A default branch catches anything that doesn't match.
+Switch extends this to multiple branches. You define cases with JavaScript expressions, and execution routes to the matching case. A default branch catches anything unmatched.
 
 ### How skipping works
 
-When a branching node runs, Flowlib looks at which output branches are active and which are inactive. Nodes connected to inactive branches are marked as skipped — but only if **all** of their incoming edges come from skipped or inactive branches. If a node has another active path leading into it, it still runs.
+When a branching node runs, nodes connected to inactive branches are marked skipped — but only if **all** of their incoming edges come from skipped or inactive sources. A node with another live path into it still runs.
+
+## Triggers
+
+A flow can contain multiple trigger nodes — manual, cron, or webhook. When a run starts from one specific trigger, **every other trigger node and its downstream branch is skipped** before execution begins. A manual run that indicates no active trigger runs all of them.
 
 ## Agent nodes
 
-Agent nodes work differently from standard nodes. Instead of running once and producing an output, they run an iterative loop:
+Agent nodes run an iterative loop rather than executing once:
 
-1. Send a prompt to an LLM (OpenAI, Anthropic, etc.) along with available tool definitions
-2. If the LLM requests tool calls, execute those tools and feed the results back
-3. Repeat until the LLM responds with text, calls a stop tool, or hits the iteration limit
+1. Send a prompt to an LLM along with the available tool definitions
+2. If the LLM requests tool calls, execute them and feed the results back
+3. Repeat until the stop condition is met
 4. The agent's final response becomes the node's output
+
+Stop conditions are `explicit_stop` (default), `tool_result`, or `max_iterations`, and the iteration ceiling defaults to 10. Agent nodes also retry transient errors internally (3 attempts by default) — the only retry behaviour in the system.
+
+## Failure, pausing, and cancellation
+
+**Failure is a hard stop.** When a node fails, the scheduler stops launching new nodes and the run is marked failed; in-flight nodes are allowed to settle. There is no per-node continue-on-fail and no error-output branch — a failure ends the run.
+
+**Runs can pause for batch work.** A node that submits a batch job returns a pending state, and the run parks in `PAUSED_FOR_BATCH` rather than blocking. A later resume picks it up and continues from where it stopped. This is what allows long-running provider batch APIs to work without holding a process open.
+
+**Runs can be cancelled.** Cancellation propagates to in-flight nodes through an abort signal, and the scheduler stops launching new work.
 
 ## State and execution traces
 
-Every flow run produces a complete execution trace. Each node's record includes its input data, resolved config params, output, status (completed/failed/skipped), any error messages, and timing. This trace is persisted to the database and visible in the UI, making it straightforward to debug issues or understand what happened during a run.
+Every node execution produces a trace record: its incoming data, output, status (completed / failed / skipped), any error message, and timing. Traces are visible in the UI and are the primary debugging tool.
+
+Two persistence strategies are available:
+
+- **`per-node`** (default) — each trace is written as the node completes, giving live progress in the UI
+- **`per-run`** — traces are buffered in memory and flushed once at the end, trading in-progress visibility for far fewer database writes
+
+<Callout type="info">
+  A node's **resolved config params** — the post-template values the node actually ran with — are
+  passed to the action and to plugin hooks, but are not written to the trace. The trace records what
+  went *into* the node, not what its parameters resolved to.
+</Callout>
+
+## Plugin hooks
+
+Plugins can intervene at several points in the lifecycle: cancelling a run before it starts, overriding flow inputs, mutating a node's resolved params, skipping a node, and rewriting a node's output. This is the extension point hosted deployments use for quota enforcement and usage metering.
+
+## How Flowlib differs from n8n
+
+If you are coming from n8n, the biggest conceptual difference is how data flows between nodes.
+
+### n8n: items flow through the whole pipeline
+
+In n8n, every node receives an array of **items**, and most nodes automatically process every item. The items array is the central data structure flowing through the workflow.
+
+- If a node produces 10 items, the next node runs 10 times automatically
+- Stopping automatic iteration requires a specific loop or batch node
+- All nodes in the chain see and operate on the same items array
+
+### Flowlib: nodes produce values, downstream nodes reference them
+
+In Flowlib, each node produces a **single output value**, which may be an object, array, string, or number. Downstream nodes choose what to reference using template expressions.
+
+- A node returning an array of 10 users passes that array as **one value**
+- The next node decides what to do with it — use the whole array, pick a field, or enable the mapper to iterate
+- Iteration is opt-in and per-node, not a workflow-wide behaviour
+
+### Key differences at a glance
+
+|                        | n8n                                         | Flowlib                                                                               |
+| ---------------------- | ------------------------------------------- | ------------------------------------------------------------------------------------- |
+| **Core data model**    | Array of items flows through every node     | Each node produces a single output value                                              |
+| **Iteration**          | Automatic — every node processes every item | Opt-in — enable the mapper on specific nodes                                          |
+| **Data referencing**   | Implicit — items array is always available  | Explicit — use `{{ node_name.field }}` templates                                      |
+| **Loop control**       | Dedicated loop node wraps a sub-workflow    | Mapper config on any node (expression + concurrency)                                  |
+| **Parallelism**        | Mainly at workflow level                    | Both — independent branches run concurrently, and the mapper adds per-node parallelism |
+| **Scope of iteration** | Affects the entire downstream chain         | Affects only the node with the mapper enabled                                         |
+
+The Flowlib approach gives you more control: you decide which node iterates, how many items run in parallel, and how results are packaged. The tradeoff is that you must be explicit about data references — which also makes flows easier to reason about, since there is no hidden implicit passing.
