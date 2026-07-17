@@ -300,12 +300,15 @@ When a node executes (or when viewing its config panel), its **input data** is a
 
 - **Keys**: upstream node's `referenceId` (or label normalized to `snake_case`)
 - **Values**: each upstream node's output (JSON-parsed if valid, otherwise raw string)
-- **Collision handling**: if two nodes produce the same key, incrementing numbers are appended (`some_a`, `some_a1`)
+- **Direct parents** are top-level keys; **indirect ancestors** are grouped under `previous_nodes`
+- **Collision handling**: the editor appends a counter starting at 2 (`some_a`, `some_a2`). Done UI-side at node creation — core's `generateNodeSlug` has no collision handling
+- **`trigger.manual` is spread flat** into the top level rather than keyed by its slug, so declared inputs read as `{{ topic }}`
 
 ```json
 {
   "fetch_user": { "id": 123, "name": "Alice" },
-  "get_config": "production"
+  "get_config": "production",
+  "previous_nodes": { "init": "ok" }
 }
 ```
 
@@ -326,23 +329,37 @@ Config params resolve as either:
 
 #### Execution flow
 
+**Nodes execute in parallel, not sequentially.** A ready-set `Scheduler` launches up to **8 nodes concurrently** (`flow-orchestration/scheduler.ts`); a node becomes ready once all its parents are terminal (SUCCESS or SKIPPED). Independent branches progress simultaneously. Ordering is guaranteed *only* through edges.
+
 ```
 executeFlow(flowId, inputs)
   ├── FlowsService.getFlowById()
   ├── FlowOrchestrationService.initiateFlowRun()
   │   ├── FlowRunsService.createFlowRun()
-  │   ├── GraphService.topologicalSort()
-  │   ├── For each node in order:
-  │   │   ├── buildIncomingDataObject()
-  │   │   ├── resolveTemplateParams()
-  │   │   ├── executeNode()
-  │   │   │   ├── NodeExecutionService.createNodeExecution()
-  │   │   │   ├── action registry → executeActionAsNode()
-  │   │   │   └── NodeExecutionService.updateNodeExecutionStatus()
-  │   │   └── Store output for downstream nodes
-  │   └── markExecutionSuccess / Failed()
+  │   └── FlowRunCoordinator.executeFlowDefinition()
+  │       ├── applyTriggerSkip()          # pre-skip inactive trigger branches
+  │       └── runSchedulerLoop()          # new Scheduler per run-segment
+  │           └── while ready nodes && inFlight < concurrency:
+  │               ├── buildIncomingDataObject()      # referenceId-keyed
+  │               ├── resolveTemplateParams()        # {{ }} via QuickJS
+  │               ├── NodeExecutionCoordinator.executeNode()
+  │               │   ├── NodeExecutionService.createNodeExecution()   # trace BEFORE dispatch
+  │               │   ├── hook beforeNodeExecute  → may skip / rewrite params
+  │               │   ├── action registry → executeActionAsNode()
+  │               │   ├── hook afterNodeExecute   → may rewrite output
+  │               │   └── NodeExecutionService.updateNodeExecutionStatus()
+  │               └── onNodeSuccess → handleBranchSkipping()  # mutates shared skip set
+  │       └── markExecutionSuccess / Failed()
   └── Return FlowRunResult
 ```
+
+`GraphService.topologicalSort()` still exists but on the live path its result is **only used for a debug log** — do not infer runtime order from it.
+
+**Concurrency is not configurable.** `parallelSchedulerEnabled` / `schedulerConcurrency` exist on `FlowRunCoordinatorDeps` but nothing passes them; the scheduler is always on at 8.
+
+**Failure is a hard stop** — `failureMode: 'stop'` is hardcoded. No continue-on-fail, no error branch, no orchestrator-level retry (only `core.agent` retries internally).
+
+For the full picture before changing the orchestrator, read [docs-internal/flow-execution.md](./docs-internal/flow-execution.md) — especially the shared-mutable-state contract between the coordinator and the scheduler.
 
 #### Flow control nodes
 

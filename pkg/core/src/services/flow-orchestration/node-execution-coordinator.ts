@@ -907,7 +907,7 @@ export class NodeExecutionCoordinator {
     useBatchProcessing: boolean | undefined,
     incomingData: NodeIncomingDataObject,
     mapperConfig: MapperConfig,
-    _abortSignal?: AbortSignal,
+    abortSignal?: AbortSignal,
   ): Promise<NodeExecution> {
     const { logger, nodeExecutionService } = this.deps;
     const jsService = this.deps.jsExpressionService;
@@ -989,6 +989,7 @@ export class NodeExecutionCoordinator {
         incomingData,
         mappedResult as unknown[],
         mapperConfig,
+        abortSignal,
       );
     }
 
@@ -1011,12 +1012,20 @@ export class NodeExecutionCoordinator {
       skippedNodeIds,
       useBatchProcessing,
       mappedData,
+      abortSignal,
     );
   }
 
   /**
    * Execute a node repeatedly — once per item from the mapper array result.
    * Handles concurrency, empty array behavior, and result packaging.
+   *
+   * Cancellation: `abortSignal` is checked before each item (sequential) or
+   * each window (parallel), so a cancelled run stops launching new iterations
+   * rather than grinding through the whole array. The signal is also passed
+   * down to each iteration so in-flight actions can abort themselves. A run
+   * cancelled mid-iteration fails the parent trace with a count of how far it
+   * got.
    */
   private async executeNodeMapperIterating(
     flowRunId: string,
@@ -1029,6 +1038,7 @@ export class NodeExecutionCoordinator {
     incomingData: NodeIncomingDataObject,
     items: unknown[],
     mapperConfig: MapperConfig,
+    abortSignal?: AbortSignal,
   ): Promise<NodeExecution> {
     const { logger, nodeExecutionService } = this.deps;
 
@@ -1077,10 +1087,18 @@ export class NodeExecutionCoordinator {
       const concurrency = mapperConfig.concurrency ?? 1;
       let hasFailure = false;
       let failureError: unknown;
+      let cancelled = false;
 
       if (concurrency === 1) {
         // Sequential — stop on first failure
         for (let i = 0; i < items.length; i++) {
+          // Stop launching new iterations once the run is cancelled. The
+          // in-flight iteration receives the same signal and settles on its
+          // own; we just don't start any more.
+          if (abortSignal?.aborted) {
+            cancelled = true;
+            break;
+          }
           const itemContext = this.buildMapperItemContext(items[i], i, items.length, incomingData);
           const result = await this.executeSingleMapperIteration(
             flowRunId,
@@ -1091,12 +1109,17 @@ export class NodeExecutionCoordinator {
             skippedNodeIds,
             useBatchProcessing,
             itemContext,
+            abortSignal,
           );
           results.push(result);
         }
       } else {
         // Parallel with concurrency limit
         for (let start = 0; start < items.length; start += concurrency) {
+          if (abortSignal?.aborted) {
+            cancelled = true;
+            break;
+          }
           const batch = items.slice(start, start + concurrency);
           const batchResults = await Promise.allSettled(
             batch.map((item, batchIdx) => {
@@ -1116,6 +1139,7 @@ export class NodeExecutionCoordinator {
                 skippedNodeIds,
                 useBatchProcessing,
                 itemContext,
+                abortSignal,
               );
             }),
           );
@@ -1132,6 +1156,26 @@ export class NodeExecutionCoordinator {
             break;
           }
         }
+      }
+
+      if (cancelled) {
+        const reason =
+          abortSignal?.reason instanceof Error
+            ? abortSignal.reason.message
+            : String(abortSignal?.reason ?? 'run cancelled');
+        logger.info('Mapper iteration cancelled', {
+          flowRunId,
+          nodeId: node.id,
+          completedIterations: results.length,
+          totalItems: items.length,
+        });
+        return await nodeExecutionService.updateNodeExecutionStatus(
+          trace.id,
+          NodeExecutionStatus.FAILED,
+          {
+            error: `Mapper iteration cancelled after ${results.length}/${items.length} items: ${reason}`,
+          },
+        );
       }
 
       if (hasFailure) {
@@ -1191,6 +1235,7 @@ export class NodeExecutionCoordinator {
     skippedNodeIds: Set<string> | undefined,
     useBatchProcessing: boolean | undefined,
     itemContext: NodeIncomingDataObject,
+    abortSignal?: AbortSignal,
   ): Promise<unknown> {
     // Execute the node with the item context as incomingData
     // This means {{ }} expressions in config params resolve against the item
@@ -1203,6 +1248,7 @@ export class NodeExecutionCoordinator {
       skippedNodeIds,
       useBatchProcessing,
       itemContext,
+      abortSignal,
     );
 
     // Extract the output value from the trace

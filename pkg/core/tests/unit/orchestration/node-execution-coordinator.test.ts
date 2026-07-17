@@ -386,3 +386,154 @@ describe('NodeExecutionCoordinator.resolveTemplateParams', () => {
     );
   });
 });
+
+// ---------------------------------------------------------------------------
+// Mapper iteration — cancellation
+//
+// Regression: executeNodeWithMapper used to accept `_abortSignal` and drop it,
+// so a cancelled run ground through every remaining item and could not
+// interrupt an in-flight iteration.
+// ---------------------------------------------------------------------------
+
+describe('NodeExecutionCoordinator mapper iteration — cancellation', () => {
+  interface TraceStub {
+    id: string;
+    status?: string;
+    error?: string;
+  }
+
+  function makeMapperCoordinator(): {
+    coordinator: NodeExecutionCoordinator;
+    trace: TraceStub;
+    updateStatus: ReturnType<typeof vi.fn>;
+  } {
+    const trace: TraceStub = { id: 'trace-1' };
+    const updateStatus = vi.fn((_id: string, status: string, patch?: { error?: string }) => {
+      trace.status = status;
+      trace.error = patch?.error;
+      return Promise.resolve(trace);
+    });
+    const nodeExecutionService = {
+      createNodeExecution: vi.fn().mockResolvedValue(trace),
+      updateNodeExecutionStatus: updateStatus,
+    };
+    const coordinator = new NodeExecutionCoordinator({
+      logger: mockLogger,
+      nodeExecutionService: nodeExecutionService as never,
+      nodeDataService: {} as never,
+      graphService: {} as never,
+      baseAIClient: {} as never,
+    });
+    return { coordinator, trace, updateStatus };
+  }
+
+  /** Invoke the private iterating method with a stubbed per-item executor. */
+  async function runIterating(
+    coordinator: NodeExecutionCoordinator,
+    items: unknown[],
+    mapperConfig: Record<string, unknown>,
+    signal: AbortSignal,
+    onItem: () => void = () => {},
+  ): Promise<{ iterations: number }> {
+    let iterations = 0;
+    // Replace the per-item executor: we're testing the loop, not node dispatch.
+    (
+      coordinator as unknown as { executeSingleMapperIteration: (...a: unknown[]) => Promise<unknown> }
+    ).executeSingleMapperIteration = async () => {
+      iterations++;
+      onItem();
+      return 'ok';
+    };
+    await (
+      coordinator as unknown as {
+        executeNodeMapperIterating: (...a: unknown[]) => Promise<unknown>;
+      }
+    ).executeNodeMapperIterating(
+      'run-1',
+      node('n1'),
+      {},
+      {},
+      undefined,
+      undefined,
+      undefined,
+      {},
+      items,
+      mapperConfig,
+      signal,
+    );
+    return { iterations };
+  }
+
+  it('runs no iterations when the signal is already aborted', async () => {
+    const { coordinator, trace } = makeMapperCoordinator();
+    const ctrl = new AbortController();
+    ctrl.abort(new Error('cancelled by user'));
+
+    const { iterations } = await runIterating(coordinator, [1, 2, 3], { expression: 'x' }, ctrl.signal);
+
+    expect(iterations).toBe(0);
+    expect(trace.status).toBe('FAILED');
+    expect(trace.error).toContain('cancelled');
+    expect(trace.error).toContain('cancelled by user');
+  });
+
+  it('stops launching new sequential iterations once aborted mid-run', async () => {
+    const { coordinator, trace } = makeMapperCoordinator();
+    const ctrl = new AbortController();
+
+    // Abort partway through the array.
+    let seen = 0;
+    const { iterations } = await runIterating(
+      coordinator,
+      [1, 2, 3, 4, 5, 6],
+      { expression: 'x', concurrency: 1 },
+      ctrl.signal,
+      () => {
+        seen++;
+        if (seen === 2) ctrl.abort(new Error('cancelled by user'));
+      },
+    );
+
+    // Two ran; the abort stops the rest rather than grinding through all six.
+    expect(iterations).toBe(2);
+    expect(trace.status).toBe('FAILED');
+    expect(trace.error).toContain('2/6');
+  });
+
+  it('stops launching new parallel windows once aborted', async () => {
+    const { coordinator, trace } = makeMapperCoordinator();
+    const ctrl = new AbortController();
+
+    let seen = 0;
+    const { iterations } = await runIterating(
+      coordinator,
+      [1, 2, 3, 4, 5, 6],
+      { expression: 'x', concurrency: 2 },
+      ctrl.signal,
+      () => {
+        seen++;
+        if (seen === 2) ctrl.abort(new Error('cancelled by user'));
+      },
+    );
+
+    // The first window of 2 completes; the next window is never launched.
+    expect(iterations).toBe(2);
+    expect(trace.status).toBe('FAILED');
+    expect(trace.error).toContain('2/6');
+  });
+
+  it('runs every item to completion when never aborted', async () => {
+    const { coordinator, trace } = makeMapperCoordinator();
+    const ctrl = new AbortController();
+
+    const { iterations } = await runIterating(
+      coordinator,
+      [1, 2, 3, 4],
+      { expression: 'x', concurrency: 1 },
+      ctrl.signal,
+    );
+
+    expect(iterations).toBe(4);
+    expect(trace.status).toBe('SUCCESS');
+  });
+});

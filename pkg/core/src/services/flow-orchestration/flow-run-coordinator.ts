@@ -33,17 +33,13 @@ type FlowRunCoordinatorDeps = {
   /** Plugin hook runner for lifecycle hooks (optional for backward compat). */
   pluginHookRunner?: PluginHookRunner;
   /**
-   * When `false`, falls back to the legacy sequential topological loop instead
-   * of the ready-set scheduler. Defaults to `true` (parallel scheduler on).
-   * Self-hosted users who previously set `FLOWLIB_PARALLEL_SCHEDULER=0` should
-   * pass `parallelSchedulerEnabled: false` instead — core no longer reads env.
-   */
-  parallelSchedulerEnabled?: boolean;
-  /**
    * Maximum number of nodes to run concurrently inside the ready-set
-   * scheduler. Defaults to 8. Self-hosted users who previously set
-   * `FLOWLIB_SCHEDULER_CONCURRENCY=N` should pass `schedulerConcurrency: N`
-   * instead — core no longer reads env.
+   * scheduler. Defaults to 8. `1` ≡ sequential.
+   *
+   * NOTE: nothing in core passes this today — `ServiceFactory` constructs the
+   * coordinator without it, so the effective concurrency is always the default.
+   * It remains a constructor knob for hosts that build the coordinator
+   * directly. Wire it through `FlowlibConfig` if it needs to be user-facing.
    */
   schedulerConcurrency?: number;
 };
@@ -158,17 +154,10 @@ export class FlowRunCoordinator {
   }
 
   /**
-   * Node execution uses the ready-set scheduler by default (sibling nodes
-   * run concurrently). Set `parallelSchedulerEnabled: false` on the
-   * coordinator deps to fall back to the legacy sequential topological loop —
-   * kept as an emergency escape hatch but slated for removal. For a milder
-   * rollback, set `schedulerConcurrency: 1` to keep the scheduler code path
-   * but launch nodes one at a time.
+   * Max nodes in flight inside the ready-set scheduler. `1` ≡ sequential.
+   * See `schedulerConcurrency` on the deps for why this is effectively
+   * always the default today.
    */
-  private isParallelEnabled(): boolean {
-    return this.deps.parallelSchedulerEnabled !== false;
-  }
-
   private getConcurrency(): number {
     const n = this.deps.schedulerConcurrency;
     if (typeof n === 'number' && Number.isFinite(n) && n >= 1) {
@@ -305,7 +294,7 @@ export class FlowRunCoordinator {
   ): Promise<FlowRunResult> {
     // Allow plugins to mutate inputs via hooks
     let mutableFlowInputs = flowInputs;
-    const { logger, nodeExecutionCoordinator } = this.deps;
+    const { logger } = this.deps;
 
     logger.debug('Executing flow definition', { flowRunId: execution.id });
 
@@ -352,10 +341,15 @@ export class FlowRunCoordinator {
     }
 
     const { nodes, edges } = definition;
-    const nodeMap = new Map(nodes.map((node) => [node.id, node]));
+    // CYCLE GUARD — do not remove. The scheduler is readiness-based and has no
+    // cycle detection of its own: nodes in a cycle simply never become ready,
+    // so the run would finish and report SUCCESS with those nodes silently
+    // unexecuted. `topologicalSort` throws on cycles, which is the only thing
+    // turning that into a visible error. The returned order is otherwise
+    // informational — the scheduler does not execute in this order.
     const executionOrder = GraphService.topologicalSort(nodes, edges);
 
-    logger.debug('Flow execution order determined', {
+    logger.debug('Flow topological order (informational — scheduler runs by readiness)', {
       flowRunId: execution.id,
       nodeCount: nodes.length,
       order: executionOrder,
@@ -366,173 +360,31 @@ export class FlowRunCoordinator {
     const skippedNodeIds = new Set<string>();
     const batchPendingNodeIds = new Set<string>();
     let hasFailure = false;
-    let hasBatchSubmission = false;
     let failedNodeError: string | undefined;
     let failedNodeId: string | undefined;
 
-    // ── Ready-set scheduler path (FLOWLIB_PARALLEL_SCHEDULER=1) ────────────
-    if (this.isParallelEnabled()) {
-      this.applyTriggerSkip(nodes, edges, skippedNodeIds, mutableFlowInputs);
-      const result = await this.runSchedulerLoop({
-        flowRunId: execution.id,
-        definition,
-        schedulableNodes: nodes,
-        flowInputs: mutableFlowInputs,
-        useBatchProcessing,
-        nodeOutputs,
-        skippedNodeIds,
-      });
-      nodeExecutions.push(...result.traces);
-      for (const id of result.batchPendingNodeIds) {
-        batchPendingNodeIds.add(id);
-      }
-      if (result.paused) {
-        await this.pauseFlowForBatch(execution.id);
-        return this.buildPausedFlowResult(execution.id, nodeExecutions);
-      }
-      if (result.failure) {
-        hasFailure = true;
-        failedNodeError = result.failure.error;
-        failedNodeId = result.failure.nodeId;
-      }
-    } else {
-      for (const nodeId of executionOrder) {
-        if (hasFailure || hasBatchSubmission) {
-          break;
-        }
-
-        const node = nodeMap.get(nodeId);
-        if (!node) {
-          logger.warn('Node not found in definition', { flowRunId: execution.id, nodeId });
-          continue;
-        }
-
-        if (skippedNodeIds.has(nodeId)) {
-          logger.debug('Skipping node execution due to conditional branching', {
-            flowRunId: execution.id,
-            nodeId,
-            nodeType: node.type,
-          });
-          continue;
-        }
-
-        // D2: Skip inactive trigger nodes — when a flow is triggered by a specific
-        // trigger node (webhook/cron), skip all other trigger nodes and their branches.
-        // When activeTriggerNodeId is absent (manual run), all trigger nodes execute.
-        const isTriggerNode = node.type.startsWith('trigger.');
-        const activeTriggerNodeId = (mutableFlowInputs as Record<string, unknown>)
-          .__triggerNodeId as string | undefined;
-
-        if (isTriggerNode && activeTriggerNodeId && node.id !== activeTriggerNodeId) {
-          skippedNodeIds.add(nodeId);
-          this.deps.graphService.markDownstreamNodesAsSkipped(nodeId, edges, skippedNodeIds);
-          logger.debug('Skipping inactive trigger node and its branch', {
-            flowRunId: execution.id,
-            nodeId,
-            nodeType: node.type,
-            activeTriggerNodeId,
-          });
-          continue;
-        }
-
-        const incomingEdges = edges.filter((edge) => edge.target === nodeId);
-        const hasBatchPendingDependencies = incomingEdges.some((edge) =>
-          batchPendingNodeIds.has(edge.source),
-        );
-
-        if (hasBatchPendingDependencies) {
-          logger.debug('Skipping node execution due to batch-pending dependencies', {
-            flowRunId: execution.id,
-            nodeId,
-            nodeType: node.type,
-            batchPendingDependencies: incomingEdges
-              .filter((edge) => batchPendingNodeIds.has(edge.source))
-              .map((e) => e.source),
-          });
-          continue;
-        }
-
-        logger.debug('Node execution check', {
-          flowRunId: execution.id,
-          nodeId,
-          nodeType: node.type,
-          isSkipped: skippedNodeIds.has(nodeId),
-          skippedNodeIds: Array.from(skippedNodeIds),
-          skippedNodeCount: skippedNodeIds.size,
-          batchPendingNodeIds: Array.from(batchPendingNodeIds),
-        });
-
-        try {
-          const nodeInputs = nodeExecutionCoordinator.prepareNodeInputs(
-            node,
-            nodeOutputs,
-            edges,
-            nodeMap,
-          );
-
-          // Build incoming data object for template resolution
-          const incomingData = nodeExecutionCoordinator.buildIncomingDataObject(
-            node,
-            nodeOutputs,
-            edges,
-            nodeMap,
-          );
-
-          const trace = await nodeExecutionCoordinator.executeNode(
-            execution.id,
-            node,
-            nodeInputs,
-            mutableFlowInputs,
-            definition,
-            skippedNodeIds,
-            useBatchProcessing,
-            incomingData,
-            this.getRunAbortSignal(execution.id),
-          );
-          nodeExecutions.push(trace);
-
-          if (trace.status === NodeExecutionStatus.BATCH_SUBMITTED) {
-            logger.debug('Batch submission detected - pausing flow', {
-              flowRunId: execution.id,
-              nodeId: trace.nodeId,
-            });
-
-            batchPendingNodeIds.add(nodeId);
-            hasBatchSubmission = true;
-
-            await this.pauseFlowForBatch(execution.id);
-            return this.buildPausedFlowResult(execution.id, nodeExecutions);
-          }
-
-          if (trace.status === NodeExecutionStatus.SUCCESS) {
-            if (trace.outputs) {
-              nodeOutputs.set(nodeId, trace.outputs);
-            }
-            // Unified branch-skipping for branching nodes (if_else, switch, etc.)
-            this.handleBranchSkipping(nodeId, trace, edges, skippedNodeIds);
-          } else if (trace.status === NodeExecutionStatus.FAILED) {
-            hasFailure = true;
-            failedNodeError = trace.error || 'Node execution failed';
-            failedNodeId = nodeId;
-            logger.warn('Node execution failed, stopping flow', {
-              flowRunId: execution.id,
-              nodeId,
-              error: trace.error,
-            });
-            break;
-          }
-        } catch (error) {
-          logger.error('Unexpected error during node execution', {
-            flowRunId: execution.id,
-            nodeId,
-            error,
-          });
-          hasFailure = true;
-          failedNodeError = error instanceof Error ? error.message : String(error);
-          failedNodeId = nodeId;
-          break;
-        }
-      }
+    this.applyTriggerSkip(nodes, edges, skippedNodeIds, mutableFlowInputs);
+    const result = await this.runSchedulerLoop({
+      flowRunId: execution.id,
+      definition,
+      schedulableNodes: nodes,
+      flowInputs: mutableFlowInputs,
+      useBatchProcessing,
+      nodeOutputs,
+      skippedNodeIds,
+    });
+    nodeExecutions.push(...result.traces);
+    for (const id of result.batchPendingNodeIds) {
+      batchPendingNodeIds.add(id);
+    }
+    if (result.paused) {
+      await this.pauseFlowForBatch(execution.id);
+      return this.buildPausedFlowResult(execution.id, nodeExecutions);
+    }
+    if (result.failure) {
+      hasFailure = true;
+      failedNodeError = result.failure.error;
+      failedNodeId = result.failure.nodeId;
     }
 
     const success = !hasFailure;
@@ -637,13 +489,7 @@ export class FlowRunCoordinator {
     definition: FlowlibDefinition,
     flowInputs: Record<string, unknown>,
   ): Promise<FlowRunResult> {
-    const {
-      logger,
-      nodeExecutionCoordinator,
-      nodeExecutionService,
-      batchJobsService,
-      flowRunsService,
-    } = this.deps;
+    const { logger, nodeExecutionService, batchJobsService, flowRunsService } = this.deps;
 
     // Needed by the plugin-hook payload below — fetched once per resume
     // rather than per resumed node.
@@ -835,96 +681,32 @@ export class FlowRunCoordinator {
 
     const newTraces: NodeExecution[] = [];
 
-    if (this.isParallelEnabled()) {
-      // `nodeOutputs` was populated during the reconstruction phase above —
-      // including outputs synthesized from resolved batch jobs whose traces
-      // were updated SUCCESS-wise after `existingNodeExecutions` was fetched.
-      // It's the authoritative source of "what has already succeeded."
-      const alreadyComplete = new Set<string>(nodeOutputs.keys());
-      const remainingSet = new Set(remainingNodes);
-      const schedulable = definition.nodes.filter(
-        (n) => remainingSet.has(n.id) || alreadyComplete.has(n.id) || skippedNodeIds.has(n.id),
-      );
-      const result = await this.runSchedulerLoop({
-        flowRunId,
-        definition,
-        schedulableNodes: schedulable,
-        flowInputs,
-        useBatchProcessing: true,
-        nodeOutputs,
-        skippedNodeIds,
-        alreadyComplete,
-      });
-      newTraces.push(...result.traces);
-      if (result.paused) {
-        await this.pauseFlowForBatch(flowRunId);
-        return this.buildPausedFlowResult(flowRunId, [...existingNodeExecutions, ...newTraces]);
-      }
-      if (result.failure) {
-        hasFailure = true;
-      }
-    } else {
-      for (const nodeId of remainingNodes) {
-        if (hasFailure) {
-          break;
-        }
-
-        const node = nodeMap.get(nodeId);
-        if (!node) {
-          continue;
-        }
-
-        const nodeInputs = nodeExecutionCoordinator.prepareNodeInputs(
-          node,
-          nodeOutputs,
-          edges,
-          nodeMap,
-        );
-
-        // Build incoming data object for template resolution
-        const incomingData = nodeExecutionCoordinator.buildIncomingDataObject(
-          node,
-          nodeOutputs,
-          edges,
-          nodeMap,
-        );
-
-        try {
-          const trace = await nodeExecutionCoordinator.executeNode(
-            flowRunId,
-            node,
-            nodeInputs,
-            flowInputs,
-            definition,
-            skippedNodeIds,
-            true,
-            incomingData,
-            this.getRunAbortSignal(flowRunId),
-          );
-
-          newTraces.push(trace);
-
-          if (trace.status === NodeExecutionStatus.SUCCESS && trace.outputs) {
-            nodeOutputs.set(nodeId, trace.outputs);
-            // Unified branch-skipping for branching nodes (if_else, switch, etc.)
-            this.handleBranchSkipping(nodeId, trace, edges, skippedNodeIds);
-          } else if (trace.status === NodeExecutionStatus.FAILED) {
-            hasFailure = true;
-          }
-
-          if (trace.status === NodeExecutionStatus.BATCH_SUBMITTED) {
-            await this.pauseFlowForBatch(flowRunId);
-            return this.buildPausedFlowResult(flowRunId, [...existingNodeExecutions, ...newTraces]);
-          }
-        } catch (error) {
-          hasFailure = true;
-          logger.error('Node execution failed during batch resume', {
-            flowRunId,
-            nodeId,
-            error: error instanceof Error ? error.message : String(error),
-          });
-        }
-      }
+    // `nodeOutputs` was populated during the reconstruction phase above —
+    // including outputs synthesized from resolved batch jobs whose traces
+    // were updated SUCCESS-wise after `existingNodeExecutions` was fetched.
+    // It's the authoritative source of "what has already succeeded."
+    const alreadyComplete = new Set<string>(nodeOutputs.keys());
+    const remainingSet = new Set(remainingNodes);
+    const schedulable = definition.nodes.filter(
+      (n) => remainingSet.has(n.id) || alreadyComplete.has(n.id) || skippedNodeIds.has(n.id),
+    );
+    const result = await this.runSchedulerLoop({
+      flowRunId,
+      definition,
+      schedulableNodes: schedulable,
+      flowInputs,
+      useBatchProcessing: true,
+      nodeOutputs,
+      skippedNodeIds,
+      alreadyComplete,
+    });
+    newTraces.push(...result.traces);
+    if (result.paused) {
+      await this.pauseFlowForBatch(flowRunId);
+      return this.buildPausedFlowResult(flowRunId, [...existingNodeExecutions, ...newTraces]);
+    }
+    if (result.failure) {
+      hasFailure = true;
     }
 
     const finalOutputs = this.collectFlowOutputs(definition, nodeOutputs);
@@ -1173,7 +955,7 @@ export class FlowRunCoordinator {
     flowInputs: Record<string, unknown>,
     useBatchProcessing?: boolean,
   ): Promise<FlowRunResult> {
-    const { logger, nodeExecutionCoordinator, graphService } = this.deps;
+    const { logger, graphService } = this.deps;
 
     logger.debug('Executing flow to specific node', {
       flowRunId: execution.id,
@@ -1208,128 +990,29 @@ export class FlowRunCoordinator {
     const skippedNodeIds = new Set<string>();
     const batchPendingNodeIds = new Set<string>();
     let hasFailure = false;
-    let hasBatchSubmission = false;
 
-    if (this.isParallelEnabled()) {
-      const pathSet = new Set(executionPath);
-      const schedulable = definition.nodes.filter((n) => pathSet.has(n.id));
-      const result = await this.runSchedulerLoop({
-        flowRunId: execution.id,
-        definition,
-        schedulableNodes: schedulable,
-        flowInputs,
-        useBatchProcessing,
-        nodeOutputs,
-        skippedNodeIds,
-      });
-      nodeExecutions.push(...result.traces);
-      for (const id of result.batchPendingNodeIds) {
-        batchPendingNodeIds.add(id);
-      }
-      if (result.paused) {
-        hasBatchSubmission = true;
-        await this.pauseFlowForBatch(execution.id);
-        return this.buildPausedFlowResult(execution.id, nodeExecutions);
-      }
-      if (result.failure) {
-        hasFailure = true;
-        nodeErrors[result.failure.nodeId] = result.failure.error;
-      }
-    } else {
-      for (const nodeId of executionPath) {
-        if (hasFailure || hasBatchSubmission) {
-          break;
-        }
-
-        const node = nodeMap.get(nodeId);
-        if (!node) {
-          logger.warn('Node not found in definition', { flowRunId: execution.id, nodeId });
-          continue;
-        }
-
-        if (skippedNodeIds.has(nodeId)) {
-          logger.debug('Skipping node execution due to conditional branching', {
-            flowRunId: execution.id,
-            nodeId,
-            nodeType: node.type,
-          });
-          continue;
-        }
-
-        logger.debug('Processing node in partial execution', {
-          flowRunId: execution.id,
-          nodeId,
-          nodeType: node.type,
-          isTargetNode: nodeId === targetNodeId,
-        });
-
-        try {
-          const nodeInputs = nodeExecutionCoordinator.prepareNodeInputs(
-            node,
-            nodeOutputs,
-            edges,
-            nodeMap,
-          );
-
-          // Build incoming data object for template resolution
-          const incomingData = nodeExecutionCoordinator.buildIncomingDataObject(
-            node,
-            nodeOutputs,
-            edges,
-            nodeMap,
-          );
-
-          const trace = await nodeExecutionCoordinator.executeNode(
-            execution.id,
-            node,
-            nodeInputs,
-            flowInputs,
-            definition,
-            skippedNodeIds,
-            useBatchProcessing,
-            incomingData,
-            this.getRunAbortSignal(execution.id),
-          );
-          nodeExecutions.push(trace);
-
-          if (trace.status === NodeExecutionStatus.BATCH_SUBMITTED) {
-            logger.debug('Batch submission detected - pausing partial flow', {
-              flowRunId: execution.id,
-              nodeId: trace.nodeId,
-            });
-
-            batchPendingNodeIds.add(nodeId);
-            hasBatchSubmission = true;
-
-            await this.pauseFlowForBatch(execution.id);
-            return this.buildPausedFlowResult(execution.id, nodeExecutions);
-          }
-
-          if (trace.status === NodeExecutionStatus.SUCCESS) {
-            if (trace.outputs) {
-              nodeOutputs.set(nodeId, trace.outputs);
-            }
-            // Unified branch-skipping for branching nodes (if_else, switch, etc.)
-            this.handleBranchSkipping(nodeId, trace, edges, skippedNodeIds);
-          } else if (trace.status === NodeExecutionStatus.FAILED) {
-            hasFailure = true;
-            nodeErrors[nodeId] = trace.error || 'Node execution failed';
-            logger.error('Node execution failed in partial execution', {
-              flowRunId: execution.id,
-              nodeId,
-              nodeType: node.type,
-            });
-          }
-        } catch (error) {
-          hasFailure = true;
-          nodeErrors[nodeId] = error instanceof Error ? error.message : String(error);
-          logger.error('Node execution threw an exception in partial execution', {
-            flowRunId: execution.id,
-            nodeId,
-            error: error instanceof Error ? error.message : String(error),
-          });
-        }
-      }
+    const pathSet = new Set(executionPath);
+    const schedulable = definition.nodes.filter((n) => pathSet.has(n.id));
+    const result = await this.runSchedulerLoop({
+      flowRunId: execution.id,
+      definition,
+      schedulableNodes: schedulable,
+      flowInputs,
+      useBatchProcessing,
+      nodeOutputs,
+      skippedNodeIds,
+    });
+    nodeExecutions.push(...result.traces);
+    for (const id of result.batchPendingNodeIds) {
+      batchPendingNodeIds.add(id);
+    }
+    if (result.paused) {
+      await this.pauseFlowForBatch(execution.id);
+      return this.buildPausedFlowResult(execution.id, nodeExecutions);
+    }
+    if (result.failure) {
+      hasFailure = true;
+      nodeErrors[result.failure.nodeId] = result.failure.error;
     }
 
     const success = !hasFailure;
