@@ -124,11 +124,6 @@ export const SettingRow: React.FC<SettingRowProps> = ({ field, record }) => {
               <Lock className="h-3 w-3" /> encrypted
             </span>
           )}
-          {isReadOnly && (
-            <Badge variant="outline" className="text-[11px] font-normal text-muted-foreground">
-              config-bound
-            </Badge>
-          )}
         </div>
 
         {isReadOnly ? (
@@ -174,24 +169,35 @@ export const SettingRow: React.FC<SettingRowProps> = ({ field, record }) => {
         )}
       </div>
 
-      {/* DESCRIPTION — full width beneath the header row */}
-      {field.description && (
-        <p className="mt-1.5 max-w-3xl text-sm leading-relaxed text-muted-foreground">
-          {field.description}
-          {field.helpUrl && (
-            <>
-              {' '}
-              <a
-                href={field.helpUrl}
-                target="_blank"
-                rel="noreferrer noopener"
-                className="text-primary underline-offset-4 hover:underline"
-              >
-                learn more
-              </a>
-            </>
+      {/* DESCRIPTION — beneath the header row. The `config-bound` chip rides
+          the right of this line, under the value it qualifies. */}
+      {(field.description || isReadOnly) && (
+        <div className="mt-1.5 flex items-start gap-4">
+          <p className="max-w-3xl text-sm leading-relaxed text-muted-foreground">
+            {field.description}
+            {field.helpUrl && (
+              <>
+                {' '}
+                <a
+                  href={field.helpUrl}
+                  target="_blank"
+                  rel="noreferrer noopener"
+                  className="text-primary underline-offset-4 hover:underline"
+                >
+                  learn more
+                </a>
+              </>
+            )}
+          </p>
+          {isReadOnly && (
+            <Badge
+              variant="outline"
+              className="ml-auto mt-0.5 text-[11px] font-normal text-muted-foreground"
+            >
+              config-bound
+            </Badge>
           )}
-        </p>
+        </div>
       )}
 
       {!isReadOnly && error && (
