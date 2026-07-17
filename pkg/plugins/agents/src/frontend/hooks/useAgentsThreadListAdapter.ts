@@ -8,10 +8,10 @@
  *     `switchToThread` accepts either threadId or remoteId, so the URL
  *     can drive switching by session.id directly.
  *
- * Session creation is handled externally by `NewChatDialog` →
- * `POST /sessions`; this adapter's `initialize()` is therefore a
- * passthrough (returns the threadId as remoteId without touching the
- * backend). After the dialog succeeds, the caller invalidates the
+ * Session creation is handled externally by `AgentsLayout` ("+ New
+ * chat" → `POST /sessions`); this adapter's `initialize()` is therefore
+ * a passthrough (returns the threadId as remoteId without touching the
+ * backend). After the create succeeds, the caller invalidates the
  * sessions query so `list()` picks up the new thread.
  */
 import { useMemo } from 'react';
@@ -82,10 +82,10 @@ export function useAgentsThreadListAdapter(): RemoteThreadListAdapter {
         qc.invalidateQueries({ queryKey: sessionsKeys.list() });
       },
 
-      // Sessions are created externally via NewChatDialog. When
+      // Sessions are created externally by AgentsLayout. When
       // assistant-ui asks to initialize a thread we treat the threadId
       // as already-resolved and return it unchanged. (Never called in
-      // the dialog-driven flow, but kept conformant for completeness.)
+      // the layout-driven flow, but kept conformant for completeness.)
       initialize: async (threadId) => ({
         remoteId: threadId,
         externalId: undefined,

@@ -5,8 +5,17 @@
  *   readFile   → sandbox.filesystem.readFile
  *   writeFile  → sandbox.filesystem.writeFile
  *   listFiles  → `find` + glob filter (the SDK has no native glob)
+ *
+ * Paths are LLM-supplied and were previously handed to the SDK raw, so
+ * `readFile('../../../etc/passwd')` reached the provider verbatim. The
+ * root here is provider-defined (each ComputeSDK backend resolves
+ * relative paths against its own sandbox cwd), so confinement takes the
+ * relative-only form: `..`, null bytes, and absolute paths are rejected,
+ * pinning access to that cwd. This matches the tool contract the agent
+ * already sees ("Workspace-relative path (e.g. \"src/index.ts\")").
  */
 import type { WorkspaceExecOptions, WorkspaceExecResult, WorkspaceHandle } from '../types';
+import { assertRelativeWorkspacePath } from '../safe-path';
 import type { ComputeSandbox } from './types';
 
 /** Convert a simple `**`/`*` glob to a RegExp anchored to the full path. */
@@ -42,17 +51,17 @@ export function createComputesdkHandle(
     remoteEndpoint: undefined,
     async exec(command: string, options?: WorkspaceExecOptions): Promise<WorkspaceExecResult> {
       const res = await sandbox.runCommand(command, {
-        cwd: options?.cwd,
+        cwd: options?.cwd === undefined ? undefined : assertRelativeWorkspacePath(options.cwd),
         env: options?.env,
         timeout: options?.timeoutMs,
       });
       return { stdout: res.stdout, stderr: res.stderr, exitCode: res.exitCode };
     },
     readFile(path: string): Promise<string> {
-      return sandbox.filesystem.readFile(path);
+      return sandbox.filesystem.readFile(assertRelativeWorkspacePath(path));
     },
     async writeFile(path: string, content: string): Promise<void> {
-      await sandbox.filesystem.writeFile(path, content);
+      await sandbox.filesystem.writeFile(assertRelativeWorkspacePath(path), content);
     },
     async listFiles(glob: string): Promise<string[]> {
       // No native glob — enumerate files and match in-process.

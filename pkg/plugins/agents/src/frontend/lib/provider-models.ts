@@ -2,7 +2,7 @@
  * Static catalogue of known providers and the model strings each
  * accepts. The agents plugin doesn't currently expose a backend
  * endpoint listing providers + models, so we maintain the list here
- * for the picker UIs (ChatHeader, NewChatDialog).
+ * for the picker UIs (`ProviderModelSelector` in the chat composer).
  *
  * Adding a new model: append to the relevant provider's `models`
  * array. The `id` is the exact string the backend stores in

@@ -118,6 +118,7 @@ function SessionRow({
   isActive: boolean;
 }): React.ReactElement {
   const deleteSession = useDeleteSession();
+  const navigate = useNavigate();
 
   const handleDelete = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -131,7 +132,21 @@ function SessionRow({
     if (!ok) {
       return;
     }
-    deleteSession.mutate({ id: session.id });
+    deleteSession.mutate(
+      { id: session.id },
+      {
+        onSuccess: () => {
+          // Deleting the chat you're looking at used to strand you: the
+          // URL still pointed at the now-gone id and the centre pane
+          // read "Chat not found". `AgentsLayout`'s auto-redirect only
+          // fires when `sessionId` is absent, so drop back to `/agents`
+          // and let it pick the next chat (or create one).
+          if (isActive) {
+            navigate(`${stripTrailingSlash(basePath)}/agents`, { replace: true });
+          }
+        },
+      },
+    );
   };
 
   return (

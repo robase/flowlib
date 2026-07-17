@@ -166,6 +166,95 @@ export function assembleToolSet(args: {
   return out;
 }
 
+/**
+ * Pull the kernel's {@link ToolGuard} off a turn's `extras`, if the caller
+ * routed the turn through `runTurn` (it always does in production; direct
+ * `provider.prompt()` calls in tests may not).
+ *
+ * Returns `undefined` when absent — see {@link wrapToolsWithGuard} for why
+ * that is a deliberate, and safe, no-op.
+ */
+export function toolGuardFromPromptInput(input: PromptInput): ToolGuard | undefined {
+  const candidate = input.extras?.[TOOL_GUARD_EXTRA_KEY];
+  if (
+    candidate &&
+    typeof candidate === 'object' &&
+    typeof (candidate as ToolGuard).check === 'function'
+  ) {
+    return candidate as ToolGuard;
+  }
+  return undefined;
+}
+
+/**
+ * The result a blocked tool hands back to the model in place of running.
+ * Shaped as a plain object (rather than a throw) so the AI SDK surfaces it
+ * as an ordinary `tool-result` the model can read and reason about —
+ * "that was denied, try something else" — instead of an opaque error.
+ */
+export interface BlockedToolResult {
+  error: string;
+  blocked: true;
+}
+
+/**
+ * Enforce the kernel's PreToolUse hook decisions **inside** the tool
+ * wrapper, before the underlying `execute` runs.
+ *
+ * This is the load-bearing half of the deny path for this provider. The
+ * AI SDK owns tool dispatch: it calls `descriptor.execute` itself and
+ * emits the `tool-call` chunk as a notification *alongside* that call. So
+ * a kernel that only inspects the drained event stream can emit "Blocked:
+ * command matches a destructive pattern" while `workspace.exec('rm -rf /')`
+ * is already running. `sandbox.run_shell` has no in-tool guard of its own
+ * (unlike the file tools' `assertSafePath`), so this wrapper is the only
+ * thing standing between a hook's `continue: false` and the container.
+ *
+ * Two invariants:
+ *  1. A denied tool never reaches the underlying `execute`.
+ *  2. A hook's `modifiedInput` is what actually gets executed — not just
+ *     what gets reported.
+ *
+ * Wrap this **outermost** (guard → output-store → real execute) so the
+ * decision precedes every other side effect.
+ *
+ * When no guard is threaded on the turn, tools are returned untouched: the
+ * kernel then has no hook pipeline to enforce, so there is nothing to
+ * apply. (`runTurn` always threads one; `noopHookPipeline` allows all.)
+ */
+export function wrapToolsWithGuard(tools: AiSdkToolSet, guard: ToolGuard | undefined): AiSdkToolSet {
+  if (!guard) {
+    return tools;
+  }
+  const wrapped: AiSdkToolSet = {};
+  for (const [name, descriptor] of Object.entries(tools)) {
+    wrapped[name] = {
+      description: descriptor.description,
+      parameters: descriptor.parameters,
+      execute: async (input, options) => {
+        // `name` here is the canonical, pre-sanitisation key (the
+        // provider sanitises for the wire only *after* wrapping), so the
+        // hooks see `sandbox.run_shell`, matching the name the kernel
+        // reports on its events.
+        const decision = await guard.check({
+          toolName: name,
+          ...(options.toolCallId ? { toolCallId: options.toolCallId } : {}),
+          input,
+        });
+        if (!decision.allow) {
+          const blocked: BlockedToolResult = {
+            error: decision.reason ?? 'blocked by pre-tool hook',
+            blocked: true,
+          };
+          return blocked;
+        }
+        return descriptor.execute(decision.input, options);
+      },
+    };
+  }
+  return wrapped;
+}
+
 /** Monotonic fallback id for the rare case the AI SDK omits `toolCallId`. */
 let toolCallCounter = 0;
 function fallbackCallId(name: string): string {

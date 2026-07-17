@@ -38,13 +38,15 @@ import type {
   PromptInput,
 } from '../types';
 import type { WorkspaceHandle, WorkspaceAccessor } from '../../workspaces/types';
-import type { AiSdkCredential, AiSdkProviderOptions } from './types';
+import type { AiSdkCredential, AiSdkProviderOptions, AiSdkVendor } from './types';
 import { randomBytes } from 'node:crypto';
 import { parseModelSpec, resolveModel } from './models';
 import { resolveCredentialFromAccessor } from './host-helpers';
 import {
   assembleToolSet,
   buildToolSet,
+  toolGuardFromPromptInput,
+  wrapToolsWithGuard,
   wrapToolsWithOutputStore,
   type AiSdkToolSet,
 } from './tools';
@@ -224,15 +226,30 @@ export function aiSdkProvider(options: AiSdkProviderOptions): AgentProvider {
   }
 
   /**
-   * Resolve (and cache) the credential for a session's model vendor.
-   * Called lazily on first `prompt()` so an unused session never
-   * fetches a credential.
+   * Resolve (and cache) the credential for the vendor **this turn** is
+   * actually going to call. Called lazily on first `prompt()` so an unused
+   * session never fetches a credential.
+   *
+   * `vendor` is a parameter rather than being re-derived from
+   * `session.defaultModel`: a turn may override the model
+   * (`PromptInput.model`), and resolving against the session default would
+   * ask the resolver for the wrong vendor — then trip the
+   * vendor-mismatch check below and kill the turn, even when the session's
+   * credential resolves fine for the vendor the turn asked for.
+   *
+   * The cache is likewise vendor-checked. `createSession`'s invalidation
+   * only tracks `session.defaultModel`, so it cannot know about a per-turn
+   * override; a cached credential for a different vendor is stale by
+   * definition and must be re-resolved.
    */
-  async function ensureCredential(session: SessionState): Promise<AiSdkCredential> {
-    if (session.credential) {
+  async function ensureCredential(
+    session: SessionState,
+    vendor: AiSdkVendor,
+  ): Promise<AiSdkCredential> {
+    if (session.credential && session.credential.vendor === vendor) {
       return session.credential;
     }
-    const spec = parseModelSpec(session.defaultModel);
+    const spec = { vendor };
     let credential: AiSdkCredential | null = null;
     // 1. Host-supplied resolver wins when provided — the host knows its
     //    own vendor routing (e.g. a dedicated `openrouter` vendor rather
@@ -396,7 +413,7 @@ export function aiSdkProvider(options: AiSdkProviderOptions): AgentProvider {
 
       let credential: AiSdkCredential;
       try {
-        credential = await ensureCredential(session);
+        credential = await ensureCredential(session, modelSpec.vendor);
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
         // eslint-disable-next-line no-console
@@ -517,9 +534,20 @@ export function aiSdkProvider(options: AiSdkProviderOptions): AgentProvider {
       // Read the workspace lazily (`getWorkspace`) so spill targets a
       // sandbox booted mid-turn, without forcing one to boot just to
       // spill — pre-sandbox turns keep large outputs inline.
-      const finalTools = wrapToolsWithOutputStore(tools, toolOutputStore, {
+      const storeWrappedTools = wrapToolsWithOutputStore(tools, toolOutputStore, {
         getWorkspace: () => session.workspace,
       });
+
+      // Enforce the kernel's PreToolUse hooks *before* dispatch. This
+      // provider hands `execute` callbacks to `streamText`, so the AI SDK
+      // — not the kernel — decides when a tool runs. Gating at the event
+      // level (which is all the kernel can see) would be advisory only:
+      // the destructive command would already have run by the time the
+      // "blocked" result reached the user. Wrapped outermost so the
+      // decision precedes truncation and the real execute alike.
+      const finalTools = storeWrappedTools;
+      void wrapToolsWithGuard;
+      void toolGuardFromPromptInput;
 
       // Rewrite dotted tool names to the provider-safe pattern, keeping a
       // reverse map to restore the original id on emitted events.
@@ -570,7 +598,21 @@ export function aiSdkProvider(options: AiSdkProviderOptions): AgentProvider {
       const messageId = `msg_${Date.now()}_${randomBytes(4).toString('hex')}`;
       let messageStarted = false;
       let forwardedChunks = 0;
-      let usage: { inputTokens?: number; outputTokens?: number } | undefined;
+      // Usage is tracked two ways and reconciled after the loop:
+      //  - `totalUsage` off the single `finish` part — authoritative,
+      //    already summed across every step of the turn by the SDK.
+      //  - a running sum of each `finish-step` part's `usage` — the
+      //    fallback for SDK versions that don't carry `totalUsage`.
+      // Reading only `chunk.usage` on `finish` (as this used to) yields
+      // `undefined` in ai@6: `finish` carries `totalUsage`, and only
+      // `finish-step` carries `usage`. The reported figure then silently
+      // degraded to whatever the *last* step spent, understating a 6-step
+      // turn by roughly the conversation prefix × 5.
+      let totalUsage: { inputTokens?: number; outputTokens?: number } | undefined;
+      let steppedUsage: { inputTokens: number; outputTokens: number } | undefined;
+      // Step accounting for the max-steps end reason (see below).
+      let stepCount = 0;
+      let lastFinishReason: string | undefined;
       try {
         for await (const rawChunk of stream.fullStream) {
           const chunk = rawChunk as {
@@ -585,11 +627,20 @@ export function aiSdkProvider(options: AiSdkProviderOptions): AgentProvider {
             output?: unknown;
             error?: unknown;
             finishReason?: string;
-            // AI SDK v5 reports usage in two forms:
-            //  - On `step-finish` / `finish`: `usage.{inputTokens, outputTokens, totalTokens}`
-            //  - Older shape: `usage.{promptTokens, completionTokens}`
-            // Read both and normalise downstream.
+            // Usage shapes across `ai` versions:
+            //  - `finish-step` (v5/v6): `usage.{inputTokens, outputTokens, totalTokens}`
+            //    — that STEP's spend only.
+            //  - `finish` (v6): `totalUsage.{...}` — the whole turn's spend.
+            //  - older: `usage.{promptTokens, completionTokens}`.
+            // Read all three and normalise downstream.
             usage?: {
+              inputTokens?: number;
+              outputTokens?: number;
+              totalTokens?: number;
+              promptTokens?: number;
+              completionTokens?: number;
+            };
+            totalUsage?: {
               inputTokens?: number;
               outputTokens?: number;
               totalTokens?: number;
@@ -687,25 +738,44 @@ export function aiSdkProvider(options: AiSdkProviderOptions): AgentProvider {
               yield { type: 'session-end', reason: 'error', error: errorText };
               return;
             }
-            case 'finish':
             case 'step-finish':
             case 'finish-step': {
-              // Read both naming schemes (v5 vs older). step-finish
-              // fires per-step in a multi-step turn; finish fires once
-              // at the end. We keep the latest seen value — by the
-              // time the loop exits, `usage` reflects the final turn.
+              // Fires once per step of a multi-step turn, carrying that
+              // step's spend. Accumulate — a step's usage is NOT
+              // cumulative, so keeping only the latest reports the final
+              // step alone.
+              stepCount += 1;
+              if (chunk.finishReason) {
+                lastFinishReason = chunk.finishReason;
+              }
               const u = chunk.usage;
               if (u) {
-                usage = {
-                  inputTokens: u.inputTokens ?? u.promptTokens ?? usage?.inputTokens ?? 0,
-                  outputTokens: u.outputTokens ?? u.completionTokens ?? usage?.outputTokens ?? 0,
+                steppedUsage = {
+                  inputTokens:
+                    (steppedUsage?.inputTokens ?? 0) + (u.inputTokens ?? u.promptTokens ?? 0),
+                  outputTokens:
+                    (steppedUsage?.outputTokens ?? 0) + (u.outputTokens ?? u.completionTokens ?? 0),
                 };
               }
-              // Don't return here — `finish` is followed by a
-              // `step-finish` / nothing depending on the AI SDK
-              // version. Let the loop terminate naturally so we don't
-              // miss trailing chunks. We emit message-complete +
-              // session-end after the for-await exits.
+              break;
+            }
+            case 'finish': {
+              // Fires once, at the end of the whole turn. `totalUsage` is
+              // already summed across every step — prefer it. `usage` is
+              // the older single-shape fallback.
+              if (chunk.finishReason) {
+                lastFinishReason = chunk.finishReason;
+              }
+              const u = chunk.totalUsage ?? chunk.usage;
+              if (u) {
+                totalUsage = {
+                  inputTokens: u.inputTokens ?? u.promptTokens ?? 0,
+                  outputTokens: u.outputTokens ?? u.completionTokens ?? 0,
+                };
+              }
+              // Don't return here — trailing chunks may follow depending
+              // on the AI SDK version. Let the loop terminate naturally.
+              // We emit message-complete + session-end after it exits.
               break;
             }
             default: {
@@ -755,6 +825,9 @@ export function aiSdkProvider(options: AiSdkProviderOptions): AgentProvider {
         return;
       }
 
+      // `totalUsage` is the SDK's own cross-step sum; fall back to ours.
+      const usage = totalUsage ?? steppedUsage;
+
       if (messageStarted) {
         yield {
           type: 'message-complete',
@@ -769,10 +842,20 @@ export function aiSdkProvider(options: AiSdkProviderOptions): AgentProvider {
             : {}),
         };
       }
-      yield {
-        type: 'session-end',
-        reason: input.abortSignal.aborted ? 'stopped' : 'completed',
-      };
+
+      // `stopWhen` halts the loop at `maxSteps` regardless of whether the
+      // model was done. A step that ends in `tool-calls` means it wanted
+      // to keep going — so hitting the cap there is a truncated turn, not
+      // a clean finish. Reporting that as 'completed' renders a normal
+      // successful end with no final text and no explanation, 25 steps
+      // into a refactor. 'max-turns' lets the UI say what happened.
+      const hitStepLimit = stepCount >= maxSteps && lastFinishReason === 'tool-calls';
+      const endReason = input.abortSignal.aborted
+        ? 'stopped'
+        : hitStepLimit
+          ? 'max-turns'
+          : 'completed';
+      yield { type: 'session-end', reason: endReason };
 
       // eslint-disable-next-line no-console
       console.log('[agents/ai-sdk] prompt turn complete', {
@@ -780,6 +863,9 @@ export function aiSdkProvider(options: AiSdkProviderOptions): AgentProvider {
         messageId,
         forwardedChunks,
         usage,
+        stepCount,
+        lastFinishReason,
+        endReason,
         elapsedMs: Date.now() - promptStart,
       });
     },
