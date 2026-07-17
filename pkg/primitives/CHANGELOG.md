@@ -1,5 +1,14 @@
 # @flowlib/primitives
 
+## 0.0.10
+
+### Patch Changes
+
+- Updated dependencies [[`d2cd0ef`](https://github.com/robase/flowlib/commit/d2cd0efbc8de5281376bbea5b2a28fb34fb9e724)]:
+  - @flowlib/core@0.0.10
+  - @flowlib/action-kit@0.0.10
+  - @flowlib/actions@0.0.10
+
 ## 0.0.9
 
 ### Patch Changes
