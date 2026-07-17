@@ -32,15 +32,19 @@ function scriptedStreamText(chunks: unknown[]) {
 
 async function drain(
   iterable: AsyncIterable<AgentEvent>,
-): Promise<{ events: AgentEvent[]; end: Extract<AgentEvent, { type: 'session-end' }> | undefined }> {
+): Promise<{
+  events: AgentEvent[];
+  end: Extract<AgentEvent, { type: 'session-end' }> | undefined;
+}> {
   const events: AgentEvent[] = [];
   for await (const e of iterable) {
     events.push(e);
   }
   return {
     events,
-    end: events.find((e): e is Extract<AgentEvent, { type: 'session-end' }> => e.type ===
-      'session-end'),
+    end: events.find(
+      (e): e is Extract<AgentEvent, { type: 'session-end' }> => e.type === 'session-end',
+    ),
   };
 }
 
@@ -77,7 +81,7 @@ describe('aiSdkProvider: token usage', () => {
     return drain(provider.prompt(makePrompt({ providerSessionId })));
   }
 
-  it("reads the turn total from `finish.totalUsage` (ai@6 puts nothing in `finish.usage`)", async () => {
+  it('reads the turn total from `finish.totalUsage` (ai@6 puts nothing in `finish.usage`)', async () => {
     // A 3-step turn. Each step's `usage` is that step's spend alone; the
     // conversation prefix is re-billed every step, so the total dwarfs the
     // last step. Reading `finish.usage` yields `undefined` here — the old
@@ -158,7 +162,11 @@ describe('aiSdkProvider: token usage', () => {
         ...step({ inputTokens: 100, outputTokens: 10 }, 'tool-calls'),
         ...step({ inputTokens: 200, outputTokens: 20 }, 'tool-calls'),
         ...step({ inputTokens: 300, outputTokens: 30 }, 'stop'),
-        { type: 'finish', finishReason: 'stop', totalUsage: { inputTokens: 600, outputTokens: 60 } },
+        {
+          type: 'finish',
+          finishReason: 'stop',
+          totalUsage: { inputTokens: 600, outputTokens: 60 },
+        },
       ],
       { maxSteps: 3 },
     );
@@ -171,7 +179,11 @@ describe('aiSdkProvider: token usage', () => {
       [
         { type: 'start' },
         ...step({ inputTokens: 100, outputTokens: 10 }, 'stop'),
-        { type: 'finish', finishReason: 'stop', totalUsage: { inputTokens: 100, outputTokens: 10 } },
+        {
+          type: 'finish',
+          finishReason: 'stop',
+          totalUsage: { inputTokens: 100, outputTokens: 10 },
+        },
       ],
       { maxSteps: 25 },
     );

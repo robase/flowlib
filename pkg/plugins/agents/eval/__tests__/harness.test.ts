@@ -336,6 +336,70 @@ describe('production fidelity (real host path)', () => {
     );
     expect(report.passed).toBe(true);
   });
+
+  /**
+   * The test above emits `human-input-request` *directly*, so it never
+   * observes what the real `ask_user` tool hands back to the model. These
+   * two drive the actual tool off `input.providerTools` — the same object
+   * the production provider loop calls — and assert on its return value.
+   *
+   * This is what pins the auto-responder's payload shape: `ask_user` does
+   * `return { answer }` itself, so the harness must resolve the gate with
+   * the *raw* answer. Resolving with `{ answer }` would nest it and the
+   * model would see `{"answer":{"answer":"…"}}`.
+   */
+  it('ask_user returns the answer flat — the harness must not double-wrap it', async () => {
+    let toolResult: unknown;
+    const provider = createScriptedProvider(async (_promptText, input) => {
+      const askUser = input.providerTools?.['ask_user'];
+      if (!askUser) {
+        throw new Error('ask_user tool was not wired onto the turn');
+      }
+      toolResult = await askUser.execute({ question: 'Which config?' }, {});
+      return scriptTurn({ text: 'Done.' });
+    });
+
+    const report = await runCase(
+      {
+        id: 'ask-user-shape',
+        prompt: 'delete the config',
+        humanInput: 'the staging one',
+        scorers: [turnSucceeded()],
+      },
+      opts(provider),
+    );
+
+    expect(report.passed).toBe(true);
+    // Flat — exactly what `ask-user-wiring.test.ts` asserts of the tool and
+    // what `chat-agent-do.ts` produces on the real transport.
+    expect(toolResult).toEqual({ answer: 'the staging one' });
+  });
+
+  it('ask_user reflects the case humanInput responder per question', async () => {
+    const asked: string[] = [];
+    let toolResult: unknown;
+    const provider = createScriptedProvider(async (_promptText, input) => {
+      const askUser = input.providerTools?.['ask_user'];
+      toolResult = await askUser!.execute({ question: 'staging or prod?' }, {});
+      return scriptTurn({ text: 'Done.' });
+    });
+
+    await runCase(
+      {
+        id: 'ask-user-fn',
+        prompt: 'deploy it',
+        humanInput: (question) => {
+          asked.push(question);
+          return `answer to: ${question}`;
+        },
+        scorers: [turnSucceeded()],
+      },
+      opts(provider),
+    );
+
+    expect(asked).toEqual(['staging or prod?']);
+    expect(toolResult).toEqual({ answer: 'answer to: staging or prod?' });
+  });
 });
 
 describe('sampling, hashing, concurrency', () => {
@@ -366,6 +430,66 @@ describe('sampling, hashing, concurrency', () => {
     );
     expect(strict.passRate).toBeCloseTo(2 / 3, 5);
     expect(strict.passed).toBe(false);
+  });
+
+  /**
+   * A sample that throws before it can be scored must cost exactly one
+   * sample — not abort the case. Otherwise one transient blip on sample 1
+   * of N defeats the whole point of `samples` / `minPassRate`.
+   *
+   * The realistic trigger is `createWorkspace`: under `--workspace`,
+   * `run.ts` provisions a real container per sample, and a provisioning
+   * failure propagates straight out of `runCaseRaw`. (Provider errors do
+   * *not* reach here — `runChatTurn` absorbs them into a failed turn, which
+   * is then scored normally.)
+   */
+  it('counts a throwing sample as one bad sample instead of aborting the case', async () => {
+    const provider = createScriptedProvider(scriptTurn({ text: 'ok' }));
+    let n = 0;
+    const flakyWorkspace = () => {
+      n += 1;
+      if (n === 1) {
+        throw new Error('workspace provisioning failed: 529 overloaded_error');
+      }
+      return new InMemoryWorkspace();
+    };
+
+    const report = await runCase(
+      {
+        id: 'flaky',
+        prompt: 'p',
+        samples: 3,
+        minPassRate: 0.66,
+        scorers: [finalTextContains('ok')],
+      },
+      { ...opts(provider), createWorkspace: flakyWorkspace },
+    );
+
+    expect(report.samples).toBe(3);
+    expect(report.passRate).toBeCloseTo(2 / 3, 5); // samples 2 & 3 survived
+    expect(report.passed).toBe(true);
+    // A partial run is scored, not written off as errored.
+    expect(report.error).toBeUndefined();
+    // …but the dead sample stays visible in the representative scores.
+    expect(report.scores.some((s) => s.name === 'sample-error')).toBe(true);
+    // Surviving samples still stamp a usable prompt hash.
+    expect(report.promptHash).toMatch(/^[0-9a-f]{8}$/);
+  });
+
+  it('reports the case as errored only when every sample throws', async () => {
+    const provider = createScriptedProvider(scriptTurn({ text: 'ok' }));
+    const report = await runCase(
+      { id: 'dead', prompt: 'p', samples: 2, scorers: [turnSucceeded()] },
+      {
+        ...opts(provider),
+        createWorkspace: () => {
+          throw new Error('529 overloaded_error');
+        },
+      },
+    );
+    expect(report.passed).toBe(false);
+    expect(report.passRate).toBe(0);
+    expect(report.error).toMatch(/overloaded_error/);
   });
 
   it('stamps a stable prompt hash that changes with the prompt', async () => {

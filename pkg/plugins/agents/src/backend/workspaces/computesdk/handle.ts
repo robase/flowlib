@@ -57,7 +57,10 @@ export function createComputesdkHandle(
       });
       return { stdout: res.stdout, stderr: res.stderr, exitCode: res.exitCode };
     },
-    readFile(path: string): Promise<string> {
+    // `async` so a rejected path surfaces as a rejected promise rather
+    // than a synchronous throw — `WorkspaceHandle.readFile` is declared
+    // to return a Promise, and callers only guard the promise.
+    async readFile(path: string): Promise<string> {
       return sandbox.filesystem.readFile(assertRelativeWorkspacePath(path));
     },
     async writeFile(path: string, content: string): Promise<void> {

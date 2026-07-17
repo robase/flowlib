@@ -181,7 +181,11 @@ function fakeStreamText(opts: {
         usage: { inputTokens: 10, outputTokens: 5 },
         finishReason: 'stop',
       };
-      yield { type: 'finish', finishReason: 'stop', totalUsage: { inputTokens: 10, outputTokens: 5 } };
+      yield {
+        type: 'finish',
+        finishReason: 'stop',
+        totalUsage: { inputTokens: 10, outputTokens: 5 },
+      };
     })(),
   });
 }

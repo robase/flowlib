@@ -222,7 +222,10 @@ export interface BlockedToolResult {
  * kernel then has no hook pipeline to enforce, so there is nothing to
  * apply. (`runTurn` always threads one; `noopHookPipeline` allows all.)
  */
-export function wrapToolsWithGuard(tools: AiSdkToolSet, guard: ToolGuard | undefined): AiSdkToolSet {
+export function wrapToolsWithGuard(
+  tools: AiSdkToolSet,
+  guard: ToolGuard | undefined,
+): AiSdkToolSet {
   if (!guard) {
     return tools;
   }

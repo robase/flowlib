@@ -155,14 +155,18 @@ describe('web.fetch — redirect re-validation', () => {
   });
 
   it('never asks the underlying fetch to follow redirects itself', async () => {
-    const spy = vi.fn(async () => new Response('ok', { headers: { 'content-type': 'text/plain' } }));
+    // `redirect: 'follow'` is the bug: it would follow a hop to a private
+    // address inside undici, where no guard of ours can see it.
+    const spy = vi.fn(
+      async (_input: RequestInfo | URL, _init?: RequestInit) =>
+        new Response('ok', { headers: { 'content-type': 'text/plain' } }),
+    );
     const tool = buildWebFetchTool({ fetchImpl: spy as unknown as typeof fetch });
 
     await tool.execute({ url: 'https://example.com/' }, {});
 
     expect(spy).toHaveBeenCalledTimes(1);
-    const init = spy.mock.calls[0][1] as RequestInit;
-    expect(init.redirect).toBe('manual');
+    expect(spy.mock.calls[0][1]?.redirect).toBe('manual');
   });
 
   it('returns a redirect response as-is when it carries no Location', async () => {
