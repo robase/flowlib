@@ -141,6 +141,12 @@ export interface PluginSidebarContribution {
   badge?: string | (() => string | undefined);
   /** Position hint: 'top' (after defaults), 'bottom' (before theme toggle) */
   position?: 'top' | 'bottom';
+  /**
+   * Sort weight among the 'top' sidebar items (core + plugin), lower first.
+   * Core items use 10/40/.../80. Items without an order append after ordered
+   * ones in registration order.
+   */
+  order?: number;
   /** Required permission — item hidden if check fails */
   permission?: string;
 }

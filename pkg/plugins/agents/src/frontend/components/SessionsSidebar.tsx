@@ -1,224 +1,99 @@
 /**
- * SessionsSidebar — left rail listing chats, grouped by workspace.
+ * SessionsSidebar — left rail listing chat sessions as a flat,
+ * searchable list.
  *
- * Cardinality model (see `docs/sessions-and-sandboxes.md`):
- *
- *   one workspace → one Cloudflare Sandbox
- *   one workspace → many sessions (chats)
- *
- * The sidebar surfaces both gestures explicitly:
- *
- *   - "+ New workspace" (top of sidebar, folder-plus icon) — provisions
- *     a fresh sandbox by creating a session with `workspaceId` omitted;
- *     the backend auto-creates a workspace row.
- *
- *   - "+ New chat" (per-workspace section, plus icon) — adds a session
- *     to the existing workspace, reusing its sandbox.
- *
- * Sessions whose `workspaceId` is `null` (legacy rows) are grouped
- * under an "Unassigned" header.
+ * Workspaces are an implementation detail: each chat is backed by its
+ * own sandbox/workspace, but the user never sees or picks one. "+ New
+ * chat" creates a session with `workspaceId` omitted; the backend
+ * auto-provisions a fresh workspace + sandbox transparently. The list is
+ * therefore flat — one row per chat — with no workspace grouping.
  */
 import * as React from 'react';
-import { Link } from 'react-router';
-import {
-  ChevronDown,
-  ChevronRight,
-  FolderPlus,
-  MessageSquarePlus,
-  MoreHorizontal,
-  Server,
-  Trash2,
-} from 'lucide-react';
-import type { AgentSession, AgentWorkspace } from '../../shared/types';
+import { Link, useNavigate } from 'react-router';
+import { Plus, Search, Sparkles, Trash2 } from 'lucide-react';
+import type { AgentSession } from '../../shared/types';
 import { useDeleteSession } from '../hooks/useSessions';
+import { StatusDot, type SessionStatus } from './StatusDot';
+import { cn } from '../lib/cn';
 
 export interface SessionsSidebarProps {
   basePath: string;
   sessions: AgentSession[];
-  workspaces: AgentWorkspace[];
   isLoading?: boolean;
   activeSessionId?: string | null;
-  /** "+ New workspace" — caller opens its dialog with `workspaceId: null`. */
-  onNewWorkspace: () => void;
-  /** "+ New chat in <workspace>" — caller opens its dialog with the given `workspaceId`. */
-  onNewChat: (workspaceId: string) => void;
+  /** "+ New chat" — creates a session; backend auto-provisions a workspace. */
+  onNewChat: () => void;
 }
 
-interface WorkspaceGroup {
-  workspace: AgentWorkspace | null;
-  sessions: AgentSession[];
-}
-
-function groupSessions(sessions: AgentSession[], workspaces: AgentWorkspace[]): WorkspaceGroup[] {
-  const byId = new Map<string | '__none__', WorkspaceGroup>();
-  // Seed the groups with all known workspaces in order so empty
-  // workspaces still render a row (lets users start their first chat
-  // in a fresh workspace they just created).
-  for (const ws of workspaces) {
-    byId.set(ws.id, { workspace: ws, sessions: [] });
-  }
-  for (const s of sessions) {
-    const key = s.workspaceId ?? '__none__';
-    const existing = byId.get(key);
-    if (existing) {
-      existing.sessions.push(s);
-      continue;
-    }
-    if (s.workspaceId) {
-      // Workspace row not in the list (deleted? cross-tenant?) — still
-      // render the sessions under a placeholder.
-      byId.set(s.workspaceId, {
-        workspace: { id: s.workspaceId, name: 'Workspace' } as AgentWorkspace,
-        sessions: [s],
-      });
-    } else {
-      byId.set('__none__', { workspace: null, sessions: [s] });
-    }
-  }
-  return Array.from(byId.values()).sort((a, b) => {
-    // Workspaces with sessions first, by most-recent-message; then
-    // empty workspaces; "Unassigned" always last.
-    const aOrphan = a.workspace === null;
-    const bOrphan = b.workspace === null;
-    if (aOrphan !== bOrphan) {
-      return aOrphan ? 1 : -1;
-    }
-    const aLast = lastMessageMs(a.sessions);
-    const bLast = lastMessageMs(b.sessions);
-    return bLast - aLast;
-  });
-}
-
-function lastMessageMs(sessions: AgentSession[]): number {
-  let max = 0;
-  for (const s of sessions) {
-    const t = s.lastMessageAt ?? s.updatedAt;
-    if (!t) {
-      continue;
-    }
-    const ms = new Date(t).getTime();
-    if (ms > max) {
-      max = ms;
-    }
-  }
-  return max;
+function sessionStatus(session: AgentSession): SessionStatus {
+  return session.status === 'archived' ? 'idle' : 'active';
 }
 
 export function SessionsSidebar({
   basePath,
   sessions,
-  workspaces,
   isLoading,
   activeSessionId,
-  onNewWorkspace,
   onNewChat,
 }: SessionsSidebarProps): React.ReactElement {
-  const groups = React.useMemo(
-    () =>
-      groupSessions(
-        sessions.filter((s) => s.status === 'active'),
-        workspaces,
-      ),
-    [sessions, workspaces],
-  );
+  const [query, setQuery] = React.useState('');
+
+  const filtered = React.useMemo(() => {
+    const active = sessions.filter((s) => s.status === 'active');
+    const q = query.trim().toLowerCase();
+    const matched = q ? active.filter((s) => s.title.toLowerCase().includes(q)) : active;
+    return [...matched].sort((a, b) => lastActivityMs(b) - lastActivityMs(a));
+  }, [sessions, query]);
 
   return (
-    <aside
-      className="w-72 shrink-0 flex flex-col h-full min-h-0 border-r border-fl-border bg-fl-card/30"
+    <div
+      className="flex h-full min-h-0 w-full flex-col bg-sidebar"
       data-testid="agents-sessions-sidebar"
     >
-      <header className="flex items-center justify-between px-3 py-2.5 border-b border-fl-border">
+      {/* Brand + new chat */}
+      <div className="flex items-center justify-between gap-2 border-b border-sidebar-border px-4 py-3">
         <div className="flex items-center gap-2 min-w-0">
-          <Server className="size-4 text-fl-primary shrink-0" />
-          <span className="text-sm font-semibold truncate">Chats</span>
+          <span className="flex h-7 w-7 items-center justify-center rounded-md bg-primary/15 text-primary">
+            <Sparkles className="h-4 w-4" />
+          </span>
+          <span className="truncate text-sm font-semibold tracking-tight">Agents</span>
         </div>
         <button
           type="button"
-          onClick={onNewWorkspace}
-          title="New workspace"
-          aria-label="New workspace"
-          className="p-1.5 rounded-md text-fl-muted-foreground hover:bg-fl-accent hover:text-fl-foreground"
-          data-testid="agents-new-workspace-button"
+          onClick={onNewChat}
+          title="New chat"
+          aria-label="New chat"
+          className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground"
+          data-testid="agents-new-chat-button"
         >
-          <FolderPlus className="size-3.5" />
+          <Plus className="h-4 w-4" />
         </button>
-      </header>
-
-      <div className="flex-1 overflow-y-auto py-2">
-        {isLoading ? (
-          <div className="px-4 py-3 text-xs text-fl-muted-foreground">Loading…</div>
-        ) : groups.length === 0 ? (
-          <EmptyState onNewWorkspace={onNewWorkspace} />
-        ) : (
-          <ul className="space-y-1">
-            {groups.map((group) => (
-              <WorkspaceGroupRow
-                key={group.workspace?.id ?? '__none__'}
-                group={group}
-                basePath={basePath}
-                activeSessionId={activeSessionId ?? null}
-                onNewChat={onNewChat}
-              />
-            ))}
-          </ul>
-        )}
       </div>
-    </aside>
-  );
-}
 
-function WorkspaceGroupRow({
-  group,
-  basePath,
-  activeSessionId,
-  onNewChat,
-}: {
-  group: WorkspaceGroup;
-  basePath: string;
-  activeSessionId: string | null;
-  onNewChat: (workspaceId: string) => void;
-}): React.ReactElement {
-  const [open, setOpen] = React.useState(true);
-  const headerLabel = group.workspace?.name ?? 'Unassigned';
-  const isOrphan = group.workspace === null;
-
-  return (
-    <li>
-      <div className="group flex items-center gap-1 px-2">
-        <button
-          type="button"
-          onClick={() => setOpen((s) => !s)}
-          className="flex items-center gap-1 min-w-0 flex-1 px-1 py-1 text-xs font-medium uppercase tracking-wide text-fl-muted-foreground hover:text-fl-foreground"
-          aria-expanded={open}
-          data-testid={`agents-workspace-toggle-${group.workspace?.id ?? 'orphan'}`}
-        >
-          {open ? (
-            <ChevronDown className="size-3 shrink-0" />
-          ) : (
-            <ChevronRight className="size-3 shrink-0" />
-          )}
-          <span className="truncate">{headerLabel}</span>
-          <span className="text-fl-muted-foreground/70 ml-1">{group.sessions.length}</span>
-        </button>
-        {!isOrphan && group.workspace ? (
-          <button
-            type="button"
-            onClick={() => onNewChat(group.workspace?.id ?? '')}
-            title="New chat in this workspace"
-            aria-label={`New chat in ${headerLabel}`}
-            className="opacity-0 group-hover:opacity-100 focus:opacity-100 p-1 rounded text-fl-muted-foreground hover:bg-fl-accent hover:text-fl-foreground"
-            data-testid={`agents-new-chat-button-${group.workspace.id}`}
-          >
-            <MessageSquarePlus className="size-3.5" />
-          </button>
-        ) : null}
+      {/* Search */}
+      <div className="px-3 py-3">
+        <div className="relative">
+          <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+          <input
+            type="search"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search chats…"
+            aria-label="Search chats"
+            className="h-8 w-full rounded-md border border-border bg-background pl-8 pr-2 text-sm outline-none placeholder:text-muted-foreground focus-visible:ring-1 focus-visible:ring-ring"
+          />
+        </div>
       </div>
-      {open ? (
-        <ul className="mt-0.5 mb-1">
-          {group.sessions.length === 0 ? (
-            <li className="px-7 py-1.5 text-xs text-fl-muted-foreground">No chats yet.</li>
+
+      {/* Sessions */}
+      <div className="min-h-0 flex-1 overflow-y-auto">
+        <div className="space-y-0.5 px-2 pb-4">
+          {isLoading ? (
+            <p className="px-2 py-6 text-center text-xs text-muted-foreground">Loading…</p>
+          ) : filtered.length === 0 ? (
+            <EmptyState query={query} onNewChat={onNewChat} />
           ) : (
-            group.sessions.map((session) => (
+            filtered.map((session) => (
               <SessionRow
                 key={session.id}
                 session={session}
@@ -227,9 +102,9 @@ function WorkspaceGroupRow({
               />
             ))
           )}
-        </ul>
-      ) : null}
-    </li>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -242,121 +117,100 @@ function SessionRow({
   basePath: string;
   isActive: boolean;
 }): React.ReactElement {
-  return (
-    <li
-      className={`group flex items-stretch gap-1 px-2 ${
-        isActive ? 'bg-fl-accent text-fl-accent-foreground' : 'hover:bg-fl-muted/40'
-      } rounded-r-md`}
-    >
-      <Link
-        to={`${stripTrailingSlash(basePath)}/agents/sessions/${encodeURIComponent(session.id)}`}
-        className={`min-w-0 flex-1 py-1.5 pl-5 text-sm border-l-2 ${
-          isActive ? 'border-fl-primary' : 'border-transparent text-fl-foreground'
-        }`}
-        data-testid={`agents-session-row-${session.id}`}
-      >
-        <div className="truncate">{session.title}</div>
-        <div className="text-xs text-fl-muted-foreground truncate">
-          {session.providerId}
-          {session.model ? ` · ${session.model}` : ''}
-          {session.messageCount > 0 ? ` · ${session.messageCount}` : ''}
-        </div>
-      </Link>
-      <SessionRowActions sessionId={session.id} sessionTitle={session.title ?? ''} />
-    </li>
-  );
-}
-
-function SessionRowActions({
-  sessionId,
-  sessionTitle,
-}: {
-  sessionId: string;
-  sessionTitle: string;
-}): React.ReactElement {
-  const [open, setOpen] = React.useState(false);
-  const rootRef = React.useRef<HTMLDivElement>(null);
   const deleteSession = useDeleteSession();
+  const navigate = useNavigate();
 
-  React.useEffect(() => {
-    if (!open) {
-      return;
-    }
-    function onDocClick(e: MouseEvent) {
-      if (!rootRef.current?.contains(e.target as Node)) {
-        setOpen(false);
-      }
-    }
-    document.addEventListener('mousedown', onDocClick);
-    return () => document.removeEventListener('mousedown', onDocClick);
-  }, [open]);
-
-  const handleDelete = () => {
+  const handleDelete = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     if (deleteSession.isPending) {
       return;
     }
     const ok = window.confirm(
-      `Delete "${sessionTitle || 'this chat'}"? Messages are archived; the session row is removed from the list.`,
+      `Delete "${session.title || 'this chat'}"? Messages are archived; the chat is removed from the list.`,
     );
     if (!ok) {
       return;
     }
-    deleteSession.mutate({ id: sessionId });
-    setOpen(false);
+    deleteSession.mutate(
+      { id: session.id },
+      {
+        onSuccess: () => {
+          // Deleting the chat you're looking at used to strand you: the
+          // URL still pointed at the now-gone id and the centre pane
+          // read "Chat not found". `AgentsLayout`'s auto-redirect only
+          // fires when `sessionId` is absent, so drop back to `/agents`
+          // and let it pick the next chat (or create one).
+          if (isActive) {
+            navigate(`${stripTrailingSlash(basePath)}/agents`, { replace: true });
+          }
+        },
+      },
+    );
   };
 
   return (
-    <div ref={rootRef} className="relative flex items-center">
+    <Link
+      to={`${stripTrailingSlash(basePath)}/agents/sessions/${encodeURIComponent(session.id)}`}
+      aria-current={isActive ? 'true' : undefined}
+      className={cn(
+        'group flex w-full items-center gap-2 rounded-md px-3 py-2 text-left transition-colors',
+        isActive ? 'bg-sidebar-accent' : 'hover:bg-accent/60',
+      )}
+      data-testid={`agents-session-row-${session.id}`}
+    >
+      <StatusDot status={sessionStatus(session)} />
+      <span
+        className={cn(
+          'min-w-0 flex-1 truncate text-sm',
+          isActive ? 'font-medium text-sidebar-accent-foreground' : 'text-foreground',
+        )}
+      >
+        {session.title}
+      </span>
       <button
         type="button"
-        onClick={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          setOpen((s) => !s);
-        }}
-        className="opacity-0 group-hover:opacity-100 focus:opacity-100 size-6 inline-flex items-center justify-center rounded text-fl-muted-foreground hover:bg-fl-muted hover:text-fl-foreground"
-        title="More actions"
-        aria-label="More actions"
-        data-testid={`agents-session-actions-${sessionId}`}
+        onClick={handleDelete}
+        disabled={deleteSession.isPending}
+        title="Delete chat"
+        aria-label="Delete chat"
+        className="shrink-0 rounded p-0.5 text-muted-foreground opacity-0 transition-opacity hover:text-destructive group-hover:opacity-100 focus:opacity-100 disabled:opacity-50"
+        data-testid={`agents-session-delete-${session.id}`}
       >
-        <MoreHorizontal className="size-3.5" />
+        <Trash2 className="h-3.5 w-3.5" />
       </button>
-      {open ? (
-        <div
-          className="absolute right-0 top-full z-30 mt-1 min-w-[140px] rounded-md border border-fl-border bg-fl-card text-fl-card-foreground shadow-lg py-1"
-          role="menu"
-        >
-          <button
-            type="button"
-            onClick={handleDelete}
-            disabled={deleteSession.isPending}
-            className="flex w-full items-center gap-2 px-3 py-1.5 text-xs text-fl-destructive hover:bg-fl-muted/40 disabled:opacity-50"
-            role="menuitem"
-            data-testid={`agents-session-delete-${sessionId}`}
-          >
-            <Trash2 className="size-3" />
-            {deleteSession.isPending ? 'Deleting…' : 'Delete chat'}
-          </button>
-        </div>
-      ) : null}
+    </Link>
+  );
+}
+
+function EmptyState({
+  query,
+  onNewChat,
+}: {
+  query: string;
+  onNewChat: () => void;
+}): React.ReactElement {
+  if (query.trim()) {
+    return <p className="px-2 py-6 text-center text-xs text-muted-foreground">No chats match.</p>;
+  }
+  return (
+    <div className="px-2 py-6 text-center">
+      <p className="text-sm text-muted-foreground">No chats yet.</p>
+      <button
+        type="button"
+        onClick={onNewChat}
+        className="mt-3 inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:opacity-90"
+      >
+        <Plus className="h-3.5 w-3.5" />
+        New chat
+      </button>
     </div>
   );
 }
 
-function EmptyState({ onNewWorkspace }: { onNewWorkspace: () => void }): React.ReactElement {
-  return (
-    <div className="px-4 py-6 text-center">
-      <p className="text-sm text-fl-muted-foreground">No chats yet.</p>
-      <button
-        type="button"
-        onClick={onNewWorkspace}
-        className="mt-3 inline-flex items-center gap-1.5 rounded-md bg-fl-primary px-3 py-1.5 text-xs font-medium text-fl-primary-foreground hover:opacity-90"
-      >
-        <FolderPlus className="size-3.5" />
-        Start a chat
-      </button>
-    </div>
-  );
+function lastActivityMs(session: AgentSession): number {
+  const t = session.lastMessageAt ?? session.updatedAt;
+  return t ? new Date(t).getTime() : 0;
 }
 
 function stripTrailingSlash(s: string): string {

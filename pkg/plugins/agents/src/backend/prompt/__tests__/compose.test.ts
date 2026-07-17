@@ -103,6 +103,62 @@ describe('composeSystemPrompt', () => {
     expect(out).not.toContain('## Project directives');
   });
 
+  it('renders environment + git status (before workspace) when provided', async () => {
+    const handle = fakeWorkspace({}, ['src']);
+    const out = await composeSystemPrompt(
+      baseInput({
+        workspace: { handle, rootPath: '/ws' },
+        environment: {
+          cwd: '/ws',
+          platform: 'Linux x86_64',
+          isGitRepo: true,
+          today: '2026-06-16',
+          model: 'openrouter/anthropic/claude-sonnet-4.5',
+        },
+        gitStatus: {
+          branch: 'agents-v2',
+          mainBranch: 'main',
+          user: 'Ada <ada@x.io>',
+          status: ' M a.ts',
+          recentCommits: 'abc123 feat: thing',
+        },
+      }),
+    );
+    expect(out).toContain('## Environment');
+    expect(out).toContain('- cwd: /ws');
+    expect(out).toContain('- platform: Linux x86_64');
+    expect(out).toContain('- is-git-repo: yes');
+    expect(out).toContain('- today: 2026-06-16');
+    expect(out).toContain('- model: openrouter/anthropic/claude-sonnet-4.5');
+    expect(out).toContain('## Git status');
+    expect(out).toContain('- branch: agents-v2');
+    expect(out).toContain('- main branch: main');
+    expect(out).toContain('- git user: Ada <ada@x.io>');
+    expect(out).toContain('Status (`git status --short`):');
+    expect(out).toContain('Recent commits:');
+    // Ordering: environment, then git status, then workspace.
+    expect(out.indexOf('## Environment')).toBeLessThan(out.indexOf('## Git status'));
+    expect(out.indexOf('## Git status')).toBeLessThan(out.indexOf('## Workspace'));
+  });
+
+  it('omits environment / git status when not supplied (lazy session)', async () => {
+    const out = await composeSystemPrompt(baseInput());
+    expect(out).not.toContain('## Environment');
+    expect(out).not.toContain('## Git status');
+  });
+
+  it('omits the git status block when all git fields are empty', async () => {
+    const out = await composeSystemPrompt(
+      baseInput({
+        environment: { cwd: '/ws', isGitRepo: false, today: '2026-06-16' },
+        gitStatus: {},
+      }),
+    );
+    expect(out).toContain('## Environment');
+    expect(out).toContain('- is-git-repo: no');
+    expect(out).not.toContain('## Git status');
+  });
+
   it('CLAUDE.md walk only runs when there IS a workspace', async () => {
     // Without a workspace, no readFile attempts at all.
     const handle: WorkspaceHandle = {
@@ -166,6 +222,22 @@ describe('composeSystemPrompt', () => {
     expect(out).toContain('## Available skills');
     expect(out).toContain('**pr-workflow** — open a PR');
     expect(out).toContain('**release** — cut a release');
+    // Summary mode promises the (future) on-demand read tool.
+    expect(out).toContain('skills.read');
+  });
+
+  it('inlines skill bodies in full when provided (v1 — no skills.read tool)', async () => {
+    const out = await composeSystemPrompt(
+      baseInput({
+        skillSummaries: [{ name: 'pr-workflow', description: 'open a PR', body: 'step 1\nstep 2' }],
+      }),
+    );
+    expect(out).toContain('## Available skills');
+    expect(out).toContain('### pr-workflow');
+    expect(out).toContain('step 1');
+    expect(out).toContain('step 2');
+    // Inline mode must NOT claim a tool that doesn't exist yet.
+    expect(out).not.toContain('skills.read');
   });
 
   it('renders plan checkpoints with status boxes', async () => {

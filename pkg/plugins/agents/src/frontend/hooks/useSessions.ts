@@ -5,10 +5,12 @@
  * definition. `useSessions()` returns every session for the active org.
  */
 
+import * as React from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import type { AgentMessage, AgentSession } from '../../shared/types';
+import type { AgentMessage, AgentProviderId, AgentSession } from '../../shared/types';
 import type { CreateSessionInput, UpdateSessionInput } from '../api/sessions.api';
 import { useAgentsApiClients } from '../api/context';
+import { PROVIDER_CATALOGUE, type ProviderEntry } from '../lib/provider-models';
 import { workspacesKeys } from './useWorkspaces';
 
 export const sessionsKeys = {
@@ -27,6 +29,57 @@ export function useSessions() {
       return r.data;
     },
   });
+}
+
+/**
+ * Backend-driven provider/model catalogue for the picker.
+ *
+ * Fetches `GET /agents/providers` and maps it to the picker's
+ * `ProviderEntry[]` shape. Falls back to the built-in
+ * `PROVIDER_CATALOGUE` when the endpoint is unavailable or no provider
+ * declares models — so the picker always renders, and deployments that
+ * curate their own models (e.g. hosted's `openrouter/*` specs) get a
+ * catalogue that matches their registered providers + credentials.
+ */
+export function useProviderCatalogue(): {
+  catalogue: ProviderEntry[];
+  defaultProviderId?: string;
+  isLoading: boolean;
+} {
+  const { sessions } = useAgentsApiClients();
+  const query = useQuery({
+    queryKey: [...sessionsKeys.all, 'providers'] as const,
+    queryFn: () => sessions.listProviders(),
+    staleTime: Infinity,
+  });
+
+  const catalogue = React.useMemo<ProviderEntry[]>(() => {
+    const data = query.data?.data;
+    if (!data || data.length === 0) {
+      return PROVIDER_CATALOGUE;
+    }
+    // A provider can only drive the picker if it declares models — drop
+    // model-less providers (e.g. claude-code) and fall back entirely when
+    // nothing usable is left.
+    const mapped: ProviderEntry[] = data
+      .filter((p) => p.models.length > 0)
+      .map((p) => ({
+        id: p.id as AgentProviderId,
+        label: p.name,
+        models: p.models.map((m) => ({
+          id: m.id,
+          label: m.label,
+          ...(m.description ? { description: m.description } : {}),
+        })),
+      }));
+    return mapped.length > 0 ? mapped : PROVIDER_CATALOGUE;
+  }, [query.data]);
+
+  return {
+    catalogue,
+    defaultProviderId: query.data?.defaultProviderId,
+    isLoading: query.isLoading,
+  };
 }
 
 export function useSession(sessionId: string | null | undefined) {

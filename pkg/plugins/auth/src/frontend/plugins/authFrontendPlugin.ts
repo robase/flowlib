@@ -36,6 +36,7 @@ export const authFrontend: FlowlibFrontendPlugin = {
       icon: Users,
       path: '/users',
       position: 'top',
+      order: 60,
       permission: 'admin:*',
     },
   ],

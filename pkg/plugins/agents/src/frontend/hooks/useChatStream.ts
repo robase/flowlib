@@ -44,6 +44,7 @@ import type { AgentSession } from '../../shared/types';
 import type { AgentEvent } from '../../shared/events';
 import { useAgentsApiClients } from '../api/context';
 import { parseInboundFrame, type ParsedInboundFrame } from './parse-inbound-frame';
+import { useHttpChatTransport } from './http-stream-adapter';
 
 // Re-export so existing consumers of `useChatStream` keep working.
 export { parseInboundFrame } from './parse-inbound-frame';
@@ -266,36 +267,19 @@ function loadDefaultAdapters(): ChatStreamAdapters {
             ready?: Promise<unknown>;
           };
           const dispatch = async () => {
-            const initialReadyState = sockLike.readyState;
-            // eslint-disable-next-line no-console
-            console.log('[useChatStream] sendMessage queued', {
-              agentName: (agent as { name?: string }).name,
-              readyState: initialReadyState,
-              hasReadyPromise: typeof sockLike.ready?.then === 'function',
-              envelopeLen: envelope.length,
-              url: sockLike.url,
-            });
             if (sockLike.ready && typeof sockLike.ready.then === 'function') {
               try {
                 await sockLike.ready;
-              } catch (err) {
-                // eslint-disable-next-line no-console
-                console.warn('[useChatStream] sendMessage → agent.ready rejected', err);
+              } catch {
                 // Keep going; agent.send will throw or queue as
                 // appropriate. The user can retry.
               }
             }
-            // eslint-disable-next-line no-console
-            console.log('[useChatStream] sendMessage dispatching', {
-              readyState: sockLike.readyState,
-            });
             try {
               agent.send(envelope);
-              // eslint-disable-next-line no-console
-              console.log('[useChatStream] sendMessage → agent.send did not throw');
-            } catch (err) {
-              // eslint-disable-next-line no-console
-              console.warn('[useChatStream] sendMessage → agent.send threw', err);
+            } catch {
+              // Swallow — same readyState reasoning as `stop()`. The
+              // user can retry from the composer.
             }
           };
           // Fire-and-forget — the adapter's `sendMessage` signature is
@@ -368,6 +352,21 @@ export function useChatStream(
   >({});
   const [resolvedHumanInputs, setResolvedHumanInputs] = React.useState<Record<string, true>>({});
 
+  // Step 0 — drop the previous session's accumulated state whenever the
+  // hook is pointed at a different chat.
+  //
+  // `useChatStream` is instantiated once and re-pointed as the user
+  // switches chats, so without this the new chat inherits the old one's
+  // rendered events and resolved permission/HIL decisions. Keyed on
+  // `sessionId` alone — deliberately narrower than the loader effect
+  // below, which also re-runs on `apiClients` identity changes and must
+  // not be allowed to wipe events mid-stream.
+  React.useEffect(() => {
+    setEvents([]);
+    setResolvedPermissions({});
+    setResolvedHumanInputs({});
+  }, [sessionId]);
+
   // Step 1 — load the session. Prefer the shared API client; fall back
   // to the legacy fetch-based loader when callers explicitly inject an
   // `options.apiBaseUrl` override (used by some embed scenarios), and
@@ -418,19 +417,31 @@ export function useChatStream(
   // this, the SDK eagerly connects to `/agents/<kebab-class>/default` (its
   // fallback for empty `name`), which 404s — and on the production worker
   // floods the logs with failed upgrades.
+  // Transport selection: `transportMode` is set server-side — `'http'`
+  // when no Durable Object is wired (Express/Node), else `'durable-object'`.
+  // Both transports' hooks are called unconditionally (rules of hooks);
+  // the inactive one is disabled so it opens nothing.
   const doName = session?.doAgentName ?? '';
-  const socket = a.useAgent({
+  const isHttp = session?.transportMode === 'http';
+  const doSocket = a.useAgent({
     agent: 'AgentChatDO',
     name: doName || 'pending',
-    enabled: Boolean(doName),
+    enabled: Boolean(doName) && !isHttp,
   });
-  const chat = a.useAgentChat({
-    agent: Object.assign(socket, { agent: 'AgentChatDO', name: doName }),
+  const doChat = a.useAgentChat({
+    agent: Object.assign(doSocket, { agent: 'AgentChatDO', name: doName }),
   });
+  const http = useHttpChatTransport({
+    sessionId,
+    baseUrl: apiClients.baseUrl ?? '',
+    enabled: isHttp,
+  });
+  const socket = isHttp ? http.socket : doSocket;
+  const chat = isHttp ? http.chat : doChat;
 
-  // Step 3 — stream agent events from the socket.
+  // Step 3 — stream agent events from the active transport.
   React.useEffect(() => {
-    if (!session?.doAgentName) {
+    if (!session) {
       return;
     }
     const onMessage = (msg: MessageEvent) => {
@@ -439,7 +450,15 @@ export function useChatStream(
         setEvents((prev) => [...prev, frame.event]);
         setStatus((prev) => (prev === 'error' ? prev : 'streaming'));
         if (frame.event.type === 'session-end') {
-          setStatus('idle');
+          // A turn that ended in error (e.g. credential/model mismatch,
+          // provider failure) carries the message on the session-end event
+          // — surface it instead of silently going idle with no response.
+          if (frame.event.reason === 'error') {
+            setError(frame.event.error ?? 'The agent turn ended with an error.');
+            setStatus('error');
+          } else {
+            setStatus('idle');
+          }
         }
       } else if (frame.kind === 'agent-error') {
         setError(frame.error.message);
@@ -451,7 +470,7 @@ export function useChatStream(
     return () => {
       socket.removeEventListener('message', onMessage);
     };
-  }, [session?.doAgentName, socket]);
+  }, [session, socket]);
 
   // Step 4 — outbound helpers.
   const sendControl = React.useCallback(

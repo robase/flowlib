@@ -83,12 +83,12 @@ export function createFilesEndpoints(ctx: PluginContext): FlowlibPluginEndpoint[
   return [
     {
       method: 'GET',
-      path: '/workspaces/:id/files',
+      path: '/agents/workspaces/:id/files',
       handler: safeHandler(ctx, listFiles),
     },
     {
       method: 'GET',
-      path: '/workspaces/:id/files/read',
+      path: '/agents/workspaces/:id/files/read',
       handler: safeHandler(ctx, readFile),
     },
   ];

@@ -67,6 +67,28 @@ export type AgentProviderConfig = Record<string, unknown>;
  * Input to `createSession`. Carries everything the provider needs to
  * stand up a new conversation thread.
  */
+/**
+ * Decrypted credential row a provider inspects to source an LLM key.
+ * Structural subset of Flowlib's credential record.
+ */
+export interface ResolvedCredentialRow {
+  name?: string;
+  authType?: string;
+  /** Decrypted config — `apiKey`, optional `baseUrl`, `oauth2Provider`, … */
+  config?: Record<string, unknown> | null;
+  metadata?: Record<string, unknown> | null;
+  provider?: string;
+}
+
+/**
+ * Minimal credentials accessor the host threads into providers (the
+ * agents plugin sets it from `flowlib.credentials`). Returns the
+ * **decrypted** credential so a provider can read its `apiKey`.
+ */
+export interface AgentCredentialsAccessor {
+  getDecryptedWithRefresh(id: string): Promise<ResolvedCredentialRow | null | undefined>;
+}
+
 export interface CreateSessionInput {
   /** Resolved auth context (org/user/role). */
   auth: AgentsAuthContext;
@@ -74,6 +96,17 @@ export interface CreateSessionInput {
   config: AgentProviderConfig;
   /** Workspace handle, present iff `capabilities.workspaceRequired`. */
   workspace?: import('../workspaces/types').WorkspaceHandle;
+  /**
+   * Lazy workspace provisioner. Providers whose
+   * `capabilities.workspaceRequired` is `false` receive this *instead of*
+   * an eager `workspace` and call it the first time a tool actually needs
+   * the sandbox — deferring (and for pure-chat turns, skipping) the
+   * container cold-start. The host implementation creates the workspace
+   * row if missing, persists the workspace id onto the session, resolves
+   * the handle, and caches it. Providers that require a workspace up
+   * front (`workspaceRequired: true`) can ignore this and use `workspace`.
+   */
+  ensureWorkspace?: import('../workspaces/types').WorkspaceAccessor;
   /** Initial system prompt (composed by Stream K). */
   systemPrompt?: string;
   /**
@@ -84,6 +117,14 @@ export interface CreateSessionInput {
    * credential (or fail if none is configured).
    */
   credentialId?: string;
+  /**
+   * Credentials accessor threaded in by the host runtime (the agents
+   * plugin sets it from `flowlib.credentials`). Lets a provider resolve
+   * the session's `credentialId` to an API key **without** the host
+   * hand-wiring a `resolveCredential` — the `aiSdkProvider` uses it as a
+   * built-in default. Per-request, so it stays correct multi-tenant.
+   */
+  credentials?: AgentCredentialsAccessor;
   /** Provider-specific extras (Claude Code: permissionMode, MCP, hooks). */
   extras?: Record<string, unknown>;
   /**
@@ -104,6 +145,27 @@ export interface CreateSessionInput {
   providerSessionId?: string;
 }
 
+/**
+ * A tool the *plugin* contributes to a turn (as opposed to the host's
+ * `tools` factory or the provider's own catalogue). Provider-agnostic:
+ * each provider adapts this shape to its native tool format. Used for
+ * plugin-internal tools that close over plugin resources the host can't
+ * reach — `skills.read` (skills repo), `memory.search` (memory adapter),
+ * `read_tool_output` (output store).
+ *
+ * The shape is intentionally identical to the ai-sdk tool descriptor so
+ * the ai-sdk provider can merge them with zero conversion.
+ */
+export interface ProviderToolDescriptor {
+  description: string;
+  /** JSON-Schema parameters object. */
+  parameters: Record<string, unknown>;
+  execute: (
+    input: Record<string, unknown>,
+    options: { abortSignal?: AbortSignal; toolCallId?: string },
+  ) => Promise<unknown>;
+}
+
 /** Input for one `prompt()` turn. */
 export interface PromptInput {
   /** Provider-side session id returned by `createSession`. */
@@ -118,8 +180,23 @@ export interface PromptInput {
   extraDenied?: ReadonlyArray<string>;
   /** Per-turn whitelist (if set, only listed tools are allowed). */
   enabledTools?: ReadonlyArray<string>;
+  /**
+   * Plugin-contributed tools for this turn, keyed by tool name. Merged
+   * on top of the provider's own catalogue (plugin tools win on name
+   * collision). Providers that don't support extra tools ignore this.
+   */
+  providerTools?: Record<string, ProviderToolDescriptor>;
   /** Cancel the iterator. Provider must honour `signal.aborted`. */
   abortSignal: AbortSignal;
+  /**
+   * Human-in-the-loop decision gate (see `SessionContext.decisionGate`).
+   * Threaded onto the turn so a provider can **block** on a
+   * permission-request / human-input-request (`await gate.awaitPermission(...)`)
+   * instead of merely emitting the event. Optional — a provider that
+   * ignores it keeps the legacy pass-through. Same gate on both transports
+   * (DO + Express), so blocking behaves identically wherever the loop runs.
+   */
+  decisionGate?: import('../service/types').DecisionGate;
   /** Provider-specific extras (e.g. Claude `permissionMode` override). */
   extras?: Record<string, unknown>;
 }
@@ -167,6 +244,12 @@ export interface AgentProvider {
   readonly name: string;
   /** Optional Lucide icon name. */
   readonly icon?: string;
+  /**
+   * Default model id used when a session omits `model`. Surfaced to the
+   * UI picker (via `GET /agents/providers`) so the frontend pre-selects a
+   * model that matches this provider's credential/gateway setup.
+   */
+  readonly defaultModel?: string;
   /** Static capability flags — see {@link AgentCapabilities}. */
   readonly capabilities: AgentCapabilities;
 

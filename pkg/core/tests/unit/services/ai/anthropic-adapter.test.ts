@@ -14,6 +14,9 @@
  *   - Malformed tool-input JSON survives without losing usage
  *   - Batch result line items: extracts `usage` from `message.usage`
  *   - Batch error / canceled / expired line items omit usage
+ *   - Agent path sends top-level `cache_control` (automatic caching)
+ *   - Cache read/write tokens fold into the reported input total
+ *   - Single-shot prompts cache the system prefix, not the varying user prompt
  */
 
 import { describe, it, expect, beforeEach, afterEach, beforeAll, afterAll, vi } from 'vitest';
@@ -46,6 +49,9 @@ interface StreamOpts {
   omitStartUsage?: boolean;
   /** Skip the message_delta usage block entirely. */
   omitDeltaUsage?: boolean;
+  /** Prompt-cache tokens reported on `message_start.message.usage`. */
+  cacheReadTokens?: number;
+  cacheCreationTokens?: number;
 }
 
 function buildSse(opts: StreamOpts): string {
@@ -70,6 +76,12 @@ function buildSse(opts: StreamOpts): string {
               usage: {
                 input_tokens: opts.inputTokensStart ?? 0,
                 output_tokens: opts.outputTokensStart ?? 0,
+                ...(opts.cacheReadTokens !== undefined
+                  ? { cache_read_input_tokens: opts.cacheReadTokens }
+                  : {}),
+                ...(opts.cacheCreationTokens !== undefined
+                  ? { cache_creation_input_tokens: opts.cacheCreationTokens }
+                  : {}),
               },
             }),
       },
@@ -381,5 +393,97 @@ describe('AnthropicAdapter — streaming usage capture', () => {
     expect(result.content).toBe('answer');
     expect(result.reasoning).toBe('reasoning trail');
     expect(result.usage).toEqual({ inputTokens: 80, outputTokens: 60 });
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Prompt caching
+// ---------------------------------------------------------------------------
+
+describe('AnthropicAdapter — prompt caching', () => {
+  it('enables automatic caching on the agent path', async () => {
+    messageResponses.push(buildSse({ inputTokensStart: 10, outputTokensFinal: 5, text: 'ok' }));
+
+    const adapter = makeAdapter();
+    await adapter.executeAgentPrompt({
+      model: 'claude-sonnet-4-6',
+      messages: [{ role: 'user', content: 'hi' }],
+      tools: [],
+      systemPrompt: 'be terse',
+    });
+
+    // Top-level cache_control — the breakpoint tracks the last cacheable block
+    // as the conversation grows, so each iteration reads back the prior one.
+    expect(captured[0]?.cache_control).toEqual({ type: 'ephemeral' });
+  });
+
+  it('reports total input tokens across cache reads, writes, and uncached input', async () => {
+    messageResponses.push(
+      buildSse({
+        inputTokensStart: 12,
+        cacheReadTokens: 1800,
+        cacheCreationTokens: 240,
+        outputTokensFinal: 30,
+        text: 'cached',
+      }),
+    );
+
+    const adapter = makeAdapter();
+    const result = await adapter.executeAgentPrompt({
+      model: 'claude-sonnet-4-6',
+      messages: [{ role: 'user', content: 'hi' }],
+      tools: [],
+    });
+
+    // `input_tokens` alone counts only post-breakpoint tokens (12). Downstream
+    // metering records this as tokensIn, so it must stay the full 2052.
+    expect(result.usage).toEqual({ inputTokens: 2052, outputTokens: 30 });
+  });
+
+  it('reports uncached input unchanged when no cache fields are present', async () => {
+    messageResponses.push(
+      buildSse({ inputTokensStart: 42, outputTokensFinal: 17, text: 'uncached' }),
+    );
+
+    const adapter = makeAdapter();
+    const result = await adapter.executeAgentPrompt({
+      model: 'claude-sonnet-4-6',
+      messages: [{ role: 'user', content: 'hi' }],
+      tools: [],
+    });
+
+    expect(result.usage).toEqual({ inputTokens: 42, outputTokens: 17 });
+  });
+
+  it('caches the system prompt on single-shot prompts, not the varying user prompt', async () => {
+    messageResponses.push(buildSse({ inputTokensStart: 5, outputTokensFinal: 3, text: 'done' }));
+
+    const adapter = makeAdapter();
+    await adapter.executePrompt({
+      model: 'claude-sonnet-4-6',
+      prompt: 'summarise this row',
+      systemPrompt: 'You are a summariser.',
+    } as Parameters<AnthropicAdapter['executePrompt']>[0]);
+
+    // Explicit breakpoint on system, NOT top-level automatic caching: the last
+    // block here is the per-row user prompt, so an automatic breakpoint would
+    // write a fresh entry every call and never read one back.
+    expect(captured[0]?.cache_control).toBeUndefined();
+    expect(captured[0]?.system).toEqual([
+      { type: 'text', text: 'You are a summariser.', cache_control: { type: 'ephemeral' } },
+    ]);
+  });
+
+  it('leaves the system prompt as a plain string when there is nothing to cache', async () => {
+    messageResponses.push(buildSse({ inputTokensStart: 5, outputTokensFinal: 3, text: 'done' }));
+
+    const adapter = makeAdapter();
+    await adapter.executePrompt({
+      model: 'claude-sonnet-4-6',
+      prompt: 'no system prompt here',
+    } as Parameters<AnthropicAdapter['executePrompt']>[0]);
+
+    expect(captured[0]?.system).toBeUndefined();
+    expect(captured[0]?.cache_control).toBeUndefined();
   });
 });

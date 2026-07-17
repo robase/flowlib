@@ -20,10 +20,13 @@ import type { PluginDatabaseApi } from '@flowlib/core';
 import type { PluginContext } from '../plugin-context';
 import { AuditRepository } from './audit.repository';
 import { McpServersRepository } from './mcp-servers.repository';
+import { MemoriesRepository } from './memories.repository';
 import { MessagesRepository } from './messages.repository';
 import { ProjectsRepository } from './projects.repository';
 import { RolePermissionsRepository } from './role-permissions.repository';
 import { SessionsRepository } from './sessions.repository';
+import { SessionPlansRepository } from './session-plans.repository';
+import { SkillsRepository } from './skills.repository';
 import { WorkspacesRepository } from './workspaces.repository';
 
 /** The bag of repositories handed to subsystems / endpoints. */
@@ -33,6 +36,9 @@ export interface Repositories {
   sessions: SessionsRepository;
   messages: MessagesRepository;
   projects: ProjectsRepository;
+  skills: SkillsRepository;
+  memories: MemoriesRepository;
+  sessionPlans: SessionPlansRepository;
   audit: AuditRepository;
   rolePermissions: RolePermissionsRepository;
 }
@@ -45,6 +51,9 @@ export function buildRepositories(database: PluginDatabaseApi): Repositories {
     sessions: new SessionsRepository(database),
     messages: new MessagesRepository(database),
     projects: new ProjectsRepository(database),
+    skills: new SkillsRepository(database),
+    memories: new MemoriesRepository(database),
+    sessionPlans: new SessionPlansRepository(database),
     audit: new AuditRepository(database),
     rolePermissions: new RolePermissionsRepository(database),
   };

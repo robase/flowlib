@@ -42,8 +42,9 @@ import { registerService as registerServiceImpl } from './service/register';
 import { registerTools as registerToolsImpl } from './tools/register';
 import { registerPermissions as registerPermissionsImpl } from './permissions/register';
 import { registerAudit as registerAuditImpl } from './audit/register';
+import { registerHooks as registerHooksImpl } from './hooks/register';
 import { registerPromptComposer as registerPromptComposerImpl } from './prompt/register';
-import { registerCloudflareDO as registerCloudflareDOImpl } from './cloudflare/register';
+import { registerCloudflareRuntime as registerCloudflareRuntimeImpl } from './cloudflare/register-runtime';
 import { registerRepositories as registerRepositoriesImpl } from './repositories/register';
 import { registerEndpoints as registerEndpointsImpl } from './endpoints/register';
 
@@ -79,12 +80,23 @@ function registerAudit(ctx: PluginContext): void {
   registerAuditImpl(ctx);
 }
 
+function registerHooks(ctx: PluginContext): void {
+  registerHooksImpl(ctx);
+}
+
 function registerPromptComposer(ctx: PluginContext): void {
   registerPromptComposerImpl(ctx);
 }
 
 function registerCloudflareDO(ctx: PluginContext): void {
-  registerCloudflareDOImpl(ctx);
+  // Light: wire the per-isolate runtime bridge (no Agents SDK import).
+  registerCloudflareRuntimeImpl(ctx);
+  // The DO class is injected via `agents({ cloudflareDoClass })` on
+  // Cloudflare hosts; on Express/Node it stays undefined and the chat
+  // endpoint has no DO to dispatch to (REST + UI still work).
+  if (ctx.options.cloudflareDoClass !== undefined) {
+    ctx.registries.cloudflareDoClass = ctx.options.cloudflareDoClass;
+  }
 }
 
 // ─── Options + context plumbing ────────────────────────────────────────
@@ -129,9 +141,37 @@ export interface AgentsPluginOptions extends AgentsPluginPublicOptions {
    * The backend extracts `.backend`; `<Flowlib>` extracts `.frontend`.
    */
   frontend?: unknown;
+  /**
+   * The Cloudflare `AgentChatDO` Durable Object class, injected by
+   * Cloudflare hosts: `agents({ cloudflareDoClass: AgentChatDO })` where
+   * `AgentChatDO` is imported from `@flowlib/agents/cloudflare`. Stashed
+   * on the runtime registry so the chat endpoint can dispatch to the DO.
+   *
+   * Left unset on Express/Node hosts — the plugin then serves its REST +
+   * UI surface but cannot stream chat (which requires the DO runtime).
+   * Typed `unknown` so the core entry stays free of the Agents SDK.
+   */
+  cloudflareDoClass?: unknown;
 }
 
-function resolveOptions(opts: AgentsPluginOptions = {}): ResolvedAgentsOptions {
+/**
+ * `ResolvedAgentsOptions` inherits every `AgentsPluginPublicOptions` field
+ * as *optional*, so forgetting to copy one through `resolveOptions` used to
+ * compile clean and silently disable the feature at runtime. The `-?`
+ * mapped type makes every public option a **required key** on the resolved
+ * object — omitting one is now a compile error. Values may still be
+ * `undefined` for options with no meaningful default (e.g. `webSearch`,
+ * which is "off" when unset).
+ */
+type FullyResolvedAgentsOptions = ResolvedAgentsOptions & {
+  // Keys come from `Required<…>` (so every one must be present) while the
+  // value type stays `AgentsPluginPublicOptions[K]` (so it may still be
+  // `undefined`). A bare `-?` would strip `undefined` from the value too,
+  // which would wrongly force a `webSearch` config on every deployment.
+  [K in keyof Required<AgentsPluginPublicOptions>]: AgentsPluginPublicOptions[K];
+};
+
+function resolveOptions(opts: AgentsPluginOptions = {}): FullyResolvedAgentsOptions {
   // Promote the deprecated singular `workspaceProvider` into the
   // canonical array form. Plural always wins when both are provided.
   const workspaceProviders =
@@ -143,6 +183,7 @@ function resolveOptions(opts: AgentsPluginOptions = {}): ResolvedAgentsOptions {
     workspaceProviders,
     exposeFlowlibActions: opts.exposeFlowlibActions ?? false,
     defaultDenyList: opts.defaultDenyList ?? [],
+    cloudflareDoClass: opts.cloudflareDoClass,
     // opencode is the chat-first default — it talks to an opencode server
     // running inside the workspace sandbox and doesn't require an API key
     // at session-create time, so a fresh org can start chatting without
@@ -161,6 +202,16 @@ function resolveOptions(opts: AgentsPluginOptions = {}): ResolvedAgentsOptions {
     // `defaultModel` fallback path (e.g. inside opencode's `prompt`)
     // wouldn't get that treatment — so we ship the dotted form here.
     defaultModel: opts.defaultModel ?? 'anthropic/claude-sonnet-4.5',
+    // Cut 2 — eagerly provision the sandbox at session start so the system
+    // prompt carries real env/git/directory context. Read into
+    // `registries.eagerWorkspace` during `init()`.
+    eagerWorkspace: opts.eagerWorkspace ?? false,
+    // Cut 4 — `web.search` tool. Left `undefined` when unconfigured; the
+    // tool is omitted entirely in that case (there is no default API key).
+    webSearch: opts.webSearch,
+    // Cut 4 — `dispatch_agent` (read-only sub-agent) tool. Token-heavy, so
+    // off unless the host opts in.
+    subAgents: opts.subAgents ?? false,
   };
 }
 
@@ -359,8 +410,26 @@ export function agents(options: AgentsPluginOptions = {}): FlowlibPluginDefiniti
       //     populated with everything above).
       //  7. Endpoints register last, since they consume everything.
       registerRepositories(ctx);
+      // Thread the credentials accessor (lazy — `getFlowlib()` resolves at
+      // call time) so providers can resolve a chat's attached credential
+      // without the host hand-wiring `resolveCredential`.
+      ctx.registries.credentials = {
+        getDecryptedWithRefresh: (id: string) =>
+          ctx.flowlib.getFlowlib().credentials.getDecryptedWithRefresh(id),
+      };
+      // Eager-workspace flag (Cut 2 — session-start code context). Read by
+      // both transports into `ChatHostDeps.eagerWorkspace`.
+      ctx.registries.eagerWorkspace = resolved.eagerWorkspace ?? false;
+      // Web-search config (Cut 4 — `web.search` tool, config-gated).
+      if (resolved.webSearch?.apiKey) {
+        ctx.registries.webSearch = resolved.webSearch;
+      }
+      // Sub-agent flag (Cut 4 — `dispatch_agent` tool).
+      ctx.registries.subAgents = resolved.subAgents ?? false;
       registerPermissions(ctx);
       registerAudit(ctx);
+      // Hooks depend on the audit writer (above) being on the registry.
+      registerHooks(ctx);
       registerProviders(ctx);
       registerWorkspaces(ctx);
       registerService(ctx);

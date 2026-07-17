@@ -16,6 +16,8 @@ export type WorkspaceProviderId =
   | 'git-clone'
   | 'cloudflare-sandbox'
   | 'cloudflare-sandbox-claude'
+  | 'computesdk'
+  | 'local-docker'
   | 'remote-sandbox'
   | 'none';
 
@@ -88,9 +90,72 @@ export interface WorkspaceHandle {
    * provider-defined but should at minimum support `**` and `*`.
    */
   listFiles(glob: string): Promise<string[]>;
+  /**
+   * Clone a git repo into the workspace (sandbox modes only). When `token`
+   * is supplied, credentials are persisted in the container so subsequent
+   * `git push` / `fetch` authenticate too. Returns the workspace-relative
+   * directory the repo was cloned into.
+   */
+  cloneRepo?(input: WorkspaceCloneInput): Promise<WorkspaceCloneResult>;
+  /**
+   * Start a long-running command detached and return a handle id (sandbox
+   * modes only). Use for commands that exceed a single request's budget
+   * (`pnpm install`, test suites); poll with {@link getCommand}.
+   */
+  startCommand?(command: string, options?: WorkspaceExecOptions): Promise<{ id: string }>;
+  /** Poll a command started by {@link startCommand} (sandbox modes only). */
+  getCommand?(id: string): Promise<WorkspaceCommandStatus>;
   /** Provider-specific extras the AgentProvider might need. */
   metadata: Record<string, unknown>;
 }
+
+/** Input to {@link WorkspaceHandle.cloneRepo}. */
+export interface WorkspaceCloneInput {
+  /** Clone URL, e.g. `https://github.com/owner/repo.git`. */
+  repoUrl: string;
+  /** Workspace-relative target directory (defaults to the repo name). */
+  dir?: string;
+  /** Branch to check out (defaults to the remote default). */
+  branch?: string;
+  /**
+   * Access token persisted as a git credential so clone + push to the
+   * repo's host authenticate. Kept inside the (isolated) container only.
+   */
+  token?: string;
+  /** Shallow-clone depth (omit for a full clone). */
+  depth?: number;
+  /** Hard timeout for the clone. */
+  timeoutMs?: number;
+}
+
+export interface WorkspaceCloneResult {
+  dir: string;
+  stdout: string;
+  stderr: string;
+  exitCode: number;
+}
+
+export interface WorkspaceCommandStatus {
+  /** `running` | `completed` | `failed` | `killed` | `error` | `starting`. */
+  status: string;
+  exitCode?: number;
+  stdout: string;
+  stderr: string;
+}
+
+/**
+ * Lazily provision-or-resolve a session's workspace, returning a live
+ * handle. The first call may boot a sandbox (cold-start cost); subsequent
+ * calls return the same handle.
+ *
+ * Hosts supply this so providers whose `capabilities.workspaceRequired`
+ * is `false` can defer — and for pure-chat turns, skip entirely — the
+ * container provisioning until a tool actually needs the filesystem or
+ * shell. The host implementation is expected to create the workspace row
+ * if missing, persist the workspace id onto the session, resolve the
+ * handle, and cache the result.
+ */
+export type WorkspaceAccessor = () => Promise<WorkspaceHandle>;
 
 /** Input to `WorkspaceProvider.create`. */
 export interface CreateWorkspaceInput {

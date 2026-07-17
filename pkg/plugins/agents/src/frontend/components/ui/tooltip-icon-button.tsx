@@ -25,9 +25,9 @@ const sizeClasses: Record<Size, string> = {
 };
 
 const variantClasses: Record<Variant, string> = {
-  default: 'bg-fl-primary text-fl-primary-foreground hover:opacity-90',
-  ghost: 'bg-transparent text-fl-foreground hover:bg-fl-muted/40',
-  outline: 'border border-fl-border bg-fl-background text-fl-foreground hover:bg-fl-muted/40',
+  default: 'bg-primary text-primary-foreground hover:opacity-90',
+  ghost: 'bg-transparent text-foreground hover:bg-muted/40',
+  outline: 'border border-border bg-background text-foreground hover:bg-muted/40',
 };
 
 export const TooltipIconButton = React.forwardRef<HTMLButtonElement, TooltipIconButtonProps>(
@@ -44,7 +44,7 @@ export const TooltipIconButton = React.forwardRef<HTMLButtonElement, TooltipIcon
         className={cn(
           'inline-flex items-center justify-center rounded-md transition-colors',
           'disabled:opacity-40 disabled:cursor-not-allowed',
-          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-fl-primary/50',
+          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50',
           '[&>svg]:size-4',
           sizeClasses[size],
           variantClasses[variant],

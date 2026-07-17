@@ -11,6 +11,15 @@ import {
 } from '@codemirror/view';
 import { EditorState, Extension, RangeSetBuilder, Prec } from '@codemirror/state';
 import { defaultKeymap, history, historyKeymap } from '@codemirror/commands';
+import {
+  autocompletion,
+  completionKeymap,
+  acceptCompletion,
+  completionStatus,
+  type CompletionContext,
+  type CompletionResult,
+  type Completion,
+} from '@codemirror/autocomplete';
 import { cn } from '../../lib/utils';
 import {
   CODEMIRROR_IOSEVKA_FONT_STACK,
@@ -29,6 +38,104 @@ interface CodeMirrorNunjucksEditorProps {
   multiline?: boolean;
   rows?: number;
   fillAvailableHeight?: boolean;
+  /**
+   * Upstream input data, used to autocomplete `{{ ... }}` template references.
+   * Top-level keys become variable suggestions; nested object keys drive
+   * property-path completions (e.g. `{{ fetch_user.data.id }}`).
+   */
+  inputData?: Record<string, unknown>;
+}
+
+/** Short, human-readable type hint shown next to a completion. */
+function describeValueType(value: unknown): string {
+  if (value === null) {
+    return 'null';
+  }
+  if (Array.isArray(value)) {
+    return `array[${value.length}]`;
+  }
+  return typeof value;
+}
+
+/**
+ * Completion source for Nunjucks `{{ ... }}` references, driven by the live
+ * upstream input data. Only fires when the cursor sits inside an unclosed
+ * `{{ ... }}` expression and is not in a filter (post-`|`) position.
+ *
+ * Supports arbitrary-depth property paths: `{{ fetch_user.data.address.city }}`.
+ */
+function getNunjucksCompletions(
+  inputData: Record<string, unknown>,
+  context: CompletionContext,
+): CompletionResult | null {
+  const before = context.state.sliceDoc(0, context.pos);
+
+  // Must be inside an open {{ that isn't already closed before the cursor.
+  const open = before.lastIndexOf('{{');
+  if (open === -1 || before.indexOf('}}', open) !== -1) {
+    return null;
+  }
+
+  const exprBefore = before.slice(open + 2);
+
+  // Trailing dotted path token being typed (e.g. "fetch_user.data.ci").
+  const pathText = (/[\w$.]*$/.exec(exprBefore) ?? [''])[0];
+
+  // Don't suggest data variables where a filter name is expected (right after `|`).
+  const charBeforePath = exprBefore
+    .slice(0, exprBefore.length - pathText.length)
+    .trimEnd()
+    .slice(-1);
+  if (charBeforePath === '|') {
+    return null;
+  }
+
+  const segments = pathText.split('.');
+  const lastSegment = segments[segments.length - 1];
+  const navSegments = segments.slice(0, -1);
+
+  // Walk into the input data along the already-typed path segments.
+  let target: unknown = inputData;
+  for (const segment of navSegments) {
+    if (
+      target &&
+      typeof target === 'object' &&
+      !Array.isArray(target) &&
+      segment in (target as Record<string, unknown>)
+    ) {
+      target = (target as Record<string, unknown>)[segment];
+    } else {
+      return null;
+    }
+  }
+
+  if (!target || typeof target !== 'object' || Array.isArray(target)) {
+    return null;
+  }
+
+  const isTopLevel = navSegments.length === 0;
+  // Avoid noise: at top level, only auto-pop once the user has typed something.
+  if (isTopLevel && lastSegment === '' && !context.explicit) {
+    return null;
+  }
+
+  const targetObj = target as Record<string, unknown>;
+  const keys = Object.keys(targetObj).filter((k) => !lastSegment || k.startsWith(lastSegment));
+  if (keys.length === 0) {
+    return null;
+  }
+
+  const options: Completion[] = keys.map((key) => ({
+    label: key,
+    type: isTopLevel ? 'variable' : 'property',
+    detail: describeValueType(targetObj[key]),
+  }));
+
+  return {
+    from: context.pos - lastSegment.length,
+    options,
+    validFor: /^[\w$]*$/,
+  };
 }
 
 // Custom decoration for nunjucks expressions {{ ... }}
@@ -195,6 +302,22 @@ function createEditorTheme(palette: CodeMirrorVscodePalette) {
       color: palette.foreground,
       boxShadow: `0 6px 18px color-mix(in srgb, ${palette.border} 35%, transparent)`,
     },
+    '.cm-tooltip-autocomplete ul li[aria-selected]': {
+      backgroundColor: palette.selection,
+      color: palette.foreground,
+    },
+    '.cm-completionLabel': {
+      fontSize: '12px',
+    },
+    '.cm-completionMatchedText': {
+      fontWeight: '600',
+      textDecoration: 'none',
+    },
+    '.cm-completionDetail': {
+      color: palette.foregroundMuted,
+      fontSize: '11px',
+      fontStyle: 'normal',
+    },
     '.cm-panels': {
       backgroundColor: palette.surface,
       color: palette.foreground,
@@ -306,6 +429,7 @@ export function CodeMirrorNunjucksEditor({
   multiline = false,
   rows = 3,
   fillAvailableHeight = false,
+  inputData,
 }: CodeMirrorNunjucksEditorProps) {
   const vscodePalette = useCodeMirrorVscodePalette();
   const vscodeTheme = useCodeMirrorVscodeTheme();
@@ -313,6 +437,10 @@ export function CodeMirrorNunjucksEditor({
   const viewRef = useRef<EditorView | null>(null);
   const onChangeRef = useRef(onChange);
   const initialValueRef = useRef(value);
+
+  // Always read the latest input data without recreating the editor.
+  const inputDataRef = useRef<Record<string, unknown>>(inputData ?? {});
+  inputDataRef.current = inputData ?? {};
 
   // Keep refs up to date
   useEffect(() => {
@@ -346,7 +474,13 @@ export function CodeMirrorNunjucksEditor({
         },
       }),
       nunjucksDecorationPlugin,
-      keymap.of([...defaultKeymap, ...historyKeymap]),
+      autocompletion({
+        override: [(ctx: CompletionContext) => getNunjucksCompletions(inputDataRef.current, ctx)],
+        activateOnTyping: true,
+        icons: false,
+      }),
+      // completionKeymap first so Enter/Arrows drive the popup when it's open.
+      keymap.of([...completionKeymap, ...defaultKeymap, ...historyKeymap]),
     ];
 
     // Add placeholder
@@ -365,7 +499,14 @@ export function CodeMirrorNunjucksEditor({
           keymap.of([
             {
               key: 'Enter',
-              run: () => true, // Prevent default (consume the event)
+              run: (view) => {
+                // Accept the autocomplete suggestion if the popup is open;
+                // otherwise consume Enter so single-line mode stays single-line.
+                if (completionStatus(view.state) === 'active') {
+                  return acceptCompletion(view);
+                }
+                return true;
+              },
             },
           ]),
         ),

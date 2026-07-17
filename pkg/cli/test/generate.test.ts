@@ -78,7 +78,10 @@ describe('generate core-only schema (no plugins)', () => {
     expect(sqlite).toContain("sqliteTable('flowlib_flow_versions'");
     expect(sqlite).toContain("sqliteTable('flowlib_flow_executions'");
     expect(sqlite).toContain("sqliteTable('flowlib_credentials'");
-    expect(sqlite).toContain(".default('PENDING')");
+    // Enum/JSON columns carry a `.$type<T>()` annotation, so their string
+    // default is emitted as a drizzle `sql` raw default (assignable to the
+    // narrowed type without a cast).
+    expect(sqlite).toContain(".default(sql`'PENDING'`)");
     // SQLite uses text for dates
     expect(sqlite).toContain("text('created_at')");
     // SQLite uses integer for booleans
@@ -791,7 +794,7 @@ describe('append-mode schema generators', () => {
     expect(result.code).toContain('Flowlib tables — AUTO-GENERATED');
     expect(result.code).toContain('sqliteTable');
     expect(result.code).toContain('relations(');
-    expect(result.code).toContain(".default('PENDING')");
+    expect(result.code).toContain(".default(sql`'PENDING'`)");
     // Should NOT contain import statements in the code portion
     expect(result.code).not.toContain("from 'drizzle-orm");
   });

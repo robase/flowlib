@@ -29,6 +29,23 @@ import type {
 } from '../../shared/types';
 import type { AgentsApiClientOptions } from './client-options';
 
+/** A model option surfaced by `GET /agents/providers`. */
+export interface ProviderModelDescriptor {
+  id: string;
+  label: string;
+  description?: string;
+}
+
+/** A registered provider surfaced by `GET /agents/providers`. */
+export interface ProviderDescriptor {
+  id: string;
+  name: string;
+  icon?: string;
+  defaultModel?: string;
+  capabilities?: Record<string, unknown>;
+  models: ProviderModelDescriptor[];
+}
+
 export interface CreateSessionInput {
   title?: string;
   providerId?: AgentProviderId;
@@ -108,6 +125,16 @@ export class SessionsApiClient {
   /** List all sessions for the active org. */
   listSessions(): Promise<{ data: AgentSession[] }> {
     return this.request<{ data: AgentSession[] }>('/sessions');
+  }
+
+  /**
+   * List the deployment's registered providers + their curated model
+   * lists, so the picker is backend-driven (matches the host's actual
+   * provider ids / credential setup) rather than a hardcoded frontend
+   * catalogue.
+   */
+  listProviders(): Promise<{ data: ProviderDescriptor[]; defaultProviderId?: string }> {
+    return this.request<{ data: ProviderDescriptor[]; defaultProviderId?: string }>('/providers');
   }
 
   getSession(sessionId: string): Promise<AgentSession> {

@@ -96,7 +96,9 @@ function isSdkEdge(item: unknown): item is SdkEdge {
 
 /** Strip `//` single-line and block comments from the source. */
 function stripComments(text: string): string {
-  return text.replace(/\/\/.*$/gm, '').replace(/\/\*[\s\S]*?\*\//g, '');
+  // `[^\n]*` instead of `.*$/m`: behaviour-identical (`.` already excludes
+  // newlines) but linear — sidesteps the polynomial-ReDoS heuristic.
+  return text.replace(/\/\/[^\n]*/g, '').replace(/\/\*[\s\S]*?\*\//g, '');
 }
 
 /**

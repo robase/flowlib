@@ -14,18 +14,8 @@ permissions:
   contents: read
 
 jobs:
-  commitlint:
-    if: github.event_name == 'pull_request'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
-        with:
-          fetch-depth: 0
-
-      - uses: wagoid/commitlint-github-action@v6
-        with:
-          configFile: commitlint.config.mjs
-
+  # Commit-message linting lives in pr-title.yml and applies to the PR title
+  # only (the squash-merge subject), not to individual branch commits.
   ci:
     runs-on: ubuntu-latest
     steps:
@@ -56,5 +46,10 @@ jobs:
       - name: Typecheck
         run: pnpm typecheck
 
+      # Covers @flowlib/core unit, @flowlib/cli, @flowlib/user-auth,
+      # @flowlib/version-control, @flowlib/agents (workerd + node + frontend
+      # projects), and the @flowlib/agents eval-harness self-tests. The eval
+      # self-tests drive a scripted provider — deterministic, no API key.
+      # Live evals (`pnpm eval:agents`) hit real models and stay out of CI.
       - name: Test
         run: pnpm test

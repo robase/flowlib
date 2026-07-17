@@ -16,6 +16,11 @@
  *   GET    /sessions/:id/messages?before=<seq>&limit=50
  *   POST   /sessions/:id/prompt                         — 501 (use WebSocket)
  *   POST   /sessions/:id/interrupt
+ *
+ * Tenant-scoped on every read; cross-tenant access returns 404. Within an
+ * org, access narrows again by `visibility`: a `private` session (the
+ * default) is only visible/manageable by its `createdBy`; `shared` and
+ * `public` sessions by any org member. See {@link canAccessSession}.
  */
 
 import type { FlowlibPluginEndpoint, PluginEndpointResponse } from '@flowlib/core';
@@ -79,11 +84,20 @@ interface UpdateSessionBody {
 
 function withDoAgentName(
   session: AgentSession,
-  orgId: string,
+  deps: EndpointDeps,
 ): AgentSession & { doAgentName: string } {
+  // The chat transport is decided by whether a Cloudflare Durable Object
+  // is wired into this deployment: present → the DO WebSocket transport;
+  // absent (e.g. Express/Node) → the HTTP/SSE transport. `doAgentName` is
+  // always computed (cheap, deterministic) so the frontend can use it
+  // when the DO transport is selected.
+  const transportMode: AgentSession['transportMode'] = deps.pluginCtx.registries.cloudflareDoClass
+    ? 'durable-object'
+    : 'http';
   return {
     ...session,
-    doAgentName: tenantScopedName('chat', orgId, session.id),
+    doAgentName: tenantScopedName('chat', deps.auth.orgId, session.id),
+    transportMode,
   };
 }
 
@@ -91,20 +105,42 @@ function getProvider(pluginCtx: PluginContext, providerId: string): AgentProvide
   return pluginCtx.registries.providers.get(providerId);
 }
 
+/**
+ * A session is visible/manageable when it is shared beyond its creator
+ * (`shared` / `public`) or when the caller created it. `private` — the
+ * default for every new session — is owner-only.
+ *
+ * Mirrors the `canAccess` model in `skills.endpoint.ts` /
+ * `memories.endpoint.ts`: org scoping is applied by the repository, this
+ * narrows further *within* the org. As there, non-private rows stay
+ * manageable by any org member for v1 — owner-vs-admin RBAC on shared
+ * rows is deferred to the permissions work.
+ *
+ * Callers must return 404 (never 403) on failure so a private session's
+ * existence is not leaked to other members of the same org.
+ */
+export function canAccessSession(session: AgentSession, userId: string): boolean {
+  return session.visibility !== 'private' || session.createdBy === userId;
+}
+
 async function listSessions(deps: EndpointDeps): Promise<PluginEndpointResponse> {
   const rows = await deps.repos.sessions.list({ orgId: deps.auth.orgId });
   return {
-    body: { data: rows.map((r) => withDoAgentName(r, deps.auth.orgId)) },
+    body: {
+      data: rows
+        .filter((r) => canAccessSession(r, deps.auth.userId))
+        .map((r) => withDoAgentName(r, deps)),
+    },
   };
 }
 
 async function getSession(deps: EndpointDeps): Promise<PluginEndpointResponse> {
   const id = deps.endpointCtx.params.id;
   const row = await deps.repos.sessions.findById(id, deps.auth.orgId);
-  if (!row) {
+  if (!row || !canAccessSession(row, deps.auth.userId)) {
     return notFound('Session not found');
   }
-  return { body: withDoAgentName(row, deps.auth.orgId) };
+  return { body: withDoAgentName(row, deps) };
 }
 
 /**
@@ -247,37 +283,11 @@ async function createSession(deps: EndpointDeps): Promise<PluginEndpointResponse
   // and the call would fail 401. The normaliser turns
   // "anthropic/claude-..." into "openrouter/anthropic/claude-..." so
   // opencode dispatches via openrouter's provider config.
-  const requestedModel = body.model ?? opts.defaultModel ?? null;
-  let resolvedModel: string | null = requestedModel ?? null;
-  if (requestedModel && credentialId) {
-    try {
-      const credForVendor = await flowlibCreds(deps).getDecryptedWithRefresh(credentialId);
-      const credentialVendor = inferOpencodeProvider({
-        name: credForVendor.name,
-        authType: credForVendor.authType,
-        config: (credForVendor.config as Record<string, unknown>) ?? null,
-        metadata: credForVendor.metadata ?? null,
-      });
-      const result = normaliseModelForCredential({
-        model: requestedModel,
-        credentialVendor,
-      });
-      resolvedModel = result.model;
-      if (result.rewritten) {
-        // eslint-disable-next-line no-console
-        console.warn('[agents/sessions] rewrote session.model to match credential vendor', {
-          requestedModel,
-          resolvedModel,
-          credentialVendor,
-          credentialId,
-          reason: result.reason,
-        });
-      }
-    } catch {
-      // Leave the model untouched on lookup failure — the assert
-      // above will already have rejected unusable credentials.
-    }
-  }
+  const resolvedModel = await resolveModelForCredential(
+    deps,
+    body.model ?? opts.defaultModel ?? null,
+    credentialId,
+  );
 
   const created = await deps.repos.sessions.create({
     orgId: deps.auth.orgId,
@@ -300,7 +310,7 @@ async function createSession(deps: EndpointDeps): Promise<PluginEndpointResponse
     status: 'active',
   });
 
-  return { status: 201, body: withDoAgentName(created, deps.auth.orgId) };
+  return { status: 201, body: withDoAgentName(created, deps) };
 }
 
 /**
@@ -454,10 +464,56 @@ function flowlibCreds(deps: EndpointDeps) {
   return deps.pluginCtx.flowlib.getFlowlib().credentials;
 }
 
+/**
+ * Coerce a requested model id to match the session's effective credential
+ * vendor when that vendor is a multi-tier router (openrouter,
+ * cloudflare-ai-gateway). Shared by create + update so a model set via
+ * either path is normalised the same way — e.g. `openai/gpt-4o-mini`
+ * with an OpenRouter credential becomes `openrouter/openai/gpt-4o-mini`,
+ * avoiding the `vendor/credential mismatch` that otherwise kills the turn.
+ *
+ * Returns the model unchanged on lookup failure or when no credential is
+ * bound (the create handler's `assertCredentialUsable` already rejected
+ * unusable credentials before this runs).
+ */
+async function resolveModelForCredential(
+  deps: EndpointDeps,
+  requestedModel: string | null | undefined,
+  credentialId: string | null | undefined,
+): Promise<string | null> {
+  const model = requestedModel ?? null;
+  if (!model || !credentialId) {
+    return model;
+  }
+  try {
+    const cred = await flowlibCreds(deps).getDecryptedWithRefresh(credentialId);
+    const credentialVendor = inferOpencodeProvider({
+      name: cred.name,
+      authType: cred.authType,
+      config: (cred.config as Record<string, unknown>) ?? null,
+      metadata: cred.metadata ?? null,
+    });
+    const result = normaliseModelForCredential({ model, credentialVendor });
+    if (result.rewritten) {
+      // eslint-disable-next-line no-console
+      console.warn('[agents/sessions] rewrote session.model to match credential vendor', {
+        requestedModel: model,
+        resolvedModel: result.model,
+        credentialVendor,
+        credentialId,
+        reason: result.reason,
+      });
+    }
+    return result.model;
+  } catch {
+    return model;
+  }
+}
+
 async function updateSession(deps: EndpointDeps): Promise<PluginEndpointResponse> {
   const id = deps.endpointCtx.params.id;
   const existing = await deps.repos.sessions.findById(id, deps.auth.orgId);
-  if (!existing) {
+  if (!existing || !canAccessSession(existing, deps.auth.userId)) {
     return notFound('Session not found');
   }
 
@@ -468,6 +524,20 @@ async function updateSession(deps: EndpointDeps): Promise<PluginEndpointResponse
       return credentialError;
     }
   }
+  // Normalise the model the same way create does — a model set via the
+  // composer's switcher (PATCH) must match the credential's vendor too,
+  // or the next turn dies with a vendor/credential mismatch. Only when a
+  // model is actually being set; resolve against the effective credential
+  // (the incoming one if changing, else the session's current one).
+  const model =
+    body.model !== undefined && body.model !== null
+      ? await resolveModelForCredential(
+          deps,
+          body.model,
+          body.credentialId !== undefined ? body.credentialId : existing.credentialId,
+        )
+      : body.model;
+
   const updated = await deps.repos.sessions.update(
     id,
     {
@@ -475,7 +545,7 @@ async function updateSession(deps: EndpointDeps): Promise<PluginEndpointResponse
       providerId: body.providerId,
       providerConfig: body.providerConfig,
       credentialId: body.credentialId,
-      model: body.model,
+      model,
       permissionMode: body.permissionMode,
       systemPrompt: body.systemPrompt,
       workspaceId: body.workspaceId,
@@ -511,7 +581,7 @@ async function updateSession(deps: EndpointDeps): Promise<PluginEndpointResponse
     }
   }
 
-  return { body: withDoAgentName(updated, deps.auth.orgId) };
+  return { body: withDoAgentName(updated, deps) };
 }
 
 /**
@@ -571,7 +641,7 @@ async function maybeRebindOutboundOnPatch(
 async function deleteSession(deps: EndpointDeps): Promise<PluginEndpointResponse> {
   const id = deps.endpointCtx.params.id;
   const existing = await deps.repos.sessions.findById(id, deps.auth.orgId);
-  if (!existing) {
+  if (!existing || !canAccessSession(existing, deps.auth.userId)) {
     return notFound('Session not found');
   }
 
@@ -647,16 +717,35 @@ async function unbindOutboundCredentials(
   );
 }
 
+/**
+ * Clamp `?limit=` into [1, 200], defaulting to 50.
+ *
+ * Non-numeric input must not fall through: `Number('abc')` is `NaN`, and
+ * `NaN` survives `Math.max`/`Math.min` unchanged, so the clamp is a no-op
+ * and `all.slice(-NaN)` degrades to `slice(0)` — returning the *entire*
+ * message history and defeating the 200 cap. Reject anything non-finite
+ * (`abc`, `Infinity`, `''`) back to the default.
+ */
+function parseLimit(raw: string | undefined): number {
+  if (raw === undefined || raw === '') {
+    return 50;
+  }
+  const n = Number(raw);
+  if (!Number.isFinite(n)) {
+    return 50;
+  }
+  return Math.max(1, Math.min(200, Math.trunc(n)));
+}
+
 async function listMessages(deps: EndpointDeps): Promise<PluginEndpointResponse> {
   const id = deps.endpointCtx.params.id;
   const session = await deps.repos.sessions.findById(id, deps.auth.orgId);
-  if (!session) {
+  if (!session || !canAccessSession(session, deps.auth.userId)) {
     return notFound('Session not found');
   }
 
-  const limitRaw = deps.endpointCtx.query.limit;
   const beforeRaw = deps.endpointCtx.query.before;
-  const limit = limitRaw ? Math.max(1, Math.min(200, Number(limitRaw))) : 50;
+  const limit = parseLimit(deps.endpointCtx.query.limit);
 
   // The plan documents `before=<seq>` pagination, but the underlying
   // repository exposes `afterSequence` (sequence > N). For v1 the
@@ -670,7 +759,7 @@ async function listMessages(deps: EndpointDeps): Promise<PluginEndpointResponse>
   });
 
   let scoped = all;
-  if (beforeRaw && !Number.isNaN(Number(beforeRaw))) {
+  if (beforeRaw && Number.isFinite(Number(beforeRaw))) {
     const before = Number(beforeRaw);
     scoped = all.filter((m) => m.sequence < before);
   }
@@ -690,7 +779,7 @@ async function listMessages(deps: EndpointDeps): Promise<PluginEndpointResponse>
 async function promptSession(deps: EndpointDeps): Promise<PluginEndpointResponse> {
   const id = deps.endpointCtx.params.id;
   const session = await deps.repos.sessions.findById(id, deps.auth.orgId);
-  if (!session) {
+  if (!session || !canAccessSession(session, deps.auth.userId)) {
     return notFound('Session not found');
   }
 
@@ -707,7 +796,7 @@ async function promptSession(deps: EndpointDeps): Promise<PluginEndpointResponse
 async function interruptSession(deps: EndpointDeps): Promise<PluginEndpointResponse> {
   const id = deps.endpointCtx.params.id;
   const session = await deps.repos.sessions.findById(id, deps.auth.orgId);
-  if (!session) {
+  if (!session || !canAccessSession(session, deps.auth.userId)) {
     return notFound('Session not found');
   }
 
@@ -733,46 +822,62 @@ async function interruptSession(deps: EndpointDeps): Promise<PluginEndpointRespo
   };
 }
 
+/** `GET /sessions/:id/plan` — the agent's working task list, for the UI. */
+async function getSessionPlan(deps: EndpointDeps): Promise<PluginEndpointResponse> {
+  const id = deps.endpointCtx.params.id;
+  const session = await deps.repos.sessions.findById(id, deps.auth.orgId);
+  if (!session || !canAccessSession(session, deps.auth.userId)) {
+    return notFound('Session not found');
+  }
+  const plan = await deps.repos.sessionPlans.get(id, deps.auth.orgId);
+  return { body: { checkpoints: plan?.checkpoints ?? [] } };
+}
+
 export function createSessionsEndpoints(ctx: PluginContext): FlowlibPluginEndpoint[] {
   return [
     {
       method: 'GET',
-      path: '/sessions',
+      path: '/agents/sessions',
       handler: safeHandler(ctx, listSessions),
     },
     {
       method: 'POST',
-      path: '/sessions',
+      path: '/agents/sessions',
       handler: safeHandler(ctx, createSession),
     },
     {
       method: 'GET',
-      path: '/sessions/:id',
+      path: '/agents/sessions/:id',
       handler: safeHandler(ctx, getSession),
     },
     {
       method: 'PATCH',
-      path: '/sessions/:id',
+      path: '/agents/sessions/:id',
       handler: safeHandler(ctx, updateSession),
     },
     {
       method: 'DELETE',
-      path: '/sessions/:id',
+      path: '/agents/sessions/:id',
       handler: safeHandler(ctx, deleteSession),
     },
     {
       method: 'GET',
-      path: '/sessions/:id/messages',
+      path: '/agents/sessions/:id/messages',
       handler: safeHandler(ctx, listMessages),
     },
     {
+      method: 'GET',
+      path: '/agents/sessions/:id/plan',
+      handler: safeHandler(ctx, getSessionPlan),
+    },
+    {
       method: 'POST',
-      path: '/sessions/:id/prompt',
+      path: '/agents/sessions/:id/prompt',
       handler: safeHandler(ctx, promptSession),
     },
     {
       method: 'POST',
-      path: '/sessions/:id/interrupt',
+      path: '/agents/sessions/:id/interrupt',
       handler: safeHandler(ctx, interruptSession),
     },
   ];

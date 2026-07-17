@@ -9,9 +9,10 @@
  */
 
 import type { CreateSessionInput } from '../types';
-import type { WorkspaceHandle } from '../../workspaces/types';
+import type { WorkspaceHandle, WorkspaceAccessor } from '../../workspaces/types';
 import type { AgentsAuthContext } from '../../../shared/auth-context';
 import type { AiSdkToolSet } from './tools';
+import type { ToolOutputBudget } from '../../tools/tool-output-store';
 
 /**
  * Vendor identifier used inside a model id like `vendor/model-id`.
@@ -118,11 +119,31 @@ export interface AiSdkProviderOptions {
   defaultModel?: string;
 
   /**
-   * Resolve credentials for an LLM call. The orchestrator calls this
-   * once per session (the result is cached on the session) — pulled
-   * fresh on each `prompt()` so OAuth refresh stays current.
+   * Curated model list surfaced to the chat picker via
+   * `GET /agents/providers`. Each `id` is the exact `'vendor/model'` spec
+   * the backend stores and the vendor factory receives — so a host using
+   * an OpenRouter credential should list `'openrouter/...'` specs (vendor
+   * `openrouter`), not bare `'anthropic/...'`, to avoid a vendor/credential
+   * mismatch. When omitted, the frontend falls back to its built-in
+   * catalogue.
    */
-  resolveCredential: CredentialResolver;
+  models?: Array<{ id: string; label: string; description?: string }>;
+
+  /**
+   * Resolve credentials for an LLM call. **Optional** — when omitted, the
+   * provider resolves the chat's *attached* credential internally via the
+   * plugin-threaded credentials accessor (`registries.credentials`), which
+   * is the zero-config "bring-your-own-key" path.
+   *
+   * When provided, this **takes precedence** over the built-in accessor:
+   * supply it when the host needs custom vendor routing (e.g. a dedicated
+   * `openrouter` vendor instead of the generic OpenAI-compatible mapping)
+   * or an env-key fallback. The built-in accessor only runs if this
+   * resolver is absent or returns `null`.
+   *
+   * Pulled fresh on each `prompt()` so OAuth refresh stays current.
+   */
+  resolveCredential?: CredentialResolver;
 
   /**
    * Vercel AI SDK's `streamText` function. The host imports this
@@ -180,8 +201,9 @@ export interface AiSdkProviderOptions {
 
   /**
    * Per-turn factory for additional tools beyond the built-in stubs.
-   * Hosts typically pass `({ workspace }) => workspace ?
-   * buildSandboxTools(workspace) : {}` from the sandbox-tools module.
+   * Hosts typically pass `({ ensureWorkspace }) =>
+   * buildSandboxTools(ensureWorkspace)` from the sandbox-tools module so
+   * the sandbox boots lazily on first use.
    *
    * Called on each `prompt()` so tool sets can react to session
    * state (workspace presence, per-session permissions, etc.).
@@ -189,13 +211,35 @@ export interface AiSdkProviderOptions {
    * any name collision replaces the stub.
    *
    * The factory receives:
-   *   - `workspace`: handle for the session's workspace, if any
+   *   - `ensureWorkspace`: lazy accessor that provisions-or-resolves the
+   *     session's sandbox on first call. Tools should close over this
+   *     rather than the eager `workspace` so a sandbox spun up mid-turn
+   *     (explicitly via `sandbox.start`, or implicitly by the first
+   *     `sandbox.*` call) is immediately usable.
+   *   - `workspace`: handle for the session's workspace if one was
+   *     already provisioned at session-create time (e.g. providers with
+   *     `workspaceRequired: true`); `undefined` for lazy sessions until
+   *     `ensureWorkspace()` runs.
    *   - `auth`: resolved auth context (org/user/role)
    *   - `sessionId`: the provider session id (placeholder format)
    */
   tools?: (input: {
     workspace?: WorkspaceHandle;
+    ensureWorkspace: WorkspaceAccessor;
     auth: AgentsAuthContext;
     sessionId: string;
   }) => Promise<AiSdkToolSet> | AiSdkToolSet;
+
+  /**
+   * Inline budget for tool results before they're truncated + spilled
+   * to the session workspace (`.flowlib/tool-outputs/<id>.txt`).
+   * Defaults to 100 lines / 4 KB. Set `{ lines: 0, bytes: 0 }` to
+   * disable truncation entirely (not recommended — large outputs flood
+   * the context window).
+   *
+   * This is the provider-wide default; a per-session override
+   * (`agent_sessions.toolOutputBudget`) can be threaded in once the
+   * session row is read end-to-end.
+   */
+  toolOutputBudget?: Partial<ToolOutputBudget>;
 }

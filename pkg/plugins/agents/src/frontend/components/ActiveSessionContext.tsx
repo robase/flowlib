@@ -12,7 +12,7 @@
  *
  * Only mounted when assistant-ui has a remoteId on the active
  * thread-list item; that always holds for our flow because sessions
- * are created externally via `NewChatDialog` and added to the adapter
+ * are created externally by `AgentsLayout` and added to the adapter
  * list before they're activated.
  */
 import * as React from 'react';

@@ -20,7 +20,6 @@ import { MessageSquare } from 'lucide-react';
 import type { ComponentType, ReactNode } from 'react';
 import { AgentsApiProvider } from '../api/context';
 import { AgentsLayout } from '../routes/AgentsLayout';
-import { McpServersPage } from '../routes/McpServersPage';
 
 /**
  * Structural mirror of `FlowlibFrontendPlugin` from `@flowlib/ui`.
@@ -42,6 +41,7 @@ type FlowlibFrontendPluginShape = {
     path: string;
     badge?: string | (() => string | undefined);
     position?: 'top' | 'bottom';
+    order?: number;
     permission?: string;
   }>;
   providers?: Array<ComponentType<{ children: ReactNode }>>;
@@ -58,10 +58,11 @@ export const agentsFrontendPlugin: FlowlibFrontendPluginShape = {
 
   sidebar: [
     {
-      label: 'Chats',
+      label: 'Agents',
       icon: MessageSquare,
       path: '/agents',
       position: 'top',
+      order: 30,
     },
   ],
 
@@ -71,10 +72,7 @@ export const agentsFrontendPlugin: FlowlibFrontendPluginShape = {
   // origin as their backend get this for free.
   providers: [AgentsApiProvider],
 
-  routes: [
-    { path: '/agents', component: AgentsLayout },
-    { path: '/agents/mcp-servers', component: McpServersPage },
-  ],
+  routes: [{ path: '/agents', component: AgentsLayout }],
 };
 
 export default agentsFrontendPlugin;

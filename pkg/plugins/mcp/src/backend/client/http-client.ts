@@ -15,7 +15,13 @@ export class HttpClient implements FlowlibClient {
   private apiKey: string;
 
   constructor(baseUrl: string, apiKey: string) {
-    this.baseUrl = baseUrl.replace(/\/+$/, '');
+    // Strip trailing slashes without a regex — `/\/+$/` is flagged as
+    // polynomial ReDoS; a manual trim is linear and behaviour-identical.
+    let trimmed = baseUrl;
+    while (trimmed.endsWith('/')) {
+      trimmed = trimmed.slice(0, -1);
+    }
+    this.baseUrl = trimmed;
     this.apiKey = apiKey;
   }
 

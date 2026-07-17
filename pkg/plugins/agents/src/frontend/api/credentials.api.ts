@@ -20,6 +20,20 @@ export interface AgentCredentialOption {
   expiresAt: string | null;
 }
 
+/** A model option from the live vendor catalogue. */
+export interface AgentModelOption {
+  id: string;
+  label: string;
+}
+
+/** Result of the per-credential live model lookup. */
+export interface CredentialModelsResult {
+  models: AgentModelOption[];
+  /** `live` = fetched from the vendor; `fallback`/`error` = use static list. */
+  source: 'live' | 'fallback' | 'error';
+  vendor: string;
+}
+
 export class CredentialsApiClient {
   private readonly baseUrl: string;
   private readonly fetchImpl: typeof fetch;
@@ -46,6 +60,36 @@ export class CredentialsApiClient {
     }
     const body = (await res.json()) as { data: AgentCredentialOption[] };
     return body.data ?? [];
+  }
+
+  /**
+   * Live model catalogue for a credential's vendor. The backend proxies
+   * the vendor's `/models` API (the key stays server-side). On any vendor
+   * issue it returns `source: 'fallback' | 'error'` with empty `models`,
+   * so callers should fall back to the static catalogue.
+   */
+  async listModels(credentialId: string): Promise<CredentialModelsResult> {
+    const res = await this.fetchImpl(
+      this.url(`/credentials/${encodeURIComponent(credentialId)}/models`),
+      {
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json', ...this.headers },
+      },
+    );
+    if (!res.ok) {
+      const text = await res.text().catch(() => '');
+      throw new Error(`Credentials API GET /credentials/:id/models failed: ${res.status} ${text}`);
+    }
+    const body = (await res.json()) as {
+      data?: AgentModelOption[];
+      source?: CredentialModelsResult['source'];
+      vendor?: string;
+    };
+    return {
+      models: body.data ?? [],
+      source: body.source ?? 'fallback',
+      vendor: body.vendor ?? 'custom',
+    };
   }
 }
 

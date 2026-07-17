@@ -27,12 +27,16 @@ import {
   renderAvailableTools,
   renderClaudeMd,
   renderDenyList,
+  renderEnvironment,
+  renderGitStatus,
   renderMemory,
   renderOperatingDirectives,
   renderSystemPrompt,
   renderPlan,
   renderSkillSummaries,
   renderWorkspaceContext,
+  type EnvironmentInput,
+  type GitStatusInput,
 } from './sections';
 
 /**
@@ -47,6 +51,14 @@ import {
 export interface ComposeInput {
   /** System prompt — the opening of the prompt. May be empty. */
   systemPrompt: string;
+  /**
+   * Session environment (cwd, platform, is-git-repo, today, model). Gathered
+   * at session start from an eagerly-provisioned workspace; omitted for
+   * pure-chat / lazy sessions where no container exists at compose time.
+   */
+  environment?: EnvironmentInput;
+  /** Git status snapshot (branch, user, status, recent commits). */
+  gitStatus?: GitStatusInput;
   /**
    * Workspace context — omit for raw-LLM (no-workspace) sessions. When
    * present, the composer also runs the CLAUDE.md walk from
@@ -66,8 +78,13 @@ export interface ComposeInput {
     /** Per-file truncation budget for the CLAUDE.md walk. Default 8 KB. */
     claudeMdMaxBytesPerFile?: number;
   };
-  /** Skill summaries (name + description only). Bodies fetched on demand. */
-  skillSummaries: ReadonlyArray<{ name: string; description: string }>;
+  /**
+   * Skills available to the session. When an item carries a `body` it is
+   * inlined in full (v1 — no `skills.read` tool yet); when it's just
+   * `{ name, description }` the composer renders a summary and notes the
+   * body is fetchable via `skills.read`. See `renderSkillSummaries`.
+   */
+  skillSummaries: ReadonlyArray<{ name: string; description: string; body?: string }>;
   /** Tools the role/session is denied. Soft mention only. */
   denyList: ReadonlyArray<string>;
   /** Tools available this session — one-line summary per tool. */
@@ -91,6 +108,11 @@ export async function composeSystemPrompt(input: ComposeInput): Promise<string> 
 
   // 1. System prompt
   sections.push(renderSystemPrompt(input.systemPrompt));
+
+  // 1a. Environment + git status (orienting context; present only for
+  // eagerly-provisioned code sessions).
+  sections.push(renderEnvironment(input.environment));
+  sections.push(renderGitStatus(input.gitStatus));
 
   // 2. Workspace context (skipped if no workspace)
   sections.push(await renderWorkspaceContext(input.workspace));

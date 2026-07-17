@@ -39,23 +39,21 @@ export const HumanInputCard: React.FC<HumanInputCardProps> = ({
 
   return (
     <div
-      className="rounded border border-fl-border bg-fl-card my-2 px-3 py-2"
+      className="rounded border border-border bg-card my-2 px-3 py-2"
       data-testid="human-input"
       data-blocking={event.blocking ? 'true' : 'false'}
     >
       <div className="flex items-center justify-between mb-1">
-        <span className="text-sm font-medium text-fl-foreground">Agent needs input</span>
+        <span className="text-sm font-medium text-foreground">Agent needs input</span>
         <span
-          className={`text-xs ${
-            event.blocking ? 'text-fl-destructive' : 'text-fl-muted-foreground'
-          }`}
+          className={`text-xs ${event.blocking ? 'text-destructive' : 'text-muted-foreground'}`}
         >
           {event.blocking ? 'blocking' : 'optional'}
         </span>
       </div>
-      <p className="text-sm text-fl-muted-foreground whitespace-pre-wrap mb-2">{event.prompt}</p>
+      <p className="text-sm text-muted-foreground whitespace-pre-wrap mb-2">{event.prompt}</p>
       <textarea
-        className="w-full border border-fl-border rounded bg-fl-background text-fl-foreground p-2 text-sm font-sans focus:outline-none focus:ring-2 focus:ring-fl-ring resize-y"
+        className="w-full border border-border rounded bg-background text-foreground p-2 text-sm font-sans focus:outline-none focus:ring-2 focus:ring-ring resize-y"
         rows={2}
         value={value}
         disabled={submitted}
@@ -71,7 +69,7 @@ export const HumanInputCard: React.FC<HumanInputCardProps> = ({
       <div className="flex justify-end mt-2">
         <button
           type="button"
-          className="px-3 py-1 rounded bg-fl-primary text-fl-primary-foreground text-sm hover:bg-fl-primary/90 disabled:opacity-50"
+          className="px-3 py-1 rounded bg-primary text-primary-foreground text-sm hover:bg-primary/90 disabled:opacity-50"
           disabled={submitted}
           onClick={submit}
         >

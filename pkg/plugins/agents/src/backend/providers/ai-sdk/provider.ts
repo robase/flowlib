@@ -29,6 +29,7 @@
 import type { AgentEvent } from '../../../shared/events';
 import type {
   AgentCapabilities,
+  AgentCredentialsAccessor,
   AgentProvider,
   AgentProviderConfig,
   CreateSessionInput,
@@ -36,11 +37,20 @@ import type {
   AgentProviderMessage,
   PromptInput,
 } from '../types';
-import type { WorkspaceHandle } from '../../workspaces/types';
-import type { AiSdkCredential, AiSdkProviderOptions } from './types';
+import type { WorkspaceHandle, WorkspaceAccessor } from '../../workspaces/types';
+import type { AiSdkCredential, AiSdkProviderOptions, AiSdkVendor } from './types';
 import { randomBytes } from 'node:crypto';
 import { parseModelSpec, resolveModel } from './models';
-import { buildToolSet, type AiSdkToolSet } from './tools';
+import { resolveCredentialFromAccessor } from './host-helpers';
+import {
+  assembleToolSet,
+  buildToolSet,
+  toolGuardFromPromptInput,
+  wrapToolsWithGuard,
+  wrapToolsWithOutputStore,
+  type AiSdkToolSet,
+} from './tools';
+import { createToolOutputStore } from '../../tools/tool-output-store';
 
 /**
  * Per-session in-memory state. The provider keeps these keyed by the
@@ -58,19 +68,32 @@ interface SessionState {
   /** Composed system prompt (may be empty). */
   systemPrompt?: string;
   /**
-   * Workspace handle bound to this session, when one was provided at
-   * `createSession`. The host's `tools` factory receives this so it
-   * can build sandbox-backed tools that close over the handle.
-   * Sessions without a workspace (pure-Q&A chats) leave this
-   * undefined.
+   * Workspace handle bound to this session, once one has been
+   * provisioned. Populated either eagerly at `createSession` (rare for
+   * this provider) or lazily the first time `ensureWorkspace` runs.
+   * Sessions that never touch a `sandbox.*` tool (pure-chat) leave this
+   * undefined and never boot a container.
    */
   workspace?: WorkspaceHandle;
+  /**
+   * Host-supplied lazy provisioner. Called the first time a tool needs
+   * the sandbox; creates the workspace row if missing, resolves the
+   * handle, persists the workspace id onto the session, and returns the
+   * handle. The provider caches the result in {@link SessionState.workspace}.
+   */
+  ensureWorkspace?: WorkspaceAccessor;
   /**
    * Last resolved credential — cached for the lifetime of this
    * isolate. The orchestrator may call `prompt()` many times against
    * the same session; we resolve once and reuse.
    */
   credential?: AiSdkCredential;
+  /**
+   * Credentials accessor threaded in by the host (the agents plugin sets
+   * it from `flowlib.credentials`). Used by the built-in default resolver
+   * when no `resolveCredential` option is wired.
+   */
+  credentials?: AgentCredentialsAccessor;
   /** Whether `createSession` extras opted into specific features. */
   extras?: Record<string, unknown>;
 }
@@ -89,15 +112,58 @@ const CAPABILITIES: AgentCapabilities = {
   fileEdits: true,
   // Streams resume via AIChatAgent's WS buffer, same as opencode.
   resumableStream: false,
-  // Required so the session-create endpoint auto-provisions a sandbox
-  // workspace per chat. The sandbox.* tools (read_file, write_file,
-  // run_shell, git, …) close over this workspace handle — without it,
-  // the agent has no filesystem/shell access. Pure-Q&A sessions still
-  // work; they just carry an unused workspace handle.
-  workspaceRequired: true,
+  // The loop runs in the DO, not a container, so we DON'T need a sandbox
+  // up front. Setting this false stops the session-create endpoint from
+  // eager-provisioning a container per chat. The sandbox is instead
+  // booted on demand by the `sandbox.*` tools (explicitly via
+  // `sandbox.start`, or implicitly on first file/shell use) through the
+  // host-supplied `ensureWorkspace` accessor. Pure-chat turns — including
+  // ones that only call remote HTTP tools — never pay the cold-start.
+  workspaceRequired: false,
   permissionPrompts: true,
   preferredWorkspaceProviderId: 'cloudflare-sandbox',
 };
+
+/**
+ * Sanitise tool names to the `^[a-zA-Z0-9_-]{1,128}$` pattern that strict
+ * providers enforce (Google/Gemini, and some OpenRouter routes reject the
+ * dot). Our action-backed tools are dotted — `sandbox.start`,
+ * `github.create_issue`, `flowlib.list_flows` — which the LLM API rejects
+ * with `tools.N.custom.name: String should match pattern …`.
+ *
+ * We rewrite `.` (and any other invalid char) to `_` for the wire, and
+ * return a reverse map so the emitted `tool-call` events carry the
+ * original dotted id (the frontend + tool renderers key off it). The AI
+ * SDK calls the executor by the sanitised key it sent, so execution is
+ * unaffected.
+ */
+function sanitiseToolSet(tools: AiSdkToolSet): {
+  tools: AiSdkToolSet;
+  restore: Map<string, string>;
+} {
+  const out: AiSdkToolSet = {};
+  const restore = new Map<string, string>();
+  const used = new Set<string>();
+  for (const [name, tool] of Object.entries(tools)) {
+    let safe = name.replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 128);
+    if (safe.length === 0) {
+      safe = '_';
+    }
+    // Deterministically dedupe the rare case where two names sanitise to
+    // the same string.
+    let candidate = safe;
+    let n = 1;
+    while (used.has(candidate)) {
+      candidate = `${safe}_${n++}`.slice(0, 128);
+    }
+    used.add(candidate);
+    out[candidate] = tool;
+    if (candidate !== name) {
+      restore.set(candidate, name);
+    }
+  }
+  return { tools: out, restore };
+}
 
 /**
  * Construct the provider singleton. Called once at plugin init by
@@ -116,13 +182,25 @@ export function aiSdkProvider(options: AiSdkProviderOptions): AgentProvider {
   const streamText = options.streamText;
   const vendors = options.vendors;
 
-  if (typeof resolveCredential !== 'function') {
-    throw new Error(
-      `aiSdkProvider({ id: ${providerId} }): resolveCredential is required ` +
-        '— pass an async function that returns an AiSdkCredential for the ' +
-        'requested (auth, credentialId, vendor) triple.',
-    );
-  }
+  // One store per provider isolate. Caps each tool result to the inline
+  // budget (default 100 lines / 4 KB) and spills the overflow to the
+  // session workspace so the model can read it back on demand. Without
+  // this, a single large tool output floods the context window.
+  const toolOutputStore = createToolOutputStore({
+    ...(options.toolOutputBudget ? { budget: options.toolOutputBudget } : {}),
+    logger: {
+      warn: (message: string, ...args: unknown[]) => {
+        // eslint-disable-next-line no-console
+        console.warn(message, ...args);
+      },
+    },
+  });
+
+  // `resolveCredential` is optional: when omitted, the provider resolves
+  // the session's attached credential via the host-threaded credentials
+  // accessor (`CreateSessionInput.credentials`, set by the agents plugin
+  // from `flowlib.credentials`). Supply `resolveCredential` only for
+  // custom logic (e.g. a dev env-key fallback).
   if (typeof streamText !== 'function') {
     throw new Error(
       `aiSdkProvider({ id: ${providerId} }): streamText is required. ` +
@@ -148,20 +226,58 @@ export function aiSdkProvider(options: AiSdkProviderOptions): AgentProvider {
   }
 
   /**
-   * Resolve (and cache) the credential for a session's model vendor.
-   * Called lazily on first `prompt()` so an unused session never
-   * fetches a credential.
+   * Resolve (and cache) the credential for the vendor **this turn** is
+   * actually going to call. Called lazily on first `prompt()` so an unused
+   * session never fetches a credential.
+   *
+   * `vendor` is a parameter rather than being re-derived from
+   * `session.defaultModel`: a turn may override the model
+   * (`PromptInput.model`), and resolving against the session default would
+   * ask the resolver for the wrong vendor — then trip the
+   * vendor-mismatch check below and kill the turn, even when the session's
+   * credential resolves fine for the vendor the turn asked for.
+   *
+   * The cache is likewise vendor-checked. `createSession`'s invalidation
+   * only tracks `session.defaultModel`, so it cannot know about a per-turn
+   * override; a cached credential for a different vendor is stale by
+   * definition and must be re-resolved.
    */
-  async function ensureCredential(session: SessionState): Promise<AiSdkCredential> {
-    if (session.credential) {
+  async function ensureCredential(
+    session: SessionState,
+    vendor: AiSdkVendor,
+  ): Promise<AiSdkCredential> {
+    if (session.credential && session.credential.vendor === vendor) {
       return session.credential;
     }
-    const spec = parseModelSpec(session.defaultModel);
-    const credential = await resolveCredential({
-      auth: session.auth,
-      credentialId: session.credentialId,
-      vendor: spec.vendor,
-    });
+    const spec = { vendor };
+    let credential: AiSdkCredential | null = null;
+    // 1. Host-supplied resolver wins when provided — the host knows its
+    //    own vendor routing (e.g. a dedicated `openrouter` vendor rather
+    //    than the generic OpenAI-compatible mapping) and any env fallback.
+    if (resolveCredential) {
+      credential = await resolveCredential({
+        auth: session.auth,
+        credentialId: session.credentialId,
+        vendor: spec.vendor,
+      });
+    }
+    // 2. Built-in default: resolve the chat's attached credential via the
+    //    host-threaded credentials accessor (`registries.credentials`,
+    //    wired automatically by the plugin). This is the zero-config
+    //    "bring-your-own-key" path for hosts that pass no resolver.
+    if (!credential && session.credentials && session.credentialId) {
+      credential = await resolveCredentialFromAccessor(session.credentials, {
+        credentialId: session.credentialId,
+        vendor: spec.vendor,
+      });
+    }
+    if (!credential) {
+      throw new Error(
+        `aiSdkProvider({ id: ${providerId} }): could not resolve a credential for vendor ` +
+          `"${spec.vendor}" (credentialId=${session.credentialId ?? 'none'}). Attach an LLM ` +
+          'credential to the chat, or pass a `resolveCredential` option.',
+      );
+    }
     session.credential = credential;
     return credential;
   }
@@ -192,6 +308,7 @@ export function aiSdkProvider(options: AiSdkProviderOptions): AgentProvider {
     id: providerId,
     name: providerName,
     ...(providerIcon ? { icon: providerIcon } : {}),
+    defaultModel,
     capabilities: CAPABILITIES,
 
     validateConfig(config: unknown): AgentProviderConfig {
@@ -204,7 +321,37 @@ export function aiSdkProvider(options: AiSdkProviderOptions): AgentProvider {
     async createSession(input: CreateSessionInput): Promise<{ providerSessionId: string }> {
       const sessionId = input.providerSessionId ?? newPlaceholderSessionId();
       if (input.providerSessionId && sessionsById.has(input.providerSessionId)) {
-        // Idempotent rehydration. Same semantics as opencode provider.
+        // Idempotent rehydration — but REFRESH mutable per-turn state. A
+        // session is often registered earlier (e.g. credential-less at
+        // chat-create time) and the chat can change its model, credential,
+        // system prompt, or workspace between turns. Without this refresh the
+        // first registration's stale state (default model, no credential)
+        // sticks for the isolate's lifetime, so credential resolution targets
+        // the wrong vendor or finds no credential at all.
+        const existing = sessionsById.get(input.providerSessionId)!;
+        const nextModel =
+          (input.config?.defaultModel as string | undefined) ?? existing.defaultModel;
+        const credentialChanged = existing.credentialId !== input.credentialId;
+        const modelChanged = nextModel !== existing.defaultModel;
+        existing.auth = input.auth;
+        existing.credentialId = input.credentialId;
+        existing.defaultModel = nextModel;
+        existing.systemPrompt = input.systemPrompt;
+        existing.extras = input.extras;
+        if (input.credentials) {
+          existing.credentials = input.credentials;
+        }
+        if (input.workspace) {
+          existing.workspace = input.workspace;
+        }
+        if (input.ensureWorkspace) {
+          existing.ensureWorkspace = input.ensureWorkspace;
+        }
+        // Drop the cached resolved credential if the credential or model
+        // (hence vendor) changed, so the next `prompt()` re-resolves.
+        if (credentialChanged || modelChanged) {
+          existing.credential = undefined;
+        }
         return { providerSessionId: input.providerSessionId };
       }
       sessionsById.set(sessionId, {
@@ -212,7 +359,9 @@ export function aiSdkProvider(options: AiSdkProviderOptions): AgentProvider {
         credentialId: input.credentialId,
         defaultModel: (input.config?.defaultModel as string | undefined) ?? defaultModel,
         systemPrompt: input.systemPrompt,
+        ...(input.credentials ? { credentials: input.credentials } : {}),
         ...(input.workspace ? { workspace: input.workspace } : {}),
+        ...(input.ensureWorkspace ? { ensureWorkspace: input.ensureWorkspace } : {}),
         extras: input.extras,
       });
       // eslint-disable-next-line no-console
@@ -264,7 +413,7 @@ export function aiSdkProvider(options: AiSdkProviderOptions): AgentProvider {
 
       let credential: AiSdkCredential;
       try {
-        credential = await ensureCredential(session);
+        credential = await ensureCredential(session, modelSpec.vendor);
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
         // eslint-disable-next-line no-console
@@ -309,6 +458,30 @@ export function aiSdkProvider(options: AiSdkProviderOptions): AgentProvider {
         return;
       }
 
+      // Lazy workspace accessor handed to the tools factory. Returns the
+      // cached handle if the sandbox is already up; otherwise calls the
+      // host's `ensureWorkspace` (provision + persist + resolve) once and
+      // caches the result on the session so a sandbox booted mid-turn
+      // (by `sandbox.start` or the first `sandbox.*` call) is reused by
+      // every later tool in the same turn — and by later turns, via the
+      // workspace id the host persisted onto the session row.
+      const ensureWorkspace: WorkspaceAccessor = async () => {
+        if (session.workspace) {
+          return session.workspace;
+        }
+        if (!session.ensureWorkspace) {
+          throw new Error(
+            '[agents/ai-sdk] a tool requested the sandbox but no workspace ' +
+              'provisioner is wired for this session. The host must pass ' +
+              '`ensureWorkspace` into createSession (or provide an eager ' +
+              '`workspace`) for sandbox.* tools to work.',
+          );
+        }
+        const handle = await session.ensureWorkspace();
+        session.workspace = handle;
+        return handle;
+      };
+
       // Build the tool catalogue: built-in stubs (echo/now) plus
       // whatever the host's tools factory returns (sandbox tools,
       // flowlib actions, …). Names collide → host-supplied wins;
@@ -319,6 +492,7 @@ export function aiSdkProvider(options: AiSdkProviderOptions): AgentProvider {
           hostTools = await toolsFactory({
             auth: session.auth,
             sessionId: input.providerSessionId,
+            ensureWorkspace,
             ...(session.workspace ? { workspace: session.workspace } : {}),
           });
         } catch (err) {
@@ -334,34 +508,55 @@ export function aiSdkProvider(options: AiSdkProviderOptions): AgentProvider {
         ...input,
         extraDenied: [...defaultDenied, ...(input.extraDenied ?? [])],
       });
-      const merged: AiSdkToolSet = { ...stubTools };
-      for (const [name, descriptor] of Object.entries(hostTools)) {
-        if (merged[name]) {
-          // eslint-disable-next-line no-console
-          console.log('[agents/ai-sdk] tool name collision — host tool overrides stub', {
-            providerSessionId: input.providerSessionId,
-            name,
-          });
-        }
-        merged[name] = descriptor;
-      }
-      // Apply default-deny + per-session deny across the merged set,
-      // and per-session allowlist if present. `buildToolSet` already
-      // applied these to the stubs; we re-apply to host tools too.
-      const tools = filterTools(merged, {
+      // Merge stubs < host < plugin-injected tools (`skills.read`,
+      // `memory.*`, …, from `input.providerTools`), then apply the
+      // default-deny + per-session deny/allow filters uniformly.
+      const tools = assembleToolSet({
+        stubs: stubTools,
+        host: hostTools,
+        injected: input.providerTools as AiSdkToolSet | undefined,
         denied: new Set<string>([...defaultDenied, ...(input.extraDenied ?? [])]),
         allowlist:
           input.enabledTools && input.enabledTools.length > 0
             ? new Set<string>(input.enabledTools)
             : null,
+        onCollision: (name) => {
+          // eslint-disable-next-line no-console
+          console.log('[agents/ai-sdk] tool name collision — later source overrides earlier', {
+            providerSessionId: input.providerSessionId,
+            name,
+          });
+        },
       });
+
+      // Route every tool's output through the truncation store. Big
+      // results spill to the workspace; small ones pass through intact.
+      // Read the workspace lazily (`getWorkspace`) so spill targets a
+      // sandbox booted mid-turn, without forcing one to boot just to
+      // spill — pre-sandbox turns keep large outputs inline.
+      const storeWrappedTools = wrapToolsWithOutputStore(tools, toolOutputStore, {
+        getWorkspace: () => session.workspace,
+      });
+
+      // Enforce the kernel's PreToolUse hooks *before* dispatch. This
+      // provider hands `execute` callbacks to `streamText`, so the AI SDK
+      // — not the kernel — decides when a tool runs. Gating at the event
+      // level (which is all the kernel can see) would be advisory only:
+      // the destructive command would already have run by the time the
+      // "blocked" result reached the user. Wrapped outermost so the
+      // decision precedes truncation and the real execute alike.
+      const finalTools = wrapToolsWithGuard(storeWrappedTools, toolGuardFromPromptInput(input));
+
+      // Rewrite dotted tool names to the provider-safe pattern, keeping a
+      // reverse map to restore the original id on emitted events.
+      const { tools: wireTools, restore: toolNameRestore } = sanitiseToolSet(finalTools);
 
       // eslint-disable-next-line no-console
       console.log('[agents/ai-sdk] firing streamText…', {
         providerSessionId: input.providerSessionId,
         modelVendor: modelSpec.vendor,
         modelId: modelSpec.modelId,
-        toolNames: Object.keys(tools),
+        toolNames: Object.keys(wireTools),
         partsCount: input.parts.length,
         maxSteps,
         hasSystemPrompt: Boolean(session.systemPrompt),
@@ -376,8 +571,16 @@ export function aiSdkProvider(options: AiSdkProviderOptions): AgentProvider {
         model,
         ...(session.systemPrompt ? { system: session.systemPrompt } : {}),
         messages: buildMessages(input),
-        tools,
+        tools: wireTools,
+        // Multi-step agentic loop. AI SDK v5/v6 default `streamText` to a
+        // SINGLE step (`stepCountIs(1)`) — it runs one tool call but never
+        // feeds the result back, so the agent stalls after the first tool
+        // (e.g. starts a sandbox, then stops instead of cloning). The v4
+        // `maxSteps` option is ignored in v5+. `stopWhen` is the v5/v6 API;
+        // we stop once the step count reaches `maxSteps`. Passed inline so
+        // the host needn't also wire `stepCountIs`.
         maxSteps,
+        stopWhen: ({ steps }: { steps: unknown[] }) => steps.length >= maxSteps,
         abortSignal: input.abortSignal,
       }) as { fullStream: AsyncIterable<unknown> };
 
@@ -393,7 +596,21 @@ export function aiSdkProvider(options: AiSdkProviderOptions): AgentProvider {
       const messageId = `msg_${Date.now()}_${randomBytes(4).toString('hex')}`;
       let messageStarted = false;
       let forwardedChunks = 0;
-      let usage: { inputTokens?: number; outputTokens?: number } | undefined;
+      // Usage is tracked two ways and reconciled after the loop:
+      //  - `totalUsage` off the single `finish` part — authoritative,
+      //    already summed across every step of the turn by the SDK.
+      //  - a running sum of each `finish-step` part's `usage` — the
+      //    fallback for SDK versions that don't carry `totalUsage`.
+      // Reading only `chunk.usage` on `finish` (as this used to) yields
+      // `undefined` in ai@6: `finish` carries `totalUsage`, and only
+      // `finish-step` carries `usage`. The reported figure then silently
+      // degraded to whatever the *last* step spent, understating a 6-step
+      // turn by roughly the conversation prefix × 5.
+      let totalUsage: { inputTokens?: number; outputTokens?: number } | undefined;
+      let steppedUsage: { inputTokens: number; outputTokens: number } | undefined;
+      // Step accounting for the max-steps end reason (see below).
+      let stepCount = 0;
+      let lastFinishReason: string | undefined;
       try {
         for await (const rawChunk of stream.fullStream) {
           const chunk = rawChunk as {
@@ -408,11 +625,20 @@ export function aiSdkProvider(options: AiSdkProviderOptions): AgentProvider {
             output?: unknown;
             error?: unknown;
             finishReason?: string;
-            // AI SDK v5 reports usage in two forms:
-            //  - On `step-finish` / `finish`: `usage.{inputTokens, outputTokens, totalTokens}`
-            //  - Older shape: `usage.{promptTokens, completionTokens}`
-            // Read both and normalise downstream.
+            // Usage shapes across `ai` versions:
+            //  - `finish-step` (v5/v6): `usage.{inputTokens, outputTokens, totalTokens}`
+            //    — that STEP's spend only.
+            //  - `finish` (v6): `totalUsage.{...}` — the whole turn's spend.
+            //  - older: `usage.{promptTokens, completionTokens}`.
+            // Read all three and normalise downstream.
             usage?: {
+              inputTokens?: number;
+              outputTokens?: number;
+              totalTokens?: number;
+              promptTokens?: number;
+              completionTokens?: number;
+            };
+            totalUsage?: {
               inputTokens?: number;
               outputTokens?: number;
               totalTokens?: number;
@@ -437,7 +663,11 @@ export function aiSdkProvider(options: AiSdkProviderOptions): AgentProvider {
             }
             case 'tool-call': {
               const callId = chunk.toolCallId ?? `${messageId}-call-${forwardedChunks}`;
-              const name = chunk.toolName ?? '<unknown>';
+              const wireName = chunk.toolName ?? '<unknown>';
+              // Restore the original dotted id (e.g. `sandbox_start` →
+              // `sandbox.start`) so downstream renderers + tool matching
+              // see the canonical name.
+              const name = toolNameRestore.get(wireName) ?? wireName;
               yield {
                 type: 'tool-call',
                 messageId,
@@ -455,6 +685,35 @@ export function aiSdkProvider(options: AiSdkProviderOptions): AgentProvider {
                 id: callId,
                 output: chunk.result ?? chunk.output ?? null,
                 isError: false,
+              };
+              break;
+            }
+            case 'tool-error': {
+              // A tool's `execute` threw (bad input, missing credential,
+              // sandbox failure, …). AI SDK v5 emits this as a distinct
+              // chunk; without mapping it the UI's pending tool-call never
+              // resolves and shows "Awaiting tool result…" forever. Emit a
+              // tool-result flagged as an error so the call closes out.
+              const callId = chunk.toolCallId ?? `${messageId}-result-${forwardedChunks}`;
+              const err = chunk.error;
+              const errorText =
+                typeof err === 'string'
+                  ? err
+                  : err instanceof Error
+                    ? err.message
+                    : JSON.stringify(err);
+              // eslint-disable-next-line no-console
+              console.error('[agents/ai-sdk] tool-error chunk', {
+                providerSessionId: input.providerSessionId,
+                toolCallId: callId,
+                errorText,
+              });
+              yield {
+                type: 'tool-result',
+                messageId,
+                id: callId,
+                output: errorText,
+                isError: true,
               };
               break;
             }
@@ -477,24 +736,44 @@ export function aiSdkProvider(options: AiSdkProviderOptions): AgentProvider {
               yield { type: 'session-end', reason: 'error', error: errorText };
               return;
             }
-            case 'finish':
-            case 'step-finish': {
-              // Read both naming schemes (v5 vs older). step-finish
-              // fires per-step in a multi-step turn; finish fires once
-              // at the end. We keep the latest seen value — by the
-              // time the loop exits, `usage` reflects the final turn.
+            case 'step-finish':
+            case 'finish-step': {
+              // Fires once per step of a multi-step turn, carrying that
+              // step's spend. Accumulate — a step's usage is NOT
+              // cumulative, so keeping only the latest reports the final
+              // step alone.
+              stepCount += 1;
+              if (chunk.finishReason) {
+                lastFinishReason = chunk.finishReason;
+              }
               const u = chunk.usage;
               if (u) {
-                usage = {
-                  inputTokens: u.inputTokens ?? u.promptTokens ?? usage?.inputTokens ?? 0,
-                  outputTokens: u.outputTokens ?? u.completionTokens ?? usage?.outputTokens ?? 0,
+                steppedUsage = {
+                  inputTokens:
+                    (steppedUsage?.inputTokens ?? 0) + (u.inputTokens ?? u.promptTokens ?? 0),
+                  outputTokens:
+                    (steppedUsage?.outputTokens ?? 0) + (u.outputTokens ?? u.completionTokens ?? 0),
                 };
               }
-              // Don't return here — `finish` is followed by a
-              // `step-finish` / nothing depending on the AI SDK
-              // version. Let the loop terminate naturally so we don't
-              // miss trailing chunks. We emit message-complete +
-              // session-end after the for-await exits.
+              break;
+            }
+            case 'finish': {
+              // Fires once, at the end of the whole turn. `totalUsage` is
+              // already summed across every step — prefer it. `usage` is
+              // the older single-shape fallback.
+              if (chunk.finishReason) {
+                lastFinishReason = chunk.finishReason;
+              }
+              const u = chunk.totalUsage ?? chunk.usage;
+              if (u) {
+                totalUsage = {
+                  inputTokens: u.inputTokens ?? u.promptTokens ?? 0,
+                  outputTokens: u.outputTokens ?? u.completionTokens ?? 0,
+                };
+              }
+              // Don't return here — trailing chunks may follow depending
+              // on the AI SDK version. Let the loop terminate naturally.
+              // We emit message-complete + session-end after it exits.
               break;
             }
             default: {
@@ -544,6 +823,9 @@ export function aiSdkProvider(options: AiSdkProviderOptions): AgentProvider {
         return;
       }
 
+      // `totalUsage` is the SDK's own cross-step sum; fall back to ours.
+      const usage = totalUsage ?? steppedUsage;
+
       if (messageStarted) {
         yield {
           type: 'message-complete',
@@ -558,10 +840,20 @@ export function aiSdkProvider(options: AiSdkProviderOptions): AgentProvider {
             : {}),
         };
       }
-      yield {
-        type: 'session-end',
-        reason: input.abortSignal.aborted ? 'stopped' : 'completed',
-      };
+
+      // `stopWhen` halts the loop at `maxSteps` regardless of whether the
+      // model was done. A step that ends in `tool-calls` means it wanted
+      // to keep going — so hitting the cap there is a truncated turn, not
+      // a clean finish. Reporting that as 'completed' renders a normal
+      // successful end with no final text and no explanation, 25 steps
+      // into a refactor. 'max-turns' lets the UI say what happened.
+      const hitStepLimit = stepCount >= maxSteps && lastFinishReason === 'tool-calls';
+      const endReason = input.abortSignal.aborted
+        ? 'stopped'
+        : hitStepLimit
+          ? 'max-turns'
+          : 'completed';
+      yield { type: 'session-end', reason: endReason };
 
       // eslint-disable-next-line no-console
       console.log('[agents/ai-sdk] prompt turn complete', {
@@ -569,6 +861,9 @@ export function aiSdkProvider(options: AiSdkProviderOptions): AgentProvider {
         messageId,
         forwardedChunks,
         usage,
+        stepCount,
+        lastFinishReason,
+        endReason,
         elapsedMs: Date.now() - promptStart,
       });
     },
@@ -581,39 +876,21 @@ export function aiSdkProvider(options: AiSdkProviderOptions): AgentProvider {
     },
 
     async listModels() {
-      // Phase 1 doesn't enumerate models — the UI surfaces a static
-      // model picker keyed by the user's credentials. Implementing
-      // this requires per-vendor `models.list` calls which are
-      // out-of-scope for the migration.
-      return [];
+      // Surface the host-declared model list to the picker (via
+      // `GET /agents/providers`). Hosts curate this in `aiSdkProvider({
+      // models })` so the catalogue matches their credential/gateway
+      // setup (e.g. `openrouter/...` specs for an OpenRouter key). We
+      // don't call per-vendor `models.list` — the curated list is the
+      // source of truth.
+      return (options.models ?? []).map((m) => ({
+        id: m.id,
+        name: m.label,
+        ...(m.description ? { metadata: { description: m.description } } : {}),
+      }));
     },
 
     async closeSession(providerSessionId: string): Promise<void> {
       sessionsById.delete(providerSessionId);
     },
   };
-}
-
-/**
- * Apply a deny set + optional allowlist to a tool catalogue.
- *
- * Order: deny wins (a name in `denied` is always removed), then
- * allowlist gates (when set, anything outside the allowlist is
- * removed). Returns a new object — does not mutate the input.
- */
-function filterTools(
-  tools: AiSdkToolSet,
-  filters: { denied: Set<string>; allowlist: Set<string> | null },
-): AiSdkToolSet {
-  const out: AiSdkToolSet = {};
-  for (const [name, descriptor] of Object.entries(tools)) {
-    if (filters.denied.has(name)) {
-      continue;
-    }
-    if (filters.allowlist && !filters.allowlist.has(name)) {
-      continue;
-    }
-    out[name] = descriptor;
-  }
-  return out;
 }

@@ -89,27 +89,27 @@ export function createProjectsEndpoints(ctx: PluginContext): FlowlibPluginEndpoi
   return [
     {
       method: 'GET',
-      path: '/projects',
+      path: '/agents/projects',
       handler: safeHandler(ctx, listProjects),
     },
     {
       method: 'POST',
-      path: '/projects',
+      path: '/agents/projects',
       handler: safeHandler(ctx, createProject),
     },
     {
       method: 'GET',
-      path: '/projects/:id',
+      path: '/agents/projects/:id',
       handler: safeHandler(ctx, getProject),
     },
     {
       method: 'PATCH',
-      path: '/projects/:id',
+      path: '/agents/projects/:id',
       handler: safeHandler(ctx, updateProject),
     },
     {
       method: 'DELETE',
-      path: '/projects/:id',
+      path: '/agents/projects/:id',
       handler: safeHandler(ctx, deleteProject),
     },
   ];

@@ -10,6 +10,8 @@
  *   DELETE /workspaces/:id   — calls `workspaceProvider.destroy()` then deletes the row
  *
  * Tenant-scoped on every read; cross-tenant access returns 404.
+ *
+ * Workspace ids are always server-generated UUIDs — see `createWorkspace`.
  */
 
 import type { FlowlibPluginEndpoint, PluginEndpointResponse } from '@flowlib/core';
@@ -26,11 +28,9 @@ interface CreateWorkspaceBody {
   sandboxConfig?: Record<string, unknown> | null;
   projectId?: string | null;
   visibility?: AgentVisibility;
-  /** Optional pre-allocated id (mostly for tests). */
-  id?: string;
 }
 
-interface UpdateWorkspaceBody extends Omit<CreateWorkspaceBody, 'id'> {}
+interface UpdateWorkspaceBody extends CreateWorkspaceBody {}
 
 async function listWorkspaces(deps: EndpointDeps): Promise<PluginEndpointResponse> {
   const rows = await deps.repos.workspaces.list({ orgId: deps.auth.orgId });
@@ -51,6 +51,17 @@ async function createWorkspace(deps: EndpointDeps): Promise<PluginEndpointRespon
   if (!body.name || typeof body.name !== 'string') {
     return badRequest('name is required');
   }
+  // The workspace id is server-generated and is NOT part of the request
+  // surface. Both sandbox providers derive container identity from it —
+  // the cloudflare provider's isolation argument rests on the id being a
+  // globally-unique UUID nobody else can predict or choose. Honouring a
+  // client-supplied id falsifies that: POSTing a victim's workspace id
+  // would attach this org to their running container. Reject loudly
+  // rather than ignoring, so a stale caller fails visibly instead of
+  // silently operating on a different workspace than it asked for.
+  if ('id' in body) {
+    return badRequest('id is server-generated and cannot be supplied by the client');
+  }
 
   const configured = deps.pluginCtx.options.workspaceProviders;
   // Default: the first configured provider when the caller doesn't
@@ -70,7 +81,7 @@ async function createWorkspace(deps: EndpointDeps): Promise<PluginEndpointRespon
     });
   }
 
-  const id = body.id ?? crypto.randomUUID();
+  const id = crypto.randomUUID();
 
   // Provider-side create. Failure leaves no DB row behind.
   let providerOk = false;
@@ -167,27 +178,27 @@ export function createWorkspacesEndpoints(ctx: PluginContext): FlowlibPluginEndp
   return [
     {
       method: 'GET',
-      path: '/workspaces',
+      path: '/agents/workspaces',
       handler: safeHandler(ctx, listWorkspaces),
     },
     {
       method: 'POST',
-      path: '/workspaces',
+      path: '/agents/workspaces',
       handler: safeHandler(ctx, createWorkspace),
     },
     {
       method: 'GET',
-      path: '/workspaces/:id',
+      path: '/agents/workspaces/:id',
       handler: safeHandler(ctx, getWorkspace),
     },
     {
       method: 'PATCH',
-      path: '/workspaces/:id',
+      path: '/agents/workspaces/:id',
       handler: safeHandler(ctx, updateWorkspace),
     },
     {
       method: 'DELETE',
-      path: '/workspaces/:id',
+      path: '/agents/workspaces/:id',
       handler: safeHandler(ctx, deleteWorkspace),
     },
   ];

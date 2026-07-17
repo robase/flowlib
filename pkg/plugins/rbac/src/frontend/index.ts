@@ -29,10 +29,11 @@ export const rbacFrontend: FlowlibFrontendPlugin = {
   // ─── Sidebar ───
   sidebar: [
     {
-      label: 'Access Control',
+      label: 'Access',
       icon: Shield,
       path: '/access',
       position: 'top',
+      order: 70,
       permission: 'flow:read',
     },
   ],

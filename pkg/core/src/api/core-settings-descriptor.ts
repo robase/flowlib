@@ -264,35 +264,35 @@ export function buildCoreSettingsDescriptors(config: FlowlibConfig): SettingsDes
   return [
     {
       namespace: 'core.logging',
-      label: 'Core: Logging',
+      label: 'Logging',
       description:
         'Default and per-scope log levels. Hot-reloads — changes take effect on the next log emission.',
       fields: loggingFields,
     },
     {
       namespace: 'core.triggers',
-      label: 'Core: Triggers',
+      label: 'Triggers',
       description:
         'Trigger system settings. `cronEnabled` hot-reloads (start/stopCronScheduler is called); webhookBaseUrl is config-bound.',
       fields: triggersFields,
     },
     {
       namespace: 'core.execution',
-      label: 'Core: Execution',
+      label: 'Execution',
       description:
         'Execution timeouts and persistence strategy. All bound at startup — change in flowlib.config.ts and restart.',
       fields: executionFields,
     },
     {
       namespace: 'core.interface',
-      label: 'Core: Interface',
+      label: 'Interface',
       description:
         'UI mount paths and theme. Read at frontend mount — change in flowlib.config.ts.',
       fields: interfaceFields,
     },
     {
       namespace: 'core.infra',
-      label: 'Core: Infrastructure',
+      label: 'Infrastructure',
       description:
         'Database, encryption, and startup gates. Display-only — these are bound to the running process.',
       fields: infraFields,

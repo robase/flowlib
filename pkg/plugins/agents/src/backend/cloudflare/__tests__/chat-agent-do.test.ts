@@ -106,6 +106,17 @@ function makeRuntime(opts: {
   sessionRow?: unknown;
   provider?: AgentProvider | null;
   noRepositories?: boolean;
+  skills?: {
+    listForScope: (scope: {
+      orgId: string | null;
+      userId?: string;
+      limit?: number;
+    }) => Promise<ReadonlyArray<{ name: string; description: string; body: string }>>;
+    findByName: (
+      name: string,
+      scope: { orgId: string | null; userId?: string },
+    ) => Promise<{ name: string; body: string } | null>;
+  };
 }): AgentsRuntimeRegistries {
   const providers = new Map<string, AgentProvider>();
   if (opts.provider) {
@@ -121,6 +132,7 @@ function makeRuntime(opts: {
         messages: {
           append: vi.fn(async () => {}),
         },
+        ...(opts.skills ? { skills: opts.skills } : {}),
       };
 
   return {
@@ -380,6 +392,160 @@ describe('AgentChatDO.onChatMessage', () => {
     expect(finishArg.finishReason).toBe('completed');
     expect(finishArg.usage.inputTokens).toBe(12);
     expect(finishArg.usage.outputTokens).toBe(34);
+  });
+
+  it('composes the system prompt (directives + deny-list + base) and passes it to createSession', async () => {
+    const createSession = vi.fn(async (_input: { systemPrompt?: string }) => ({
+      providerSessionId: 'provider-sess-xyz',
+    }));
+    const provider = fakeProvider('claude-code');
+    (provider as unknown as { createSession: typeof createSession }).createSession = createSession;
+
+    const runTurn = vi.fn(async () => ({
+      reason: 'completed' as const,
+      messageCount: 0,
+      toolCallCount: 0,
+      inputTokensTotal: 0,
+      outputTokensTotal: 0,
+      durationMs: 1,
+    }));
+
+    setAgentsRuntime(
+      makeRuntime({
+        agentService: { runTurn } as unknown as AgentService,
+        provider,
+        sessionRow: {
+          providerId: 'claude-code',
+          providerSessionId: 'provider-sess-xyz',
+          orgId: 'org-a',
+          systemPrompt: 'You are a focused helper.',
+          denyList: ['sandbox.run_shell'],
+        },
+      }),
+    );
+    const stub = makeStubDO({
+      name: 'org:org-a/kind:chat/sess-1',
+      messages: [{ role: 'user', content: 'hi' }],
+    });
+
+    await stub.onChatMessage(onFinish);
+
+    expect(createSession).toHaveBeenCalledOnce();
+    const arg = createSession.mock.calls[0][0];
+    expect(arg.systemPrompt).toBeTypeOf('string');
+    const composed = arg.systemPrompt as string;
+    // Base prompt is preserved …
+    expect(composed).toContain('You are a focused helper.');
+    // … the always-on operating directives are appended …
+    expect(composed).toContain('## Operating directives');
+    // … and the deny-list is surfaced as a soft restriction.
+    expect(composed).toContain('## Tool restrictions');
+    expect(composed).toContain('sandbox.run_shell');
+  });
+
+  it('summarises skills in the prompt and injects a working skills.read tool', async () => {
+    const createSession = vi.fn(async (_input: { systemPrompt?: string }) => ({
+      providerSessionId: 'p-skill',
+    }));
+    const provider = fakeProvider('claude-code');
+    (provider as unknown as { createSession: typeof createSession }).createSession = createSession;
+
+    let capturedPrompt: {
+      providerTools?: Record<
+        string,
+        { execute: (i: Record<string, unknown>, o: object) => Promise<unknown> }
+      >;
+    } | null = null;
+    const runTurn = vi.fn(async (_ctx: SessionContext, prompt: unknown) => {
+      capturedPrompt = prompt as typeof capturedPrompt;
+      return {
+        reason: 'completed' as const,
+        messageCount: 0,
+        toolCallCount: 0,
+        inputTokensTotal: 0,
+        outputTokensTotal: 0,
+        durationMs: 1,
+      };
+    });
+
+    const body = '1. branch\n2. commit\n3. open PR';
+    setAgentsRuntime(
+      makeRuntime({
+        agentService: { runTurn } as unknown as AgentService,
+        provider,
+        sessionRow: {
+          providerId: 'claude-code',
+          providerSessionId: 'p-skill',
+          orgId: 'org-a',
+        },
+        skills: {
+          listForScope: vi.fn(async () => [
+            { name: 'pr-flow', description: 'How to open a pull request', body },
+          ]),
+          findByName: vi.fn(async (name: string) =>
+            name === 'pr-flow' ? { name: 'pr-flow', body } : null,
+          ),
+        },
+      }),
+    );
+    const stub = makeStubDO({
+      name: 'org:org-a/kind:chat/sess-1',
+      messages: [{ role: 'user', content: 'hi' }],
+    });
+
+    await stub.onChatMessage(onFinish);
+
+    // Prompt lists the skill as a summary and promises the read tool —
+    // the body is NOT inlined (progressive disclosure).
+    const composed = createSession.mock.calls[0][0].systemPrompt as string;
+    expect(composed).toContain('## Available skills');
+    expect(composed).toContain('**pr-flow** — How to open a pull request');
+    expect(composed).toContain('skills.read');
+    expect(composed).not.toContain('1. branch');
+
+    // The skills.read tool is injected and actually resolves the body.
+    const tool = capturedPrompt!.providerTools?.['skills.read'];
+    expect(tool).toBeDefined();
+    expect(await tool!.execute({ name: 'pr-flow' }, {})).toEqual({ name: 'pr-flow', body });
+    expect(await tool!.execute({ name: 'nope' }, {})).toMatchObject({ error: expect.any(String) });
+  });
+
+  it('threads the session deny/allow lists onto PromptInput so they are enforced', async () => {
+    let capturedPrompt: { extraDenied?: string[]; enabledTools?: string[] } | null = null;
+    const runTurn = vi.fn(async (_ctx: SessionContext, prompt: unknown) => {
+      capturedPrompt = prompt as typeof capturedPrompt;
+      return {
+        reason: 'completed' as const,
+        messageCount: 0,
+        toolCallCount: 0,
+        inputTokensTotal: 0,
+        outputTokensTotal: 0,
+        durationMs: 1,
+      };
+    });
+    setAgentsRuntime(
+      makeRuntime({
+        agentService: { runTurn } as unknown as AgentService,
+        provider: fakeProvider('claude-code'),
+        sessionRow: {
+          providerId: 'claude-code',
+          providerSessionId: 'p-deny',
+          orgId: 'org-a',
+          denyList: ['sandbox.run_shell', 'github.create_issue'],
+          enabledTools: ['sandbox.read_file', 'sandbox.write_file'],
+        },
+      }),
+    );
+    const stub = makeStubDO({
+      name: 'org:org-a/kind:chat/sess-1',
+      messages: [{ role: 'user', content: 'hi' }],
+    });
+
+    await stub.onChatMessage(onFinish);
+
+    expect(capturedPrompt).not.toBeNull();
+    expect(capturedPrompt!.extraDenied).toEqual(['sandbox.run_shell', 'github.create_issue']);
+    expect(capturedPrompt!.enabledTools).toEqual(['sandbox.read_file', 'sandbox.write_file']);
   });
 
   it('happy path: extracts text from structured `parts` arrays too', async () => {

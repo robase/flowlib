@@ -38,13 +38,13 @@
 
   ```ts
   const telemetryPlugin: FlowlibPluginDefinition = {
-    id: "agent-telemetry",
+    id: 'agent-telemetry',
     backend: {
-      id: "agent-telemetry",
+      id: 'agent-telemetry',
       hooks: {
         afterAgentToolExecute: async (ctx) => {
           recordEvent({
-            metric: "agent_tool_call",
+            metric: 'agent_tool_call',
             tool: ctx.toolName,
             ok: ctx.success,
             flowRunId: ctx.flowRunId,

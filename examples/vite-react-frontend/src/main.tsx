@@ -9,6 +9,10 @@ import { webhooks } from '@flowlib/webhooks';
 import { versionControl } from '@flowlib/version-control';
 import { mcp } from '@flowlib/mcp';
 import { vercelWorkflowsPlugin } from '@flowlib/vercel-workflows';
+// @flowlib/agents browser entry: `agents()` contributes the chat list +
+// /agents route; `agentsChatFrontendPlugin` adds the /agents/sessions/:id
+// chat surface.
+import { agents, agentsChatFrontendPlugin } from '@flowlib/agents';
 
 import './app.css';
 
@@ -33,6 +37,10 @@ export const App = () => {
                     versionControl(),
                     mcp(),
                     vercelWorkflowsPlugin(),
+                    // Chat list + /agents route.
+                    agents(),
+                    // Chat surface route (/agents/sessions/:sessionId).
+                    { id: 'agents-chat', name: 'Agents Chat', frontend: agentsChatFrontendPlugin },
                   ],
                 }}
               />

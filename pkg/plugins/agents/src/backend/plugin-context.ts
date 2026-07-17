@@ -33,6 +33,12 @@ export interface AgentsRuntimeRegistries {
   repositories?: unknown;
   /** Permissions resolver — Stream J. */
   permissions?: unknown;
+  /**
+   * Credentials accessor (`flowlib.credentials`), threaded to providers so
+   * `aiSdkProvider` can resolve a chat's attached credential without the
+   * host hand-wiring `resolveCredential`. Set during `init()`.
+   */
+  credentials?: import('./providers/types').AgentCredentialsAccessor;
   /** Audit log writer — Stream J. */
   auditWriter?: unknown;
   /** System prompt composer — Stream K. */
@@ -45,6 +51,24 @@ export interface AgentsRuntimeRegistries {
   hookPipeline?: unknown;
   /** Cloudflare AIChatAgent DO class export — Stream H. */
   cloudflareDoClass?: unknown;
+  /**
+   * Whether to eagerly provision the workspace at session start so the
+   * system prompt gets real environment/git/directory context. Mirrors
+   * the `eagerWorkspace` plugin option; read by both transports into
+   * `ChatHostDeps.eagerWorkspace`. Default false (lazy).
+   */
+  eagerWorkspace?: boolean;
+  /**
+   * Web-search config (API key + optional endpoint). When set, both
+   * transports offer the `web.search` tool. Mirrors the `webSearch`
+   * plugin option. Undefined → tool omitted.
+   */
+  webSearch?: { apiKey: string; endpoint?: string; apiKeyHeader?: string };
+  /**
+   * Whether the `dispatch_agent` (read-only sub-agent) tool is offered.
+   * Mirrors the `subAgents` plugin option. Default false.
+   */
+  subAgents?: boolean;
 }
 
 /**
@@ -68,6 +92,12 @@ export interface ResolvedAgentsOptions extends AgentsPluginPublicOptions {
   exposeFlowlibActions: boolean;
   /** Tool ids hard-denied for every agent in this deployment (e.g. `['Bash']`). */
   defaultDenyList: ReadonlyArray<string>;
+  /**
+   * Cloudflare `AgentChatDO` class, injected by Cloudflare hosts via
+   * `agents({ cloudflareDoClass })`. Stashed onto
+   * `registries.cloudflareDoClass`. Undefined on Express/Node hosts.
+   */
+  cloudflareDoClass?: unknown;
   /**
    * Provider id used when `POST /sessions` omits `providerId`. Must
    * match one of the registered providers' ids. Defaults to

@@ -26,6 +26,18 @@ import {
 import { BaseProviderAdapter, ProviderCapabilities } from './provider-adapter';
 
 /**
+ * The usage fields this adapter reads off streaming events. Narrower than
+ * `Anthropic.Usage` because the SSE events type `usage` loosely (partial on
+ * `message_delta`), so the stream is cast to this rather than the full shape.
+ */
+type AnthropicUsageShape = {
+  input_tokens?: number;
+  output_tokens?: number;
+  cache_read_input_tokens?: number | null;
+  cache_creation_input_tokens?: number | null;
+};
+
+/**
  * Anthropic Provider Adapter
  */
 export class AnthropicAdapter extends BaseProviderAdapter {
@@ -154,26 +166,46 @@ export class AnthropicAdapter extends BaseProviderAdapter {
       const anthropicMessages = this.convertMessages(request.messages);
       const tools = this.convertTools(request.tools);
 
-      const thinkingEnabled =
-        request.thinking?.enabled === true && this.modelSupportsThinking(request.model);
+      const contract = this.thinkingContract(request.model);
+      const thinkingEnabled = request.thinking?.enabled === true && contract !== 'none';
       const budgetTokens = this.resolveThinkingBudget(request.thinking);
-      // Anthropic requires max_tokens > budget_tokens when thinking is enabled.
+      // Extended thinking requires max_tokens > budget_tokens; adaptive has no budget.
       const baseMaxTokens = request.maxTokens || 4096;
-      const maxTokens = thinkingEnabled
-        ? Math.max(baseMaxTokens, budgetTokens + 4096)
-        : baseMaxTokens;
+      const maxTokens =
+        thinkingEnabled && contract === 'budget'
+          ? Math.max(baseMaxTokens, budgetTokens + 4096)
+          : baseMaxTokens;
 
       const params: Anthropic.MessageCreateParams = {
         model: request.model,
         max_tokens: maxTokens,
-        // Anthropic requires temperature === 1 when extended thinking is enabled.
-        temperature: thinkingEnabled ? 1 : request.temperature,
         system: request.systemPrompt,
         messages: anthropicMessages,
         tools: tools.length > 0 ? tools : undefined,
+        // Automatic prompt caching. The agent loop resends the whole
+        // conversation on every iteration, so each tool round-trip re-pays for
+        // the tool defs + system prompt + all prior turns. Top-level
+        // `cache_control` puts the breakpoint on the last cacheable block and
+        // moves it forward as the conversation grows, so iteration N+1 reads
+        // back everything iteration N wrote.
+        //
+        // Safe when it doesn't pay off: prompts under the model's minimum
+        // (1024 tokens for most, 4096 for Opus 4.5/4.6 and Haiku 4.5) are
+        // silently not cached rather than erroring. The one cost is a
+        // single-iteration run with a large prefix, which takes a 1.25x write
+        // it never reads back.
+        cache_control: { type: 'ephemeral' },
       };
 
-      if (thinkingEnabled) {
+      if (this.modelAcceptsSampling(request.model)) {
+        // Extended thinking requires temperature === 1 on the models that take it.
+        params.temperature = thinkingEnabled ? 1 : request.temperature;
+      }
+
+      if (thinkingEnabled && contract === 'adaptive') {
+        params.thinking = { type: 'adaptive' };
+        params.output_config = { effort: request.thinking?.effort ?? 'medium' };
+      } else if (thinkingEnabled) {
         params.thinking = { type: 'enabled', budget_tokens: budgetTokens };
       }
 
@@ -205,20 +237,60 @@ export class AnthropicAdapter extends BaseProviderAdapter {
   }
 
   /**
-   * Models that accept the `thinking` parameter. Claude 4.x and 3.7 Sonnet
-   * support extended thinking; earlier models reject it with a 400.
+   * How a model wants reasoning configured. Anthropic changed the contract
+   * mid-generation, and the two forms are mutually exclusive:
+   *
+   *  - `adaptive` — `thinking: { type: 'adaptive' }` + `output_config.effort`.
+   *    The model decides depth per request. Opus 4.6+ and Sonnet 5 / Fable 5.
+   *    These reject `budget_tokens` with a 400.
+   *  - `budget`   — `thinking: { type: 'enabled', budget_tokens: N }`.
+   *    Opus 4.0/4.1/4.5, Sonnet 4.0/4.5, Haiku 4.5, 3.7 Sonnet.
+   *  - `none`     — no reasoning support; sending `thinking` is a 400.
+   *
+   * Ordering matters: `claude-sonnet-4-6` also matches a bare
+   * `claude-sonnet-4` prefix, so the adaptive checks run first.
    */
-  private modelSupportsThinking(model: string): boolean {
+  private thinkingContract(model: string): 'adaptive' | 'budget' | 'none' {
     const m = model.toLowerCase();
-    return (
+    if (
+      m.startsWith('claude-fable-') ||
+      m.startsWith('claude-mythos-') ||
+      m.startsWith('claude-sonnet-5') ||
+      m.startsWith('claude-opus-4-6') ||
+      m.startsWith('claude-opus-4-7') ||
+      m.startsWith('claude-opus-4-8') ||
+      m.startsWith('claude-sonnet-4-6')
+    ) {
+      return 'adaptive';
+    }
+    if (
       m.startsWith('claude-opus-4') ||
       m.startsWith('claude-sonnet-4') ||
       m.startsWith('claude-haiku-4') ||
       m.startsWith('claude-3-7-sonnet')
+    ) {
+      return 'budget';
+    }
+    return 'none';
+  }
+
+  /**
+   * `temperature` / `top_p` / `top_k` were removed on the newest models — they
+   * 400 rather than being ignored, so the parameter must be omitted entirely.
+   * Opus 4.6 and Sonnet 4.6 still accept sampling despite being adaptive.
+   */
+  private modelAcceptsSampling(model: string): boolean {
+    const m = model.toLowerCase();
+    return !(
+      m.startsWith('claude-fable-') ||
+      m.startsWith('claude-mythos-') ||
+      m.startsWith('claude-sonnet-5') ||
+      m.startsWith('claude-opus-4-7') ||
+      m.startsWith('claude-opus-4-8')
     );
   }
 
-  /** Translate `effort` levels to a concrete budget when explicit budget not provided. */
+  /** Translate `effort` levels to a concrete budget for `budget`-contract models. */
   private resolveThinkingBudget(thinking?: AgentPromptRequest['thinking']): number {
     if (thinking?.budgetTokens && thinking.budgetTokens > 0) {
       return Math.max(1024, Math.floor(thinking.budgetTokens));
@@ -250,6 +322,8 @@ export class AnthropicAdapter extends BaseProviderAdapter {
     let currentToolUse: { id: string; name: string; input: string } | null = null;
     let inputTokens: number | undefined;
     let outputTokens: number | undefined;
+    let cacheReadTokens: number | undefined;
+    let cacheCreationTokens: number | undefined;
     const toolCalls: AgentToolCall[] = [];
 
     for await (const chunk of stream) {
@@ -258,22 +332,19 @@ export class AnthropicAdapter extends BaseProviderAdapter {
       // `message_delta` events whose `usage.output_tokens` is the running cumulative
       // total. Last-write-wins on output, first-non-zero wins on input.
       const evt = chunk as
-        | {
-            type: 'message_start';
-            message: { usage?: { input_tokens?: number; output_tokens?: number } };
-          }
-        | { type: 'message_delta'; usage?: { input_tokens?: number; output_tokens?: number } }
+        | { type: 'message_start'; message: { usage?: AnthropicUsageShape } }
+        | { type: 'message_delta'; usage?: AnthropicUsageShape }
         | typeof chunk;
       if (evt.type === 'message_start') {
-        const u = (
-          evt as { message: { usage?: { input_tokens?: number; output_tokens?: number } } }
-        ).message.usage;
+        const u = (evt as { message: { usage?: AnthropicUsageShape } }).message.usage;
         if (u) {
           inputTokens = u.input_tokens ?? inputTokens;
           outputTokens = u.output_tokens ?? outputTokens;
+          cacheReadTokens = u.cache_read_input_tokens ?? cacheReadTokens;
+          cacheCreationTokens = u.cache_creation_input_tokens ?? cacheCreationTokens;
         }
       } else if (evt.type === 'message_delta') {
-        const u = (evt as { usage?: { input_tokens?: number; output_tokens?: number } }).usage;
+        const u = (evt as { usage?: AnthropicUsageShape }).usage;
         if (u) {
           if (u.input_tokens !== undefined) {
             inputTokens = u.input_tokens;
@@ -281,6 +352,11 @@ export class AnthropicAdapter extends BaseProviderAdapter {
           if (u.output_tokens !== undefined) {
             outputTokens = u.output_tokens;
           }
+          // `??` rather than an explicit-undefined check: the API types these
+          // as `number | null`, and a null means "no cache activity" — same as
+          // absent, so both should leave any earlier value alone.
+          cacheReadTokens = u.cache_read_input_tokens ?? cacheReadTokens;
+          cacheCreationTokens = u.cache_creation_input_tokens ?? cacheCreationTokens;
         }
       }
 
@@ -334,9 +410,31 @@ export class AnthropicAdapter extends BaseProviderAdapter {
     }
 
     const reasoning = reasoningContent ? reasoningContent : undefined;
+
+    if (cacheReadTokens || cacheCreationTokens) {
+      this.logger.debug('Anthropic prompt cache', {
+        cacheReadTokens: cacheReadTokens ?? 0,
+        cacheCreationTokens: cacheCreationTokens ?? 0,
+        uncachedInputTokens: inputTokens ?? 0,
+      });
+    }
+
+    // With caching on, `input_tokens` counts only what follows the last cache
+    // breakpoint — the cached prefix is reported separately. Sum the three so
+    // `inputTokens` keeps meaning "total input processed", which is what the
+    // metering hooks downstream of this (flow-run-coordinator) record as
+    // `tokensIn`. Without this, turning caching on would silently collapse
+    // reported input usage to near-zero.
+    const totalInputTokens =
+      inputTokens === undefined &&
+      cacheReadTokens === undefined &&
+      cacheCreationTokens === undefined
+        ? undefined
+        : (inputTokens ?? 0) + (cacheReadTokens ?? 0) + (cacheCreationTokens ?? 0);
+
     const usage =
-      inputTokens !== undefined || outputTokens !== undefined
-        ? { inputTokens: inputTokens ?? 0, outputTokens: outputTokens ?? 0 }
+      totalInputTokens !== undefined || outputTokens !== undefined
+        ? { inputTokens: totalInputTokens ?? 0, outputTokens: outputTokens ?? 0 }
         : undefined;
 
     if (toolCalls.length > 0) {
@@ -349,7 +447,7 @@ export class AnthropicAdapter extends BaseProviderAdapter {
    * Execute a simple prompt (streaming)
    */
   async executePrompt(request: PromptRequest): Promise<PromptResult> {
-    const messageRequest = this.buildPromptRequest(request);
+    const messageRequest = this.buildPromptRequest(request, { cache: true });
 
     this.logger.debug(`Submitting prompt to Anthropic`);
 
@@ -416,6 +514,7 @@ export class AnthropicAdapter extends BaseProviderAdapter {
    */
   private buildPromptRequest(
     request: PromptRequest | BatchRequest,
+    options: { cache?: boolean } = {},
   ): Anthropic.MessageCreateParamsNonStreaming {
     // Anthropic enforces strict max_tokens limits per model (e.g., 4096 for Haiku,
     // 8192 for Sonnet). The user-provided maxTokens is typically the *model context*
@@ -423,11 +522,28 @@ export class AnthropicAdapter extends BaseProviderAdapter {
     // "max_tokens exceeds model limit" errors. Cap at a safe default for prompt
     // (non-agent) requests; agent requests set max_tokens independently.
     const maxOutputTokens = request.maxTokens ? Math.min(request.maxTokens, 8192) : 4096;
+
+    // Cache breakpoint on the system prompt rather than top-level automatic
+    // caching. A single-shot prompt's last block is the user prompt, which
+    // differs every call — a breakpoint there would write a new entry each
+    // request and never read one back. The cached prefix is `tools` then
+    // `system` (that order, regardless of how this object is built), both of
+    // which are fixed by node config, so a node run repeatedly reads them back.
+    const cacheSystemPrompt = options.cache === true && Boolean(request.systemPrompt);
+
     const params: Anthropic.MessageCreateParamsNonStreaming = {
       model: request.model,
       max_tokens: maxOutputTokens,
       temperature: request.temperature,
-      system: request.systemPrompt,
+      system: cacheSystemPrompt
+        ? [
+            {
+              type: 'text',
+              text: request.systemPrompt as string,
+              cache_control: { type: 'ephemeral' },
+            },
+          ]
+        : request.systemPrompt,
       messages: [{ role: 'user', content: request.prompt }],
     };
 
@@ -454,6 +570,8 @@ export class AnthropicAdapter extends BaseProviderAdapter {
    * Submit batch to Anthropic Batch API
    */
   async submitBatch(batchJobId: string, requestData: BatchRequest): Promise<BatchSubmissionResult> {
+    // Deliberately uncached: each batch carries a single request, so a
+    // breakpoint would buy a 1.25x cache write that nothing ever reads back.
     const messageRequest = this.buildPromptRequest(requestData);
 
     try {

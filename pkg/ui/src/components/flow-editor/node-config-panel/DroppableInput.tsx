@@ -10,6 +10,8 @@ interface DroppableInputProps {
   multiline?: boolean;
   rows?: number;
   fillAvailableHeight?: boolean;
+  /** Upstream input data used to autocomplete `{{ ... }}` references. */
+  inputData?: Record<string, unknown>;
 }
 
 /**
@@ -29,6 +31,7 @@ export function DroppableInput({
   multiline = false,
   rows = 1,
   fillAvailableHeight = false,
+  inputData,
 }: DroppableInputProps) {
   return (
     <CodeMirrorNunjucksEditor
@@ -40,6 +43,7 @@ export function DroppableInput({
       rows={rows}
       fillAvailableHeight={fillAvailableHeight}
       className={className}
+      inputData={inputData}
     />
   );
 }

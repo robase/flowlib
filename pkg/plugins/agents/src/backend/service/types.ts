@@ -9,7 +9,7 @@
 
 import type { AgentEvent } from '../../shared/events';
 import type { AgentsAuthContext } from '../../shared/auth-context';
-import type { AgentProvider, PromptInput } from '../providers/types';
+import type { AgentProvider, PromptInput, ProviderToolDescriptor } from '../providers/types';
 import type { WorkspaceHandle } from '../workspaces/types';
 import type { HookPipeline } from '../hooks/types';
 import type { PermissionsResolver } from '../permissions/types';
@@ -50,6 +50,58 @@ export interface SessionContext {
   abortSignal: AbortSignal;
   /** Per-session model override. */
   defaultModel?: string;
+  /**
+   * Tools the session denies (from `agent_sessions.denyList`). The DO
+   * threads this onto `PromptInput.extraDenied` so the deny is actually
+   * enforced at the provider's tool filter — not merely mentioned in the
+   * composed prompt. (§6 will additionally enforce it kernel-side so it
+   * covers provider-native and MCP tools uniformly.)
+   */
+  denyList?: ReadonlyArray<string>;
+  /**
+   * Per-session tool allowlist (from `agent_sessions.enabledTools`). When
+   * non-empty, only these tools are exposed; threaded onto
+   * `PromptInput.enabledTools`.
+   */
+  enabledTools?: ReadonlyArray<string>;
+  /**
+   * Plugin-contributed tools for the session (e.g. `skills.read`). The DO
+   * threads these onto `PromptInput.providerTools` so the provider merges
+   * them into the turn's catalogue.
+   */
+  providerTools?: Record<string, ProviderToolDescriptor>;
+  /**
+   * Human-in-the-loop decision gate. When present, a provider (or the
+   * kernel) can **block** the turn awaiting a user decision for a
+   * permission-request / human-input-request, instead of merely emitting
+   * the event and continuing (the legacy pass-through). The transport
+   * resolves the pending promise when the matching control frame arrives
+   * (DO `onMessage` for `flowlib.permission-response` / `flowlib.hil-response`;
+   * the Express `POST /sessions/:id/control` endpoint). Optional — a
+   * provider that doesn't consult it keeps the pass-through behaviour, so
+   * pure-chat is unaffected.
+   */
+  decisionGate?: DecisionGate;
+}
+
+/**
+ * Human-in-the-loop decision gate (see `SessionContext.decisionGate`).
+ *
+ * `await*` opens a pending promise keyed by the request's `id`; the
+ * transport calls the matching `resolve*` when the client responds. If
+ * the turn aborts, in-flight awaits reject so the provider unwinds.
+ */
+export interface DecisionGate {
+  /** Block until the user responds to a permission request. */
+  awaitPermission(request: { id: string; [k: string]: unknown }): Promise<unknown>;
+  /** Block until the user responds to a human-input request. */
+  awaitHumanInput(request: { id: string; [k: string]: unknown }): Promise<unknown>;
+  /** Resolve a pending permission await (called by the transport). */
+  resolvePermission(id: string, decision: unknown): void;
+  /** Resolve a pending human-input await (called by the transport). */
+  resolveHumanInput(id: string, response: unknown): void;
+  /** Reject all pending awaits (e.g. on turn abort / disconnect). */
+  rejectAll(reason?: unknown): void;
 }
 
 /**

@@ -21,6 +21,9 @@
  */
 
 import type { PromptInput } from '../types';
+import type { WorkspaceHandle } from '../../workspaces/types';
+import type { ToolOutputStore, ToolOutputBudget } from '../../tools/tool-output-store';
+import { TOOL_GUARD_EXTRA_KEY, type ToolGuard } from '../../service/run-turn';
 
 /**
  * The minimum tool shape we hand to `streamText`. We don't import
@@ -50,7 +53,7 @@ export interface AiSdkToolDescriptor {
    */
   execute: (
     input: Record<string, unknown>,
-    options: { abortSignal?: AbortSignal },
+    options: { abortSignal?: AbortSignal; toolCallId?: string },
   ) => Promise<unknown>;
 }
 
@@ -116,4 +119,211 @@ export function buildToolSet(input: PromptInput): AiSdkToolSet {
     filtered[name] = descriptor;
   }
   return filtered;
+}
+
+/**
+ * Merge the tool sources into the final per-turn catalogue and apply the
+ * deny / allow filters.
+ *
+ * Precedence on name collision: `stubs` < `host` < `injected`. So a
+ * plugin-injected tool (`skills.read`, `memory.*`) overrides a host tool
+ * of the same name, which overrides a stub — the more authoritative
+ * source wins. Deny removes a name outright; the allowlist (when set)
+ * keeps only listed names.
+ */
+export function assembleToolSet(args: {
+  stubs: AiSdkToolSet;
+  host: AiSdkToolSet;
+  injected?: AiSdkToolSet;
+  denied: ReadonlySet<string>;
+  allowlist: ReadonlySet<string> | null;
+  onCollision?: (name: string) => void;
+}): AiSdkToolSet {
+  const merged: AiSdkToolSet = { ...args.stubs };
+  const layer = (tools: AiSdkToolSet) => {
+    for (const [name, descriptor] of Object.entries(tools)) {
+      if (merged[name]) {
+        args.onCollision?.(name);
+      }
+      merged[name] = descriptor;
+    }
+  };
+  layer(args.host);
+  if (args.injected) {
+    layer(args.injected);
+  }
+
+  const out: AiSdkToolSet = {};
+  for (const [name, descriptor] of Object.entries(merged)) {
+    if (args.denied.has(name)) {
+      continue;
+    }
+    if (args.allowlist && !args.allowlist.has(name)) {
+      continue;
+    }
+    out[name] = descriptor;
+  }
+  return out;
+}
+
+/**
+ * Pull the kernel's {@link ToolGuard} off a turn's `extras`, if the caller
+ * routed the turn through `runTurn` (it always does in production; direct
+ * `provider.prompt()` calls in tests may not).
+ *
+ * Returns `undefined` when absent — see {@link wrapToolsWithGuard} for why
+ * that is a deliberate, and safe, no-op.
+ */
+export function toolGuardFromPromptInput(input: PromptInput): ToolGuard | undefined {
+  const candidate = input.extras?.[TOOL_GUARD_EXTRA_KEY];
+  if (
+    candidate &&
+    typeof candidate === 'object' &&
+    typeof (candidate as ToolGuard).check === 'function'
+  ) {
+    return candidate as ToolGuard;
+  }
+  return undefined;
+}
+
+/**
+ * The result a blocked tool hands back to the model in place of running.
+ * Shaped as a plain object (rather than a throw) so the AI SDK surfaces it
+ * as an ordinary `tool-result` the model can read and reason about —
+ * "that was denied, try something else" — instead of an opaque error.
+ */
+export interface BlockedToolResult {
+  error: string;
+  blocked: true;
+}
+
+/**
+ * Enforce the kernel's PreToolUse hook decisions **inside** the tool
+ * wrapper, before the underlying `execute` runs.
+ *
+ * This is the load-bearing half of the deny path for this provider. The
+ * AI SDK owns tool dispatch: it calls `descriptor.execute` itself and
+ * emits the `tool-call` chunk as a notification *alongside* that call. So
+ * a kernel that only inspects the drained event stream can emit "Blocked:
+ * command matches a destructive pattern" while `workspace.exec('rm -rf /')`
+ * is already running. `sandbox.run_shell` has no in-tool guard of its own
+ * (unlike the file tools' `assertSafePath`), so this wrapper is the only
+ * thing standing between a hook's `continue: false` and the container.
+ *
+ * Two invariants:
+ *  1. A denied tool never reaches the underlying `execute`.
+ *  2. A hook's `modifiedInput` is what actually gets executed — not just
+ *     what gets reported.
+ *
+ * Wrap this **outermost** (guard → output-store → real execute) so the
+ * decision precedes every other side effect.
+ *
+ * When no guard is threaded on the turn, tools are returned untouched: the
+ * kernel then has no hook pipeline to enforce, so there is nothing to
+ * apply. (`runTurn` always threads one; `noopHookPipeline` allows all.)
+ */
+export function wrapToolsWithGuard(
+  tools: AiSdkToolSet,
+  guard: ToolGuard | undefined,
+): AiSdkToolSet {
+  if (!guard) {
+    return tools;
+  }
+  const wrapped: AiSdkToolSet = {};
+  for (const [name, descriptor] of Object.entries(tools)) {
+    wrapped[name] = {
+      description: descriptor.description,
+      parameters: descriptor.parameters,
+      execute: async (input, options) => {
+        // `name` here is the canonical, pre-sanitisation key (the
+        // provider sanitises for the wire only *after* wrapping), so the
+        // hooks see `sandbox.run_shell`, matching the name the kernel
+        // reports on its events.
+        const decision = await guard.check({
+          toolName: name,
+          ...(options.toolCallId ? { toolCallId: options.toolCallId } : {}),
+          input,
+        });
+        if (!decision.allow) {
+          const blocked: BlockedToolResult = {
+            error: decision.reason ?? 'blocked by pre-tool hook',
+            blocked: true,
+          };
+          return blocked;
+        }
+        return descriptor.execute(decision.input, options);
+      },
+    };
+  }
+  return wrapped;
+}
+
+/** Monotonic fallback id for the rare case the AI SDK omits `toolCallId`. */
+let toolCallCounter = 0;
+function fallbackCallId(name: string): string {
+  const c = (globalThis as { crypto?: { randomUUID?: () => string } }).crypto;
+  return `${name}-${c?.randomUUID?.() ?? `${Date.now()}-${++toolCallCounter}`}`;
+}
+
+/**
+ * Wrap every tool's `execute` so its output passes through the
+ * {@link ToolOutputStore}. Large results (a `run_shell` dumping a whole
+ * file, a 10k-row action response) are truncated to the inline budget
+ * and the full text spilled to the session workspace
+ * (`.flowlib/tool-outputs/<id>.txt`), with a footer telling the model
+ * where the rest lives. Small results pass through unchanged — including
+ * their structured (object) shape, so the UI and model still get rich
+ * tool results when they're cheap.
+ *
+ * This is the ai-sdk path's equivalent of the truncation the claude-code
+ * MCP bridge already applies. Without it, one over-eager tool call floods
+ * the context window and burns tokens.
+ *
+ * Truncation must never break a tool call: if the store throws for any
+ * reason we fall back to the raw result.
+ */
+export function wrapToolsWithOutputStore(
+  tools: AiSdkToolSet,
+  store: ToolOutputStore,
+  opts: {
+    workspace?: WorkspaceHandle;
+    /**
+     * Lazy workspace getter, read at execute-time. Preferred over the
+     * eager `workspace` so a sandbox provisioned mid-turn (e.g. by an
+     * earlier `sandbox.*` tool call) becomes the spill target for later
+     * tool results — without forcing a container to boot just to spill.
+     * When it returns `undefined`, large outputs stay inline until a
+     * workspace exists.
+     */
+    getWorkspace?: () => WorkspaceHandle | undefined;
+    budget?: Partial<ToolOutputBudget>;
+  } = {},
+): AiSdkToolSet {
+  const wrapped: AiSdkToolSet = {};
+  for (const [name, descriptor] of Object.entries(tools)) {
+    wrapped[name] = {
+      description: descriptor.description,
+      parameters: descriptor.parameters,
+      execute: async (input, options) => {
+        const result = await descriptor.execute(input, options);
+        const toolCallId = options.toolCallId ?? fallbackCallId(name);
+        const workspace = opts.getWorkspace?.() ?? opts.workspace;
+        try {
+          const stored = await store.store({
+            toolCallId,
+            output: result,
+            ...(workspace ? { workspace } : {}),
+            ...(opts.budget ? { budget: opts.budget } : {}),
+          });
+          // Preserve the original (possibly structured) result when it
+          // fits — only coerce to the truncated string when we had to
+          // spill.
+          return stored.truncated ? stored.inline : result;
+        } catch {
+          return result;
+        }
+      },
+    };
+  }
+  return wrapped;
 }

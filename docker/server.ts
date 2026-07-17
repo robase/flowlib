@@ -1,99 +1,73 @@
+/**
+ * Docker entry server.
+ *
+ * Thin Express shell that mounts the **same `flowlibConfig`** the
+ * `express-drizzle` example uses (`./flowlib.config`) and serves the
+ * pre-built SPA. By reusing that config we get the full plugin set —
+ * auth, rbac, webhooks, mcp, vercel-workflows, version-control, and the
+ * code-editing agents (chat over HTTP/SSE, with an optional local Docker
+ * sandbox) — without re-declaring it here, so the image never drifts out
+ * of sync with the example.
+ *
+ * Everything is env-driven (see `flowlib.config.ts` + `docker-compose.yml`):
+ *   DATABASE_URL / FLOWLIB_DB_TYPE   — database
+ *   FLOWLIB_ENCRYPTION_KEY           — credential encryption + auth (required)
+ *   FLOWLIB_ADMIN_EMAIL / _PASSWORD  — seeded admin
+ *   FLOWLIB_TRUSTED_ORIGINS          — extra CORS/auth origins
+ *   SEED_*                           — seeded credentials (LLM keys, OAuth)
+ *   AGENT_DOCKER_SANDBOX_IMAGE       — agent sandbox (needs the docker socket)
+ *
+ * The Dockerfile copies this file to `examples/express-drizzle/docker-server.ts`
+ * so the `./flowlib.config` import + workspace deps resolve.
+ */
+import 'dotenv/config';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import express from 'express';
 import type { ErrorRequestHandler } from 'express';
-import path from 'path';
-import { fileURLToPath } from 'url';
+import cors from 'cors';
 import { createFlowlibRouter } from '@flowlib/express';
-import { auth } from '@flowlib/user-auth';
-import { rbac } from '@flowlib/rbac';
-import { webhooks } from '@flowlib/webhooks';
+import { flowlibConfig } from './flowlib.config';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-
-const app = express();
 const port = parseInt(process.env.PORT || '3000', 10);
-const staticDir = process.env.STATIC_DIR || '/app/frontend';
+// The built SPA. The Dockerfile sets STATIC_DIR to the vite build output.
+const staticDir = process.env.STATIC_DIR || path.resolve(__dirname, '../vite-react-frontend/dist');
 
-// --- Database ---
-const dbType = (process.env.FLOWLIB_DB_TYPE as 'sqlite' | 'postgres' | 'mysql') || 'sqlite';
-const dbConnectionString = process.env.DATABASE_URL || 'file:./data/flowlib.db';
-
-// --- Encryption key (required) ---
-const encryptionKey = process.env.FLOWLIB_ENCRYPTION_KEY;
-if (!encryptionKey) {
+if (!process.env.FLOWLIB_ENCRYPTION_KEY) {
   console.error(
-    'FATAL: FLOWLIB_ENCRYPTION_KEY is required. Generate one with: npx flowlib-cli secret',
+    'FATAL: FLOWLIB_ENCRYPTION_KEY is required. Generate one with `npx flowlib-cli secret` ' +
+      'and set it in the environment (docker-compose.yml).',
   );
   process.exit(1);
 }
 
-// --- Auth ---
-const adminEmail = process.env.FLOWLIB_ADMIN_EMAIL || 'admin@flowlib.local';
-const adminPassword = process.env.FLOWLIB_ADMIN_PASSWORD || 'changeme';
+const app = express();
 
-// --- Webhooks ---
-const webhookBaseUrl = process.env.FLOWLIB_WEBHOOK_BASE_URL || `http://localhost:${port}/flowlib`;
-
-// --- Trusted Origins (comma-separated) ---
+// CORS for cross-origin frontends (when not served from this container).
 const trustedOrigins = process.env.FLOWLIB_TRUSTED_ORIGINS
-  ? process.env.FLOWLIB_TRUSTED_ORIGINS.split(',').map((o) => o.trim())
-  : [`http://localhost:${port}`];
+  ? process.env.FLOWLIB_TRUSTED_ORIGINS.split(',')
+      .map((o) => o.trim())
+      .filter(Boolean)
+  : true;
+app.use(cors({ origin: trustedOrigins, credentials: true }));
+app.use(express.json({ limit: '10mb' }));
 
-// --- Logging ---
-const logLevel = (process.env.FLOWLIB_LOG_LEVEL as 'debug' | 'info' | 'warn' | 'error') || 'info';
-
-// --- Plugins ---
-const plugins = [
-  auth({
-    trustedOrigins,
-    betterAuthOptions: {
-      secret: encryptionKey,
-    },
-    globalAdmins: [
-      {
-        email: adminEmail,
-        pw: adminPassword,
-        name: 'Admin',
-      },
-    ],
-  }),
-  rbac(),
-  webhooks({ webhookBaseUrl }),
-];
-
-// --- Body parsing ---
-app.use(express.json());
-
-// --- Mount Flowlib API ---
-const flowlibRouter = await createFlowlibRouter({
-  encryptionKey,
-  database: {
-    id: 'flowlib-docker',
-    type: dbType,
-    connectionString: dbConnectionString,
-  },
-  logging: {
-    level: logLevel,
-  },
-  plugins,
-});
-
-// --- Health check (before other routes) ---
 app.get('/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-// --- Mount Flowlib API ---
+// Mount the full Flowlib API (all plugins from the shared config).
+const flowlibRouter = await createFlowlibRouter(flowlibConfig);
 app.use('/flowlib', flowlibRouter);
 
-// --- Serve static frontend ---
+// Serve the pre-built SPA + fallback for client-side routes.
+// Express 5 (path-to-regexp v8) requires named wildcards — bare '*' throws.
 app.use(express.static(staticDir));
-
-// --- SPA fallback (all non-API routes serve index.html) ---
-app.get('*', (req, res) => {
+app.get('/*splat', (_req, res) => {
   res.sendFile(path.join(staticDir, 'index.html'));
 });
 
-// --- Error handler ---
 const errorHandler: ErrorRequestHandler = (error, _req, res, next) => {
   console.error('Unhandled error:', error);
   if (res.headersSent) {
@@ -103,12 +77,15 @@ const errorHandler: ErrorRequestHandler = (error, _req, res, next) => {
 };
 app.use(errorHandler);
 
-// --- Start ---
 app.listen(port, '0.0.0.0', () => {
-  console.log(`Flowlib server running on http://0.0.0.0:${port}`);
-  console.log(`  Database: ${dbType} (${dbConnectionString})`);
-  console.log(`  Admin: ${adminEmail}`);
-  console.log(`  Static: ${staticDir}`);
+  console.log(`Flowlib running on http://0.0.0.0:${port}`);
+  console.log(
+    `  Database: ${flowlibConfig.database.type} (${flowlibConfig.database.connectionString})`,
+  );
+  console.log(`  Static:   ${staticDir}`);
+  console.log(
+    `  Agent sandbox: ${process.env.AGENT_DOCKER_SANDBOX_IMAGE || '(disabled — pure chat)'}`,
+  );
 });
 
 process.on('SIGINT', () => process.exit(0));

@@ -25,6 +25,8 @@ export type WorkspaceProviderId =
   | 'git-clone'
   | 'cloudflare-sandbox'
   | 'cloudflare-sandbox-claude'
+  | 'computesdk'
+  | 'local-docker'
   | 'remote-sandbox'
   | 'none';
 
@@ -54,6 +56,27 @@ export interface AgentMcpServer {
    */
   config: Record<string, unknown>;
   createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** Skill scope — `personal` is owner-visible, `global` is org-wide. */
+export type SkillScope = 'personal' | 'global';
+
+/**
+ * An authored skill — a Markdown body the agent's system prompt can pull
+ * in (progressive disclosure: summary in the prompt, body on demand via
+ * `skills.read`). Org + scope + owner scoped on every read.
+ */
+export interface AgentSkill {
+  id: string;
+  orgId: string | null;
+  name: string;
+  description: string;
+  body: string;
+  scope: SkillScope;
+  ownerId: string | null;
+  tags: string[];
   createdAt: string;
   updatedAt: string;
 }
@@ -123,6 +146,15 @@ export interface AgentSession {
    * server-side so the naming scheme stays on the backend.
    */
   doAgentName?: string;
+  /**
+   * Which chat transport the frontend should use for this session,
+   * decided server-side by whether a Cloudflare Durable Object is wired
+   * into the deployment:
+   *   - `'durable-object'` — connect a WebSocket to `AgentChatDO` (Cloudflare).
+   *   - `'http'` — POST to `/sessions/:id/stream` (SSE) + `/sessions/:id/control`
+   *     (Express/Node and any non-CF host).
+   */
+  transportMode?: 'durable-object' | 'http';
 }
 
 /** An assistant or user message — message parts encode rich content. */
@@ -200,4 +232,30 @@ export interface AgentsPluginPublicOptions {
    * @default 'anthropic/claude-sonnet-4-5'
    */
   defaultModel?: string;
+  /**
+   * Eagerly provision the session's sandbox **at session start** (rather
+   * than lazily on the first `sandbox.*` tool call) so the system prompt
+   * can include real environment + git-status + directory context — the
+   * orienting context a coding agent benefits from.
+   *
+   * Tradeoff: every chat on a workspace-capable provider pays one
+   * container cold-start up front, even pure-chat turns. Enable for
+   * code-first deployments; leave off (default) for chat-first ones.
+   * @default false
+   */
+  eagerWorkspace?: boolean;
+  /**
+   * Enable the `web.search` agent tool by supplying a search API key.
+   * Off by default (the tool is omitted entirely when unset). Defaults
+   * target the Brave Search API; override `endpoint`/`apiKeyHeader` for
+   * other providers.
+   */
+  webSearch?: { apiKey: string; endpoint?: string; apiKeyHeader?: string };
+  /**
+   * Enable the `dispatch_agent` tool — lets the agent spawn read-only
+   * exploration sub-turns (depth capped at 1). Token-heavy, so off by
+   * default; enable for deep-research / large-codebase deployments.
+   * @default false
+   */
+  subAgents?: boolean;
 }

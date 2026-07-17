@@ -39,6 +39,9 @@ const WORKSPACE_PROVIDER_VALUES = [
   'local-fs',
   'git-clone',
   'cloudflare-sandbox',
+  'cloudflare-sandbox-claude',
+  'computesdk',
+  'local-docker',
   'remote-sandbox',
   'none',
 ] as const;
@@ -388,10 +391,14 @@ export const agentSchema: FlowlibPluginSchema = {
         index: true,
       },
       userId: { type: 'string', required: false, index: true },
+      // Cascade on project delete: `listForScope` finds project memories by
+      // `project_id = <project>`, so a row pointing at a deleted project is
+      // unreadable by every code path and would linger forever.
       projectId: {
         type: 'uuid',
         required: false,
         index: true,
+        references: { table: 'agent_projects', field: 'id', onDelete: 'cascade' },
       },
       content: { type: 'text', required: true },
       // Stored as a serialised buffer on SQLite (manual cosine search) and

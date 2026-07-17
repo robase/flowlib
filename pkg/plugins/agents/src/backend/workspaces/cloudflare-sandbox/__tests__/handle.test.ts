@@ -324,4 +324,113 @@ describe('CloudflareSandboxHandle', () => {
       expect(loader).toHaveBeenCalledTimes(2);
     });
   });
+
+  describe('cloneRepo', () => {
+    it('persists a credential then clones, deriving the dir from the URL', async () => {
+      const stub = makeStub();
+      const handle = buildHandle(stub);
+      const res = await handle.cloneRepo!({
+        repoUrl: 'https://github.com/acme/app.git',
+        token: 'ghp_secret',
+        branch: 'main',
+      });
+      expect(res.dir).toBe('app');
+      expect(res.exitCode).toBe(0);
+
+      // Credential file written with the token (inside /workspace).
+      const writeCalls = (stub.writeFile as ReturnType<typeof vi.fn>).mock.calls;
+      const credWrite = writeCalls.find((c) => String(c[0]).endsWith('.flowlib-git-credentials'));
+      expect(credWrite).toBeDefined();
+      expect(String(credWrite?.[1])).toContain('x-access-token:ghp_secret@github.com');
+
+      // git config (credential helper) + git clone were both run; the token
+      // is NOT on the clone command line.
+      const execCalls = (stub.exec as ReturnType<typeof vi.fn>).mock.calls.map((c) => String(c[0]));
+      expect(execCalls.some((cmd) => cmd.includes('credential.helper'))).toBe(true);
+      const cloneCmd = execCalls.find((cmd) => cmd.includes('git clone'));
+      expect(cloneCmd).toContain("--branch 'main'");
+      expect(cloneCmd).toContain("'https://github.com/acme/app.git'");
+      expect(cloneCmd).toContain("'app'");
+      expect(cloneCmd).not.toContain('ghp_secret');
+    });
+
+    it('clones without configuring credentials when no token is given', async () => {
+      const stub = makeStub();
+      const handle = buildHandle(stub);
+      await handle.cloneRepo!({ repoUrl: 'https://github.com/acme/pub.git' });
+      const execCalls = (stub.exec as ReturnType<typeof vi.fn>).mock.calls.map((c) => String(c[0]));
+      expect(execCalls.some((cmd) => cmd.includes('credential.helper'))).toBe(false);
+      expect(execCalls.some((cmd) => cmd.includes('git clone'))).toBe(true);
+    });
+
+    it('rejects an unsafe target directory', async () => {
+      const handle = buildHandle();
+      await expect(
+        handle.cloneRepo!({ repoUrl: 'https://github.com/a/b.git', dir: '../escape' }),
+      ).rejects.toThrow(/Unsafe clone directory/);
+    });
+  });
+
+  describe('detached commands', () => {
+    function procStub() {
+      const procs = new Map<
+        string,
+        { id: string; status: string; exitCode?: number; out: string }
+      >();
+      const stub = {
+        ...makeStub(),
+        startProcess: vi.fn(async (command: string) => {
+          const id = `p${procs.size + 1}`;
+          procs.set(id, { id, status: 'running', out: `started: ${command}` });
+          return {
+            id,
+            status: 'running',
+            async getLogs() {
+              return { stdout: '', stderr: '' };
+            },
+          };
+        }),
+        getProcess: vi.fn(async (id: string) => {
+          const p = procs.get(id);
+          if (!p) {
+            return null;
+          }
+          return {
+            id: p.id,
+            status: p.status,
+            exitCode: p.exitCode,
+            async getLogs() {
+              return { stdout: p.out, stderr: '' };
+            },
+          };
+        }),
+      } as unknown as SandboxStub;
+      return { stub, procs };
+    }
+
+    it('startCommand returns a process id; getCommand reports status + logs', async () => {
+      const { stub, procs } = procStub();
+      const handle = buildHandle(stub);
+      const { id } = await handle.startCommand!('pnpm test');
+      expect(id).toBe('p1');
+
+      procs.set('p1', { id: 'p1', status: 'completed', exitCode: 0, out: 'all pass' });
+      const status = await handle.getCommand!('p1');
+      expect(status.status).toBe('completed');
+      expect(status.exitCode).toBe(0);
+      expect(status.stdout).toBe('all pass');
+    });
+
+    it('getCommand on an unknown id returns an error status', async () => {
+      const { stub } = procStub();
+      const handle = buildHandle(stub);
+      const status = await handle.getCommand!('nope');
+      expect(status.status).toBe('error');
+    });
+
+    it('throws a clear error when the sandbox lacks process support', async () => {
+      const handle = buildHandle(makeStub()); // no startProcess/getProcess
+      await expect(handle.startCommand!('x')).rejects.toThrow(/does not support detached/);
+    });
+  });
 });

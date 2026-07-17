@@ -90,6 +90,9 @@ export interface ExpressResponseLike {
   write?(chunk: Uint8Array | string): unknown;
   end?(): unknown;
   flushHeaders?(): unknown;
+  /** Node stream events — used to cancel a stream on client disconnect. */
+  on?(event: string, listener: () => void): unknown;
+  off?(event: string, listener: () => void): unknown;
 }
 
 /**
@@ -160,13 +163,35 @@ export async function writeFlowlibHttpResultToExpress(
     if (!write || !end) {
       throw new Error('Express response missing write/end — cannot stream');
     }
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) {
-        end();
-        return;
+    // Client disconnect → cancel the stream so its `cancel()` can abort
+    // the underlying work (e.g. the agent turn + LLM stream + sandbox).
+    //
+    // `reader.cancel()` makes the pending/next `read()` resolve `{ done: true }`,
+    // so the `cancelled` check MUST precede the `done` check — otherwise the
+    // disconnect path falls into the `done` branch and calls `end()` on an
+    // already-destroyed response.
+    let cancelled = false;
+    const onClose = (): void => {
+      cancelled = true;
+      void reader.cancel().catch(() => {
+        /* best-effort: client already gone */
+      });
+    };
+    res.on?.('close', onClose);
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (cancelled) {
+          return;
+        }
+        if (done) {
+          end();
+          return;
+        }
+        write(value);
       }
-      write(value);
+    } finally {
+      res.off?.('close', onClose);
     }
   }
   if (result.headers) {

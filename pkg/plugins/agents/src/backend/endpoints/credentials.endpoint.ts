@@ -18,7 +18,8 @@
 
 import type { FlowlibPluginEndpoint, PluginEndpointResponse } from '@flowlib/core';
 import type { PluginContext } from '../plugin-context';
-import { safeHandler, type EndpointDeps } from './helpers';
+import { safeHandler, notFound, type EndpointDeps } from './helpers';
+import { fetchVendorModels } from '../providers/vendor-models';
 
 /**
  * Trimmed-down credential entry returned to the agents picker UI.
@@ -108,12 +109,95 @@ async function listLlmCredentials(deps: EndpointDeps): Promise<PluginEndpointRes
   return { body: { data } };
 }
 
+/** Collapse vendor aliases onto a slug `fetchVendorModels` understands. */
+function canonicalVendor(slug: string): string {
+  return slug === 'gemini' ? 'google' : slug;
+}
+
+/**
+ * `GET /agents/credentials/:credentialId/models` — the live model
+ * catalogue for a credential's vendor, fetched from the vendor's own API
+ * (server-side, so the key never reaches the browser).
+ *
+ * Returns `{ data, source }` where `source` is:
+ *   - `live`     — fetched from the vendor's `/models` API
+ *   - `fallback` — no fetcher for this vendor; use the static catalogue
+ *   - `error`    — the vendor call failed; use the static catalogue
+ *
+ * Always 200 (with possibly-empty `data`) so a vendor hiccup degrades to
+ * the hardcoded list rather than breaking the picker.
+ */
+async function listCredentialModels(deps: EndpointDeps): Promise<PluginEndpointResponse> {
+  const credentialId = deps.endpointCtx.params.credentialId;
+  if (!credentialId) {
+    return notFound('credentialId is required');
+  }
+
+  const flowlib = deps.pluginCtx.flowlib.getFlowlib();
+  let cred: {
+    name?: string;
+    authType?: string;
+    config?: Record<string, unknown> | null;
+    metadata?: Record<string, unknown> | null;
+  };
+  try {
+    cred = await flowlib.credentials.getDecryptedWithRefresh(credentialId);
+  } catch (err) {
+    return notFound(
+      `Credential not found or not accessible: ${err instanceof Error ? err.message : String(err)}`,
+    );
+  }
+
+  const vendor = canonicalVendor(
+    inferOpencodeProvider({
+      name: cred.name ?? '',
+      authType: cred.authType ?? '',
+      config: cred.config ?? null,
+      metadata: cred.metadata ?? null,
+    }),
+  );
+
+  const apiKey = typeof cred.config?.apiKey === 'string' ? cred.config.apiKey : '';
+  const baseUrl = typeof cred.config?.baseUrl === 'string' ? cred.config.baseUrl : undefined;
+  if (!apiKey) {
+    return { status: 200, body: { data: [], source: 'fallback', vendor } };
+  }
+
+  try {
+    const models = await fetchVendorModels(vendor, { apiKey, ...(baseUrl ? { baseUrl } : {}) });
+    if (models === null) {
+      return { status: 200, body: { data: [], source: 'fallback', vendor } };
+    }
+    return { status: 200, body: { data: models, source: 'live', vendor } };
+  } catch (err) {
+    deps.pluginCtx.logger.warn('[agents] vendor model fetch failed', {
+      credentialId,
+      vendor,
+      message: err instanceof Error ? err.message : String(err),
+    });
+    return {
+      status: 200,
+      body: {
+        data: [],
+        source: 'error',
+        vendor,
+        error: err instanceof Error ? err.message : String(err),
+      },
+    };
+  }
+}
+
 export function createCredentialsEndpoints(ctx: PluginContext): FlowlibPluginEndpoint[] {
   return [
     {
       method: 'GET',
-      path: '/credentials/llm',
+      path: '/agents/credentials/llm',
       handler: safeHandler(ctx, listLlmCredentials),
+    },
+    {
+      method: 'GET',
+      path: '/agents/credentials/:credentialId/models',
+      handler: safeHandler(ctx, listCredentialModels),
     },
   ];
 }

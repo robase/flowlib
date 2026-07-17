@@ -41,13 +41,24 @@ export function AppSideMenu({ basePath = '' }: AppSideMenuProps) {
   // Strip a lone trailing `/` from basePath; keep `/` itself as `/`.
   const homeHref = basePath && basePath !== '/' ? basePath.replace(/\/$/, '') : '/';
   const menuItems = [
-    { icon: Home, label: 'Home', href: homeHref },
-    { icon: FileText, label: 'Flow Runs', href: buildFrontendRoute(basePath, '/flow-runs') },
-    { icon: KeyRound, label: 'Credentials', href: buildFrontendRoute(basePath, '/credentials') },
-    { icon: SettingsIcon, label: 'Settings', href: buildFrontendRoute(basePath, '/settings') },
+    { icon: Home, label: 'Home', href: homeHref, order: 10 },
+    { icon: FileText, label: 'Flows', href: buildFrontendRoute(basePath, '/flow-runs'), order: 20 },
+    {
+      icon: KeyRound,
+      label: 'Credentials',
+      href: buildFrontendRoute(basePath, '/credentials'),
+      order: 40,
+    },
+    {
+      icon: SettingsIcon,
+      label: 'Settings',
+      href: buildFrontendRoute(basePath, '/settings'),
+      order: 80,
+    },
   ];
 
-  // Plugin-contributed sidebar items (top position = after defaults)
+  // Plugin-contributed sidebar items (top position = interleaved with core by `order`)
+  const DEFAULT_SIDEBAR_ORDER = 1000;
   const pluginTopItems = registry.sidebarItems
     .filter((item) => item.position !== 'bottom')
     .filter((item) => !item.permission || registry.checkPermission(item.permission))
@@ -55,6 +66,7 @@ export function AppSideMenu({ basePath = '' }: AppSideMenuProps) {
       icon: item.icon,
       label: item.label,
       href: buildFrontendRoute(basePath, item.path),
+      order: item.order ?? DEFAULT_SIDEBAR_ORDER,
     }));
 
   const pluginBottomItems = registry.sidebarItems
@@ -66,7 +78,8 @@ export function AppSideMenu({ basePath = '' }: AppSideMenuProps) {
       href: buildFrontendRoute(basePath, item.path),
     }));
 
-  const allMainItems = [...menuItems, ...pluginTopItems];
+  // Stable sort keeps registration order among items sharing the same `order`.
+  const allMainItems = [...menuItems, ...pluginTopItems].sort((a, b) => a.order - b.order);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
