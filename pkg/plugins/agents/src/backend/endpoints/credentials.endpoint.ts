@@ -19,7 +19,7 @@
 import type { FlowlibPluginEndpoint, PluginEndpointResponse } from '@flowlib/core';
 import type { PluginContext } from '../plugin-context';
 import { safeHandler, notFound, type EndpointDeps } from './helpers';
-import { fetchVendorModels } from '../providers/vendor-models';
+import { fetchVendorModels, SUPPORTED_MODEL_VENDORS } from '../providers/vendor-models';
 
 /**
  * Trimmed-down credential entry returned to the agents picker UI.
@@ -121,11 +121,16 @@ function canonicalVendor(slug: string): string {
  *
  * Returns `{ data, source }` where `source` is:
  *   - `live`     — fetched from the vendor's `/models` API
- *   - `fallback` — no fetcher for this vendor; use the static catalogue
+ *   - `fallback` — can't fetch for this credential; use the static catalogue
  *   - `error`    — the vendor call failed; use the static catalogue
  *
  * Always 200 (with possibly-empty `data`) so a vendor hiccup degrades to
  * the hardcoded list rather than breaking the picker.
+ *
+ * Non-`live` responses carry an `error` string explaining the cause. The
+ * picker shows it in a fallback notice: a silent degrade is what let the
+ * static catalogue drift far enough to list models that no longer exist,
+ * so every path off `live` has to say why it took it.
  */
 async function listCredentialModels(deps: EndpointDeps): Promise<PluginEndpointResponse> {
   const credentialId = deps.endpointCtx.params.credentialId;
@@ -160,13 +165,35 @@ async function listCredentialModels(deps: EndpointDeps): Promise<PluginEndpointR
   const apiKey = typeof cred.config?.apiKey === 'string' ? cred.config.apiKey : '';
   const baseUrl = typeof cred.config?.baseUrl === 'string' ? cred.config.baseUrl : undefined;
   if (!apiKey) {
-    return { status: 200, body: { data: [], source: 'fallback', vendor } };
+    deps.pluginCtx.logger.warn('[agents] no apiKey on credential — model list falling back', {
+      credentialId,
+      vendor,
+    });
+    return {
+      status: 200,
+      body: {
+        data: [],
+        source: 'fallback',
+        vendor,
+        error: `Credential has no \`config.apiKey\`, so the ${vendor} model list can't be fetched.`,
+      },
+    };
   }
 
   try {
     const models = await fetchVendorModels(vendor, { apiKey, ...(baseUrl ? { baseUrl } : {}) });
     if (models === null) {
-      return { status: 200, body: { data: [], source: 'fallback', vendor } };
+      return {
+        status: 200,
+        body: {
+          data: [],
+          source: 'fallback',
+          vendor,
+          error:
+            `No live model catalogue for vendor "${vendor}" ` +
+            `(supported: ${SUPPORTED_MODEL_VENDORS.join(', ')}).`,
+        },
+      };
     }
     return { status: 200, body: { data: models, source: 'live', vendor } };
   } catch (err) {

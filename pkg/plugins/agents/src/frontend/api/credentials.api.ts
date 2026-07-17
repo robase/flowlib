@@ -32,6 +32,13 @@ export interface CredentialModelsResult {
   /** `live` = fetched from the vendor; `fallback`/`error` = use static list. */
   source: 'live' | 'fallback' | 'error';
   vendor: string;
+  /**
+   * Why the live lookup failed, when `source` is `error`. Surfaced in the
+   * picker's fallback notice — without it a degraded picker is
+   * indistinguishable from a healthy one, which is how a stale static list
+   * can sit in production unnoticed.
+   */
+  error?: string;
 }
 
 export class CredentialsApiClient {
@@ -76,19 +83,30 @@ export class CredentialsApiClient {
         headers: { 'Content-Type': 'application/json', ...this.headers },
       },
     );
+    // A non-2xx here (404 from a credential the backend can't read, 500 from
+    // the plugin) used to throw, leaving the picker on the static list with no
+    // trace of why. Degrade to a reported `error` instead so the notice can
+    // name the cause.
     if (!res.ok) {
       const text = await res.text().catch(() => '');
-      throw new Error(`Credentials API GET /credentials/:id/models failed: ${res.status} ${text}`);
+      return {
+        models: [],
+        source: 'error',
+        vendor: 'custom',
+        error: `GET /credentials/:id/models → ${res.status} ${text.slice(0, 200)}`,
+      };
     }
     const body = (await res.json()) as {
       data?: AgentModelOption[];
       source?: CredentialModelsResult['source'];
       vendor?: string;
+      error?: string;
     };
     return {
       models: body.data ?? [],
       source: body.source ?? 'fallback',
       vendor: body.vendor ?? 'custom',
+      ...(body.error ? { error: body.error } : {}),
     };
   }
 }

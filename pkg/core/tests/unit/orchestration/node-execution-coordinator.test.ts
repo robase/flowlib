@@ -438,7 +438,9 @@ describe('NodeExecutionCoordinator mapper iteration — cancellation', () => {
     let iterations = 0;
     // Replace the per-item executor: we're testing the loop, not node dispatch.
     (
-      coordinator as unknown as { executeSingleMapperIteration: (...a: unknown[]) => Promise<unknown> }
+      coordinator as unknown as {
+        executeSingleMapperIteration: (...a: unknown[]) => Promise<unknown>;
+      }
     ).executeSingleMapperIteration = async () => {
       iterations++;
       onItem();
@@ -469,7 +471,12 @@ describe('NodeExecutionCoordinator mapper iteration — cancellation', () => {
     const ctrl = new AbortController();
     ctrl.abort(new Error('cancelled by user'));
 
-    const { iterations } = await runIterating(coordinator, [1, 2, 3], { expression: 'x' }, ctrl.signal);
+    const { iterations } = await runIterating(
+      coordinator,
+      [1, 2, 3],
+      { expression: 'x' },
+      ctrl.signal,
+    );
 
     expect(iterations).toBe(0);
     expect(trace.status).toBe('FAILED');
@@ -490,7 +497,9 @@ describe('NodeExecutionCoordinator mapper iteration — cancellation', () => {
       ctrl.signal,
       () => {
         seen++;
-        if (seen === 2) ctrl.abort(new Error('cancelled by user'));
+        if (seen === 2) {
+          ctrl.abort(new Error('cancelled by user'));
+        }
       },
     );
 
@@ -512,7 +521,9 @@ describe('NodeExecutionCoordinator mapper iteration — cancellation', () => {
       ctrl.signal,
       () => {
         seen++;
-        if (seen === 2) ctrl.abort(new Error('cancelled by user'));
+        if (seen === 2) {
+          ctrl.abort(new Error('cancelled by user'));
+        }
       },
     );
 

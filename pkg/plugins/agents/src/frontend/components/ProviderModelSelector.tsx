@@ -21,7 +21,7 @@
  */
 import * as React from 'react';
 import { Link, useLocation } from 'react-router';
-import { Check, ChevronDown, Plus, Search } from 'lucide-react';
+import { AlertTriangle, Check, ChevronDown, Plus, Search } from 'lucide-react';
 import { useCredentialModels, useLlmCredentials } from '../hooks/useCredentials';
 import type { AgentCredentialOption } from '../api/credentials.api';
 import {
@@ -103,6 +103,9 @@ export function ProviderModelSelector({
   // Live vendor catalogue for the selected credential; fall back to the
   // static list while loading or when the vendor has no live fetcher.
   const { data: liveModels, isLoading: modelsLoading } = useCredentialModels(credentialId);
+  const isLive = Boolean(
+    liveModels && liveModels.source === 'live' && liveModels.models.length > 0,
+  );
   const modelOptions = React.useMemo<ModelOption[]>(() => {
     if (liveModels && liveModels.source === 'live' && liveModels.models.length > 0) {
       return liveModels.models;
@@ -110,6 +113,16 @@ export function ProviderModelSelector({
     return modelsForProvider(selectedSlug);
   }, [liveModels, selectedSlug]);
   const selectedModelOption = modelOptions.find((m) => m.id === model);
+
+  // When the live lookup can't run we show the static catalogue — which is a
+  // handful of models frozen at whatever was current when someone last edited
+  // the file. Say so, and say why: an unannounced fallback looks identical to
+  // a working picker, so a stale list survives indefinitely.
+  const staleNotice =
+    !modelsLoading && liveModels && !isLive
+      ? (liveModels.error ??
+        `Couldn't load the live ${liveModels.vendor} model list.`)
+      : null;
 
   const handleProviderPick = (provider: ProviderOption) => {
     if (provider.credential.id === credentialId) {
@@ -223,6 +236,7 @@ export function ProviderModelSelector({
         model={model ?? null}
         options={modelOptions}
         loading={modelsLoading}
+        staleNotice={staleNotice}
         onPick={handleModelPick}
       />
     </div>
@@ -239,6 +253,7 @@ function ModelCombobox({
   model,
   options,
   loading,
+  staleNotice,
   onPick,
 }: {
   disabled?: boolean;
@@ -248,6 +263,8 @@ function ModelCombobox({
   model: string | null;
   options: ModelOption[];
   loading?: boolean;
+  /** Set when `options` is the frozen static list rather than the live one. */
+  staleNotice?: string | null;
   onPick: (model: string) => void;
 }): React.ReactElement {
   const [query, setQuery] = React.useState('');
@@ -280,6 +297,21 @@ function ModelCombobox({
               data-testid={`${testId}-search`}
             />
           </div>
+          {staleNotice ? (
+            <div
+              className="flex items-start gap-2 border-b border-border bg-muted/30 px-2.5 py-2"
+              data-testid={`${testId}-stale-notice`}
+            >
+              <AlertTriangle className="mt-0.5 size-3.5 shrink-0 opacity-70" />
+              <div className="min-w-0 text-[10px] leading-relaxed text-muted-foreground">
+                <div className="font-medium">Showing cached defaults</div>
+                <div className="truncate" title={staleNotice}>
+                  {staleNotice}
+                </div>
+                <div>This list may be out of date — you can type any model id below.</div>
+              </div>
+            </div>
+          ) : null}
           <div className="max-h-72 overflow-y-auto py-1">
             {loading ? (
               <div

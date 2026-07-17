@@ -1,16 +1,11 @@
 /**
- * Static catalogue of known providers and the model strings each
- * accepts. The agents plugin doesn't currently expose a backend
- * endpoint listing providers + models, so we maintain the list here
- * for the picker UIs (`ProviderModelSelector` in the chat composer).
+ * Static fallback catalogues for the picker UIs. **Neither constant in
+ * this file is the source of truth for available models** — both are
+ * last-resort lists used when a live lookup is unavailable. See the
+ * doc comment on each for which live path supersedes it.
  *
- * Adding a new model: append to the relevant provider's `models`
- * array. The `id` is the exact string the backend stores in
- * `sessions.model` and the provider forwards to the LLM.
- *
- * Model string format follows the backend default
- * (`'<vendor>/<model>'`) — see `pkg/plugins/agents/src/backend/plugin.ts`
- * for `defaultModel`.
+ * Model string format follows the backend default (`'<vendor>/<model>'`)
+ * — see `pkg/plugins/agents/src/backend/plugin.ts` for `defaultModel`.
  */
 import type { AgentProviderId } from '../../shared/types';
 
@@ -49,13 +44,13 @@ export const PROVIDER_CATALOGUE: ProviderEntry[] = [
     id: 'ai-sdk',
     label: 'Chat',
     models: [
-      { id: 'anthropic/claude-sonnet-4-5', label: 'Claude Sonnet 4.5', description: 'Anthropic' },
-      { id: 'anthropic/claude-opus-4-1', label: 'Claude Opus 4.1', description: 'Anthropic' },
-      { id: 'openai/gpt-4o', label: 'GPT-4o', description: 'OpenAI' },
-      { id: 'openai/gpt-4o-mini', label: 'GPT-4o mini', description: 'OpenAI' },
+      { id: 'anthropic/claude-opus-4-8', label: 'Claude Opus 4.8', description: 'Anthropic' },
+      { id: 'anthropic/claude-sonnet-5', label: 'Claude Sonnet 5', description: 'Anthropic' },
+      { id: 'openai/gpt-5.2', label: 'GPT-5.2', description: 'OpenAI' },
+      { id: 'openai/gpt-5-mini', label: 'GPT-5 mini', description: 'OpenAI' },
       {
-        id: 'google/gemini-2.0-flash-exp',
-        label: 'Gemini 2.0 Flash',
+        id: 'google/gemini-3.5-flash',
+        label: 'Gemini 3.5 Flash',
         description: 'Google',
       },
     ],
@@ -63,21 +58,30 @@ export const PROVIDER_CATALOGUE: ProviderEntry[] = [
 ];
 
 /**
- * Per-provider model suggestions for the two-dropdown picker
- * (`ProviderModelSelector`). Keyed by the **LLM credential provider
- * slug** (`anthropic` | `openai` | `google` | `openrouter` | …) — i.e.
- * what `useLlmCredentials()` reports — so selecting a provider surfaces
- * the right model list.
+ * **Emergency fallback only — not the source of truth.**
  *
- * Each `id` is the full backend model string (`'<vendor>/<model>'`) that
- * gets stored on `sessions.model` and forwarded to the provider. The
- * vendor prefix must match a key the deployment's `ai-sdk` vendors map
- * knows (`anthropic` / `openai` / `google`); OpenAI-compatible gateways
- * (OpenRouter, Groq, …) reuse the `openai` prefix with a `baseURL` on the
- * credential.
+ * The picker is driven by the *live* vendor catalogue: the backend proxies
+ * each vendor's own `/models` API (`GET /agents/credentials/:id/models`,
+ * see `backend/providers/vendor-models.ts`) using the selected credential,
+ * server-side. That path is the one that stays current.
  *
- * This is a convenience list only — the combobox also accepts free-text,
- * so any model not listed here still works.
+ * This constant is only reached when the live fetch genuinely can't run —
+ * no fetcher for the vendor, no `apiKey` on the credential, or the vendor
+ * API errored. When that happens the picker renders a visible notice
+ * saying so (see `ProviderModelSelector`), because a silent fallback is
+ * exactly how this list went stale enough to advertise models that no
+ * longer exist.
+ *
+ * Keyed by the **LLM credential provider slug** (`anthropic` | `openai` |
+ * `google` | `openrouter` | …) — what `useLlmCredentials()` reports.
+ *
+ * Each `id` is the full backend model string (`'<vendor>/<model>'`) stored
+ * on `sessions.model` and forwarded to the provider. The vendor prefix must
+ * match a key the deployment's `ai-sdk` vendors map knows.
+ *
+ * Keep this list SHORT — two or three current models per vendor. It exists
+ * to keep the picker usable during an outage, not to mirror the catalogue.
+ * The combobox accepts free-text, so an unlisted model still works.
  */
 export interface VendorEntry {
   /** Credential provider slug; also the menu group key. */
@@ -90,27 +94,29 @@ export const VENDOR_MODEL_CATALOGUE: Record<string, VendorEntry> = {
   anthropic: {
     slug: 'anthropic',
     label: 'Anthropic',
+    // Aliases, not dated snapshots — an alias keeps pointing at the current
+    // snapshot, so this list ages more slowly when the live fetch is down.
     models: [
-      { id: 'anthropic/claude-sonnet-4-5', label: 'Claude Sonnet 4.5' },
-      { id: 'anthropic/claude-opus-4-1', label: 'Claude Opus 4.1' },
-      { id: 'anthropic/claude-3-5-haiku-latest', label: 'Claude Haiku 3.5' },
+      { id: 'anthropic/claude-opus-4-8', label: 'Claude Opus 4.8' },
+      { id: 'anthropic/claude-sonnet-5', label: 'Claude Sonnet 5' },
+      { id: 'anthropic/claude-haiku-4-5', label: 'Claude Haiku 4.5' },
     ],
   },
   openai: {
     slug: 'openai',
     label: 'OpenAI',
     models: [
-      { id: 'openai/gpt-4o', label: 'GPT-4o' },
-      { id: 'openai/gpt-4o-mini', label: 'GPT-4o mini' },
-      { id: 'openai/o3-mini', label: 'o3-mini' },
+      { id: 'openai/gpt-5.2', label: 'GPT-5.2' },
+      { id: 'openai/gpt-5.1', label: 'GPT-5.1' },
+      { id: 'openai/gpt-5-mini', label: 'GPT-5 mini' },
     ],
   },
   google: {
     slug: 'google',
     label: 'Google',
     models: [
-      { id: 'google/gemini-2.0-flash-exp', label: 'Gemini 2.0 Flash' },
-      { id: 'google/gemini-1.5-pro', label: 'Gemini 1.5 Pro' },
+      { id: 'google/gemini-3.1-pro-preview', label: 'Gemini 3.1 Pro' },
+      { id: 'google/gemini-3.5-flash', label: 'Gemini 3.5 Flash' },
     ],
   },
   openrouter: {
@@ -119,12 +125,16 @@ export const VENDOR_MODEL_CATALOGUE: Record<string, VendorEntry> = {
     // OpenRouter is wired as its own dedicated vendor (`createOpenRouter`),
     // so model ids are OpenRouter's native `<vendor>/<model>` form — NOT
     // `openai/`-prefixed. The backend normaliser adds the `openrouter/`
-    // routing prefix. Type any OpenRouter model into the combobox; these
-    // are common starters.
+    // routing prefix.
+    //
+    // ‼️ OpenRouter names Anthropic models with DOTS (`claude-opus-4.8`),
+    // unlike the `anthropic` vendor above, which uses Anthropic's own
+    // hyphenated ids (`claude-opus-4-8`). The two are not interchangeable —
+    // a hyphenated id 404s at OpenRouter.
     models: [
-      { id: 'anthropic/claude-sonnet-4.6', label: 'Claude Sonnet 4.6' },
-      { id: 'openai/gpt-4o', label: 'GPT-4o' },
-      { id: 'google/gemini-2.0-flash-exp', label: 'Gemini 2.0 Flash' },
+      { id: 'anthropic/claude-opus-4.8', label: 'Claude Opus 4.8' },
+      { id: 'openai/gpt-5.2', label: 'GPT-5.2' },
+      { id: 'google/gemini-3.5-flash', label: 'Gemini 3.5 Flash' },
     ],
   },
 };

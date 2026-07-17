@@ -6,15 +6,18 @@
 
 **Date:** 2026-07-17
 
+**On references:** where a symbol name is given (`runSchedulerLoop()`, `handleBranchSkipping()`), that's the durable pointer — grep for it. Bare line numbers are a convenience and go stale on the next edit; the symbol wins if they disagree.
+
 ---
 
 ## TL;DR for someone about to change this code
 
 - **Execution is parallel by default.** A ready-set scheduler runs up to **8 nodes concurrently**. Any doc, comment, or mental model that says "strictly sequential" is stale.
-- **The sequential path still exists but is unreachable in production.** `parallelSchedulerEnabled` / `schedulerConcurrency` are declared on `FlowRunCoordinatorDeps` and read by the coordinator, but **nothing in `src/` ever passes them**. Only tests that construct `FlowRunCoordinator` directly can reach the legacy loop. Treat it as dead code with a test-only consumer.
+- **Concurrency is not configurable.** `schedulerConcurrency` exists on `FlowRunCoordinatorDeps` and is read by `getConcurrency()`, but nothing in `src/` passes it — `ServiceFactory` constructs the coordinator without it. The effective value is always 8.
 - **Three layers, clean boundaries.** Service = "which flow, which run row, sync or async". FlowRunCoordinator = "walk the graph, own run status". NodeExecutionCoordinator = "run one node, own its trace".
 - **Shared mutable state is the coupling.** `skippedNodeIds` and `nodeOutputs` are passed into the scheduler by reference and mutated in place by callbacks. This is deliberate and load-bearing — read [Shared state](#shared-state-the-important-part) before touching it.
 - **Failure is a hard stop and it is hardcoded.** `failureMode: 'stop'` and `batchPolicy: 'pause-immediately'` are literals at the construction site. The type allows `'drain'` / `'drain-then-pause'`; neither is implemented.
+- **`topologicalSort` is the cycle guard — do not remove it.** Its *return value* is only used for a debug log, which makes it look deletable. It isn't: it throws on cycles, and the scheduler has no cycle detection of its own. See [Cycles](#cycles-and-the-topologicalsort-guard).
 
 ---
 
@@ -29,7 +32,7 @@ FlowOrchestrationService          flow-orchestration.service.ts
         ▼
 FlowRunCoordinator               flow-orchestration/flow-run-coordinator.ts
   ├─ owns: graph walk, run status, heartbeat, abort controllers, branch skipping
-  └─ constructs a Scheduler per run-segment          (:248)
+  └─ constructs a Scheduler per run-segment          (runSchedulerLoop)
         │
         ▼
 Scheduler                        flow-orchestration/scheduler.ts
@@ -86,19 +89,27 @@ run()
 
 So a FAILED node lands in `done` but not `terminal`, and its children never become ready. That — not `canLaunch` — is what actually stops a failed branch; `canLaunch`'s failure gate just stops *unrelated* ready work.
 
+### Cycles and the `topologicalSort` guard
+
+The scheduler has **no cycle detection**. In a cycle `A → B → A`, neither node's parents ever reach terminal, so neither becomes ready, `seedReady` skips both, and the loop exits as soon as `inFlight` empties. The run would report **SUCCESS with those nodes silently unexecuted** — a wrong-answer failure, not a loud one.
+
+The only thing preventing that is `GraphService.topologicalSort` (`graph.service.ts:26`), which throws `'Flow contains cycles and cannot be executed'` when its result is shorter than the node list. `executeFlowDefinition` calls it purely for that side effect — the returned order is informational, since the scheduler runs by readiness.
+
+This is a trap: the call *looks* like a leftover feeding a debug log, and deleting it typechecks, passes tests, and silently converts a loud error into a wrong result. It's marked `CYCLE GUARD — do not remove` in the source. If the scheduler ever grows its own cycle detection, retire the sort *in the same change*.
+
 ### Why there's no locking
 
 All bookkeeping happens in `handleCompletion`, which runs between `await`s. Two completions are never processed concurrently. The comment at `:79-82` makes this explicit — **preserve this property**. Any `await` introduced inside `handleCompletion` or `onNodeSuccess` breaks the invariant and introduces real races on the shared sets.
 
 ### Options, and which are real
 
-Constructed exactly once, `flow-run-coordinator.ts:248`:
+Constructed exactly once, `flow-run-coordinator.ts` → `runSchedulerLoop()`:
 
 | Option | Value | Configurable? |
 | --- | --- | --- |
 | `concurrency` | `deps.schedulerConcurrency` else **8** | **No** — nothing passes it |
-| `failureMode` | `'stop'` | **No** — hardcoded literal at `:256` |
-| `batchPolicy` | `'pause-immediately'` | **No** — hardcoded literal at `:257` |
+| `failureMode` | `'stop'` | **No** — hardcoded literal in `runSchedulerLoop()` |
+| `batchPolicy` | `'pause-immediately'` | **No** — hardcoded literal in `runSchedulerLoop()` |
 | `signal` | `getRunAbortSignal(flowRunId)` | via `abortRun` |
 | `nodes` | full / path-filtered / resume-filtered | per entry point |
 | `skippedNodeIds`, `nodeOutputs` | **shared mutable refs** | — |
@@ -114,18 +125,18 @@ The scheduler and the coordinator communicate through **two mutable collections 
 **`nodeOutputs: Map<string, NodeOutput>`**
 - Scheduler writes SUCCESS outputs (`scheduler.ts:243`).
 - The `executeNode` closure reads it to build downstream inputs.
-- On resume, pre-populated from persisted traces; `alreadyComplete` is `new Set(nodeOutputs.keys())` (`flow-run-coordinator.ts:843`).
+- On resume, pre-populated from persisted traces; `alreadyComplete` is `new Set(nodeOutputs.keys())` (`continueFlowRunFromBatch`).
 
 **`skippedNodeIds: Set<string>`**
 - Mutated from three directions: `onNodeSuccess` → `handleBranchSkipping`; actions via `functions.markDownstreamNodesAsSkipped`; the scheduler itself on a SKIPPED trace.
-- The scheduler detects external mutation by **size comparison** — `absorbNewlySkipped` (`:318`) early-returns when `skippedNodeIds.size === lastSkippedSize`.
+- The scheduler detects external mutation by **size comparison** — `absorbNewlySkipped` (`absorbNewlySkipped`) early-returns when `skippedNodeIds.size === lastSkippedSize`.
 
 <!-- prettier-ignore -->
 > ⚠️ **The size check is a real constraint.** Anything that adds *and* removes ids between two completions, netting to the same size, is invisible to `absorbNewlySkipped` and those nodes never get absorbed as terminal. Nothing does this today. If you ever need to un-skip a node, this mechanism must change.
 
 ### Branch skipping
 
-`handleBranchSkipping` (`flow-run-coordinator.ts:969-1043`), called as `onNodeSuccess`:
+`handleBranchSkipping` (`flow-run-coordinator.ts` → `handleBranchSkipping()`), called as `onNodeSuccess`:
 
 1. Requires SUCCESS + an object at `trace.outputs.data.variables`.
 2. `connectedHandles` = non-null `sourceHandle`s on outgoing edges.
@@ -133,13 +144,13 @@ The scheduler and the coordinator communicate through **two mutable collections 
 4. Inactive-handle targets, minus targets that also have an active-handle edge from the same node, minus targets with an incoming edge from any other non-skipped source (join protection).
 5. Survivors → `skippedNodeIds` + `graphService.markDownstreamNodesAsSkipped(...)`.
 
-Reused on the **resume path** (`:670`) to replay skips, because **skipped nodes have no persisted SKIPPED trace** — the skip set is reconstructed by re-running this logic over completed traces. That's a subtle coupling: change the skip rule and you change how historical runs resume.
+Reused on the **resume path** (the resume path) to replay skips, because **skipped nodes have no persisted SKIPPED trace** — the skip set is reconstructed by re-running this logic over completed traces. That's a subtle coupling: change the skip rule and you change how historical runs resume.
 
 ---
 
 ## The per-node pipeline
 
-The `executeNode` closure (`flow-run-coordinator.ts:259-283`) runs, per node:
+The `executeNode` closure (`flow-run-coordinator.ts` → the `executeNode` closure in `runSchedulerLoop()`) runs, per node:
 
 ```
 prepareNodeInputs          → handle-keyed map (fallback only; see below)
@@ -187,17 +198,17 @@ The contract is documented at `:124-146`. Three behaviours to know:
 
 ### The mapper
 
-Where iteration lives: **`executeNodeMapperIterating` (`:1021-1179`)**.
+Where iteration lives: **`executeNodeMapperIterating`**.
 
-- Expression eval failure → FAILED with `_mapper: { expression, error }` in the trace inputs, code `BAD_REQUEST` (`:924-949`).
+- Expression eval failure → FAILED with `_mapper: { expression, error }` in the trace inputs, code `BAD_REQUEST` (the expression-eval catch).
 - Mode enforcement `:952-977`. `iterate` + non-array → FAILED (`VALIDATION`). `reshape` + array → silently rewrapped `{ items: [...] }`.
-- **Concurrency is fixed-window, not rolling** (`:1099-1134`): `items.slice(start, start+concurrency)` + `Promise.allSettled`, breaking after the first window containing a rejection. A slow item stalls its whole window.
-- **Each iteration writes its own child trace** — `executeSingleMapperIteration` calls `executeNodeOnce` (`:1197`). N items ⇒ N+1 trace rows (N children + the mapper parent). Relevant to D1/Postgres write volume.
-- Item context (`:1225-1249`): `{...incomingData}` → item object spread over it → `_item`. **Later layers win**, so an item field named like an upstream node shadows it.
+- **Concurrency is fixed-window, not rolling** (the parallel window loop): `items.slice(start, start+concurrency)` + `Promise.allSettled`, breaking after the first window containing a rejection. A slow item stalls its whole window.
+- **Each iteration writes its own child trace** — `executeSingleMapperIteration` calls `executeNodeOnce` (`executeSingleMapperIteration`). N items ⇒ N+1 trace rows (N children + the mapper parent). Relevant to D1/Postgres write volume.
+- Item context (`buildMapperItemContext`): `{...incomingData}` → item object spread over it → `_item`. **Later layers win**, so an item field named like an upstream node shadows it.
 - Packaging `:1254-1281`: `array` | `object` (keyed by `keyField ?? 'id'`) | `first` | `last` | `concat`.
 
 <!-- prettier-ignore -->
-> ⚠️ **The mapper drops the abort signal.** `executeNodeWithMapper` takes `_abortSignal` (`:910`) and never forwards it; neither mapper call to `executeNodeOnce` (`:1005`, `:1197`) passes one. **A cancelled run cannot interrupt an in-progress mapper node** — it runs to completion. Worth fixing.
+> ⚠️ **The mapper drops the abort signal.** `executeNodeWithMapper` takes `_abortSignal` (`:910`) and never forwards it; neither mapper call to `executeNodeOnce` (both mapper call sites) passes one. **A cancelled run cannot interrupt an in-progress mapper node** — it runs to completion. Worth fixing.
 
 ### What lands in the trace
 
@@ -215,12 +226,12 @@ Where iteration lives: **`executeNodeMapperIterating` (`:1021-1179`)**.
 
 ## Batch pause / resume
 
-1. An action returns `state: 'PENDING'` → trace status `BATCH_SUBMITTED` (`node-execution-coordinator.ts:848`).
+1. An action returns `state: 'PENDING'` → trace status `BATCH_SUBMITTED` (`node-execution-coordinator.ts` → `executeNodeOnce()`).
 2. Scheduler sets `paused`, does **not** promote children (`scheduler.ts:279-283`); `canLaunch` blocks new launches; in-flight nodes drain.
 3. Coordinator calls `pauseFlowForBatch` → run status `PAUSED_FOR_BATCH`; heartbeat stopped.
-4. The batch poller later calls `resumeFromBatchCompletion` (`:592`) → `continueFlowRunFromBatch` (`:635`).
+4. The batch poller later calls `resumeFromBatchCompletion` (`resumeFromBatchCompletion`) → `continueFlowRunFromBatch` (`continueFlowRunFromBatch`).
 
-Resume **reconstructs state from persisted traces**: `nodeOutputs` re-populated, `alreadyComplete = new Set(nodeOutputs.keys())`, and skips **replayed** through `handleBranchSkipping` (`:670`).
+Resume **reconstructs state from persisted traces**: `nodeOutputs` re-populated, `alreadyComplete = new Set(nodeOutputs.keys())`, and skips **replayed** through `handleBranchSkipping` (the resume path).
 
 The consequence: **resume correctness depends entirely on trace persistence.** Under `persistence: 'per-run'` the buffer is in-memory and flushed at the end — so anything that pauses mid-run and resumes in a *different isolate* must be on `per-node`. This is why `executePendingRun` force-flips manual runs to per-node, and it's the sharp edge for Workers/Workflows hosts where every step is a fresh isolate.
 
@@ -228,13 +239,13 @@ The consequence: **resume correctness depends entirely on trace persistence.** U
 
 ## Cancellation
 
-`abortRun(flowRunId, reason)` (`:79`) looks up a per-run `AbortController`, aborts it, and returns whether it found one. **The map is per-process.** In a multi-isolate or multi-worker host, cancelling a run scheduled elsewhere silently no-ops (returns false); `cancelExecution` still writes CANCELLED to the row.
+`abortRun(flowRunId, reason)` (`abortRun`) looks up a per-run `AbortController`, aborts it, and returns whether it found one. **The map is per-process.** In a multi-isolate or multi-worker host, cancelling a run scheduled elsewhere silently no-ops (returns false); `cancelExecution` still writes CANCELLED to the row.
 
 The signal reaches actions as `context.abortSignal` (`node-execution-coordinator.ts:686`) and gates `canLaunch` (`scheduler.ts:181`). In-flight nodes are never force-killed — an action that ignores the signal runs to completion. And see the mapper caveat above.
 
 ## Heartbeats
 
-One `setInterval` per in-flight run (`:56`), started in `markExecutionRunning` (`:1095`), stopped on every terminal path. Feeds the **stale-run detector** — a run whose heartbeat goes cold is reaped as a dead process.
+One `setInterval` per in-flight run (`heartbeatTimers`), started in `markExecutionRunning` (`markExecutionRunning`), stopped on every terminal path. Feeds the **stale-run detector** — a run whose heartbeat goes cold is reaped as a dead process.
 
 `heartbeatIntervalMs` is the one option with a full config path: `schemas/flowlib-config.ts:103` (default 30s) → `service-factory.ts:230` → `flow-orchestration.service.ts:117`. Set `0` to disable — correct for hosts where durability is external (Cloudflare/Vercel Workflows), since the interval is meaningless when each step is a fresh isolate.
 
@@ -246,29 +257,32 @@ Things a newcomer will trip on. Each is real as of this doc's date.
 
 | Gap | Where |
 | --- | --- |
-| **`CLAUDE.md` still describes execution as a sequential topological loop.** Its `executeFlow` pseudo-code predates the scheduler entirely. | `CLAUDE.md` |
-| **`topologicalSort` is computed on the parallel path but only used for a debug log** (`:356-362`). It's the real ordering only in the legacy loop and batch-resume. Don't infer runtime order from it. | `flow-run-coordinator.ts` |
-| **`validateEdgeHandles` is a no-op that always returns valid** (`:1283-1296`), so the handle-validation logging at `:391-397` is dead code. | `node-execution-coordinator.ts` |
-| **`prepareNodeInputs`' handle-keyed map is a fallback only** — used as trace `inputs` only when `incomingData` is empty. | `node-execution-coordinator.ts:345` |
-| **`collectFlowOutputs` ignores its `definition` arg** (`_definition`, `:1046`) — returns every node's output, not designated outputs. | `flow-run-coordinator.ts` |
-| **Mapper ignores the abort signal.** | `node-execution-coordinator.ts:910` |
-| **Resolved params are not persisted.** | — |
+| **`validateEdgeHandles` is a no-op that always returns valid** (`validateEdgeHandles`), so the handle-validation logging at `prepareNodeInputs` is dead code. | `node-execution-coordinator.ts` |
+| **`prepareNodeInputs`' handle-keyed map is a fallback only** — used as trace `inputs` only when `incomingData` is empty. | `node-execution-coordinator.ts` → `prepareNodeInputs()` |
+| **`collectFlowOutputs` ignores its `definition` arg** (`_definition`) — returns every node's output, not designated outputs. | `flow-run-coordinator.ts` |
+| **Resolved params are not persisted.** Needs a new `actionTraces` column → migration across all three dialects plus hosted. Not yet done. | `pkg/db/src/core-schema.ts:142` |
 | **No continue-on-fail, no error branch, no orchestrator-level retry.** `retryCount` exists on the trace model but nodes are never retried; the only retries are inside `core.agent`. | `scheduler.ts:27` |
 | **`failureMode: 'drain'` / `batchPolicy: 'drain-then-pause'` are typed but unimplemented.** | `scheduler.ts:7-8` |
-| **The legacy sequential loop is unreachable in production** but is still maintained in three places (`executeFlowDefinition`, `continueFlowRunFromBatch`, `executeFlowToNode`). Every orchestrator change costs double. Its own comment says "slated for removal". | `flow-run-coordinator.ts:160-167` |
+| **`schedulerConcurrency` is a dep nothing passes** — concurrency is effectively fixed at 8. Wire it through `FlowlibConfig` if it should be user-facing. | `flow-run-coordinator.ts` |
+| **The mapper's parallel windows are fixed, not rolling** — a slow item stalls its whole window. | `node-execution-coordinator.ts` |
+
+### Fixed on 2026-07-17
+
+- ~~The legacy sequential loop is maintained-but-dead in three places~~ — **deleted**. `executeFlowDefinition`, `continueFlowRunFromBatch` and `executeFlowToNode` now go straight to `runSchedulerLoop`; `isParallelEnabled()` and the `parallelSchedulerEnabled` dep are gone. The file went 1372 → 1055 lines. Note the deletion surfaced the cycle-guard subtlety above.
+- ~~The mapper ignores the abort signal~~ — **fixed**. The signal is threaded through `executeNodeWithMapper` → `executeNodeMapperIterating` → `executeSingleMapperIteration` → `executeNodeOnce`, and the loop stops launching new items/windows once aborted, failing the parent trace with a `<done>/<total>` count. Regression tests in `tests/unit/orchestration/node-execution-coordinator.test.ts`.
+- ~~`CLAUDE.md` teaches the sequential model~~ — **corrected**, and now points here.
 
 ### Suggested cleanups, roughly by value
 
-1. **Delete the legacy sequential path** (or give it a real config path). Right now it's maintained-but-dead: three duplicated branches, reachable only from one test file.
-2. **Forward the abort signal through the mapper.** A cancelled run that ignores cancellation for the length of a 50-item mapper is a genuine bug.
-3. **Persist resolved params on the trace.** The single most common debugging question the trace can't answer.
-4. **Fix `CLAUDE.md`'s execution section.** It's what agents read before touching this code, and it currently teaches the wrong model.
+1. **Persist resolved params on the trace.** The single most common debugging question the trace can't answer. Costs a schema migration — see the gaps table.
+2. **Give the scheduler its own cycle detection** and retire the `topologicalSort` guard in the same change. Right now a correctness-critical check is disguised as a debug log.
+3. **Make the mapper's windows rolling** rather than fixed.
 
 ---
 
 ## Where to look first
 
 - `scheduler.ts` — 350 lines, read top to bottom. The class comment at `:60-83` is accurate and the best entry point to the whole subsystem.
-- `flow-run-coordinator.ts:218-298` — `runSchedulerLoop`. The seam between graph walk and scheduler, including the `executeNode` closure and every scheduler option.
+- `flow-run-coordinator.ts` → `runSchedulerLoop()` — `runSchedulerLoop`. The seam between graph walk and scheduler, including the `executeNode` closure and every scheduler option.
 - `node-execution-coordinator.ts:124-207` — the `buildIncomingDataObject` contract. Explains what a node actually sees.
-- `flow-run-coordinator.ts:969-1043` — `handleBranchSkipping`. Small, subtle, and load-bearing for both branching *and* resume.
+- `flow-run-coordinator.ts` → `handleBranchSkipping()` — `handleBranchSkipping`. Small, subtle, and load-bearing for both branching *and* resume.
