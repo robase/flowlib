@@ -10,7 +10,7 @@
  */
 import * as React from 'react';
 import { Link } from 'react-router';
-import { Plus, Search, Server, Sparkles, Trash2 } from 'lucide-react';
+import { Plus, Search, Sparkles, Trash2 } from 'lucide-react';
 import type { AgentSession } from '../../shared/types';
 import { useDeleteSession } from '../hooks/useSessions';
 import { StatusDot, type SessionStatus } from './StatusDot';
@@ -103,17 +103,6 @@ export function SessionsSidebar({
             ))
           )}
         </div>
-      </div>
-
-      {/* Footer */}
-      <div className="border-t border-sidebar-border p-2">
-        <Link
-          to={`${stripTrailingSlash(basePath)}/agents/mcp-servers`}
-          className="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-accent/60 hover:text-foreground"
-        >
-          <Server className="h-4 w-4" />
-          MCP servers
-        </Link>
       </div>
     </div>
   );

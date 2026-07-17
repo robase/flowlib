@@ -12,12 +12,21 @@ import type { WorkspaceExecResult, WorkspaceHandle } from '../../../src/backend/
 
 /** Simple glob → RegExp supporting `**`, `*`, and `?`. */
 function globToRegExp(glob: string): RegExp {
-  const escaped = glob.replace(/[.+^${}()|[\]\\]/g, '\\$&');
-  const pattern = escaped
-    .replace(/\*\*/g, '\0') // placeholder for ** (NUL can't occur in a glob)
-    .replace(/\*/g, '[^/]*')
-    .replace(/\0/g, '.*')
-    .replace(/\?/g, '[^/]');
+  // Single pass: `**` is listed first so it wins over `*`, which avoids needing a
+  // placeholder sentinel between passes. Anything else in the class is a regex
+  // metacharacter and gets escaped.
+  const pattern = glob.replace(/\*\*|\*|\?|[.+^${}()|[\]\\]/g, (token) => {
+    switch (token) {
+      case '**':
+        return '.*';
+      case '*':
+        return '[^/]*';
+      case '?':
+        return '[^/]';
+      default:
+        return `\\${token}`;
+    }
+  });
   return new RegExp(`^${pattern}$`);
 }
 

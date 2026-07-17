@@ -33,6 +33,7 @@ export default {
         'rbac',
         'webhooks',
         'version-control',
+        'agents',
         'cloudflare-agents',
         'mcp',
         'docs',

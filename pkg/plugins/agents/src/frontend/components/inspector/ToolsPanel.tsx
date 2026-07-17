@@ -2,10 +2,12 @@
  * ToolsPanel — the active session's tool policy.
  *
  * Reads real fields off the session row: permission mode, the
- * enabled-tools allow-list, the deny-list, whether Flowlib actions are
- * exposed, and the tool-output truncation budget. There's no endpoint
- * enumerating every resolvable tool, so the list reflects the explicit
- * allow / deny entries the policy carries.
+ * enabled-tools allow-list, the deny-list, and whether Flowlib actions
+ * are exposed. There's no endpoint enumerating every resolvable tool, so
+ * the list reflects the explicit allow / deny entries the policy carries.
+ *
+ * The session's `toolOutputBudget` is deliberately not surfaced — it's a
+ * runtime truncation detail, not a policy the user reasons about here.
  */
 import * as React from 'react';
 import { Ban, Check, Wrench } from 'lucide-react';
@@ -26,7 +28,6 @@ export function ToolsPanel({ session }: { session: AgentSession | null }): React
 
   const enabled = session.enabledTools ?? [];
   const denied = session.denyList ?? [];
-  const budget = session.toolOutputBudget;
 
   return (
     <div className="flex h-full flex-col">
@@ -39,7 +40,6 @@ export function ToolsPanel({ session }: { session: AgentSession | null }): React
             value={enabled.length === 0 ? 'all allowed' : `${enabled.length} tools`}
           />
           <PolicyStat label="Flowlib actions" value={session.exposeFlowlibActions ? 'on' : 'off'} />
-          <PolicyStat label="Output budget" value={`${budget.lines} ln / ${budget.bytes} B`} />
         </dl>
       </div>
 

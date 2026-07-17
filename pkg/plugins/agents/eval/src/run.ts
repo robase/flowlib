@@ -42,13 +42,21 @@ function parseArgs(argv: string[]): Args {
   const args: Args = { sandbox: false, image: 'node:24-slim' };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
-    if (a === '--grep') {args.grep = argv[++i];}
-    else if (a === '--json') {args.json = argv[++i];}
-    else if (a === '--model') {args.model = argv[++i];}
-    else if (a === '--samples') {args.samples = Number(argv[++i]);}
-    else if (a === '--concurrency') {args.concurrency = Number(argv[++i]);}
-    else if (a === '--sandbox') {args.sandbox = true;}
-    else if (a === '--image') {args.image = argv[++i];}
+    if (a === '--grep') {
+      args.grep = argv[++i];
+    } else if (a === '--json') {
+      args.json = argv[++i];
+    } else if (a === '--model') {
+      args.model = argv[++i];
+    } else if (a === '--samples') {
+      args.samples = Number(argv[++i]);
+    } else if (a === '--concurrency') {
+      args.concurrency = Number(argv[++i]);
+    } else if (a === '--sandbox') {
+      args.sandbox = true;
+    } else if (a === '--image') {
+      args.image = argv[++i];
+    }
   }
   return args;
 }
@@ -70,7 +78,9 @@ async function loadCases(): Promise<EvalCase[]> {
       default?: EvalCase | EvalCase[];
     };
     const exported = mod.default;
-    if (!exported) {continue;}
+    if (!exported) {
+      continue;
+    }
     for (const c of Array.isArray(exported) ? exported : [exported]) {
       cases.push(c);
     }
@@ -143,7 +153,9 @@ async function main(): Promise<void> {
   // Lazily build the judge only if a case needs it.
   let judgeClient: JudgeClient | undefined;
   const judge: JudgeClient = async (input) => {
-    if (!judgeClient) {judgeClient = await createAnthropicJudge();}
+    if (!judgeClient) {
+      judgeClient = await createAnthropicJudge();
+    }
     return judgeClient(input);
   };
 

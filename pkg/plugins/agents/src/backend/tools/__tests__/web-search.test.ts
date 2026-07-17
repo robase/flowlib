@@ -54,7 +54,7 @@ describe('buildWebSearchTool', () => {
       fetchImpl: fakeFetch((url, init) => {
         seenUrl = url;
         seenHeader = String(
-          (init?.headers as Record<string, string>)['X-Subscription-Token'] ?? '',
+          (init?.headers as Record<string, string> | undefined)?.['X-Subscription-Token'] ?? '',
         );
         return json(BRAVE_BODY);
       }),
