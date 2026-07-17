@@ -1,6 +1,6 @@
 {
   "name": "@flowlib/primitives",
-  "version": "0.0.9",
+  "version": "0.0.10",
   "description": "TypeScript-native flow execution primitives — run Flowlib flows in any JS runtime without a database or framework",
   "license": "MIT",
   "author": "robase <team@flowlib.dev>",

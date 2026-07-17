@@ -1,6 +1,6 @@
 {
   "name": "@flowlib/cli",
-  "version": "0.0.9",
+  "version": "0.0.10",
   "description": "CLI for managing Flowlib database schemas, migrations, and project setup",
   "keywords": [
     "cli",
