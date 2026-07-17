@@ -545,9 +545,7 @@ export function aiSdkProvider(options: AiSdkProviderOptions): AgentProvider {
       // the destructive command would already have run by the time the
       // "blocked" result reached the user. Wrapped outermost so the
       // decision precedes truncation and the real execute alike.
-      const finalTools = storeWrappedTools;
-      void wrapToolsWithGuard;
-      void toolGuardFromPromptInput;
+      const finalTools = wrapToolsWithGuard(storeWrappedTools, toolGuardFromPromptInput(input));
 
       // Rewrite dotted tool names to the provider-safe pattern, keeping a
       // reverse map to restore the original id on emitted events.

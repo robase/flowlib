@@ -44,11 +44,14 @@ function assertNoTraversal(segments: string[], original: string): void {
 export function resolveWorkspacePath(root: string, path: string): string {
   assertNoNullByte(path);
   const base = root.replace(/\/+$/, '');
-  // Normalise leading `./` and trailing slashes.
-  const p = path.replace(/^\.\//, '').replace(/\/+$/, '');
-  if (p === '' || p === '.') {
+  // Normalise leading `./` and trailing slashes — but never strip a lone
+  // `/` down to `''`, or filesystem root would be waved through as "the
+  // workspace root" instead of being rejected as outside it.
+  const trimmed = path.replace(/^\.\//, '').replace(/(.)\/+$/, '$1');
+  if (trimmed === '' || trimmed === '.') {
     return base;
   }
+  const p = trimmed;
   if (p.startsWith('/')) {
     // Caller passed an absolute path — it must remain inside the root.
     assertNoTraversal(p.split('/').filter(Boolean), path);

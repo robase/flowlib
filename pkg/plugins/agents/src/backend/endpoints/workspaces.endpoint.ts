@@ -81,7 +81,7 @@ async function createWorkspace(deps: EndpointDeps): Promise<PluginEndpointRespon
     });
   }
 
-  const id = (body as { id?: string }).id ?? crypto.randomUUID();
+  const id = crypto.randomUUID();
 
   // Provider-side create. Failure leaves no DB row behind.
   let providerOk = false;

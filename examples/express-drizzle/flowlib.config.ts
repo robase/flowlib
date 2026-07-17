@@ -21,6 +21,7 @@ import { createAnthropic } from '@ai-sdk/anthropic';
 import { createOpenAI } from '@ai-sdk/openai';
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { createOpenRouter } from '@openrouter/ai-sdk-provider';
+import { vercelWorkflowsPlugin } from '@flowlib/vercel-workflows';
 import { versionControl } from '@flowlib/version-control';
 import { githubProvider } from '@flowlib/version-control/providers/github';
 import { defineConfig } from '@flowlib/core';
@@ -152,6 +153,12 @@ export const flowlibConfig = defineConfig({
       syncDirection: 'write',
     }),
     mcp(),
+    // Compiles flows to Vercel Workflows source. Registered here because this
+    // example intentionally loads most plugins for breadth testing; it adds
+    // two read-only endpoints and no database tables.
+    vercelWorkflowsPlugin({
+      deploymentUrl: process.env.VERCEL_DEPLOYMENT_URL,
+    }),
     // Code-editing agents. Chat runs **in-process** on Express via the
     // runtime-portable agent loop (HTTP/SSE transport) — no Cloudflare
     // Durable Object required. The `ai-sdk` provider drives our own
