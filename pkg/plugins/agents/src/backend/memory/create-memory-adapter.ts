@@ -18,6 +18,7 @@ import { extractFacts } from './extract';
 import { contentHash } from './hash';
 import { reconcileFact } from './reconcile';
 import { scoreAndRank } from './scoring';
+import { scopeMatches } from './types';
 import type {
   AddMemoryInput,
   Embedder,
@@ -210,8 +211,11 @@ export function createMemoryAdapter(deps: MemoryAdapterDeps): MemoryAdapter {
       if (!rec) {
         return null;
       }
-      // Tenant guard — never return a record outside the query scope.
-      if (rec.scope.orgId !== scope.orgId) {
+      // Scope guard — never return a record outside the query scope. Uses
+      // the same `scopeMatches` predicate as `search`/`getAll`/`existsByHash`
+      // so an org-mate cannot read another user's personal memory (or a
+      // memory belonging to a project they didn't ask for) by id.
+      if (!scopeMatches(rec.scope, scope)) {
         return null;
       }
       return toRecord(rec);
@@ -224,7 +228,8 @@ export function createMemoryAdapter(deps: MemoryAdapterDeps): MemoryAdapter {
 
     async delete(id, scope) {
       const rec = await backend.getRecord(id);
-      if (rec && rec.scope.orgId === scope.orgId) {
+      // Same guard as `get` — deleting is at least as privileged as reading.
+      if (rec && scopeMatches(rec.scope, scope)) {
         await backend.deleteRecord(id);
       }
     },

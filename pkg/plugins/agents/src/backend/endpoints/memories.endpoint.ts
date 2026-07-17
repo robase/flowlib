@@ -103,13 +103,30 @@ async function updateMemory(deps: EndpointDeps): Promise<PluginEndpointResponse>
   if (body.scope !== undefined && !SCOPES.has(body.scope)) {
     return badRequest('scope must be one of: personal, project, global');
   }
+
+  // `scope` drives `userId`/`projectId` — exactly as in `createMemory`.
+  // Updating `scope` alone used to leave the ownership columns untouched,
+  // so a `global` → `personal` flip produced `scope='personal',
+  // user_id=NULL`: a row that matches neither the global nor the personal
+  // branch of `listForScope`, invisible to every list, search and prompt
+  // context, with no API path back. Recompute both columns on every write.
+  const nextScope = body.scope !== undefined ? normaliseScope(body.scope) : existing.scope;
+  const nextProjectId =
+    nextScope === 'project' ? (body.projectId ?? existing.projectId) : null;
+  if (nextScope === 'project' && !nextProjectId) {
+    return badRequest('projectId is required for project-scoped memories');
+  }
+
   const updated = await deps.repos.memories.update(
     id,
     {
       content: body.content,
       tags: Array.isArray(body.tags) ? body.tags : undefined,
-      scope: body.scope !== undefined ? normaliseScope(body.scope) : undefined,
-      projectId: body.projectId,
+      scope: nextScope,
+      // Keep an existing owner; adopt the caller when promoting a memory
+      // that never had one (e.g. global → personal).
+      userId: nextScope === 'personal' ? (existing.userId ?? deps.auth.userId) : null,
+      projectId: nextProjectId,
     },
     deps.auth.orgId,
   );

@@ -39,8 +39,53 @@ interface CacheEntry {
 }
 const cache = new Map<string, CacheEntry>();
 
-function cacheKey(vendor: string, baseUrl: string | undefined): string {
-  return `${vendor}|${baseUrl ?? ''}`;
+/**
+ * Non-cryptographic fallback for runtimes without WebCrypto. FNV-1a over
+ * the key — enough to partition the cache; never used as a secret.
+ */
+function fnv1a(text: string): string {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < text.length; i++) {
+    h ^= text.charCodeAt(i);
+    h = Math.imul(h, 0x01000193) >>> 0;
+  }
+  return `f${h.toString(16)}`;
+}
+
+/**
+ * Hash the API key for use in the cache key. The raw key MUST NOT end up
+ * in the map's keys: the cache is a module-level, per-isolate `Map` shared
+ * across every tenant that hits this isolate, and keys leak into anything
+ * that enumerates or logs it.
+ *
+ * Hashing also fixes the correctness bug this partitioning exists for:
+ * without the key in the cache key, tenant A's catalogue (fetched with a
+ * limited-scope key) was served to tenant B within the TTL, since two
+ * tenants on the same vendor + base URL collided on `vendor|baseUrl`.
+ */
+async function hashApiKey(apiKey: string): Promise<string> {
+  const subtle = (globalThis as { crypto?: { subtle?: SubtleCrypto } }).crypto?.subtle;
+  if (!subtle) {
+    return fnv1a(apiKey);
+  }
+  try {
+    const digest = await subtle.digest('SHA-256', new TextEncoder().encode(apiKey));
+    // 16 hex chars (64 bits) is plenty to keep tenants apart in a
+    // 10-minute in-memory cache.
+    return Array.from(new Uint8Array(digest).slice(0, 8))
+      .map((b) => b.toString(16).padStart(2, '0'))
+      .join('');
+  } catch {
+    return fnv1a(apiKey);
+  }
+}
+
+async function cacheKey(
+  vendor: string,
+  baseUrl: string | undefined,
+  apiKey: string,
+): Promise<string> {
+  return `${vendor}|${baseUrl ?? ''}|${await hashApiKey(apiKey)}`;
 }
 
 /**
@@ -58,7 +103,7 @@ export async function fetchVendorModels(
   const fetchImpl = opts.fetchImpl ?? ((...a: Parameters<typeof fetch>) => globalThis.fetch(...a));
   const now = opts.now ?? (() => Date.now());
 
-  const key = cacheKey(vendor, creds.baseUrl);
+  const key = await cacheKey(vendor, creds.baseUrl, creds.apiKey);
   const hit = cache.get(key);
   if (hit && hit.expires > now()) {
     return hit.models;

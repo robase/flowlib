@@ -10,9 +10,19 @@ node_modules
 **/*.db-journal
 **/*.db-wal
 **/*.db-shm
+**/*.db.bak
+**/*.db.bak-wal
+**/*.db.bak-shm
+# Patterns are matched against paths relative to the build context root, which
+# is the repo root (see docker/docker-compose.yml). A bare `.env` therefore
+# only excludes `<root>/.env` and would let `docker/.env` — where the README
+# tells you to put real secrets — get baked into the image. Match at any depth.
 .env
 .env.*
+**/.env
+**/.env.*
 !.env.example
+!**/.env.example
 docs/
 playwright/
 scripts/

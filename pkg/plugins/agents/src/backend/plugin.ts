@@ -154,7 +154,24 @@ export interface AgentsPluginOptions extends AgentsPluginPublicOptions {
   cloudflareDoClass?: unknown;
 }
 
-function resolveOptions(opts: AgentsPluginOptions = {}): ResolvedAgentsOptions {
+/**
+ * `ResolvedAgentsOptions` inherits every `AgentsPluginPublicOptions` field
+ * as *optional*, so forgetting to copy one through `resolveOptions` used to
+ * compile clean and silently disable the feature at runtime. The `-?`
+ * mapped type makes every public option a **required key** on the resolved
+ * object — omitting one is now a compile error. Values may still be
+ * `undefined` for options with no meaningful default (e.g. `webSearch`,
+ * which is "off" when unset).
+ */
+type FullyResolvedAgentsOptions = ResolvedAgentsOptions & {
+  // Keys come from `Required<…>` (so every one must be present) while the
+  // value type stays `AgentsPluginPublicOptions[K]` (so it may still be
+  // `undefined`). A bare `-?` would strip `undefined` from the value too,
+  // which would wrongly force a `webSearch` config on every deployment.
+  [K in keyof Required<AgentsPluginPublicOptions>]: AgentsPluginPublicOptions[K];
+};
+
+function resolveOptions(opts: AgentsPluginOptions = {}): FullyResolvedAgentsOptions {
   // Promote the deprecated singular `workspaceProvider` into the
   // canonical array form. Plural always wins when both are provided.
   const workspaceProviders =
@@ -185,6 +202,16 @@ function resolveOptions(opts: AgentsPluginOptions = {}): ResolvedAgentsOptions {
     // `defaultModel` fallback path (e.g. inside opencode's `prompt`)
     // wouldn't get that treatment — so we ship the dotted form here.
     defaultModel: opts.defaultModel ?? 'anthropic/claude-sonnet-4.5',
+    // Cut 2 — eagerly provision the sandbox at session start so the system
+    // prompt carries real env/git/directory context. Read into
+    // `registries.eagerWorkspace` during `init()`.
+    eagerWorkspace: opts.eagerWorkspace ?? false,
+    // Cut 4 — `web.search` tool. Left `undefined` when unconfigured; the
+    // tool is omitted entirely in that case (there is no default API key).
+    webSearch: opts.webSearch,
+    // Cut 4 — `dispatch_agent` (read-only sub-agent) tool. Token-heavy, so
+    // off unless the host opts in.
+    subAgents: opts.subAgents ?? false,
   };
 }
 

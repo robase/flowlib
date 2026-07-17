@@ -49,15 +49,27 @@ function controlUrl(baseUrl: string, sessionId: string): string {
  */
 export function useHttpChatTransport(opts: UseHttpChatTransportOptions): HttpChatTransport {
   const { sessionId, baseUrl, enabled } = opts;
-  // Listeners + current abort live in refs so the socket/chat identities
-  // stay stable across renders.
-  const listenersRef = React.useRef<Set<MessageListener>>(new Set());
+  // The in-flight abort lives in a ref so the unmount/session-change
+  // effect below can reach it. The *listener set*, by contrast, is
+  // deliberately scoped to each memo evaluation (see below) rather than
+  // to the hook instance.
   const abortRef = React.useRef<AbortController | null>(null);
 
-  return React.useMemo<HttpChatTransport>(() => {
+  const transport = React.useMemo<HttpChatTransport>(() => {
+    // Scoped per transport identity (i.e. per session), NOT per hook
+    // instance. `useChatStream` holds a single hook instance across chat
+    // switches, so a hook-level Set would be shared between sessions: an
+    // in-flight reader from session A would emit into the set that by
+    // then holds session B's `onMessage`, rendering A's text, tool calls
+    // and permission prompts inside B's thread. With the set captured
+    // here, A's reader can only ever reach A's listeners — and
+    // `useChatStream`'s effect cleanup has already removed them from
+    // this (old) socket by the time B is active, so the emit goes
+    // nowhere.
+    const listeners = new Set<MessageListener>();
     const emit = (data: string): void => {
       const evt = { data } as MessageEvent;
-      for (const l of listenersRef.current) {
+      for (const l of listeners) {
         l(evt);
       }
     };
@@ -81,10 +93,10 @@ export function useHttpChatTransport(opts: UseHttpChatTransportOptions): HttpCha
         });
       },
       addEventListener: (_type, listener) => {
-        listenersRef.current.add(listener);
+        listeners.add(listener);
       },
       removeEventListener: (_type, listener) => {
-        listenersRef.current.delete(listener);
+        listeners.delete(listener);
       },
       readyState: 1,
     };
@@ -144,12 +156,35 @@ export function useHttpChatTransport(opts: UseHttpChatTransportOptions): HttpCha
         })();
       },
       stop: () => {
+        // Local cancel only. The server-side interrupt is the caller's
+        // job: `useChatStream.interrupt()` sends the
+        // `flowlib.interrupt` control envelope itself (and is the only
+        // caller of `stop()`). Sending it here too produced two POSTs
+        // to `/control` per stop — mirroring the DO transport, whose
+        // `stop()` likewise only cancels locally.
         abortRef.current?.abort();
-        // Also tell the server to stop the turn (frees the LLM/sandbox).
-        socket.send(JSON.stringify({ type: 'flowlib.interrupt' }));
+        abortRef.current = null;
       },
     };
 
     return { socket, chat };
   }, [sessionId, baseUrl, enabled]);
+
+  // Cancel any in-flight stream when the component unmounts or the
+  // transport is rebuilt (session / baseUrl / enabled change).
+  //
+  // Without this the reader loop keeps `await reader.read()`-ing after
+  // the chat UI is gone: the user navigates away mid-turn, the fetch
+  // stays open, and the agent turn keeps burning tokens and sandbox
+  // time with no consumer. Repeated navigation stacked orphaned
+  // streams. Aborting the fetch closes the connection, which the
+  // server sees as a client disconnect.
+  React.useEffect(() => {
+    return () => {
+      abortRef.current?.abort();
+      abortRef.current = null;
+    };
+  }, [transport]);
+
+  return transport;
 }

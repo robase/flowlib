@@ -117,8 +117,22 @@ export function ProviderModelSelector({
     }
     // Reset to the new provider's first suggested model so we never carry
     // a model string from the old vendor into the new credential.
-    const nextModel = modelsForProvider(provider.slug)[0]?.id ?? '';
-    onChange({ credentialId: provider.credential.id, model: nextModel });
+    //
+    // `modelsForProvider` only knows the vendors in the static
+    // catalogue (anthropic/openai/google/openrouter) and returns `[]`
+    // for anything else — a Groq/Mistral/Azure/custom credential used to
+    // fall through to `''`, which got PATCHed onto the session and made
+    // the next message fail at the provider while the chip just read
+    // "Select model". When there's no suggestion, keep the current model
+    // rather than persisting an empty one: the combobox loads this
+    // credential's live catalogue once it's selected, and accepts
+    // free-text besides, so the user can correct it from a working
+    // state.
+    const suggested = modelsForProvider(provider.slug)[0]?.id;
+    onChange({
+      credentialId: provider.credential.id,
+      model: suggested ?? model ?? '',
+    });
   };
 
   const handleModelPick = (nextModel: string) => {

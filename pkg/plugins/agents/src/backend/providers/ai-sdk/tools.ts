@@ -23,6 +23,7 @@
 import type { PromptInput } from '../types';
 import type { WorkspaceHandle } from '../../workspaces/types';
 import type { ToolOutputStore, ToolOutputBudget } from '../../tools/tool-output-store';
+import { TOOL_GUARD_EXTRA_KEY, type ToolGuard } from '../../service/run-turn';
 
 /**
  * The minimum tool shape we hand to `streamText`. We don't import

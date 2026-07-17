@@ -32,7 +32,8 @@ curl http://localhost:3000/health        # {"status":"ok",...}
 > The build is heavy on first run (full `pnpm install` + build of every
 > `@flowlib/*` package + the SPA bundle, inside the container). The build
 > context is small — `.dockerignore` excludes `node_modules`, `dist`, `.git`,
-> `.env`, and local `*.db` files, so deps are installed fresh and clean.
+> env files at any depth (including this directory's `.env`), and local `*.db`
+> files, so deps are installed fresh and clean and no secrets enter the image.
 
 ## Configuration (environment)
 

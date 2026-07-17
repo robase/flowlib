@@ -16,6 +16,11 @@
  *   GET    /sessions/:id/messages?before=<seq>&limit=50
  *   POST   /sessions/:id/prompt                         — 501 (use WebSocket)
  *   POST   /sessions/:id/interrupt
+ *
+ * Tenant-scoped on every read; cross-tenant access returns 404. Within an
+ * org, access narrows again by `visibility`: a `private` session (the
+ * default) is only visible/manageable by its `createdBy`; `shared` and
+ * `public` sessions by any org member. See {@link canAccessSession}.
  */
 
 import type { FlowlibPluginEndpoint, PluginEndpointResponse } from '@flowlib/core';
@@ -100,17 +105,39 @@ function getProvider(pluginCtx: PluginContext, providerId: string): AgentProvide
   return pluginCtx.registries.providers.get(providerId);
 }
 
+/**
+ * A session is visible/manageable when it is shared beyond its creator
+ * (`shared` / `public`) or when the caller created it. `private` — the
+ * default for every new session — is owner-only.
+ *
+ * Mirrors the `canAccess` model in `skills.endpoint.ts` /
+ * `memories.endpoint.ts`: org scoping is applied by the repository, this
+ * narrows further *within* the org. As there, non-private rows stay
+ * manageable by any org member for v1 — owner-vs-admin RBAC on shared
+ * rows is deferred to the permissions work.
+ *
+ * Callers must return 404 (never 403) on failure so a private session's
+ * existence is not leaked to other members of the same org.
+ */
+export function canAccessSession(session: AgentSession, userId: string): boolean {
+  return session.visibility !== 'private' || session.createdBy === userId;
+}
+
 async function listSessions(deps: EndpointDeps): Promise<PluginEndpointResponse> {
   const rows = await deps.repos.sessions.list({ orgId: deps.auth.orgId });
   return {
-    body: { data: rows.map((r) => withDoAgentName(r, deps)) },
+    body: {
+      data: rows
+        .filter((r) => canAccessSession(r, deps.auth.userId))
+        .map((r) => withDoAgentName(r, deps)),
+    },
   };
 }
 
 async function getSession(deps: EndpointDeps): Promise<PluginEndpointResponse> {
   const id = deps.endpointCtx.params.id;
   const row = await deps.repos.sessions.findById(id, deps.auth.orgId);
-  if (!row) {
+  if (!row || !canAccessSession(row, deps.auth.userId)) {
     return notFound('Session not found');
   }
   return { body: withDoAgentName(row, deps) };
@@ -486,7 +513,7 @@ async function resolveModelForCredential(
 async function updateSession(deps: EndpointDeps): Promise<PluginEndpointResponse> {
   const id = deps.endpointCtx.params.id;
   const existing = await deps.repos.sessions.findById(id, deps.auth.orgId);
-  if (!existing) {
+  if (!existing || !canAccessSession(existing, deps.auth.userId)) {
     return notFound('Session not found');
   }
 
@@ -614,7 +641,7 @@ async function maybeRebindOutboundOnPatch(
 async function deleteSession(deps: EndpointDeps): Promise<PluginEndpointResponse> {
   const id = deps.endpointCtx.params.id;
   const existing = await deps.repos.sessions.findById(id, deps.auth.orgId);
-  if (!existing) {
+  if (!existing || !canAccessSession(existing, deps.auth.userId)) {
     return notFound('Session not found');
   }
 
@@ -690,16 +717,35 @@ async function unbindOutboundCredentials(
   );
 }
 
+/**
+ * Clamp `?limit=` into [1, 200], defaulting to 50.
+ *
+ * Non-numeric input must not fall through: `Number('abc')` is `NaN`, and
+ * `NaN` survives `Math.max`/`Math.min` unchanged, so the clamp is a no-op
+ * and `all.slice(-NaN)` degrades to `slice(0)` — returning the *entire*
+ * message history and defeating the 200 cap. Reject anything non-finite
+ * (`abc`, `Infinity`, `''`) back to the default.
+ */
+function parseLimit(raw: string | undefined): number {
+  if (raw === undefined || raw === '') {
+    return 50;
+  }
+  const n = Number(raw);
+  if (!Number.isFinite(n)) {
+    return 50;
+  }
+  return Math.max(1, Math.min(200, Math.trunc(n)));
+}
+
 async function listMessages(deps: EndpointDeps): Promise<PluginEndpointResponse> {
   const id = deps.endpointCtx.params.id;
   const session = await deps.repos.sessions.findById(id, deps.auth.orgId);
-  if (!session) {
+  if (!session || !canAccessSession(session, deps.auth.userId)) {
     return notFound('Session not found');
   }
 
-  const limitRaw = deps.endpointCtx.query.limit;
   const beforeRaw = deps.endpointCtx.query.before;
-  const limit = limitRaw ? Math.max(1, Math.min(200, Number(limitRaw))) : 50;
+  const limit = parseLimit(deps.endpointCtx.query.limit);
 
   // The plan documents `before=<seq>` pagination, but the underlying
   // repository exposes `afterSequence` (sequence > N). For v1 the
@@ -713,7 +759,7 @@ async function listMessages(deps: EndpointDeps): Promise<PluginEndpointResponse>
   });
 
   let scoped = all;
-  if (beforeRaw && !Number.isNaN(Number(beforeRaw))) {
+  if (beforeRaw && Number.isFinite(Number(beforeRaw))) {
     const before = Number(beforeRaw);
     scoped = all.filter((m) => m.sequence < before);
   }
@@ -733,7 +779,7 @@ async function listMessages(deps: EndpointDeps): Promise<PluginEndpointResponse>
 async function promptSession(deps: EndpointDeps): Promise<PluginEndpointResponse> {
   const id = deps.endpointCtx.params.id;
   const session = await deps.repos.sessions.findById(id, deps.auth.orgId);
-  if (!session) {
+  if (!session || !canAccessSession(session, deps.auth.userId)) {
     return notFound('Session not found');
   }
 
@@ -750,7 +796,7 @@ async function promptSession(deps: EndpointDeps): Promise<PluginEndpointResponse
 async function interruptSession(deps: EndpointDeps): Promise<PluginEndpointResponse> {
   const id = deps.endpointCtx.params.id;
   const session = await deps.repos.sessions.findById(id, deps.auth.orgId);
-  if (!session) {
+  if (!session || !canAccessSession(session, deps.auth.userId)) {
     return notFound('Session not found');
   }
 
@@ -780,7 +826,7 @@ async function interruptSession(deps: EndpointDeps): Promise<PluginEndpointRespo
 async function getSessionPlan(deps: EndpointDeps): Promise<PluginEndpointResponse> {
   const id = deps.endpointCtx.params.id;
   const session = await deps.repos.sessions.findById(id, deps.auth.orgId);
-  if (!session) {
+  if (!session || !canAccessSession(session, deps.auth.userId)) {
     return notFound('Session not found');
   }
   const plan = await deps.repos.sessionPlans.get(id, deps.auth.orgId);

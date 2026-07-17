@@ -165,6 +165,11 @@ export async function writeFlowlibHttpResultToExpress(
     }
     // Client disconnect → cancel the stream so its `cancel()` can abort
     // the underlying work (e.g. the agent turn + LLM stream + sandbox).
+    //
+    // `reader.cancel()` makes the pending/next `read()` resolve `{ done: true }`,
+    // so the `cancelled` check MUST precede the `done` check — otherwise the
+    // disconnect path falls into the `done` branch and calls `end()` on an
+    // already-destroyed response.
     let cancelled = false;
     const onClose = (): void => {
       cancelled = true;
@@ -176,11 +181,11 @@ export async function writeFlowlibHttpResultToExpress(
     try {
       while (true) {
         const { done, value } = await reader.read();
-        if (done) {
-          end();
+        if (cancelled) {
           return;
         }
-        if (cancelled) {
+        if (done) {
+          end();
           return;
         }
         write(value);

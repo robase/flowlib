@@ -267,36 +267,19 @@ function loadDefaultAdapters(): ChatStreamAdapters {
             ready?: Promise<unknown>;
           };
           const dispatch = async () => {
-            const initialReadyState = sockLike.readyState;
-            // eslint-disable-next-line no-console
-            console.log('[useChatStream] sendMessage queued', {
-              agentName: (agent as { name?: string }).name,
-              readyState: initialReadyState,
-              hasReadyPromise: typeof sockLike.ready?.then === 'function',
-              envelopeLen: envelope.length,
-              url: sockLike.url,
-            });
             if (sockLike.ready && typeof sockLike.ready.then === 'function') {
               try {
                 await sockLike.ready;
-              } catch (err) {
-                // eslint-disable-next-line no-console
-                console.warn('[useChatStream] sendMessage → agent.ready rejected', err);
+              } catch {
                 // Keep going; agent.send will throw or queue as
                 // appropriate. The user can retry.
               }
             }
-            // eslint-disable-next-line no-console
-            console.log('[useChatStream] sendMessage dispatching', {
-              readyState: sockLike.readyState,
-            });
             try {
               agent.send(envelope);
-              // eslint-disable-next-line no-console
-              console.log('[useChatStream] sendMessage → agent.send did not throw');
-            } catch (err) {
-              // eslint-disable-next-line no-console
-              console.warn('[useChatStream] sendMessage → agent.send threw', err);
+            } catch {
+              // Swallow — same readyState reasoning as `stop()`. The
+              // user can retry from the composer.
             }
           };
           // Fire-and-forget — the adapter's `sendMessage` signature is
@@ -368,6 +351,21 @@ export function useChatStream(
     Record<string, 'allow' | 'deny'>
   >({});
   const [resolvedHumanInputs, setResolvedHumanInputs] = React.useState<Record<string, true>>({});
+
+  // Step 0 — drop the previous session's accumulated state whenever the
+  // hook is pointed at a different chat.
+  //
+  // `useChatStream` is instantiated once and re-pointed as the user
+  // switches chats, so without this the new chat inherits the old one's
+  // rendered events and resolved permission/HIL decisions. Keyed on
+  // `sessionId` alone — deliberately narrower than the loader effect
+  // below, which also re-runs on `apiClients` identity changes and must
+  // not be allowed to wipe events mid-stream.
+  React.useEffect(() => {
+    setEvents([]);
+    setResolvedPermissions({});
+    setResolvedHumanInputs({});
+  }, [sessionId]);
 
   // Step 1 — load the session. Prefer the shared API client; fall back
   // to the legacy fetch-based loader when callers explicitly inject an

@@ -67,6 +67,13 @@ export interface UpdateMemoryInput {
   tags?: string[];
   scope?: MemoryScope;
   projectId?: string | null;
+  /**
+   * Owner. Must stay consistent with `scope`: set for `personal`, `null`
+   * for `project`/`global` — the same invariant `create` establishes.
+   * `listForScope` finds personal rows by `user_id`, so a row whose
+   * `scope`/`user_id` disagree is unreachable by every read path.
+   */
+  userId?: string | null;
 }
 
 /**
@@ -241,6 +248,9 @@ export class MemoriesRepository {
     }
     if (patch.projectId !== undefined) {
       set.project_id = patch.projectId;
+    }
+    if (patch.userId !== undefined) {
+      set.user_id = patch.userId;
     }
     if (Object.keys(set).length === 0) {
       return this.findById(id, orgId);

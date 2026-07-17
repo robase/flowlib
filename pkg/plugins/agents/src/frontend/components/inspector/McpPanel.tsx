@@ -32,6 +32,11 @@ export function McpPanel({ session }: { session: AgentSession | null }): React.R
   const deleteServer = useDeleteMcpServer();
   const updateSession = useUpdateSession();
   const [showForm, setShowForm] = React.useState(false);
+  // The session PATCH is one shared mutation across every row, so
+  // `updateSession.isPending` alone can't say *which* server is being
+  // toggled — using it directly disabled every row's switch until the
+  // request settled. Track the row that owns the in-flight toggle.
+  const [togglingServerId, setTogglingServerId] = React.useState<string | null>(null);
 
   const enabledIds = React.useMemo(
     () => new Set(session?.enabledMcpServerIds ?? []),
@@ -46,7 +51,17 @@ export function McpPanel({ session }: { session: AgentSession | null }): React.R
     const nextIds = next
       ? Array.from(new Set([...current, serverId]))
       : current.filter((id) => id !== serverId);
-    updateSession.mutate({ id: session.id, input: { enabledMcpServerIds: nextIds } });
+    setTogglingServerId(serverId);
+    updateSession.mutate(
+      { id: session.id, input: { enabledMcpServerIds: nextIds } },
+      {
+        onSettled: () => {
+          // Only clear if we still own the flag — a rapid toggle of a
+          // different row may have claimed it in the meantime.
+          setTogglingServerId((curr) => (curr === serverId ? null : curr));
+        },
+      },
+    );
   };
 
   return (
@@ -70,9 +85,15 @@ export function McpPanel({ session }: { session: AgentSession | null }): React.R
       {showForm ? (
         <CreateForm
           onCancel={() => setShowForm(false)}
-          onSubmit={async (input) => {
-            await createServer.mutateAsync(input);
-            setShowForm(false);
+          // `mutate` + `onSuccess` rather than an awaited `mutateAsync`:
+          // the form's submit handler awaited this, so a failed create
+          // rejected out of a React event handler and surfaced as an
+          // unhandled promise rejection in the console. The failure is
+          // already rendered from `createServer.error` via `error` below.
+          onSubmit={(input) => {
+            createServer.mutate(input, {
+              onSuccess: () => setShowForm(false),
+            });
           }}
           submitting={createServer.isPending}
           error={createServer.error ? (createServer.error as Error).message : null}
@@ -99,10 +120,10 @@ export function McpPanel({ session }: { session: AgentSession | null }): React.R
               key={server.id}
               server={server}
               enabled={enabledIds.has(server.id)}
-              disabled={!session || updateSession.isPending}
+              disabled={!session || togglingServerId === server.id}
               onToggle={(next) => toggle(server.id, next)}
               onDelete={() => deleteServer.mutate({ id: server.id })}
-              deleting={deleteServer.isPending}
+              deleting={deleteServer.isPending && deleteServer.variables?.id === server.id}
             />
           ))
         )}
@@ -191,12 +212,13 @@ function CreateForm({
   error,
 }: {
   onCancel: () => void;
+  /** Fire-and-forget — the caller owns success/error reporting. */
   onSubmit: (input: {
     name: string;
     description?: string | null;
     transport: McpTransport;
     config: Record<string, unknown>;
-  }) => Promise<void>;
+  }) => void;
   submitting: boolean;
   error: string | null;
 }): React.ReactElement {
@@ -206,7 +228,7 @@ function CreateForm({
   const [configText, setConfigText] = React.useState('{}');
   const [parseError, setParseError] = React.useState<string | null>(null);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     let config: Record<string, unknown>;
     try {
@@ -220,7 +242,7 @@ function CreateForm({
       return;
     }
     setParseError(null);
-    await onSubmit({
+    onSubmit({
       name: name.trim(),
       description: description.trim() || null,
       transport,
