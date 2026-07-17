@@ -1,32 +1,37 @@
-name: Changeset from merged PR
+name: Changeset from PR
 
-# Auto-derive a changeset from a merged PR's title + diff and commit it to
-# the base branch (main). The Release workflow's `changesets/action` then
-# rolls the new changeset into the existing "chore: version packages" PR,
-# which serves as the running accumulator. Feature PR branches stay clean —
-# no bot commits land on them.
+# Auto-derive a changeset from a PR's title + diff and commit it to the PR
+# branch. It then merges to `main` along with the PR itself, and `release.yml`
+# rolls it into the "chore: version packages" PR on the next push to main.
 #
-# Trigger lag: GitHub does NOT fire downstream workflows for pushes made
-# with the default `GITHUB_TOKEN` (loop-prevention). So a changeset pushed
-# by this workflow won't trigger `release.yml` on its own — it'll be picked
-# up by the next push to `main` (e.g. the next PR merge). To remove the lag,
-# swap `secrets.GITHUB_TOKEN` below for a PAT with `contents: write`.
+# Why the PR branch and not `main`: the `main` ruleset requires that changes
+# go through a pull request, and `GITHUB_TOKEN` runs as `github-actions[bot]`
+# (write role), which is not a bypass actor. Pushing the changeset straight to
+# `main` is rejected with `GH013 — Changes must be made through a pull
+# request`, which is exactly how the previous post-merge design failed. The
+# trade-off is a bot commit on the feature branch; the alternative (a bypass
+# PAT) means a long-lived token that can write to `main`.
+#
+# Loop safety: pushes made with `GITHUB_TOKEN` do not trigger workflows, so
+# the bot's own commit cannot re-fire this job. The script is idempotent
+# regardless — if `.changeset/pr-<N>.md` already matches, nothing is written.
+#
+# Note this means no CI run is attached to the bot's commit. That is safe
+# here because the `main` ruleset has no required-status-check rule; if one is
+# ever added, this job needs a PAT so its push triggers CI.
 #
 # Skip conditions:
-#   - PR was closed without merging
-#   - PR is from a fork (we can't run with write permissions safely)
+#   - PR is from a fork (we can't push to its branch)
 #   - PR head is the version-packages branch (`changeset-release/main`)
 #   - PR has the `skip-changeset` label
 #   - PR title prefix is non-versioning (chore/docs/ci/build/style/refactor/test)
 #   - No workspace packages are affected by the diff
-#
-# The script (`.github/scripts/changeset-from-pr.mjs`) is idempotent: if
-# `.changeset/pr-<N>.md` already matches what we'd generate, nothing is
-# committed.
 
 on:
   pull_request:
-    types: [closed]
+    # `edited` matters: the bump is derived from the PR title, so retitling
+    # feat: -> fix: must rewrite the changeset.
+    types: [opened, synchronize, reopened, edited]
     branches: [main]
 
 permissions:
@@ -34,12 +39,12 @@ permissions:
   pull-requests: read
 
 concurrency:
-  group: changeset-from-merged-pr-${{ github.event.pull_request.number }}
+  group: changeset-from-pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
 
 jobs:
   changeset:
     if: |
-      github.event.pull_request.merged == true &&
       github.event.pull_request.head.repo.full_name == github.repository &&
       github.event.pull_request.head.ref != 'changeset-release/main' &&
       !contains(github.event.pull_request.labels.*.name, 'skip-changeset')
@@ -47,8 +52,8 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with:
-          ref: ${{ github.event.pull_request.base.ref }}
-          # Need history reachable from base.sha so the diff range works.
+          ref: ${{ github.event.pull_request.head.ref }}
+          # Full history so the script can diff against origin/<base>.
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
 
@@ -57,23 +62,25 @@ jobs:
         with:
           node-version: 24
 
+      # No PR_BASE_SHA: the script fetches origin/<base> and diffs
+      # `origin/<base>...HEAD`, which is what we want when checked out on the
+      # PR head rather than post-merge on the base branch.
       - name: Generate changeset from PR title
         id: gen
         env:
           PR_NUMBER: ${{ github.event.pull_request.number }}
           PR_TITLE: ${{ github.event.pull_request.title }}
           PR_BASE: ${{ github.event.pull_request.base.ref }}
-          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: node .github/scripts/changeset-from-pr.mjs
 
-      - name: Commit + push to base branch
+      - name: Commit + push to PR branch
         if: steps.gen.outputs.changed == 'true'
         env:
           PR_NUMBER: ${{ github.event.pull_request.number }}
-          BASE_REF: ${{ github.event.pull_request.base.ref }}
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add ".changeset/pr-${PR_NUMBER}.md"
           git commit -m "chore: changeset for #${PR_NUMBER}"
-          git push origin "HEAD:${BASE_REF}"
+          git push origin "HEAD:${HEAD_REF}"
