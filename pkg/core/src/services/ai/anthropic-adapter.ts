@@ -154,26 +154,33 @@ export class AnthropicAdapter extends BaseProviderAdapter {
       const anthropicMessages = this.convertMessages(request.messages);
       const tools = this.convertTools(request.tools);
 
-      const thinkingEnabled =
-        request.thinking?.enabled === true && this.modelSupportsThinking(request.model);
+      const contract = this.thinkingContract(request.model);
+      const thinkingEnabled = request.thinking?.enabled === true && contract !== 'none';
       const budgetTokens = this.resolveThinkingBudget(request.thinking);
-      // Anthropic requires max_tokens > budget_tokens when thinking is enabled.
+      // Extended thinking requires max_tokens > budget_tokens; adaptive has no budget.
       const baseMaxTokens = request.maxTokens || 4096;
-      const maxTokens = thinkingEnabled
-        ? Math.max(baseMaxTokens, budgetTokens + 4096)
-        : baseMaxTokens;
+      const maxTokens =
+        thinkingEnabled && contract === 'budget'
+          ? Math.max(baseMaxTokens, budgetTokens + 4096)
+          : baseMaxTokens;
 
       const params: Anthropic.MessageCreateParams = {
         model: request.model,
         max_tokens: maxTokens,
-        // Anthropic requires temperature === 1 when extended thinking is enabled.
-        temperature: thinkingEnabled ? 1 : request.temperature,
         system: request.systemPrompt,
         messages: anthropicMessages,
         tools: tools.length > 0 ? tools : undefined,
       };
 
-      if (thinkingEnabled) {
+      if (this.modelAcceptsSampling(request.model)) {
+        // Extended thinking requires temperature === 1 on the models that take it.
+        params.temperature = thinkingEnabled ? 1 : request.temperature;
+      }
+
+      if (thinkingEnabled && contract === 'adaptive') {
+        params.thinking = { type: 'adaptive' };
+        params.output_config = { effort: request.thinking?.effort ?? 'medium' };
+      } else if (thinkingEnabled) {
         params.thinking = { type: 'enabled', budget_tokens: budgetTokens };
       }
 
@@ -205,20 +212,60 @@ export class AnthropicAdapter extends BaseProviderAdapter {
   }
 
   /**
-   * Models that accept the `thinking` parameter. Claude 4.x and 3.7 Sonnet
-   * support extended thinking; earlier models reject it with a 400.
+   * How a model wants reasoning configured. Anthropic changed the contract
+   * mid-generation, and the two forms are mutually exclusive:
+   *
+   *  - `adaptive` — `thinking: { type: 'adaptive' }` + `output_config.effort`.
+   *    The model decides depth per request. Opus 4.6+ and Sonnet 5 / Fable 5.
+   *    These reject `budget_tokens` with a 400.
+   *  - `budget`   — `thinking: { type: 'enabled', budget_tokens: N }`.
+   *    Opus 4.0/4.1/4.5, Sonnet 4.0/4.5, Haiku 4.5, 3.7 Sonnet.
+   *  - `none`     — no reasoning support; sending `thinking` is a 400.
+   *
+   * Ordering matters: `claude-sonnet-4-6` also matches a bare
+   * `claude-sonnet-4` prefix, so the adaptive checks run first.
    */
-  private modelSupportsThinking(model: string): boolean {
+  private thinkingContract(model: string): 'adaptive' | 'budget' | 'none' {
     const m = model.toLowerCase();
-    return (
+    if (
+      m.startsWith('claude-fable-') ||
+      m.startsWith('claude-mythos-') ||
+      m.startsWith('claude-sonnet-5') ||
+      m.startsWith('claude-opus-4-6') ||
+      m.startsWith('claude-opus-4-7') ||
+      m.startsWith('claude-opus-4-8') ||
+      m.startsWith('claude-sonnet-4-6')
+    ) {
+      return 'adaptive';
+    }
+    if (
       m.startsWith('claude-opus-4') ||
       m.startsWith('claude-sonnet-4') ||
       m.startsWith('claude-haiku-4') ||
       m.startsWith('claude-3-7-sonnet')
+    ) {
+      return 'budget';
+    }
+    return 'none';
+  }
+
+  /**
+   * `temperature` / `top_p` / `top_k` were removed on the newest models — they
+   * 400 rather than being ignored, so the parameter must be omitted entirely.
+   * Opus 4.6 and Sonnet 4.6 still accept sampling despite being adaptive.
+   */
+  private modelAcceptsSampling(model: string): boolean {
+    const m = model.toLowerCase();
+    return !(
+      m.startsWith('claude-fable-') ||
+      m.startsWith('claude-mythos-') ||
+      m.startsWith('claude-sonnet-5') ||
+      m.startsWith('claude-opus-4-7') ||
+      m.startsWith('claude-opus-4-8')
     );
   }
 
-  /** Translate `effort` levels to a concrete budget when explicit budget not provided. */
+  /** Translate `effort` levels to a concrete budget for `budget`-contract models. */
   private resolveThinkingBudget(thinking?: AgentPromptRequest['thinking']): number {
     if (thinking?.budgetTokens && thinking.budgetTokens > 0) {
       return Math.max(1024, Math.floor(thinking.budgetTokens));

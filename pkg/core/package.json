@@ -65,7 +65,7 @@
     "test:run-all": "tsx tests/run-tests.ts"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.57.0",
+    "@anthropic-ai/sdk": "^0.81.0",
     "@flowlib/action-kit": "workspace:*",
     "@flowlib/actions": "workspace:*",
     "@flowlib/db": "workspace:*",
