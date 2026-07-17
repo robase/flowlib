@@ -84,8 +84,12 @@ describe('TemplateService.isTemplate', () => {
         if (isTemplate(s) !== reference(s)) {
           mismatches.push(s);
         }
-        if (depth === 0) return;
-        for (const ch of alphabet) walk(s + ch, depth - 1);
+        if (depth === 0) {
+          return;
+        }
+        for (const ch of alphabet) {
+          walk(s + ch, depth - 1);
+        }
       };
       walk('', 6);
 
@@ -104,8 +108,12 @@ describe('TemplateService.isTemplate', () => {
         for (let j = 0; j < len; j += 1) {
           s += alphabet[Math.floor(Math.random() * alphabet.length)];
         }
-        if (reference(s)) positives += 1;
-        if (isTemplate(s) !== reference(s)) mismatches.push(s);
+        if (reference(s)) {
+          positives += 1;
+        }
+        if (isTemplate(s) !== reference(s)) {
+          mismatches.push(s);
+        }
       }
 
       expect(mismatches).toEqual([]);
@@ -121,7 +129,9 @@ describe('TemplateService.isTemplate', () => {
 
     const timeOf = (value: string): number => {
       const started = performance.now();
-      for (let i = 0; i < 20; i += 1) isTemplate(value);
+      for (let i = 0; i < 20; i += 1) {
+        isTemplate(value);
+      }
       return performance.now() - started;
     };
 

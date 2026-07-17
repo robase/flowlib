@@ -126,12 +126,18 @@ export async function runCaseRaw(
   // Auto-responder: resolve human-input / permission requests on a macro-
   // task so the provider's `await gate.await*` has registered first (the
   // tool emits the event, *then* awaits — a microtask would race it).
+  //
+  // `resolveHumanInput` passes its payload through to `awaitHumanInput`
+  // verbatim, and the `ask_user` tool wraps it itself (`return { answer }`).
+  // So the raw answer goes in here — wrapping it as `{ answer }` would make
+  // the model see `{"answer":{"answer":"…"}}`. This matches the real
+  // transport (`chat-agent-do.ts` resolves with `frame.response`).
   const answer = humanInputAnswer(c);
   const allowPermission = c.permission !== 'deny';
   const emit = (event: AgentEvent): void => {
     transcript.record(event);
     if (event.type === 'human-input-request') {
-      setTimeout(() => gate.resolveHumanInput(event.id, { answer: answer(event.prompt) }), 0);
+      setTimeout(() => gate.resolveHumanInput(event.id, answer(event.prompt)), 0);
     } else if (event.type === 'permission-request') {
       setTimeout(() => gate.resolvePermission(event.id, { allowed: allowPermission }), 0);
     }
@@ -235,24 +241,32 @@ export async function runCase(c: EvalCase, opts: RunOptions): Promise<CaseReport
     result?: RunOutcome['result'];
     promptHash: string;
   }> = [];
+  /** Messages from samples that threw before they could be scored. */
+  const sampleErrors: string[] = [];
 
   for (let i = 0; i < samples; i++) {
     let outcome: RunOutcome;
+    const sampleStartedAt = Date.now();
     try {
       outcome = await runCaseRaw(c, opts);
     } catch (err) {
-      const report: CaseReport = {
-        case: c,
-        scores: [],
+      // A sample that throws (transient API 5xx, timeout, …) counts as *one
+      // bad sample*, not a dead case — that is the whole point of
+      // `samples` / `minPassRate`. Aborting here would let a single 529 on
+      // sample 1 of 5 fail a case the model would otherwise have passed.
+      // If *every* sample throws, the case is reported as errored below.
+      const message = err instanceof Error ? err.message : String(err);
+      sampleErrors.push(message);
+      sampleResults.push({
         passed: false,
         weightedScore: 0,
-        samples,
-        passRate: 0,
-        durationMs: 0,
-        error: err instanceof Error ? err.message : String(err),
-      };
-      opts.onCaseComplete?.(report);
-      return report;
+        // Synthetic verdict so the report surfaces *why* the sample died —
+        // `scores` below prefers the first failing sample.
+        scores: [{ name: 'sample-error', passed: false, score: 0, detail: message }],
+        durationMs: Date.now() - sampleStartedAt,
+        promptHash: '',
+      });
+      continue;
     }
     try {
       const scored = await scoreOutcome(outcome, c.scorers, scorerCtx);
@@ -270,6 +284,9 @@ export async function runCase(c: EvalCase, opts: RunOptions): Promise<CaseReport
 
   const passedCount = sampleResults.filter((s) => s.passed).length;
   const passRate = passedCount / samples;
+  // Only a wholesale failure is an "errored" case; a partial run is scored
+  // on its pass rate like any other.
+  const allSamplesErrored = sampleErrors.length === samples;
   const report: CaseReport = {
     case: c,
     // Representative scores: prefer the first failing sample so the report
@@ -279,9 +296,11 @@ export async function runCase(c: EvalCase, opts: RunOptions): Promise<CaseReport
     weightedScore: sampleResults.reduce((a, s) => a + s.weightedScore, 0) / samples,
     samples,
     passRate,
-    promptHash: sampleResults[0]?.promptHash,
+    // Errored samples carry no hash — report the first real one.
+    promptHash: sampleResults.find((s) => s.promptHash)?.promptHash,
     durationMs: sampleResults.reduce((a, s) => a + s.durationMs, 0),
-    result: sampleResults[sampleResults.length - 1]?.result,
+    result: [...sampleResults].reverse().find((s) => s.result)?.result,
+    ...(allSamplesErrored ? { error: sampleErrors[0] } : {}),
   };
   opts.onCaseComplete?.(report);
   return report;
