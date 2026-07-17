@@ -1,0 +1,47 @@
+name: PR Title
+
+# The PR title is what lands on `main` as the commit subject when a PR is
+# squash-merged, so it — not the individual branch commits — is what needs to
+# satisfy the conventional-commit format. Branch commits stay unlinted so work
+# in progress can be committed freely.
+#
+# Lives in its own workflow (rather than as a job in ci.yml) because it must
+# re-run on `edited`: without that, retitling a PR to fix a failure would not
+# clear the check. Keeping it separate means a title edit doesn't re-trigger
+# the full build/test matrix.
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, edited, reopened, synchronize]
+
+concurrency:
+  group: pr-title-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  commitlint:
+    name: commitlint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: pnpm/action-setup@v5
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # The title is passed via env rather than interpolated into the run
+      # script: it is untrusted input, and `${{ }}` inside `run:` would let a
+      # crafted title execute shell.
+      - name: Lint PR title
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: printf '%s' "$PR_TITLE" | npx commitlint --config commitlint.config.mjs
