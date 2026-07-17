@@ -8,7 +8,7 @@ import { rbac } from '@flowlib/rbac';
 import { webhooks } from '@flowlib/webhooks';
 import { versionControl } from '@flowlib/version-control';
 import { mcp } from '@flowlib/mcp';
-import { vercelWorkflowsPlugin } from '@flowlib/vercel-workflows';
+// import { vercelWorkflowsPlugin } from '@flowlib/vercel-workflows';
 // @flowlib/agents browser entry: `agents()` contributes the chat list +
 // /agents route; `agentsChatFrontendPlugin` adds the /agents/sessions/:id
 // chat surface.
@@ -36,7 +36,10 @@ export const App = () => {
                     webhooks(),
                     versionControl(),
                     mcp(),
-                    vercelWorkflowsPlugin(),
+                    // Commented out to match the backend, which no longer
+                    // registers the plugin (the Deploy button's
+                    // /deploy/preview endpoint would 404).
+                    // vercelWorkflowsPlugin(),
                     // Chat list + /agents route.
                     agents(),
                     // Chat surface route (/agents/sessions/:sessionId).
