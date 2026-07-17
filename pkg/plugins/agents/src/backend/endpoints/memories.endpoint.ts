@@ -111,8 +111,7 @@ async function updateMemory(deps: EndpointDeps): Promise<PluginEndpointResponse>
   // branch of `listForScope`, invisible to every list, search and prompt
   // context, with no API path back. Recompute both columns on every write.
   const nextScope = body.scope !== undefined ? normaliseScope(body.scope) : existing.scope;
-  const nextProjectId =
-    nextScope === 'project' ? (body.projectId ?? existing.projectId) : null;
+  const nextProjectId = nextScope === 'project' ? (body.projectId ?? existing.projectId) : null;
   if (nextScope === 'project' && !nextProjectId) {
     return badRequest('projectId is required for project-scoped memories');
   }

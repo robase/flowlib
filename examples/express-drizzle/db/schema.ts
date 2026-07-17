@@ -800,7 +800,7 @@ export const agent_memories = sqliteTable('agent_memories', {
   orgId: text('org_id'),
   scope: text('scope').notNull(),
   userId: text('user_id'),
-  projectId: text('project_id'),
+  projectId: text('project_id').references(() => agent_projects.id, { onDelete: 'cascade' }),
   content: text('content').notNull(),
   embedding: text('embedding'),
   tags: text('tags', { mode: 'json' }).$type<string[]>(),
@@ -907,6 +907,10 @@ export const flowVersionsRelations = relations(flowVersions, ({ one }) => ({
 
 export const vc_sync_historyRelations = relations(vc_sync_history, ({ one }) => ({
   flow: one(flows, { fields: [vc_sync_history.flowId], references: [flows.id] }),
+}));
+
+export const agent_projectsRelations = relations(agent_projects, ({ many }) => ({
+  agent_memories: many(agent_memories),
 }));
 
 export const chatMessagesRelations = relations(chatMessages, ({ one }) => ({
@@ -1033,6 +1037,13 @@ export const agent_session_plansRelations = relations(agent_session_plans, ({ on
   session: one(agent_sessions, {
     fields: [agent_session_plans.sessionId],
     references: [agent_sessions.id],
+  }),
+}));
+
+export const agent_memoriesRelations = relations(agent_memories, ({ one }) => ({
+  project: one(agent_projects, {
+    fields: [agent_memories.projectId],
+    references: [agent_projects.id],
   }),
 }));
 

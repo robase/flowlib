@@ -30,9 +30,7 @@ function scriptedStreamText(chunks: unknown[]) {
   });
 }
 
-async function drain(
-  iterable: AsyncIterable<AgentEvent>,
-): Promise<{
+async function drain(iterable: AsyncIterable<AgentEvent>): Promise<{
   events: AgentEvent[];
   end: Extract<AgentEvent, { type: 'session-end' }> | undefined;
 }> {
