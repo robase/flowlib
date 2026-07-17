@@ -20,7 +20,10 @@ Flowlib uses a **ready-set scheduler**. Rather than walking the graph in a singl
 
 The practical consequence: **independent branches run in parallel**. If a flow fans out from one node into three unrelated chains, those chains progress simultaneously. Ordering is guaranteed only where you have expressed it — through edges. Two nodes with no dependency path between them have no guaranteed order relative to one another.
 
-If you need strictly sequential behaviour, set the scheduler concurrency to `1`. Nodes then launch one at a time on the same code path.
+<Callout type="warn">
+  The concurrency limit is not currently configurable. If two nodes must run in a specific order,
+  connect them with an edge — that is the only way to express sequencing.
+</Callout>
 
 ## How edges work
 
