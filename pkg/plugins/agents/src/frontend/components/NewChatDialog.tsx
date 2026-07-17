@@ -17,7 +17,8 @@
 import * as React from 'react';
 import type { AgentCredentialOption } from '../api/credentials.api';
 import type { AgentProviderId } from '../../shared/types';
-import { ModelSelector, type ModelSelection } from './ModelSelector';
+import { ProviderModelSelector, type ProviderModelSelection } from './ProviderModelSelector';
+import { modelsForProvider, normalizeProviderSlug } from '../lib/provider-models';
 import { useProviderCatalogue } from '../hooks/useSessions';
 
 export interface NewChatDialogProps {
@@ -51,45 +52,33 @@ export function NewChatDialog({
   onStart,
   targetLabel,
 }: NewChatDialogProps): React.ReactElement | null {
-  const { catalogue, defaultProviderId } = useProviderCatalogue();
-  const [selectedId, setSelectedId] = React.useState<string | null>(null);
-  // `null` until the (possibly async) catalogue resolves a default — the
-  // effect below picks the deployment's default provider + its first model.
-  const [selectedModel, setSelectedModel] = React.useState<ModelSelection | null>(null);
+  // The agent runtime provider (e.g. `ai-sdk`) is a deployment concern,
+  // separate from the LLM *vendor* the user picks via their credential.
+  // The picker below selects the credential + model; the runtime provider
+  // is the deployment default.
+  const { defaultProviderId } = useProviderCatalogue();
+  const [credentialId, setCredentialId] = React.useState<string | null>(null);
+  const [model, setModel] = React.useState<string>('');
 
-  // Pick a sensible default once the catalogue is available, and keep the
-  // user's choice if it's still valid. Re-runs when the dialog opens or the
-  // catalogue loads.
+  // Auto-select the first active credential (and a starter model from the
+  // static catalogue) when the dialog opens, so the user can usually press
+  // Start without touching the dropdowns. Live models load in once the
+  // credential is chosen and refine the list.
   React.useEffect(() => {
     if (!open) {
       return;
     }
-    setSelectedModel((prev) => {
-      const stillValid =
-        prev &&
-        catalogue.some(
-          (p) => p.id === prev.providerId && p.models.some((m) => m.id === prev.model),
-        );
-      if (stillValid) {
+    setCredentialId((prev) => {
+      if (prev && credentials.some((c) => c.id === prev && c.isActive)) {
         return prev;
       }
-      const provider = catalogue.find((p) => p.id === defaultProviderId) ?? catalogue[0];
-      const firstModel = provider?.models[0];
-      return provider && firstModel ? { providerId: provider.id, model: firstModel.id } : prev;
-    });
-  }, [open, catalogue, defaultProviderId]);
-
-  // Auto-select the first active credential when the dialog opens so
-  // the user can usually press Enter without picking from a list.
-  React.useEffect(() => {
-    if (!open) {
-      return;
-    }
-    setSelectedId((prev) => {
-      if (prev && credentials.some((c) => c.id === prev)) {
-        return prev;
+      const first = credentials.find((c) => c.isActive);
+      if (!first) {
+        return null;
       }
-      return credentials.find((c) => c.isActive)?.id ?? null;
+      const seeded = modelsForProvider(normalizeProviderSlug(first.provider))[0]?.id ?? '';
+      setModel((m) => m || seeded);
+      return first.id;
     });
   }, [open, credentials]);
 
@@ -97,15 +86,23 @@ export function NewChatDialog({
     return null;
   }
 
-  const handleStart = () => {
-    onStart({
-      credentialId: selectedId,
-      providerId: selectedModel?.providerId,
-      model: selectedModel?.model,
-    });
+  const handleSelectionChange = (next: ProviderModelSelection) => {
+    setCredentialId(next.credentialId);
+    setModel(next.model);
   };
 
-  const grouped = groupByProvider(credentials);
+  const handleUseDefault = () => {
+    setCredentialId(null);
+    setModel('');
+  };
+
+  const handleStart = () => {
+    onStart({
+      credentialId,
+      providerId: defaultProviderId as AgentProviderId | undefined,
+      model: model || undefined,
+    });
+  };
 
   return (
     <div
@@ -135,21 +132,7 @@ export function NewChatDialog({
           ) : null}
         </div>
 
-        <div className="px-5 py-3 border-b border-border">
-          <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground mb-1.5">
-            Model
-          </div>
-          <ModelSelector
-            providerId={selectedModel?.providerId}
-            model={selectedModel?.model}
-            onChange={setSelectedModel}
-            variant="block"
-            testIdPrefix="new-chat-model-selector"
-            catalogue={catalogue}
-          />
-        </div>
-
-        <div className="px-5 py-4 max-h-[420px] overflow-y-auto">
+        <div className="px-5 py-4 border-b border-border">
           {isLoading ? (
             <div className="text-sm text-muted-foreground">Loading credentials…</div>
           ) : error ? (
@@ -159,59 +142,32 @@ export function NewChatDialog({
           ) : credentials.length === 0 ? (
             <EmptyHint />
           ) : (
-            <ul className="space-y-3" data-testid="credential-list">
-              {Object.entries(grouped).map(([provider, items]) => (
-                <li key={provider}>
-                  <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground mb-1">
-                    {provider}
-                  </div>
-                  <ul className="space-y-1">
-                    {items.map((c) => (
-                      <li key={c.id}>
-                        <label
-                          className={`flex items-center gap-3 rounded-md border px-3 py-2 cursor-pointer transition-colors ${
-                            selectedId === c.id
-                              ? 'border-primary bg-primary/5'
-                              : 'border-border hover:bg-muted/30'
-                          } ${c.isActive ? '' : 'opacity-60 cursor-not-allowed'}`}
-                          data-testid={`credential-option-${c.id}`}
-                        >
-                          <input
-                            type="radio"
-                            name="credential"
-                            value={c.id}
-                            checked={selectedId === c.id}
-                            disabled={!c.isActive}
-                            onChange={() => setSelectedId(c.id)}
-                            className="accent-primary"
-                          />
-                          <div className="min-w-0 flex-1">
-                            <div className="font-medium truncate">{c.name}</div>
-                            {c.description ? (
-                              <div className="text-xs text-muted-foreground truncate">
-                                {c.description}
-                              </div>
-                            ) : null}
-                          </div>
-                          {!c.isActive ? (
-                            <span className="text-xs text-muted-foreground">inactive</span>
-                          ) : null}
-                        </label>
-                      </li>
-                    ))}
-                  </ul>
-                </li>
-              ))}
-            </ul>
+            <>
+              <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground mb-1.5">
+                Provider &amp; model
+              </div>
+              <ProviderModelSelector
+                credentialId={credentialId}
+                model={model}
+                onChange={handleSelectionChange}
+                menuPlacement="bottom"
+                testIdPrefix="new-chat-provider-model"
+              />
+              <p className="mt-2 text-xs text-muted-foreground">
+                {credentialId
+                  ? 'Models are fetched live from the selected provider. You can change this later from chat settings.'
+                  : 'No provider selected — the chat will use the deployment default credential and model.'}
+              </p>
+            </>
           )}
         </div>
 
         <div className="px-5 py-3 border-t border-border flex items-center justify-between gap-3">
           <button
             type="button"
-            onClick={() => setSelectedId(null)}
+            onClick={handleUseDefault}
             className="text-xs text-muted-foreground hover:underline disabled:opacity-50"
-            disabled={selectedId === null || isStarting}
+            disabled={credentialId === null || isStarting}
             data-testid="new-chat-clear-credential"
           >
             Use deployment default
@@ -254,14 +210,3 @@ function EmptyHint(): React.ReactElement {
   );
 }
 
-function groupByProvider(creds: AgentCredentialOption[]): Record<string, AgentCredentialOption[]> {
-  const out: Record<string, AgentCredentialOption[]> = {};
-  for (const c of creds) {
-    const key = c.provider || 'custom';
-    if (!out[key]) {
-      out[key] = [];
-    }
-    out[key].push(c);
-  }
-  return out;
-}

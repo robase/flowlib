@@ -66,7 +66,7 @@ describe('fetchVendorModels', () => {
       ],
     });
     const models = await fetchVendorModels('openai', { apiKey: 'k' }, { fetchImpl: impl });
-    expect(models.map((m) => m.id)).toEqual([
+    expect((models ?? []).map((m) => m.id)).toEqual([
       'openai/chatgpt-4o-latest',
       'openai/gpt-4o',
       'openai/o3-mini',
