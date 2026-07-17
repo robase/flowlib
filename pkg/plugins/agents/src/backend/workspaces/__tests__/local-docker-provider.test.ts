@@ -115,7 +115,11 @@ describe('localDockerWorkspace — hardening defaults', () => {
         return { stdout: '', stderr: 'No such object', exitCode: 1 };
       }
       if (args[0] === 'network') {
-        return { stdout: '', stderr: 'Error response from daemon: network with name flowlib-agents already exists', exitCode: 1 };
+        return {
+          stdout: '',
+          stderr: 'Error response from daemon: network with name flowlib-agents already exists',
+          exitCode: 1,
+        };
       }
       return { stdout: 'ok', stderr: '', exitCode: 0 };
     });

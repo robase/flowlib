@@ -56,5 +56,10 @@ jobs:
       - name: Typecheck
         run: pnpm typecheck
 
+      # Covers @flowlib/core unit, @flowlib/cli, @flowlib/user-auth,
+      # @flowlib/version-control, @flowlib/agents (workerd + node + frontend
+      # projects), and the @flowlib/agents eval-harness self-tests. The eval
+      # self-tests drive a scripted provider — deterministic, no API key.
+      # Live evals (`pnpm eval:agents`) hit real models and stay out of CI.
       - name: Test
         run: pnpm test

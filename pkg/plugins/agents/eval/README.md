@@ -22,9 +22,9 @@ the real path behaves.
   deterministic self-tests (no API key, no Docker), or the real
   **`aiSdkProvider`** for live evals against Anthropic. The thing under test is
   the prompt + tool surface, not the provider.
-- **Node, not workerd.** The plugin's own `vitest.config.ts` runs in the
-  Cloudflare `workerd` pool. Evals need real timers, `node:fs`, and the AI SDK,
-  so they run in Node via a separate config and `tsx`.
+- **Node, not workerd.** The plugin's own `vitest.config.ts` runs most of its
+  suite in the Cloudflare `workerd` pool. Evals need real timers, `node:fs`, and
+  the AI SDK, so they run in Node via a separate config and `tsx`.
 - **Turns never hang.** `ask_user` / human-input and permission requests are
   auto-answered (configurable per case via `humanInput` / `permission`), so a
   case that asks a clarifying question still runs to completion and is scorable.
@@ -49,6 +49,15 @@ eval/
 └── __tests__/              # harness self-tests (scripted provider, run in CI)
 ```
 
+The self-tests under `__tests__/` really do run in CI: root `pnpm test` ends with
+`pnpm test:eval`, and `.github/workflows/ci.yml` runs `pnpm test` on every push
+and PR. They use the scripted provider only — deterministic, no network, no API
+key — so they are safe to gate on.
+
+The **live** suite (`cases/*.eval.ts`, run via `pnpm eval` / root `pnpm eval:agents`)
+is _not_ in CI: it calls real models, costs money, and is nondeterministic. Run it
+locally or on demand.
+
 ## Running
 
 ```bash
@@ -67,9 +76,9 @@ pnpm eval:typecheck             # typecheck the harness
 ```
 
 From the repo root: `pnpm test:eval` (self-tests, no key) and `pnpm eval:agents`
-(live). `pnpm eval` exits non-zero if any case fails — wire it into CI behind an
-API-key gate (like the existing `pnpm test:e2e`); `test:eval` needs no key and
-can run on every change.
+(live). `test:eval` needs no key and runs on every change as the last step of
+root `pnpm test`. `pnpm eval` exits non-zero if any case fails — if you ever want
+it in CI, gate it behind an API key (like the existing `pnpm test:e2e`).
 
 Sandbox-only cases (`requiresSandbox: true`) are skipped — and listed — unless
 you pass `--sandbox`.
