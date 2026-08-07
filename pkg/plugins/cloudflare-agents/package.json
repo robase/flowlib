@@ -9,6 +9,10 @@
     "url": "https://github.com/robase/flowlib.git",
     "directory": "pkg/plugins/cloudflare-agents"
   },
+  "homepage": "https://github.com/robase/flowlib#readme",
+  "bugs": {
+    "url": "https://github.com/robase/flowlib/issues"
+  },
   "files": [
     "dist/**/*"
   ],
